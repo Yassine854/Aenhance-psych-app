@@ -1,0 +1,134 @@
+{
+  "login": "Connexion",
+  "register": "Créer un compte",
+  "dashboard": "Tableau de bord",
+  "heroTitle": "Santé Mentale à Distance",
+  "aboutTitle": "À propos de la santé mentale à distance",
+  "aboutDesc": "La santé mentale à distance, également appelée...",
+  "nav": {
+    "about": "À propos",
+    "services": "Nos Services",
+    "support": "Support",
+    "resources": "Ressources",
+    "blog": "Blog",
+    "aboutItems": [
+      "Santé Telementale",
+      "Qui Nous Sommes",
+      "Notre Équipe",
+      "Rejoindre Notre Équipe",
+      "Conditions Générales",
+      "Protection de la Vie Privée"
+    ]
+  }
+,
+"carousel": {
+  "slide1": {
+    "title": "Accessibilité",
+    "description": "Nous nous engageons à rendre les services de santé mentale facilement accessibles à tous, en éliminant tout obstacle à l'obtention des soins nécessaires.",
+    "button": "En savoir plus"
+  },
+  "slide2": {
+    "title": "Confidentialité et sécurité",
+    "description": "Votre confidentialité est notre priorité. Nous veillons à ce que toutes vos données soient protégées par des mesures de sécurité de pointe.",
+    "button": "Apprendre encore plus"
+  },
+  "slide3": {
+    "title": "Soins de qualité",
+    "description": "Bénéficiez d'un soutien professionnel en santé mentale de la part d'experts qualifiés engagés pour votre bien-être.",
+    "button": "Découvrir plus"
+  }
+},
+"sections": {
+    "mentalTelehealth": {
+      "title": "Télésanté Mentale",
+      "paragraph1": "La télésanté mentale, également connue sous le nom de thérapie en ligne ou téléthérapie, transforme notre approche des soins de santé mentale. Elle utilise la puissance de la technologie pour rendre la thérapie plus accessible, plus pratique et très efficace.",
+      "paragraph2": "Chez AEnhance, nous fournissons des services de télésanté mentale de haute qualité pour aider les individus à améliorer leur bien-être mental et à vivre une vie plus heureuse et plus épanouissante.",
+      "button": "Lire Plus"
+    },
+    "aenhanceValues": {
+      "title": "Valeurs d'AEnhance",
+      "accessibility": {
+        "title": "Accessibilité",
+        "description": "Nous nous engageons à rendre les services de santé mentale facilement accessibles à tous, en supprimant tous les obstacles à l'obtention des soins dont ils ont besoin."
+      },
+      "qualityCare": {
+        "title": "Soins de qualité",
+        "description": "Nous accordons la priorité à la fourniture d'excellents services de santé mentale, en respectant toujours les normes de qualité les plus élevées."
+      },
+      "privacy": {
+        "title": "Confidentialité et vie privée",
+        "description": "Notre priorité absolue est de protéger votre vie privée et votre confidentialité, en créant un espace sûr et sécurisé pour demander de l'aide."
+      },
+      "button": "Lire Plus"
+    },
+    "howItWorks": {
+      "title": "Comment ça marche?",
+      "steps": {
+        "createAccount": {
+          "title": "CRÉEZ VOTRE COMPTE",
+          "description": "Inscrivez-vous maintenant sur notre plateforme sécurisée, \"AEnhance\" pour commencer votre voyage vers le bien-être mental.",
+          "button": "En savoir plus"
+        },
+        "exploreTherapists": {
+          "title": "EXPLOREZ LES THÉRAPEUTES",
+          "description": "Parcourez notre réseau de thérapeutes agréés, consultez leurs profils et choisissez celui qui correspond le mieux à vos besoins."
+        },
+        "scheduleSession": {
+          "title": "PLANIFIEZ VOTRE SÉANCE",
+          "description": "Réservez un horaire pratique avec le thérapeute de votre choix."
+        },
+        "connectVirtually": {
+          "title": "CONNECTEZ-VOUS VIRTUELLEMENT",
+          "description": "Assistez à votre séance par vidéoconférence ou d'autres méthodes de communication sécurisées, depuis le confort de votre domicile."
+        },
+        "startJourney": {
+          "title": "COMMENCEZ VOTRE VOYAGE",
+          "description": "Commencez votre voyage vers un meilleur bien-être mental avec le soutien et les conseils de votre thérapeute."
+        }
+      }
+    },
+    "youNeedSupport": {
+  "title": "Vous Avez Besoin de Soutien",
+  "paragraph1": "Parfois, nous avons tous besoin d’un coup de main pour prendre soin de notre bien-être mental. Avec nous, une équipe de psychologues qualifiés est prête à vous guider. Que vous cherchiez à surmonter le stress, l’anxiété, la dépression, ou simplement à recevoir un soutien quotidien, nous sommes là pour vous.",
+  "paragraph2": "Créez un compte maintenant et découvrez les opportunités disponibles pour cultiver une vie plus équilibrée et riche émotionnellement.",
+  "button": "En Savoir Plus"
+},
+"joinOurTeam": {
+  "title": "Rejoignez Notre Équipe de Psychologues",
+  "paragraph1": "Votre expertise peut réellement transformer la vie des individus. Rejoignez notre communauté en ligne de psychologues et apportez vos compétences là où elles sont nécessaires. Profitez d’une plateforme conviviale, de la flexibilité du travail en ligne et de la possibilité d’atteindre un public diversifié.",
+  "paragraph2": "Créez votre compte dès maintenant pour commencer votre parcours avec nous et contribuer à changer des vies grâce à la psychologie en ligne.",
+  "button": "En Savoir Plus"
+}
+
+  },
+   "footer": {
+    "about": "À PROPOS",
+    "resources": "RESSOURCES",
+    "contactUs": "CONTACTEZ-NOUS",
+    "paymentMethods": "MÉTHODES DE PAIEMENT",
+    "copyright": "© 2025 AENHANCE",
+    "developedBy": "Développé & Conçu par",
+    "companyName": "AENHANCE",
+    "companyDesc": "Chez AEnhance, nous sommes dévoués à fournir des services de télésanté mentale de haute qualité pour aider les individus à améliorer leur bien-être mental et à vivre une vie plus heureuse et plus épanouissante.",
+    "aboutMenu": {
+      "telementalHealth": "Télésanté Mentale",
+      "whoWeAre": "Qui Nous Sommes",
+      "ourCareTeam": "Notre Équipe de Soins",
+      "joinOurTeam": "Rejoignez Notre Équipe",
+      "termsConditions": "Termes et Conditions",
+      "privacyProtection": "Protection de la Vie Privée"
+    },
+    "resourcesMenu": {
+      "anxietyDisorders": "Troubles Anxieux",
+      "moodDisorders": "Troubles de l'Humeur",
+      "sleepDisorders": "Troubles du Sommeil",
+      "eatingDisorders": "Troubles Alimentaires",
+      "adjustmentDisorders": "Troubles d'Adaptation",
+      "personalityDisorders": "Troubles de la Personnalité"
+    },
+    "contact": {
+      "phone": "+216 26 223 193",
+      "email": "contact{'@'}aenhance.tn"
+    }
+  }
+}

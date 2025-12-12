@@ -1,0 +1,133 @@
+{
+  "login": "Login",
+  "register": "Create an Account",
+  "dashboard": "Dashboard",
+  "heroTitle": "Telemental Health",
+  "aboutTitle": "About Telemental Health",
+  "aboutDesc": "Telemental health, also known as online therapy...",
+  "nav": {
+    "about": "About",
+    "services": "Our Services",
+    "support": "Support",
+    "resources": "Resources",
+    "blog": "Blog",
+    "aboutItems": [
+      "Telemental Health",
+      "Who We Are",
+      "Our Care Team",
+      "Join Our Team",
+      "Terms and Conditions",
+      "Privacy Protection"
+    ]
+  },
+  "carousel": {
+  "slide1": {
+    "title": "Accessibility",
+    "description": "We are dedicated to making mental health services easily available to everyone, removing any obstacles to getting the care they need.",
+    "button": "Read More"
+  },
+  "slide2": {
+    "title": "Privacy & Security",
+    "description": "Your privacy is our priority. We ensure all your data is protected with industry-leading security measures.",
+    "button": "Learn More"
+  },
+  "slide3": {
+    "title": "Quality Care",
+    "description": "Experience professional mental health support from qualified experts committed to your wellbeing.",
+    "button": "Discover More"
+  }
+},
+"sections": {
+    "mentalTelehealth": {
+      "title": "Mental Telehealth",
+      "paragraph1": "Telemental health, also known as online therapy or teletherapy, is changing how we approach mental health care. It uses the power of technology to make therapy easier to access, more convenient and highly effective.",
+      "paragraph2": "At AEnhance, we provide high-quality telemental health services to help individuals enhance their mental well-being and help them live happier and more fulfilling lives.",
+      "button": "Read More"
+    },
+    "aenhanceValues": {
+      "title": "AEnhance Values",
+      "accessibility": {
+        "title": "Accessibility",
+        "description": "We're dedicated to making mental health services easily available to everyone, removing any obstacles to getting the care they need."
+      },
+      "qualityCare": {
+        "title": "Quality care",
+        "description": "We prioritize providing excellent mental health services, always meeting the highest quality standards."
+      },
+      "privacy": {
+        "title": "Privacy and confidentiality",
+        "description": "Our foremost priority is safeguarding your privacy and confidentiality, creating a safe and secure space for seeking help."
+      },
+      "button": "Read More"
+    },
+    "howItWorks": {
+      "title": "How does it work?",
+      "steps": {
+        "createAccount": {
+          "title": "CREATE YOUR ACCOUNT",
+          "description": "Sign up now on our secure platform, \"AEnhance\" to embark on your journey to mental well-being.",
+          "button": "Read More"
+        },
+        "exploreTherapists": {
+          "title": "EXPLORE THERAPISTS",
+          "description": "Browse our network of licensed therapists, review their profiles, and choose the one that best suits your needs."
+        },
+        "scheduleSession": {
+          "title": "SCHEDULE YOUR SESSION",
+          "description": "Book a convenient time with the therapist of your choice."
+        },
+        "connectVirtually": {
+          "title": "CONNECT VIRTUALLY",
+          "description": "Attend your session through video conferencing or other secure communication methods, from the comfort of your home."
+        },
+        "startJourney": {
+          "title": "START YOUR JOURNEY",
+          "description": "Begin your journey towards better mental well-being with the support and guidance of your therapist."
+        }
+      }
+    },
+    "youNeedSupport": {
+      "title": "You Need Support",
+      "paragraph1": "Sometimes, we all need a helping hand to take care of our mental well-being. With us, a team of skilled psychologists is ready to guide you. Whether you're looking to overcome stress, anxiety, depression, or simply seeking daily support, we're here for you.",
+      "paragraph2": "Create an account now and explore the opportunities available to cultivate a more emotionally rich and balanced life.",
+      "button": "Read More"
+    },
+    "joinOurTeam": {
+      "title": "Join Our Team of Psychologists",
+      "paragraph1": "Your expertise can make a real difference in individuals' lives. Join our online community of psychologists and offer your skills where they are needed. Benefit from a user-friendly platform, the flexibility of online work, and the opportunity to reach a diverse audience.",
+      "paragraph2": "Create your account now to start your journey with us and contribute to changing lives through online psychology.",
+      "button": "Read More"
+    }
+  },
+  "footer": {
+    "about": "ABOUT",
+    "resources": "RESOURCES",
+    "contactUs": "CONTACT US",
+    "paymentMethods": "PAYMENT METHODS",
+    "copyright": "© 2025 AENHANCE",
+    "developedBy": "Developed & Designed by",
+    "companyName": "AENHANCE",
+    "companyDesc": "At AEnhance, we are devoted to providing high-quality telemental health services to help individuals improve their mental well-being and live happier, more fulfilling lives.",
+    "aboutMenu": {
+      "telementalHealth": "Telemental Health",
+      "whoWeAre": "Who We Are",
+      "ourCareTeam": "Our Care Team",
+      "joinOurTeam": "Join Our Team",
+      "termsConditions": "Terms and Conditions",
+      "privacyProtection": "Privacy Protection"
+    },
+    "resourcesMenu": {
+      "anxietyDisorders": "Anxiety Disorders",
+      "moodDisorders": "Mood Disorders",
+      "sleepDisorders": "Sleep Disorders",
+      "eatingDisorders": "Eating Disorders",
+      "adjustmentDisorders": "Adjustment Disorders",
+      "personalityDisorders": "Personality Disorders"
+    },
+    "contact": {
+      "phone": "+216 26 223 193",
+      "email": "contact{'@'}aenhance.tn"
+    }
+  }
+
+}
