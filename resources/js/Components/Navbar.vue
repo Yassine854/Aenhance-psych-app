@@ -34,8 +34,10 @@
       <div class="flex items-center justify-between py-3">
         <!-- Logo (Extreme Left) -->
         <div class="flex-shrink-0">
-          <img src="/storage/aenhance.svg" alt="Logo" class="h-14 w-auto object-contain" />
-        </div>
+  <Link :href="route('home')" class="cursor-pointer">
+    <img src="/storage/aenhance.svg" alt="Logo" class="h-14 w-auto object-contain hover:opacity-80 transition-opacity" />
+  </Link>
+</div>
 
         <!-- Desktop Navigation -->
         <ul class="hidden lg:flex gap-8 items-center flex-1 justify-center">
@@ -52,7 +54,13 @@
             </button>
             <ul v-if="showAboutDropdown" class="absolute top-full left-0 mt-1 bg-white text-black rounded shadow-md w-52 z-50">
               <li v-for="item in aboutItems" :key="item">
-                <a href="#" class="block px-4 py-2 hover:bg-gray-100 text-sm transition">{{ item }}</a>
+                <Link 
+  :href="item.href" 
+  class="block px-4 py-2 hover:bg-gray-100 text-sm transition"
+  @click="showAboutDropdown = false"
+>
+  {{ item.label }}
+</Link>
               </li>
             </ul>
           </li>
@@ -153,7 +161,7 @@ onMounted(() => {
 
 // About dropdown items reactive to language
 const aboutItems = computed(() => [
-  t("nav.aboutItems.0"),
+  { label: t("nav.aboutItems.0"), href: route('telemental-health') },
   t("nav.aboutItems.1"),
   t("nav.aboutItems.2"),
   t("nav.aboutItems.3"),

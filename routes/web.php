@@ -23,7 +23,16 @@ Route::get('/', function () {
         'laravelVersion' => Application::VERSION,
         'phpVersion' => PHP_VERSION,
     ]);
-});
+})->name('home');
+
+Route::get('/telemental-health', function () {
+    return Inertia::render('guest/about/TelementalHealth', [
+        'canLogin' => Route::has('login'),
+        'canRegister' => Route::has('register'),
+        'authUser' => Auth::user(),
+    ]);
+})->name('telemental-health');
+
 
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');

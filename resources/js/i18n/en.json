@@ -128,6 +128,78 @@
       "phone": "+216 26 223 193",
       "email": "contact{'@'}aenhance.tn"
     }
+  },
+  "telementalHealth": {
+    "banner": {
+      "title": "Telemental Health",
+      "home": "Home",
+      "about": "About",
+      "current": "Telemental Health"
+    },
+    "content": {
+      "aboutTitle": "About Telemental Health",
+      "aboutParagraph": "Telemental health, also known as online therapy or teletherapy, is changing how we approach mental health care. It uses the power of technology to make therapy easier to access, more convenient and highly effective. At AEnhance, we provide high-quality telemental health services to help individuals enhance their mental well-being and help them live happier and more fulfilling lives.",
+      "whatIsTitle": "What Is Telemental Health?",
+      "whatIsParagraph": "Telemental health refers to the delivery of mental health services, including therapy and counseling, through digital platforms such as video conferencing, phone calls, or secure messaging. This innovative approach allows individuals to connect with licensed mental health professionals from the comfort of their own homes or any location with internet access.",
+      "whyChooseTitle": "Why Choose Telemental Health?",
+      "reasons": {
+        "accessibility": {
+          "title": "Accessibility",
+          "description": "Telemental health breaks down geographical barriers, making therapy accessible to individuals in rural or underserved areas. You can receive support without the need for long commutes or travel."
+        },
+        "convenience": {
+          "title": "Convenience",
+          "description": "Say goodbye to the hassle of scheduling and commuting. Telemental health offers flexibility in appointment times and locations, allowing you to fit therapy into your busy life."
+        },
+        "privacy": {
+          "title": "Privacy",
+          "description": "Our telemental health platform ensures secure and confidential sessions. You can discuss your concerns openly and honestly, knowing your privacy is protected."
+        },
+        "choice": {
+          "title": "Choice of Therapists",
+          "description": "AEnhance provides a diverse network of licensed therapists with various specialties. You have the freedom to choose the therapist who best aligns with your needs and preferences."
+        },
+        "effectiveness": {
+          "title": "Effective Outcomes",
+          "description": "Numerous studies have shown that telemental health can be as effective as in-person therapy for many individuals. The key is finding the right therapist and approach for you."
+        }
+      },
+      "references": {
+        "title": "References:",
+        "ref1": "Effectiveness of Telemental Health for Children and Adolescents During the COVID-19 Pandemic: A Systematic Review and Meta-Analysis.",
+        "ref2": "The Effectiveness of Telemental Health for Adults During the COVID-19 Pandemic: A Systematic Review and Meta-Analysis.",
+        "ref3": "Telemental Health for Mental Health Conditions in Adults: A Systematic Review and Meta-analysis of Randomized Controlled Trials.",
+        "ref4": "Telemental Health for the Treatment of Anxiety Disorders: A Systematic Review and Meta-Analysis.",
+        "ref5": "Telemental Health for the Treatment of Depression: A Systematic Review and Meta-Analysis."
+      }
+    },
+    "sidebar": {
+      "about": {
+        "title": "ABOUT",
+        "items": {
+          "telementalHealth": "Telemental Health",
+          "whoWeAre": "Who We Are",
+          "ourCareTeam": "Our Care Team",
+          "joinOurTeam": "Join Our Team",
+          "termsAndConditions": "Terms and Conditions",
+          "privacyProtection": "Privacy Protection"
+        }
+      },
+      "navigation": {
+        "title": "MAIN NAVIGATION",
+        "items": {
+          "about": "About",
+          "ourServices": "Our Services",
+          "support": "Support",
+          "resources": "Resources",
+          "blog": "Blog"
+        }
+      },
+      "launch": {
+        "title": "LAUNCH OF THE NEW WEBSITE \"AENHANCE.TN\"",
+        "description": "The AEnhance Team is thrilled to announce the launch of its new website version \"aenhance.tn\"."
+      }
+    }
   }
 
 }

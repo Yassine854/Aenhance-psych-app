@@ -130,5 +130,77 @@
       "phone": "+216 26 223 193",
       "email": "contact{'@'}aenhance.tn"
     }
+  },
+  "telementalHealth": {
+    "banner": {
+      "title": "Santé Mentale à Distance",
+      "home": "Accueil",
+      "about": "À Propos",
+      "current": "Santé Mentale à Distance"
+    },
+    "content": {
+      "aboutTitle": "À Propos de la Santé Mentale à Distance",
+      "aboutParagraph": "La santé mentale à distance, également connue sous le nom de thérapie en ligne ou téléthérapie, change notre approche des soins de santé mentale. Elle utilise la puissance de la technologie pour rendre la thérapie plus accessible, plus pratique et très efficace. Chez AEnhance, nous fournissons des services de télésanté mentale de haute qualité pour aider les individus à améliorer leur bien-être mental et à vivre une vie plus heureuse et plus épanouissante.",
+      "whatIsTitle": "Qu'est-ce que la Santé Mentale à Distance ?",
+      "whatIsParagraph": "La santé mentale à distance fait référence à la prestation de services de santé mentale, y compris la thérapie et le conseil, via des plateformes numériques telles que la vidéoconférence, les appels téléphoniques ou la messagerie sécurisée. Cette approche innovante permet aux individus de se connecter avec des professionnels de la santé mentale agréés depuis le confort de leur domicile ou de tout endroit avec accès à Internet.",
+      "whyChooseTitle": "Pourquoi Choisir la Santé Mentale à Distance ?",
+      "reasons": {
+        "accessibility": {
+          "title": "Accessibilité",
+          "description": "La santé mentale à distance élimine les barrières géographiques, rendant la thérapie accessible aux personnes vivant dans des zones rurales ou mal desservies. Vous pouvez recevoir du soutien sans avoir besoin de longs trajets ou de déplacements."
+        },
+        "convenience": {
+          "title": "Commodité",
+          "description": "Dites adieu aux tracas de planification et de déplacement. La santé mentale à distance offre une flexibilité dans les horaires et les lieux de rendez-vous, vous permettant d'intégrer la thérapie dans votre vie bien remplie."
+        },
+        "privacy": {
+          "title": "Confidentialité",
+          "description": "Notre plateforme de santé mentale à distance garantit des sessions sécurisées et confidentielles. Vous pouvez discuter de vos préoccupations ouvertement et honnêtement, sachant que votre vie privée est protégée."
+        },
+        "choice": {
+          "title": "Choix de Thérapeutes",
+          "description": "AEnhance fournit un réseau diversifié de thérapeutes agréés avec diverses spécialités. Vous avez la liberté de choisir le thérapeute qui correspond le mieux à vos besoins et préférences."
+        },
+        "effectiveness": {
+          "title": "Résultats Efficaces",
+          "description": "De nombreuses études ont montré que la santé mentale à distance peut être aussi efficace que la thérapie en personne pour de nombreux individus. La clé est de trouver le bon thérapeute et l'approche qui vous convient."
+        }
+      },
+      "references": {
+        "title": "Références :",
+        "ref1": "Efficacité de la Télésanté Mentale pour les Enfants et les Adolescents Pendant la Pandémie de COVID-19 : Une Revue Systématique et Méta-Analyse.",
+        "ref2": "L'Efficacité de la Télésanté Mentale pour les Adultes Pendant la Pandémie de COVID-19 : Une Revue Systématique et Méta-Analyse.",
+        "ref3": "Télésanté Mentale pour les Conditions de Santé Mentale chez les Adultes : Une Revue Systématique et Méta-analyse des Essais Contrôlés Randomisés.",
+        "ref4": "Télésanté Mentale pour le Traitement des Troubles Anxieux : Une Revue Systématique et Méta-Analyse.",
+        "ref5": "Télésanté Mentale pour le Traitement de la Dépression : Une Revue Systématique et Méta-Analyse."
+      }
+    },
+    "sidebar": {
+      "about": {
+        "title": "À PROPOS",
+        "items": {
+          "telementalHealth": "Santé Mentale à Distance",
+          "whoWeAre": "Qui Sommes-Nous",
+          "ourCareTeam": "Notre Équipe de Soins",
+          "joinOurTeam": "Rejoignez Notre Équipe",
+          "termsAndConditions": "Termes et Conditions",
+          "privacyProtection": "Protection de la Vie Privée"
+        }
+      },
+      "navigation": {
+        "title": "NAVIGATION PRINCIPALE",
+        "items": {
+          "about": "À Propos",
+          "ourServices": "Nos Services",
+          "support": "Support",
+          "resources": "Ressources",
+          "blog": "Blog"
+        }
+      },
+      "launch": {
+        "title": "LANCEMENT DU NOUVEAU SITE WEB \"AENHANCE.TN\"",
+        "description": "L'équipe AEnhance est ravie d'annoncer le lancement de sa nouvelle version du site web \"aenhance.tn\"."
+      }
+    }
   }
 }
