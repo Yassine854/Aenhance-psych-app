@@ -1,0 +1,28 @@
+/* Google font */
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap');
+
+/* Tailwind core layers — REQUIRED */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Tailwind v4 theme variables */
+@theme {
+  --font-outfit: Outfit, sans-serif;
+}
+
+/* Base styles */
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentColor);
+  }
+
+  body {
+    font-family: var(--font-outfit);
+    @apply relative font-normal bg-gray-50;
+  }
+}

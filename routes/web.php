@@ -78,6 +78,10 @@ Route::get('/how-it-works', function () {
 
 
 Route::get('/dashboard', function () {
+    $user = Auth::user();
+    if ($user && $user->role === 'admin') {
+        return Inertia::render('Admin/Dashboard');
+    }
     return Inertia::render('Dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
