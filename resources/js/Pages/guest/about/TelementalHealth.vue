@@ -3,7 +3,7 @@ import { Head } from "@inertiajs/vue3";
 import { useI18n } from "vue-i18n";
 import { ref, onMounted } from "vue";
 import Navbar from '@/Components/Navbar.vue';
-import Footer from '@/components/Footer.vue';
+import Footer from '@/Components/Footer.vue';
 
 defineProps({
   canLogin: { type: Boolean },

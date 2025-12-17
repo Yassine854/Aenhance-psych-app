@@ -18,6 +18,10 @@
       "Join Our Team",
       "Terms and Conditions",
       "Privacy Protection"
+    ],
+    "supportItems": [
+      "FAQ",
+      "How It Works"
     ]
   },
   "carousel": {
@@ -200,6 +204,511 @@
         "description": "The AEnhance Team is thrilled to announce the launch of its new website version \"aenhance.tn\"."
       }
     }
+  },
+  "faq": {
+    "banner": {
+      "title": "FAQ",
+      "home": "Home",
+      "support": "Support",
+      "current": "FAQ"
+    },
+    "sidebar": {
+      "support": {
+        "title": "SUPPORT",
+        "items": {
+          "faq": "FAQ",
+          "howItWorks": "How It Works?"
+        }
+      },
+      "navigation": {
+        "title": "MAIN NAVIGATION",
+        "items": {
+          "about": "About",
+          "ourServices": "Our Services",
+          "support": "Support",
+          "resources": "Resources",
+          "blog": "Blog"
+        }
+      }
+    },
+    "questions": {
+      "q1": {
+        "question": "What's the difference between psychologists and psychiatrists, and how do I choose the right mental health professional for my needs?",
+        "answer": {
+          "p1": "Psychologists and psychiatrists are both mental health professionals (experts), but they have different approaches and qualifications.",
+          "p2": "Psychologists offer therapy and counseling with a master's or PhD. Psychiatrists are doctors who can prescribe medication along with therapy.",
+          "p3": "To choose the right professional, consider your specific needs. If you're looking for therapy without medication, a psychologist may be suitable. If medication is a potential part of your treatment, consider a psychiatrist or a combined approach with both. Don't hesitate to ask if they think the other professional could help you too."
+        }
+      },
+      "q2": {
+        "question": "How can I determine if online therapy is the right option for me?",
+        "answer": "Online therapy can be an excellent choice for many people. It offers flexibility, easy access, and a wide range of qualified therapists. To see if it suits you, consider your comfort with technology, your schedule, and discussing personal matters online. Many individuals find online therapy helpful, but it's essential to assess your own preferences and needs."
+      },
+      "q3": {
+        "question": "What are the typical durations and frequencies of therapy sessions on AEnhance, and how long should I expect to continue therapy?",
+        "answer": "At AEnhance, therapy sessions' length and frequency vary based on what suits you best. Typically, sessions last around 45-60 minutes and occur weekly or biweekly. How long you continue therapy depends on your unique needs and goals. Some people prefer shorter-term (a few weeks to months), while others go for longer to address more complex issues. Your therapist will help figure out the best plan for you."
+      },
+      "q4": {
+        "question": "How do I schedule my first therapy session on AEnhance?",
+        "answer": {
+          "intro": "Scheduling your first therapy session on AEnhance is simple. Here's how:",
+          "step1": "Create an account on our platform.",
+          "step2": "Look through our list of experienced therapists and check their profiles.",
+          "step3": "Once you find a therapist you like, you can book your first session right from their profile.",
+          "step4": "Pick a date and time that suits you, and you're ready to start your therapy journey."
+        }
+      },
+      "q5": {
+        "question": "What can I expect during my first therapy session?",
+        "answer": "Your first therapy session, known as the intake session, often called an intake session, is an opportunity to know your therapist and talk about your goals and concerns. You'll discuss why you're in therapy and what you hope to achieve. Your therapist may ask about your past history, current challenges, and any relevant background details. This meeting sets the foundation for your therapeutic journey and helps build a connection between you and your therapist."
+      },
+      "q6": {
+        "question": "How do I prepare for my therapy sessions on AEnhance?",
+        "answer": {
+          "intro": "Getting ready for your therapy sessions can make them more productive. Here's how you can be prepared:",
+          "step1": "Think about what you want to talk about during your session. Consider your thoughts, feelings, and specific concerns you want to address.",
+          "step2": "Find a quiet and private space for your session. This way, you can focus without any disturbances or interruptions.",
+          "step3": "Ensure that your camera and microphone are working well, and choose a place with good lighting.",
+          "step4": "Try to be open and honest during your sessions. Effective therapy requires clear and open communication between you and your therapist."
+        }
+      },
+      "q7": {
+        "question": "What should I do if I experience technical difficulties during my online therapy session?",
+        "answer": "If you encounter technical issues during your online therapy session, don't worry. First, try refreshing your browser or restarting your device. Make sure you have a stable internet connection. If the problem persists, contact AEnhance support for assistance. Your therapist may also be able to switch to a phone call if video isn't working. We're here to help ensure your therapy experience is as smooth as possible."
+      }
+    }
+  },
+  "howItWorks": {
+    "banner": {
+      "title": "How It Works?",
+      "home": "Home",
+      "support": "Support",
+      "current": "How It Works?"
+    },
+    "gettingStarted": {
+      "title": "Getting started with telemental health at AEnhance is simple:",
+      "step1": {
+        "title": "Create an Account:",
+        "description": "Sign up for an account on our secure platform."
+      },
+      "step2": {
+        "title": "Explore Therapists:",
+        "description": "Explore our network of licensed therapists, read their profiles, and choose the one who resonates with you."
+      },
+      "step3": {
+        "title": "Schedule Your Session:",
+        "description": "Book a convenient appointment time with your chosen therapist."
+      },
+      "step4": {
+        "title": "Connect Virtually:",
+        "description": "Attend your session through video conferencing or other secure communication methods."
+      },
+      "step5": {
+        "title": "Start Your Journey:",
+        "description": "Begin your journey toward improved mental well-being with the support and guidance of your therapist."
+      },
+      "conclusion": "Join the many individuals who have experienced the benefits of telemental health. Start your journey toward better mental health with AEnhance today. We're here to support you every step of the way."
+    },
+    "visualSteps": {
+      "title": "How does it work?",
+      "steps": {
+        "createAccount": {
+          "title": "CREATE YOUR ACCOUNT",
+          "description": "Sign up now on our secure platform, \"AEnhance,\" to embark on your journey of mental well-being.",
+          "button": "Start Now"
+        },
+        "exploreTherapists": {
+          "title": "EXPLORE THERAPISTS",
+          "description": "Browse our network of licensed therapists, read their profiles, and choose the one that best suits your needs."
+        },
+        "scheduleSession": {
+          "title": "SCHEDULE YOUR SESSION",
+          "description": "Book a convenient time with the therapist of your choice."
+        },
+        "connectVirtually": {
+          "title": "CONNECT VIRTUALLY",
+          "description": "Attend your session through video conferencing or other secure communication methods, from the comfort of your home."
+        },
+        "startJourney": {
+          "title": "START YOUR JOURNEY",
+          "description": "Begin your journey towards better mental well-being with the support and guidance of your therapist."
+        }
+      }
+    },
+    "sidebar": {
+      "support": {
+        "title": "SUPPORT",
+        "items": {
+          "faq": "FAQ",
+          "howItWorks": "How It Works?"
+        }
+      },
+      "navigation": {
+        "title": "MAIN NAVIGATION",
+        "items": {
+          "about": "About",
+          "ourServices": "Our Services",
+          "support": "Support",
+          "resources": "Resources",
+          "blog": "Blog"
+        }
+      },
+      "launch": {
+        "title": "LAUNCH OF THE NEW WEB SITE \"AENHANCE.TN\"",
+        "description": "The AEnhance Team is thrilled to announce the launch of its new website version \"aenhance.tn\". Discover innovative features and immerse yourself in an enhanced navigation for an exceptional user experience."
+      }
+    }
+  },
+  "privacyProtection": {
+    "banner": {
+      "title": "Privacy Protection",
+      "home": "Home",
+      "about": "About",
+      "current": "Privacy Protection"
+    },
+    "content": {
+      "introTitle": "Your Privacy is Our Priority",
+      "introParagraph1": "At AEnhance, we understand that seeking mental health support requires trust. Your privacy and the confidentiality of your personal information are fundamental to the therapeutic relationship. We are committed to protecting your data with the highest standards of security and compliance.",
+      "introParagraph2": "This page explains how we collect, use, protect, and respect your personal information when you use our telemental health services.",
+      
+      "commitmentTitle": "Our Commitment to Privacy",
+      "commitment": {
+        "encryption": {
+          "title": "End-to-End Encryption",
+          "description": "All communications between you and your therapist are encrypted using industry-standard 256-bit AES encryption. This means your sessions, messages, and files are secure and cannot be intercepted by unauthorized parties."
+        },
+        "compliance": {
+          "title": "HIPAA Compliance",
+          "description": "We fully comply with HIPAA (Health Insurance Portability and Accountability Act) regulations, ensuring that your Protected Health Information (PHI) is handled with the utmost care and according to federal privacy standards."
+        },
+        "storage": {
+          "title": "Secure Data Storage",
+          "description": "Your data is stored on secure, encrypted servers located in certified data centers. We implement multiple layers of security including firewalls, intrusion detection, and regular security audits to protect your information."
+        },
+        "noSharing": {
+          "title": "No Third-Party Sharing",
+          "description": "We never sell, rent, or share your personal information with third parties for marketing purposes. Your data is only accessed by your care team and is never used for purposes outside of providing you with quality mental health care."
+        }
+      },
+      
+      "rightsTitle": "Your Privacy Rights",
+      "rights": {
+        "access": {
+          "title": "Right to Access",
+          "description": "You have the right to access your personal information and health records at any time through your secure account dashboard."
+        },
+        "correction": {
+          "title": "Right to Correction",
+          "description": "You can request corrections to any inaccurate or incomplete personal information we hold about you."
+        },
+        "deletion": {
+          "title": "Right to Deletion",
+          "description": "You can request the deletion of your account and associated data, subject to legal retention requirements."
+        },
+        "export": {
+          "title": "Right to Data Portability",
+          "description": "You can request a copy of your data in a machine-readable format to transfer to another service provider."
+        }
+      },
+      
+      "collectionTitle": "Information We Collect",
+      "collectionDescription": "To provide you with quality telemental health services, we collect the following types of information:",
+      "collectionItems": [
+        "Account Information: Name, email address, date of birth, and contact details",
+        "Health Information: Mental health history, treatment goals, session notes, and progress records",
+        "Payment Information: Billing details processed through secure, PCI-compliant payment processors",
+        "Technical Data: Device information, IP address, and usage data to improve our services and ensure security"
+      ],
+      
+      "securityTitle": "Security Measures",
+      "securityDescription": "We implement comprehensive security measures to protect your information:",
+      "securityMeasures": [
+        {
+          "title": "Regular Security Audits",
+          "description": "Third-party security assessments and penetration testing"
+        },
+        {
+          "title": "Access Controls",
+          "description": "Role-based access ensuring only authorized personnel can view your data"
+        },
+        {
+          "title": "Activity Monitoring",
+          "description": "24/7 monitoring for suspicious activity and potential security breaches"
+        },
+        {
+          "title": "Staff Training",
+          "description": "Regular privacy and security training for all team members"
+        }
+      ],
+      
+      "contactTitle": "Questions About Your Privacy?",
+      "contactDescription": "If you have any questions or concerns about how we handle your privacy, our dedicated Privacy Team is here to help. We're committed to transparency and will respond to your inquiries promptly.",
+      "contactButton": "Contact Privacy Team"
+    },
+    "sidebar": {
+      "about": {
+        "title": "About",
+        "items": {
+          "telementalHealth": "Telemental Health",
+          "whoWeAre": "Who We Are",
+          "ourCareTeam": "Our Care Team",
+          "joinOurTeam": "Join Our Team",
+          "termsAndConditions": "Terms & Conditions",
+          "privacyProtection": "Privacy Protection"
+        }
+      },
+      "quickFacts": {
+        "title": "Privacy Quick Facts",
+        "items": [
+          "256-bit encryption for all communications",
+          "HIPAA compliant infrastructure",
+          "No data sharing with third parties",
+          "You control your data"
+        ]
+      },
+      "trust": {
+        "title": "Verified & Secure",
+        "description": "Our platform meets the highest standards for healthcare data protection and privacy compliance."
+      }
+    }
+  },
+  
+  "termsConditions": {
+    "banner": {
+      "title": "Terms and Conditions",
+      "home": "Home",
+      "about": "About",
+      "current": "Terms and Conditions"
+    },
+    "content": {
+      "introTitle": "Agreement to Terms",
+      "introParagraph1": "Welcome to AEnhance. These Terms and Conditions constitute a legally binding agreement between you and AEnhance regarding your use of our telemental health services.",
+      "introParagraph2": "Please read these terms carefully before using our services. By accessing or using our platform, you acknowledge that you have read, understood, and agree to be bound by these terms.",
+      
+      "sections": {
+        "acceptance": {
+          "title": "Acceptance of Terms",
+          "paragraph1": "By creating an account, accessing our website, or using any of our services, you accept and agree to be bound by these Terms and Conditions and our Privacy Policy.",
+          "paragraph2": "If you do not agree to these terms, you must not access or use our services."
+        },
+        
+        "serviceDescription": {
+          "title": "Service Description",
+          "paragraph": "AEnhance provides online mental health services connecting licensed mental health professionals with individuals seeking support. Our services include:",
+          "items": [
+            "One-on-one video therapy sessions",
+            "Secure messaging with your therapist",
+            "Mental health assessments and progress tracking",
+            "Access to mental health resources and educational materials"
+          ]
+        },
+        
+        "eligibility": {
+          "title": "User Eligibility",
+          "paragraph": "You must be at least 18 years old to use our services independently. Users under 18 must have parental or guardian consent. You must provide accurate, current, and complete information during registration.",
+          "note": {
+            "title": "Important",
+            "text": "Our services are not appropriate for emergency situations or severe psychiatric crises. If you are experiencing a mental health emergency, please call emergency services immediately."
+          }
+        },
+        
+        "registration": {
+          "title": "Account Registration and Security",
+          "paragraph": "When you create an account with AEnhance, you agree to:",
+          "responsibilities": [
+            "Provide accurate and complete registration information",
+            "Maintain the security of your password and account",
+            "Notify us immediately of any unauthorized access",
+            "Accept responsibility for all activities under your account"
+          ]
+        },
+        
+        "therapeutic": {
+          "title": "Therapeutic Relationship",
+          "paragraph1": "Our platform facilitates the connection between you and licensed mental health professionals. The therapeutic relationship is established between you and your chosen therapist, not between you and AEnhance as a company.",
+          "paragraph2": "Your therapist maintains independent professional judgment in providing services and is responsible for clinical decisions regarding your care."
+        },
+        
+        "emergency": {
+          "title": "Emergency Situations",
+          "warning": {
+            "title": "CRITICAL NOTICE",
+            "text": "AEnhance is NOT designed for emergency situations. If you are experiencing a mental health emergency, suicidal thoughts, or thoughts of harming yourself or others:",
+            "numbers": "Call 911 (US), 112 (EU), or your local emergency number immediately"
+          },
+          "paragraph": "Do not rely on communications through our platform for emergency services. Always contact emergency services directly in crisis situations."
+        },
+        
+        "payment": {
+          "title": "Payment Terms",
+          "fees": {
+            "title": "Service Fees",
+            "text": "All fees for services are displayed clearly before purchase. Payment is required before or at the time of service delivery. We accept major credit cards and other payment methods as indicated on our platform."
+          },
+          "cancellation": {
+            "title": "Cancellation Policy",
+            "text": "You may cancel appointments at least 24 hours in advance without penalty. Late cancellations or no-shows may result in charges as specified by your therapist."
+          },
+          "refunds": {
+            "title": "Refunds",
+            "text": "Refunds are handled on a case-by-case basis. Please contact our support team to discuss any concerns about billing or service quality."
+          }
+        },
+        
+        "confidentiality": {
+          "title": "Confidentiality and Privacy",
+          "paragraph1": "We take your privacy seriously. All communications and personal information are protected according to HIPAA regulations and our Privacy Policy.",
+          "paragraph2": "However, there are legal and ethical exceptions to confidentiality, including:",
+          "exceptions": [
+            "Immediate danger to yourself or others",
+            "Suspected abuse or neglect of children, elderly, or vulnerable adults",
+            "Court orders or legal proceedings requiring disclosure",
+            "As otherwise required or permitted by law"
+          ]
+        },
+        
+        "conduct": {
+          "title": "User Conduct",
+          "paragraph": "You agree not to:",
+          "prohibited": [
+            "Use the service for any unlawful purpose",
+            "Harass, abuse, or harm therapists or other users",
+            "Share your account credentials with others",
+            "Attempt to gain unauthorized access to our systems",
+            "Upload malicious software or engage in disruptive behavior"
+          ]
+        },
+        
+        "liability": {
+          "title": "Limitation of Liability",
+          "paragraph1": "AEnhance provides a platform connecting users with licensed professionals but does not provide medical advice or treatment directly. We are not liable for the actions, advice, or services provided by therapists using our platform.",
+          "paragraph2": "To the fullest extent permitted by law, AEnhance shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of our services."
+        },
+        
+        "termination": {
+          "title": "Termination",
+          "paragraph1": "You may terminate your account at any time through your account settings. We reserve the right to suspend or terminate accounts that violate these terms or engage in inappropriate conduct.",
+          "paragraph2": "Upon termination, your right to use the service ceases immediately. Certain provisions of these terms shall survive termination."
+        },
+        
+        "changes": {
+          "title": "Changes to Terms",
+          "paragraph": "We may modify these terms at any time. We will notify you of material changes via email or through our platform. Your continued use of services after changes constitutes acceptance of the revised terms."
+        }
+      },
+      
+      "contact": {
+        "title": "Contact Information",
+        "text": "If you have questions about these Terms and Conditions, please contact us:",
+        "email": "Email"
+      }
+    },
+    
+    "sidebar": {
+      "about": {
+        "title": "About",
+        "items": {
+          "telementalHealth": "Telemental Health",
+          "whoWeAre": "Who We Are",
+          "ourCareTeam": "Our Care Team",
+          "joinOurTeam": "Join Our Team",
+          "termsAndConditions": "Terms & Conditions",
+          "privacyProtection": "Privacy Protection"
+        }
+      },
+      "notice": {
+        "title": "Important Notice",
+        "text": "By using AEnhance services, you acknowledge that you have read, understood, and agree to these Terms and Conditions in their entirety."
+      }
+    }
+  },
+  "whoWeAre": {
+    "banner": {
+      "title": "Who We Are",
+      "home": "Home",
+      "about": "About",
+      "current": "Who We Are"
+    },
+    "sidebar": {
+      "about": {
+        "title": "About",
+        "items": {
+          "telementalHealth": "Telemental Health",
+          "whoWeAre": "Who We Are",
+          "ourCareTeam": "Our Care Team",
+          "joinOurTeam": "Join Our Team",
+          "termsAndConditions": "Terms & Conditions",
+          "privacyProtection": "Privacy Protection"
+        }
+      }
+      
+    },
+    "introduction": {
+      "title": "Welcome to AEnhance",
+      "paragraph1": "AEnhance is a pioneering telemental health platform dedicated to transforming mental health care accessibility across Tunisia and beyond. We believe that everyone deserves access to quality mental health support, regardless of their location or circumstances.",
+      "paragraph2": "Founded with a vision to break down barriers to mental health care, we combine cutting-edge technology with compassionate, professional therapeutic services to create a safe, confidential, and accessible space for healing and growth."
+    },
+    "mission": {
+      "title": "Our Mission",
+      "paragraph1": "Our mission is to democratize access to mental health care by providing a secure, convenient, and affordable telemental health platform that connects individuals with licensed mental health professionals.",
+      "paragraph2": "We strive to eliminate the stigma surrounding mental health treatment and empower individuals to take control of their mental well-being through accessible, high-quality therapeutic services delivered with empathy and professionalism."
+    },
+    "vision": {
+      "title": "Our Vision",
+      "paragraph1": "We envision a world where mental health care is as accessible as physical health care, where seeking help is normalized, and where everyone has the tools and support they need to thrive.",
+      "paragraph2": "Through continuous innovation and dedication to excellence, we aim to become the leading telemental health platform in the region, setting new standards for quality, accessibility, and patient-centered care."
+    },
+    "values": {
+      "title": "Our Core Values",
+      "accessibility": {
+        "title": "Accessibility",
+        "description": "We believe mental health care should be available to everyone, anywhere, at any time. Our platform breaks down geographical, financial, and social barriers to ensure that quality care is within reach."
+      },
+      "qualityCare": {
+        "title": "Quality Care",
+        "description": "We maintain the highest standards of professional excellence by partnering with licensed, experienced mental health professionals who are committed to evidence-based practices and continuous learning."
+      },
+      "privacy": {
+        "title": "Privacy & Security",
+        "description": "We prioritize your confidentiality with state-of-the-art encryption and strict adherence to privacy regulations, ensuring that your personal information and therapeutic journey remain completely secure."
+      },
+      "empathy": {
+        "title": "Empathy",
+        "description": "We approach every interaction with compassion, understanding, and respect. Our platform is designed with empathy at its core, creating a supportive environment for healing and growth."
+      },
+      "innovation": {
+        "title": "Innovation",
+        "description": "We continuously evolve our technology and services to better serve our community, embracing new approaches and tools that enhance the therapeutic experience while maintaining the human connection."
+      },
+      "community": {
+        "title": "Community",
+        "description": "We foster a supportive community that reduces isolation and promotes mental wellness. Together, we're building a culture where mental health is openly discussed and prioritized."
+      }
+    },
+    "objectives": {
+      "title": "Our Strategic Objectives",
+      "objective1": {
+        "title": "Expand Access to Mental Health Care",
+        "description": "Increase the availability of mental health services in underserved areas by providing a reliable telehealth platform that connects patients with qualified therapists regardless of their location."
+      },
+      "objective2": {
+        "title": "Reduce Mental Health Stigma",
+        "description": "Create awareness campaigns and educational resources that normalize mental health conversations and encourage individuals to seek help without fear of judgment or discrimination."
+      },
+      "objective3": {
+        "title": "Ensure Excellence in Care",
+        "description": "Continuously train and support our network of mental health professionals, implement quality assurance measures, and gather patient feedback to maintain the highest standards of therapeutic care."
+      },
+      "objective4": {
+        "title": "Foster Innovation in Telemental Health",
+        "description": "Invest in research and development to improve our platform's features, enhance user experience, and integrate emerging technologies that support better therapeutic outcomes."
+      },
+      "objective5": {
+        "title": "Build Strategic Partnerships",
+        "description": "Collaborate with healthcare providers, educational institutions, and community organizations to create a comprehensive ecosystem of mental health support and education."
+      }
+    }
   }
+  
 
 }

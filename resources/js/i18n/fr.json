@@ -13,11 +13,15 @@
     "blog": "Blog",
     "aboutItems": [
       "Santé Telementale",
-      "Qui Nous Sommes",
-      "Notre Équipe",
+      "Qui Sommes-Nous",
+      "Notre Équipe de Soins",
       "Rejoindre Notre Équipe",
-      "Conditions Générales",
+      "Termes et Conditions",
       "Protection de la Vie Privée"
+    ],
+    "supportItems": [
+      "FAQ",
+      "Comment Ça Marche"
     ]
   }
 ,
@@ -202,5 +206,508 @@
         "description": "L'équipe AEnhance est ravie d'annoncer le lancement de sa nouvelle version du site web \"aenhance.tn\"."
       }
     }
+  },
+  "faq": {
+    "banner": {
+      "title": "FAQ",
+      "home": "Accueil",
+      "support": "Assistance",
+      "current": "FAQ"
+    },
+    "sidebar": {
+      "support": {
+        "title": "ASSISTANCE",
+        "items": {
+          "faq": "FAQ",
+          "howItWorks": "Comment ça marche ?"
+        }
+      },
+      "navigation": {
+        "title": "NAVIGATION PRINCIPALE",
+        "items": {
+          "about": "À propos",
+          "ourServices": "Nos Services",
+          "support": "Assistance",
+          "resources": "Ressources",
+          "blog": "Blog"
+        }
+      }
+    },
+    "questions": {
+      "q1": {
+        "question": "Quelle est la différence entre les psychologues et les psychiatres, et comment choisir le bon professionnel de santé mentale pour mes besoins ?",
+        "answer": {
+          "p1": "Les psychologues et les psychiatres sont tous deux des professionnels de la santé mentale (experts), mais ils ont des approches et des qualifications différentes.",
+          "p2": "Les psychologues offrent des thérapies et des conseils avec une maîtrise ou un doctorat. Les psychiatres sont des médecins qui peuvent prescrire des médicaments en plus de la thérapie.",
+          "p3": "Pour choisir le bon professionnel, considérez vos besoins spécifiques. Si vous recherchez une thérapie sans médicaments, un psychologue peut convenir. Si les médicaments font potentiellement partie de votre traitement, envisagez un psychiatre ou une approche combinée avec les deux. N'hésitez pas à demander s'ils pensent que l'autre professionnel pourrait également vous aider."
+        }
+      },
+      "q2": {
+        "question": "Comment puis-je déterminer si la thérapie en ligne est la bonne option pour moi ?",
+        "answer": "La thérapie en ligne peut être un excellent choix pour de nombreuses personnes. Elle offre de la flexibilité, un accès facile et un large éventail de thérapeutes qualifiés. Pour voir si elle vous convient, considérez votre aisance avec la technologie, votre emploi du temps et la discussion de questions personnelles en ligne. De nombreuses personnes trouvent la thérapie en ligne utile, mais il est essentiel d'évaluer vos propres préférences et besoins."
+      },
+      "q3": {
+        "question": "Quelles sont les durées et fréquences typiques des séances de thérapie sur AEnhance, et combien de temps dois-je m'attendre à continuer la thérapie ?",
+        "answer": "Chez AEnhance, la durée et la fréquence des séances de thérapie varient en fonction de ce qui vous convient le mieux. En général, les séances durent environ 45 à 60 minutes et ont lieu chaque semaine ou toutes les deux semaines. La durée pendant laquelle vous continuez la thérapie dépend de vos besoins et objectifs uniques. Certaines personnes préfèrent des thérapies à court terme (quelques semaines à quelques mois), tandis que d'autres optent pour des durées plus longues afin de traiter des problèmes plus complexes. Votre thérapeute vous aidera à déterminer le meilleur plan pour vous."
+      },
+      "q4": {
+        "question": "Comment planifier ma première séance de thérapie sur AEnhance ?",
+        "answer": {
+          "intro": "Planifier votre première séance de thérapie sur AEnhance est simple. Voici comment :",
+          "step1": "Créez un compte sur notre plateforme.",
+          "step2": "Parcourez notre liste de thérapeutes expérimentés et consultez leurs profils.",
+          "step3": "Une fois que vous avez trouvé un thérapeute qui vous plaît, vous pouvez réserver votre première séance directement depuis leur profil.",
+          "step4": "Choisissez une date et une heure qui vous conviennent, et vous êtes prêt à commencer votre parcours thérapeutique."
+        }
+      },
+      "q5": {
+        "question": "À quoi puis-je m'attendre lors de ma première séance de thérapie ?",
+        "answer": "Votre première séance de thérapie, connue sous le nom de séance d'accueil, est l'occasion de connaître votre thérapeute et de parler de vos objectifs et préoccupations. Vous discuterez de la raison pour laquelle vous êtes en thérapie et de ce que vous espérez accomplir. Votre thérapeute peut vous poser des questions sur votre passé, vos défis actuels et tous les détails pertinents. Cette rencontre établit les fondations de votre parcours thérapeutique et aide à créer un lien entre vous et votre thérapeute."
+      },
+      "q6": {
+        "question": "Comment me préparer pour mes séances de thérapie sur AEnhance ?",
+        "answer": {
+          "intro": "Se préparer pour vos séances de thérapie peut les rendre plus productives. Voici comment vous pouvez être préparé :",
+          "step1": "Réfléchissez à ce dont vous voulez parler pendant votre séance. Considérez vos pensées, vos sentiments et les préoccupations spécifiques que vous souhaitez aborder.",
+          "step2": "Trouvez un espace calme et privé pour votre séance. De cette façon, vous pouvez vous concentrer sans perturbations ni interruptions.",
+          "step3": "Assurez-vous que votre caméra et votre microphone fonctionnent bien, et choisissez un endroit avec un bon éclairage.",
+          "step4": "Essayez d'être ouvert et honnête pendant vos séances. Une thérapie efficace nécessite une communication claire et ouverte entre vous et votre thérapeute."
+        }
+      },
+      "q7": {
+        "question": "Que dois-je faire si je rencontre des difficultés techniques pendant ma séance de thérapie en ligne ?",
+        "answer": "Si vous rencontrez des problèmes techniques pendant votre séance de thérapie en ligne, ne vous inquiétez pas. Tout d'abord, essayez de rafraîchir votre navigateur ou de redémarrer votre appareil. Assurez-vous d'avoir une connexion Internet stable. Si le problème persiste, contactez le support AEnhance pour obtenir de l'aide. Votre thérapeute peut également passer à un appel téléphonique si la vidéo ne fonctionne pas. Nous sommes là pour vous aider à garantir que votre expérience thérapeutique soit aussi fluide que possible."
+      }
+    }
+  },
+  "howItWorks": {
+    "banner": {
+      "title": "Comment ça marche ?",
+      "home": "Accueil",
+      "support": "Assistance",
+      "current": "Comment ça marche ?"
+    },
+    "gettingStarted": {
+      "title": "Commencer avec la télésanté mentale chez AEnhance est simple :",
+      "step1": {
+        "title": "Créer un compte :",
+        "description": "Inscrivez-vous pour un compte sur notre plateforme sécurisée."
+      },
+      "step2": {
+        "title": "Explorer les thérapeutes :",
+        "description": "Explorez notre réseau de thérapeutes agréés, lisez leurs profils et choisissez celui qui vous correspond."
+      },
+      "step3": {
+        "title": "Planifier votre séance :",
+        "description": "Réservez un rendez-vous pratique avec le thérapeute de votre choix."
+      },
+      "step4": {
+        "title": "Connexion virtuelle :",
+        "description": "Assistez à votre séance par vidéoconférence ou par d'autres méthodes de communication sécurisées."
+      },
+      "step5": {
+        "title": "Commencez votre parcours :",
+        "description": "Commencez votre parcours vers une meilleure santé mentale avec le soutien et les conseils de votre thérapeute."
+      },
+      "conclusion": "Rejoignez les nombreuses personnes qui ont bénéficié de la télésanté mentale. Commencez votre parcours vers une meilleure santé mentale avec AEnhance aujourd'hui. Nous sommes là pour vous soutenir à chaque étape."
+    },
+    "visualSteps": {
+      "title": "Comment ça marche ?",
+      "steps": {
+        "createAccount": {
+          "title": "CRÉEZ VOTRE COMPTE",
+          "description": "Inscrivez-vous maintenant sur notre plateforme sécurisée, \"AEnhance\", pour commencer votre parcours de bien-être mental.",
+          "button": "Commencer maintenant"
+        },
+        "exploreTherapists": {
+          "title": "EXPLOREZ LES THÉRAPEUTES",
+          "description": "Parcourez notre réseau de thérapeutes agréés, lisez leurs profils et choisissez celui qui correspond le mieux à vos besoins."
+        },
+        "scheduleSession": {
+          "title": "PLANIFIEZ VOTRE SÉANCE",
+          "description": "Réservez un moment pratique avec le thérapeute de votre choix."
+        },
+        "connectVirtually": {
+          "title": "CONNEXION VIRTUELLE",
+          "description": "Assistez à votre séance par vidéoconférence ou par d'autres méthodes de communication sécurisées, depuis le confort de votre domicile."
+        },
+        "startJourney": {
+          "title": "COMMENCEZ VOTRE PARCOURS",
+          "description": "Commencez votre parcours vers un meilleur bien-être mental avec le soutien et les conseils de votre thérapeute."
+        }
+      }
+    },
+    "sidebar": {
+      "support": {
+        "title": "ASSISTANCE",
+        "items": {
+          "faq": "FAQ",
+          "howItWorks": "Comment ça marche ?"
+        }
+      },
+      "navigation": {
+        "title": "NAVIGATION PRINCIPALE",
+        "items": {
+          "about": "À propos",
+          "ourServices": "Nos Services",
+          "support": "Assistance",
+          "resources": "Ressources",
+          "blog": "Blog"
+        }
+      },
+      "launch": {
+        "title": "LANCEMENT DU NOUVEAU SITE WEB \"AENHANCE.TN\"",
+        "description": "L'équipe AEnhance est ravie d'annoncer le lancement de sa nouvelle version de site Web \"aenhance.tn\". Découvrez des fonctionnalités innovantes et plongez dans une navigation améliorée pour une expérience utilisateur exceptionnelle."
+      }
+    }
+  },
+  "privacyProtection": {
+    "banner": {
+      "title": "Protection de la Vie Privée",
+      "home": "Accueil",
+      "about": "À Propos",
+      "current": "Protection de la Vie Privée"
+    },
+    "content": {
+      "introTitle": "Votre Vie Privée est Notre Priorité",
+      "introParagraph1": "Chez AEnhance, nous comprenons que rechercher un soutien en santé mentale nécessite de la confiance. Votre vie privée et la confidentialité de vos informations personnelles sont fondamentales pour la relation thérapeutique. Nous nous engageons à protéger vos données selon les normes de sécurité et de conformité les plus élevées.",
+      "introParagraph2": "Cette page explique comment nous collectons, utilisons, protégeons et respectons vos informations personnelles lorsque vous utilisez nos services de télésanté mentale.",
+      
+      "commitmentTitle": "Notre Engagement envers la Vie Privée",
+      "commitment": {
+        "encryption": {
+          "title": "Chiffrement de Bout en Bout",
+          "description": "Toutes les communications entre vous et votre thérapeute sont chiffrées en utilisant le chiffrement AES 256 bits standard de l'industrie. Cela signifie que vos séances, messages et fichiers sont sécurisés et ne peuvent pas être interceptés par des parties non autorisées."
+        },
+        "compliance": {
+          "title": "Conformité HIPAA",
+          "description": "Nous nous conformons entièrement aux réglementations HIPAA, garantissant que vos informations de santé protégées sont traitées avec le plus grand soin et selon les normes fédérales de confidentialité."
+        },
+        "storage": {
+          "title": "Stockage Sécurisé des Données",
+          "description": "Vos données sont stockées sur des serveurs sécurisés et chiffrés situés dans des centres de données certifiés. Nous mettons en œuvre plusieurs couches de sécurité incluant des pare-feu, la détection d'intrusion et des audits de sécurité réguliers."
+        },
+        "noSharing": {
+          "title": "Pas de Partage avec des Tiers",
+          "description": "Nous ne vendons, ne louons jamais ni ne partageons vos informations personnelles avec des tiers à des fins de marketing. Vos données ne sont accessibles que par votre équipe de soins et ne sont jamais utilisées à d'autres fins que vous fournir des soins de santé mentale de qualité."
+        }
+      },
+      
+      "rightsTitle": "Vos Droits à la Vie Privée",
+      "rights": {
+        "access": {
+          "title": "Droit d'Accès",
+          "description": "Vous avez le droit d'accéder à vos informations personnelles et dossiers de santé à tout moment via votre tableau de bord de compte sécurisé."
+        },
+        "correction": {
+          "title": "Droit de Correction",
+          "description": "Vous pouvez demander des corrections à toute information personnelle inexacte ou incomplète que nous détenons à votre sujet."
+        },
+        "deletion": {
+          "title": "Droit de Suppression",
+          "description": "Vous pouvez demander la suppression de votre compte et des données associées, sous réserve des exigences légales de conservation."
+        },
+        "export": {
+          "title": "Droit à la Portabilité des Données",
+          "description": "Vous pouvez demander une copie de vos données dans un format lisible par machine pour les transférer à un autre fournisseur de services."
+        }
+      },
+      
+      "collectionTitle": "Informations Que Nous Collectons",
+      "collectionDescription": "Pour vous fournir des services de télésanté mentale de qualité, nous collectons les types d'informations suivants:",
+      "collectionItems": [
+        "Informations de Compte: Nom, adresse email, date de naissance et coordonnées",
+        "Informations de Santé: Historique de santé mentale, objectifs de traitement, notes de séance et dossiers de progrès",
+        "Informations de Paiement: Détails de facturation traités via des processeurs de paiement sécurisés conformes PCI",
+        "Données Techniques: Informations sur l'appareil, adresse IP et données d'utilisation pour améliorer nos services et garantir la sécurité"
+      ],
+      
+      "securityTitle": "Mesures de Sécurité",
+      "securityDescription": "Nous mettons en œuvre des mesures de sécurité complètes pour protéger vos informations:",
+      "securityMeasures": [
+        {
+          "title": "Audits de Sécurité Réguliers",
+          "description": "Évaluations de sécurité par des tiers et tests de pénétration"
+        },
+        {
+          "title": "Contrôles d'Accès",
+          "description": "Accès basé sur les rôles garantissant que seul le personnel autorisé peut consulter vos données"
+        },
+        {
+          "title": "Surveillance des Activités",
+          "description": "Surveillance 24/7 pour les activités suspectes et les violations de sécurité potentielles"
+        },
+        {
+          "title": "Formation du Personnel",
+          "description": "Formation régulière sur la vie privée et la sécurité pour tous les membres de l'équipe"
+        }
+      ],
+      
+      "contactTitle": "Questions sur Votre Vie Privée?",
+      "contactDescription": "Si vous avez des questions ou des préoccupations concernant la façon dont nous traitons votre vie privée, notre équipe dédiée à la vie privée est là pour vous aider. Nous nous engageons à la transparence et répondrons rapidement à vos demandes.",
+      "contactButton": "Contacter l'Équipe Vie Privée"
+    },
+    "sidebar": {
+      "about": {
+        "title": "À Propos",
+        "items": {
+          "telementalHealth": "Télésanté Mentale",
+          "whoWeAre": "Qui Sommes-Nous",
+          "ourCareTeam": "Notre Équipe de Soins",
+          "joinOurTeam": "Rejoignez Notre Équipe",
+          "termsAndConditions": "Termes et Conditions",
+          "privacyProtection": "Protection de la Vie Privée"
+        }
+      },
+      "quickFacts": {
+        "title": "Faits Rapides sur la Vie Privée",
+        "items": [
+          "Chiffrement 256 bits pour toutes les communications",
+          "Infrastructure conforme HIPAA",
+          "Aucun partage de données avec des tiers",
+          "Vous contrôlez vos données"
+        ]
+      },
+      "trust": {
+        "title": "Vérifié & Sécurisé",
+        "description": "Notre plateforme répond aux normes les plus élevées de protection des données de santé et de conformité à la vie privée."
+      }
+    }
+  },
+  "termsConditions": {
+    "banner": {
+      "title": "Termes et Conditions",
+      "home": "Accueil",
+      "about": "À Propos",
+      "current": "Termes et Conditions"
+    },
+    "content": {
+      "introTitle": "Accord aux Termes",
+      "introParagraph1": "Bienvenue sur AEnhance. Ces Termes et Conditions constituent un accord juridiquement contraignant entre vous et AEnhance concernant votre utilisation de nos services de télésanté mentale.",
+      "introParagraph2": "Veuillez lire attentivement ces termes avant d'utiliser nos services. En accédant ou en utilisant notre plateforme, vous reconnaissez avoir lu, compris et accepté d'être lié par ces termes.",
+      
+      "sections": {
+        "acceptance": {
+          "title": "Acceptation des Termes",
+          "paragraph1": "En créant un compte, en accédant à notre site Web ou en utilisant l'un de nos services, vous acceptez et convenez d'être lié par ces Termes et Conditions et notre Politique de Confidentialité.",
+          "paragraph2": "Si vous n'acceptez pas ces termes, vous ne devez pas accéder ou utiliser nos services."
+        },
+        
+        "serviceDescription": {
+          "title": "Description du Service",
+          "paragraph": "AEnhance fournit des services de santé mentale en ligne reliant des professionnels de la santé mentale agréés avec des personnes cherchant du soutien. Nos services incluent:",
+          "items": [
+            "Séances de thérapie vidéo individuelles",
+            "Messagerie sécurisée avec votre thérapeute",
+            "Évaluations de santé mentale et suivi des progrès",
+            "Accès aux ressources de santé mentale et matériaux éducatifs"
+          ]
+        },
+        
+        "eligibility": {
+          "title": "Éligibilité de l'Utilisateur",
+          "paragraph": "Vous devez avoir au moins 18 ans pour utiliser nos services de manière indépendante. Les utilisateurs de moins de 18 ans doivent avoir le consentement parental ou du tuteur. Vous devez fournir des informations exactes, actuelles et complètes lors de l'inscription.",
+          "note": {
+            "title": "Important",
+            "text": "Nos services ne sont pas appropriés pour les situations d'urgence ou les crises psychiatriques graves. Si vous vivez une urgence de santé mentale, veuillez appeler les services d'urgence immédiatement."
+          }
+        },
+        
+        "registration": {
+          "title": "Inscription au Compte et Sécurité",
+          "paragraph": "Lorsque vous créez un compte avec AEnhance, vous acceptez de:",
+          "responsibilities": [
+            "Fournir des informations d'inscription exactes et complètes",
+            "Maintenir la sécurité de votre mot de passe et compte",
+            "Nous informer immédiatement de tout accès non autorisé",
+            "Accepter la responsabilité de toutes les activités sous votre compte"
+          ]
+        },
+        
+        "therapeutic": {
+          "title": "Relation Thérapeutique",
+          "paragraph1": "Notre plateforme facilite la connexion entre vous et les professionnels de la santé mentale agréés. La relation thérapeutique est établie entre vous et votre thérapeute choisi, pas entre vous et AEnhance en tant qu'entreprise.",
+          "paragraph2": "Votre thérapeute maintient un jugement professionnel indépendant dans la prestation de services et est responsable des décisions cliniques concernant vos soins."
+        },
+        
+        "emergency": {
+          "title": "Situations d'Urgence",
+          "warning": {
+            "title": "AVIS CRITIQUE",
+            "text": "AEnhance n'est PAS conçu pour les situations d'urgence. Si vous vivez une urgence de santé mentale, des pensées suicidaires ou des pensées de vous faire du mal ou de faire du mal aux autres:",
+            "numbers": "Appelez le 911 (US), le 112 (EU), ou votre numéro d'urgence local immédiatement"
+          },
+          "paragraph": "Ne comptez pas sur les communications via notre plateforme pour les services d'urgence. Contactez toujours directement les services d'urgence dans les situations de crise."
+        },
+        
+        "payment": {
+          "title": "Conditions de Paiement",
+          "fees": {
+            "title": "Frais de Service",
+            "text": "Tous les frais pour les services sont affichés clairement avant l'achat. Le paiement est requis avant ou au moment de la prestation du service. Nous acceptons les principales cartes de crédit et autres méthodes de paiement indiquées sur notre plateforme."
+          },
+          "cancellation": {
+            "title": "Politique d'Annulation",
+            "text": "Vous pouvez annuler des rendez-vous au moins 24 heures à l'avance sans pénalité. Les annulations tardives ou les absences peuvent entraîner des frais comme spécifié par votre thérapeute."
+          },
+          "refunds": {
+            "title": "Remboursements",
+            "text": "Les remboursements sont traités au cas par cas. Veuillez contacter notre équipe de support pour discuter de toute préoccupation concernant la facturation ou la qualité du service."
+          }
+        },
+        
+        "confidentiality": {
+          "title": "Confidentialité et Vie Privée",
+          "paragraph1": "Nous prenons votre vie privée au sérieux. Toutes les communications et informations personnelles sont protégées selon les réglementations HIPAA et notre Politique de Confidentialité.",
+          "paragraph2": "Cependant, il existe des exceptions légales et éthiques à la confidentialité, notamment:",
+          "exceptions": [
+            "Danger immédiat pour vous-même ou les autres",
+            "Abus ou négligence présumés d'enfants, de personnes âgées ou d'adultes vulnérables",
+            "Ordonnances du tribunal ou procédures judiciaires nécessitant la divulgation",
+            "Comme autrement requis ou permis par la loi"
+          ]
+        },
+        
+        "conduct": {
+          "title": "Conduite de l'Utilisateur",
+          "paragraph": "Vous acceptez de ne pas:",
+          "prohibited": [
+            "Utiliser le service à des fins illégales",
+            "Harceler, abuser ou nuire aux thérapeutes ou autres utilisateurs",
+            "Partager vos identifiants de compte avec d'autres",
+            "Tenter d'obtenir un accès non autorisé à nos systèmes",
+            "Télécharger des logiciels malveillants ou adopter un comportement perturbateur"
+          ]
+        },
+        
+        "liability": {
+          "title": "Limitation de Responsabilité",
+          "paragraph1": "AEnhance fournit une plateforme reliant les utilisateurs aux professionnels agréés mais ne fournit pas de conseils médicaux ou de traitement directement. Nous ne sommes pas responsables des actions, conseils ou services fournis par les thérapeutes utilisant notre plateforme.",
+          "paragraph2": "Dans toute la mesure permise par la loi, AEnhance ne sera pas responsable de tout dommage indirect, accessoire, spécial, consécutif ou punitif découlant de votre utilisation de nos services."
+        },
+        
+        "termination": {
+          "title": "Résiliation",
+          "paragraph1": "Vous pouvez résilier votre compte à tout moment via les paramètres de votre compte. Nous nous réservons le droit de suspendre ou de résilier les comptes qui violent ces termes ou adoptent une conduite inappropriée.",
+          "paragraph2": "Lors de la résiliation, votre droit d'utiliser le service cesse immédiatement. Certaines dispositions de ces termes survivront à la résiliation."
+        },
+        
+        "changes": {
+          "title": "Modifications des Termes",
+          "paragraph": "Nous pouvons modifier ces termes à tout moment. Nous vous informerons des changements importants par email ou via notre plateforme. Votre utilisation continue des services après les changements constitue l'acceptation des termes révisés."
+        }
+      },
+      
+      "contact": {
+        "title": "Coordonnées",
+        "text": "Si vous avez des questions sur ces Termes et Conditions, veuillez nous contacter:",
+        "email": "Email"
+      }
+    },
+    
+    "sidebar": {
+      "about": {
+        "title": "À Propos",
+        "items": {
+          "telementalHealth": "Télésanté Mentale",
+          "whoWeAre": "Qui Sommes-Nous",
+          "ourCareTeam": "Notre Équipe de Soins",
+          "joinOurTeam": "Rejoignez Notre Équipe",
+          "termsAndConditions": "Termes et Conditions",
+          "privacyProtection": "Protection de la Vie Privée"
+        }
+      },
+      "notice": {
+        "title": "Avis Important",
+        "text": "En utilisant les services AEnhance, vous reconnaissez avoir lu, compris et accepté ces Termes et Conditions dans leur intégralité."
+      }
+    }
+  },
+  "whoWeAre": {
+    "banner": {
+      "title": "Qui Sommes-Nous",
+      "home": "Accueil",
+      "about": "À Propos",
+      "current": "Qui Sommes-Nous"
+    },
+    "sidebar": {
+      "about": {
+        "title": "À Propos",
+        "items": {
+          "telementalHealth": "Télésanté Mentale",
+          "whoWeAre": "Qui Sommes-Nous",
+          "ourCareTeam": "Notre Équipe de Soins",
+          "joinOurTeam": "Rejoignez Notre Équipe",
+          "termsAndConditions": "Termes et Conditions",
+          "privacyProtection": "Protection de la Vie Privée"
+        }
+      }
+    },
+    "introduction": {
+      "title": "Bienvenue chez AEnhance",
+      "paragraph1": "AEnhance est une plateforme pionnière de télésanté mentale dédiée à la transformation de l'accessibilité aux soins de santé mentale en Tunisie et au-delà. Nous croyons que chacun mérite d'avoir accès à un soutien en santé mentale de qualité, quel que soit son emplacement ou ses circonstances.",
+      "paragraph2": "Fondée avec la vision de briser les barrières aux soins de santé mentale, nous combinons une technologie de pointe avec des services thérapeutiques professionnels et compatissants pour créer un espace sûr, confidentiel et accessible pour la guérison et la croissance."
+    },
+    "mission": {
+      "title": "Notre Mission",
+      "paragraph1": "Notre mission est de démocratiser l'accès aux soins de santé mentale en fournissant une plateforme de télésanté mentale sécurisée, pratique et abordable qui met en relation les individus avec des professionnels de la santé mentale agréés.",
+      "paragraph2": "Nous nous efforçons d'éliminer la stigmatisation entourant les traitements de santé mentale et d'autonomiser les individus à prendre en charge leur bien-être mental grâce à des services thérapeutiques accessibles et de haute qualité dispensés avec empathie et professionnalisme."
+    },
+    "vision": {
+      "title": "Notre Vision",
+      "paragraph1": "Nous imaginons un monde où les soins de santé mentale sont aussi accessibles que les soins de santé physique, où la recherche d'aide est normalisée et où chacun dispose des outils et du soutien nécessaires pour s'épanouir.",
+      "paragraph2": "Grâce à l'innovation continue et au dévouement à l'excellence, nous visons à devenir la principale plateforme de télésanté mentale de la région, établissant de nouvelles normes en matière de qualité, d'accessibilité et de soins centrés sur le patient."
+    },
+    "values": {
+      "title": "Nos Valeurs Fondamentales",
+      "accessibility": {
+        "title": "Accessibilité",
+        "description": "Nous croyons que les soins de santé mentale devraient être disponibles pour tous, partout, à tout moment. Notre plateforme élimine les barrières géographiques, financières et sociales pour garantir que des soins de qualité sont à portée de main."
+      },
+      "qualityCare": {
+        "title": "Soins de Qualité",
+        "description": "Nous maintenons les normes les plus élevées d'excellence professionnelle en nous associant à des professionnels de la santé mentale agréés et expérimentés qui s'engagent dans des pratiques fondées sur des preuves et un apprentissage continu."
+      },
+      "privacy": {
+        "title": "Confidentialité et Sécurité",
+        "description": "Nous accordons la priorité à votre confidentialité avec un cryptage de pointe et une stricte adhésion aux réglementations sur la vie privée, garantissant que vos informations personnelles et votre parcours thérapeutique restent complètement sécurisés."
+      },
+      "empathy": {
+        "title": "Empathie",
+        "description": "Nous abordons chaque interaction avec compassion, compréhension et respect. Notre plateforme est conçue avec l'empathie au cœur, créant un environnement de soutien pour la guérison et la croissance."
+      },
+      "innovation": {
+        "title": "Innovation",
+        "description": "Nous faisons évoluer continuellement notre technologie et nos services pour mieux servir notre communauté, en adoptant de nouvelles approches et outils qui améliorent l'expérience thérapeutique tout en maintenant la connexion humaine."
+      },
+      "community": {
+        "title": "Communauté",
+        "description": "Nous favorisons une communauté de soutien qui réduit l'isolement et favorise le bien-être mental. Ensemble, nous construisons une culture où la santé mentale est ouvertement discutée et priorisée."
+      }
+    },
+    "objectives": {
+      "title": "Nos Objectifs Stratégiques",
+      "objective1": {
+        "title": "Élargir l'Accès aux Soins de Santé Mentale",
+        "description": "Augmenter la disponibilité des services de santé mentale dans les zones mal desservies en fournissant une plateforme de télésanté fiable qui met en relation les patients avec des thérapeutes qualifiés, quel que soit leur emplacement."
+      },
+      "objective2": {
+        "title": "Réduire la Stigmatisation de la Santé Mentale",
+        "description": "Créer des campagnes de sensibilisation et des ressources éducatives qui normalisent les conversations sur la santé mentale et encouragent les individus à demander de l'aide sans crainte de jugement ou de discrimination."
+      },
+      "objective3": {
+        "title": "Garantir l'Excellence des Soins",
+        "description": "Former et soutenir continuellement notre réseau de professionnels de la santé mentale, mettre en œuvre des mesures d'assurance qualité et recueillir les commentaires des patients pour maintenir les normes les plus élevées de soins thérapeutiques."
+      },
+      "objective4": {
+        "title": "Favoriser l'Innovation en Télésanté Mentale",
+        "description": "Investir dans la recherche et le développement pour améliorer les fonctionnalités de notre plateforme, améliorer l'expérience utilisateur et intégrer les technologies émergentes qui soutiennent de meilleurs résultats thérapeutiques."
+      },
+      "objective5": {
+        "title": "Construire des Partenariats Stratégiques",
+        "description": "Collaborer avec des prestataires de soins de santé, des institutions éducatives et des organisations communautaires pour créer un écosystème complet de soutien et d'éducation en matière de santé mentale."
+      }
+    }
+  
   }
 }

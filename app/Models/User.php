@@ -21,6 +21,8 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'role',
+        'is_active'
     ];
 
     /**
@@ -42,4 +44,45 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
     ];
+
+
+
+    // Relationships
+
+    public function psychologistProfile()
+    {
+        return $this->hasOne(PsychologistProfile::class);
+    }
+
+    public function patientProfile()
+    {
+        return $this->hasOne(PatientProfile::class);
+    }
+
+    public function patientAppointments()
+    {
+        return $this->hasMany(Appointment::class, 'patient_id');
+    }
+
+    public function psychologistAppointments()
+    {
+        return $this->hasMany(Appointment::class, 'psychologist_id');
+    }
+
+
+    public function isAdmin()
+{
+    return $this->role === 'ADMIN';
+}
+
+public function isPsychologist()
+{
+    return $this->role === 'PSYCHOLOGIST';
+}
+
+public function isPatient()
+{
+    return $this->role === 'PATIENT';
+}
+
 }

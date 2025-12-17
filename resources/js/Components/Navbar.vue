@@ -34,10 +34,10 @@
       <div class="flex items-center justify-between py-3">
         <!-- Logo (Extreme Left) -->
         <div class="flex-shrink-0">
-  <Link :href="route('home')" class="cursor-pointer">
-    <img src="/storage/aenhance.svg" alt="Logo" class="h-14 w-auto object-contain hover:opacity-80 transition-opacity" />
-  </Link>
-</div>
+          <Link :href="route('home')" class="cursor-pointer">
+            <img src="/storage/aenhance.svg" alt="Logo" class="h-14 w-auto object-contain hover:opacity-80 transition-opacity" />
+          </Link>
+        </div>
 
         <!-- Desktop Navigation -->
         <ul class="hidden lg:flex gap-8 items-center flex-1 justify-center">
@@ -55,19 +55,43 @@
             <ul v-if="showAboutDropdown" class="absolute top-full left-0 mt-1 bg-white text-black rounded shadow-md w-52 z-50">
               <li v-for="item in aboutItems" :key="item">
                 <Link 
-  :href="item.href" 
-  class="block px-4 py-2 hover:bg-gray-100 text-sm transition"
-  @click="showAboutDropdown = false"
->
-  {{ item.label }}
-</Link>
+                  :href="item.href" 
+                  class="block px-4 py-2 hover:bg-gray-100 text-sm transition"
+                  @click="showAboutDropdown = false"
+                >
+                  {{ item.label }}
+                </Link>
               </li>
             </ul>
           </li>
 
           <!-- Other links -->
           <li><a href="#" class="px-3 py-1 text-gray-700 font-medium hover:bg-gray-100 transition">{{ t('nav.services') }}</a></li>
-          <li><a href="#" class="px-3 py-1 text-gray-700 font-medium hover:bg-gray-100 transition">{{ t('nav.support') }}</a></li>
+          
+          <!-- Support Dropdown -->
+          <li class="relative">
+            <button @click="showSupportDropdown = !showSupportDropdown"
+              class="px-3 py-1 text-gray-700 font-medium flex items-center gap-1 relative group hover:bg-gray-100 transition">
+              {{ t('nav.support') }}
+              <svg class="w-3 h-3 mt-1" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd"
+                      d="M5.23 7.21a.75.75 0 011.06.02L10 10.585l3.71-3.356a.75.75 0 111.02 1.1l-4 3.625a.75.75 0 01-1.02 0l-4-3.625a.75.75 0 01.02-1.06z"
+                      clip-rule="evenodd"/>
+              </svg>
+            </button>
+            <ul v-if="showSupportDropdown" class="absolute top-full left-0 mt-1 bg-white text-black rounded shadow-md w-52 z-50">
+              <li v-for="item in supportItems" :key="item.label">
+                <Link 
+                  :href="item.href" 
+                  class="block px-4 py-2 hover:bg-gray-100 text-sm transition"
+                  @click="showSupportDropdown = false"
+                >
+                  {{ item.label }}
+                </Link>
+              </li>
+            </ul>
+          </li>
+          
           <li><a href="#" class="px-3 py-1 text-gray-700 font-medium hover:bg-gray-100 transition">{{ t('nav.resources') }}</a></li>
           <li><a href="#" class="px-3 py-1 text-gray-700 font-medium hover:bg-gray-100 transition">{{ t('nav.blog') }}</a></li>
         </ul>
@@ -96,14 +120,44 @@
             </button>
             <ul v-if="showAboutDropdown" class="pl-6 mt-2 space-y-1">
               <li v-for="item in aboutItems" :key="item">
-                <a href="#" class="block px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 transition">{{ item }}</a>
+                <Link 
+                  :href="item.href" 
+                  class="block px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 transition"
+                  @click="showAboutDropdown = false; showMobileMenu = false"
+                >
+                  {{ item.label }}
+                </Link>
               </li>
             </ul>
           </li>
 
           <!-- Other links -->
           <li><a href="#" class="block px-3 py-2 text-gray-700 font-medium hover:bg-gray-100 transition">{{ t('nav.services') }}</a></li>
-          <li><a href="#" class="block px-3 py-2 text-gray-700 font-medium hover:bg-gray-100 transition">{{ t('nav.support') }}</a></li>
+          
+          <!-- Support Dropdown (Mobile) -->
+          <li>
+            <button @click="showSupportDropdown = !showSupportDropdown"
+              class="w-full text-left px-3 py-2 text-gray-700 font-medium flex items-center justify-between hover:bg-gray-100 transition">
+              {{ t('nav.support') }}
+              <svg class="w-4 h-4" :class="{ 'rotate-180': showSupportDropdown }" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd"
+                      d="M5.23 7.21a.75.75 0 011.06.02L10 10.585l3.71-3.356a.75.75 0 111.02 1.1l-4 3.625a.75.75 0 01-1.02 0l-4-3.625a.75.75 0 01.02-1.06z"
+                      clip-rule="evenodd"/>
+              </svg>
+            </button>
+            <ul v-if="showSupportDropdown" class="pl-6 mt-2 space-y-1">
+              <li v-for="item in supportItems" :key="item.label">
+                <Link 
+                  :href="item.href" 
+                  class="block px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 transition"
+                  @click="showSupportDropdown = false; showMobileMenu = false"
+                >
+                  {{ item.label }}
+                </Link>
+              </li>
+            </ul>
+          </li>
+          
           <li><a href="#" class="block px-3 py-2 text-gray-700 font-medium hover:bg-gray-100 transition">{{ t('nav.resources') }}</a></li>
           <li><a href="#" class="block px-3 py-2 text-gray-700 font-medium hover:bg-gray-100 transition">{{ t('nav.blog') }}</a></li>
         </ul>
@@ -125,6 +179,7 @@ const props = defineProps({
 
 const showDropdown = ref(false);
 const showAboutDropdown = ref(false);
+const showSupportDropdown = ref(false);
 const showMobileMenu = ref(false);
 const { t, locale } = useI18n();
 const currentLang = ref("");
@@ -162,11 +217,17 @@ onMounted(() => {
 // About dropdown items reactive to language
 const aboutItems = computed(() => [
   { label: t("nav.aboutItems.0"), href: route('telemental-health') },
-  t("nav.aboutItems.1"),
-  t("nav.aboutItems.2"),
-  t("nav.aboutItems.3"),
-  t("nav.aboutItems.4"),
-  t("nav.aboutItems.5")
+  { label: t("nav.aboutItems.1"), href: route('who-we-are') },
+  { label: t("nav.aboutItems.2"), href: "#" },
+  { label: t("nav.aboutItems.3"), href: "#" },
+  { label: t("nav.aboutItems.4"), href: route('terms-conditions') },
+  { label: t("nav.aboutItems.5"), href: route('privacy-protection') }
+]);
+
+// Support dropdown items reactive to language
+const supportItems = computed(() => [
+  { label: t("nav.supportItems.0"), href: route('faq') },
+  { label: t("nav.supportItems.1"), href: route('how-it-works') }
 ]);
 </script>
 
