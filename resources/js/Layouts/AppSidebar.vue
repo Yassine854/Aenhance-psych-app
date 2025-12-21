@@ -1,7 +1,7 @@
 <template>
   <aside
     :class="[
-      'fixed mt-16 flex flex-col lg:mt-0 top-0 px-5 left-0 bg-white dark:bg-gray-900 dark:border-gray-800 text-gray-900 h-screen transition-all duration-300 ease-in-out z-99999 border-r border-gray-200',
+      'fixed mt-16 flex flex-col lg:mt-0 top-0 px-5 left-0 bg-white dark:bg-gray-900 dark:border-gray-800 text-gray-900 dark:text-gray-300 h-screen transition-all duration-300 ease-in-out z-50 border-r border-gray-200 pointer-events-auto',
       {
         'lg:w-[290px]': isExpanded || isMobileOpen || isHovered,
         'lg:w-[90px]': !isExpanded && !isHovered,
@@ -13,38 +13,44 @@
     @mouseenter="!isExpanded && (isHovered = true)"
     @mouseleave="isHovered = false"
   >
-    <div
-      :class="[
-        'py-8 flex',
-        !isExpanded && !isHovered ? 'lg:justify-center' : 'justify-start',
-      ]"
-    >
-      <Link href="/">
-        <img
-          v-if="isExpanded || isHovered || isMobileOpen"
-          class="dark:hidden"
-          src="/images/logo/logo.svg"
-          alt="Logo"
-          width="150"
-          height="40"
-        />
-        <img
-          v-if="isExpanded || isHovered || isMobileOpen"
-          class="hidden dark:block"
-          src="/images/logo/logo-dark.svg"
-          alt="Logo"
-          width="150"
-          height="40"
-        />
-        <img
-          v-else
-          src="/images/logo/logo-icon.svg"
-          alt="Logo"
-          width="32"
-          height="32"
-        />
-      </Link>
-    </div>
+  <div
+  :class="[
+    'py-8 flex transition-[justify-content,padding] duration-300 ease-in-out',
+    isExpanded || isHovered || isMobileOpen
+      ? 'justify-start px-4'
+      : 'justify-center',
+  ]"
+>
+  <Link
+    href="/"
+    :class="!isExpanded && !isHovered ? 'mx-auto' : ''"
+  >
+    <img
+      v-if="isExpanded || isHovered || isMobileOpen"
+      class="dark:hidden"
+      src="/storage/aenhance.svg"
+      alt="Logo"
+      width="80"
+      height="60"
+    />
+    <img
+      v-if="isExpanded || isHovered || isMobileOpen"
+      class="hidden dark:block"
+      src="/storage/aenhance.svg"
+      alt="Logo"
+      width="150"
+      height="40"
+    />
+    <img
+      v-else
+      src="/storage/aenhance.svg"
+      alt="Logo"
+      width="50"
+      height="50"
+    />
+  </Link>
+</div>
+
     <div
       class="flex flex-col overflow-y-auto duration-300 ease-linear no-scrollbar"
     >
@@ -70,21 +76,22 @@
                   v-if="item.subItems"
                   @click="toggleSubmenu(groupIndex, index)"
                   :class="[
-                    'menu-item group w-full',
+                    'menu-item group w-full text-gray-700 dark:text-gray-300',
                     {
-                      'menu-item-active': isSubmenuOpen(groupIndex, index),
+                      'menu-item-active bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100': isSubmenuOpen(groupIndex, index),
                       'menu-item-inactive': !isSubmenuOpen(groupIndex, index),
                     },
                     !isExpanded && !isHovered
-                      ? 'lg:justify-center'
-                      : 'lg:justify-start',
+                      ? 'lg:px-0 lg:justify-center'
+                      : 'lg:px-3 lg:justify-start',
                   ]"
                 >
                   <span
                     :class="[
+                      'w-9 h-9 flex items-center justify-center',
                       isSubmenuOpen(groupIndex, index)
-                        ? 'menu-item-icon-active'
-                        : 'menu-item-icon-inactive',
+                        ? 'menu-item-icon-active text-gray-700 dark:text-gray-100'
+                        : 'menu-item-icon-inactive text-gray-500 dark:text-gray-400',
                     ]"
                   >
                     <component :is="item.icon" />
@@ -112,18 +119,20 @@
                   v-else-if="item.path"
                   :href="item.path"
                   :class="[
-                    'menu-item group',
+                    'menu-item group text-gray-700 dark:text-gray-300',
                     {
-                      'menu-item-active': isActive(item.path),
+                      'menu-item-active bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100': isActive(item.path),
                       'menu-item-inactive': !isActive(item.path),
                     },
                   ]"
                 >
                   <span
                     :class="[
+                      'w-9 h-9 flex items-center justify-center',
+                      'w-9 h-9 flex items-center justify-center',
                       isActive(item.path)
-                        ? 'menu-item-icon-active'
-                        : 'menu-item-icon-inactive',
+                        ? 'menu-item-icon-active text-gray-700 dark:text-gray-100'
+                        : 'menu-item-icon-inactive text-gray-500 dark:text-gray-400',
                     ]"
                   >
                     <component :is="item.icon" />
@@ -135,74 +144,67 @@
                   >
                 </Link>
 
-                <transition
-                  @enter="startTransition"
-                  @after-enter="endTransition"
-                  @before-leave="startTransition"
-                  @after-leave="endTransition"
+                <div
+                  v-if="
+                    isSubmenuOpen(groupIndex, index) &&
+                    (isExpanded || isHovered || isMobileOpen)
+                  "
                 >
-                  <div
-                    v-show="
-                      isSubmenuOpen(groupIndex, index) &&
-                      (isExpanded || isHovered || isMobileOpen)
-                    "
-                  >
-                    <ul class="mt-2 space-y-1 ml-9">
-                      <li v-for="subItem in item.subItems" :key="subItem.name">
-                        <Link
-                          :href="subItem.path"
-                          :class="[
-                            'menu-dropdown-item',
-                            {
-                              'menu-dropdown-item-active': isActive(
-                                subItem.path
-                              ),
-                              'menu-dropdown-item-inactive': !isActive(
-                                subItem.path
-                              ),
-                            },
-                          ]"
-                        >
-                          {{ subItem.name }}
-                          <span class="flex items-center gap-1 ml-auto">
-                            <span
-                              v-if="subItem.new"
-                              :class="[
-                                'menu-dropdown-badge',
-                                {
-                                  'menu-dropdown-badge-active': isActive(
-                                    subItem.path
-                                  ),
-                                  'menu-dropdown-badge-inactive': !isActive(
-                                    subItem.path
-                                  ),
-                                },
-                              ]"
-                            >
-                              new
-                            </span>
-                            <span
-                              v-if="subItem.pro"
-                              :class="[
-                                'menu-dropdown-badge',
-                                {
-                                  'menu-dropdown-badge-active': isActive(
-                                    subItem.path
-                                  ),
-                                  'menu-dropdown-badge-inactive': !isActive(
-                                    subItem.path
-                                  ),
-                                },
-                              ]"
-                            >
-                              pro
-                            </span>
+                  <ul class="mt-2 space-y-1 ml-9">
+                    <li v-for="subItem in item.subItems" :key="subItem.name">
+                      <Link
+                        :href="subItem.path"
+                        :class="[
+                          'menu-dropdown-item text-gray-700 dark:text-gray-300',
+                          {
+                            'menu-dropdown-item-active bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100': isActive(
+                              subItem.path
+                            ),
+                            'menu-dropdown-item-inactive': !isActive(
+                              subItem.path
+                            ),
+                          },
+                        ]"
+                      >
+                        {{ subItem.name }}
+                        <span class="flex items-center gap-1 ml-auto">
+                          <span
+                            v-if="subItem.new"
+                            :class="[
+                              'menu-dropdown-badge bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200',
+                              {
+                                'menu-dropdown-badge-active': isActive(
+                                  subItem.path
+                                ),
+                                'menu-dropdown-badge-inactive': !isActive(
+                                  subItem.path
+                                ),
+                              },
+                            ]"
+                          >
+                            new
                           </span>
-                        </Link>
-                      </li>
-                    </ul>
-                  </div>
-                </transition>
+                          <span
+                            v-if="subItem.pro"
+                            :class="[
+                              'menu-dropdown-badge bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200',
+                              {
+                                'menu-dropdown-badge-active': isActive(
+                                  subItem.path
+                                ),
+                                'menu-dropdown-badge-inactive': !isActive(
+                                  subItem.path
+                                ),
+                              },
+                            ]"
+                          >
+                            pro
+                          </span>
+                        </span>
+                      </Link>
+                    </li>
+                  </ul>
+                </div>
               </li>
             </ul>
           </div>
@@ -248,69 +250,34 @@ const menuGroups = [
         subItems: [{ name: "Ecommerce", path: "/", pro: false }],
       },
       {
-        icon: CalenderIcon,
-        name: "Calendar",
-        path: "/calendar",
-      },
-      {
-        icon: UserCircleIcon,
-        name: "User Profile",
-        path: "/profile",
-      },
-
-      {
-        name: "Forms",
+        name: "Psychologists",
         icon: ListIcon,
         subItems: [
-          { name: "Form Elements", path: "/form-elements", pro: false },
+          { name: "Licensed Psychologists", path: "/form-elements", pro: false },
+          { name: "All Psychologists", path: "/form-elements", pro: false },
+          { name: "Subscriptions", path: "/form-elements", pro: false },
+          { name: "Payments", path: "/form-elements", pro: false },
         ],
       },
-      {
-        name: "Tables",
-        icon: TableIcon,
-        subItems: [{ name: "Basic Tables", path: "/basic-tables", pro: false }],
-      },
-      {
-        name: "Pages",
-        icon: PageIcon,
+{
+        name: "Patients",
+        icon: ListIcon,
         subItems: [
-          { name: "Black Page", path: "/blank", pro: false },
-          { name: "404 Page", path: "/error-404", pro: false },
+          { name: "Patient Records", path: "/form-elements", pro: false },
+          { name: "All Patients", path: "/form-elements", pro: false },
+          { name: "Payment follow-up", path: "/form-elements", pro: false },
         ],
       },
-    ],
-  },
-  {
-    title: "Others",
-    items: [
-      {
-        icon: PieChartIcon,
-        name: "Charts",
+
+{
+        name: "Page Settings",
+        icon: ListIcon,
         subItems: [
-          { name: "Line Chart", path: "/line-chart", pro: false },
-          { name: "Bar Chart", path: "/bar-chart", pro: false },
+          { name: "Ressources", path: "/form-elements", pro: false },
+          { name: "Blogs", path: "/form-elements", pro: false },
         ],
       },
-      {
-        icon: BoxCubeIcon,
-        name: "Ui Elements",
-        subItems: [
-          { name: "Alerts", path: "/alerts", pro: false },
-          { name: "Avatars", path: "/avatars", pro: false },
-          { name: "Badge", path: "/badge", pro: false },
-          { name: "Buttons", path: "/buttons", pro: false },
-          { name: "Images", path: "/images", pro: false },
-          { name: "Videos", path: "/videos", pro: false },
-        ],
-      },
-      {
-        icon: PlugInIcon,
-        name: "Authentication",
-        subItems: [
-          { name: "Signin", path: "/signin", pro: false },
-          { name: "Signup", path: "/signup", pro: false },
-        ],
-      },
+      
       // ... Add other menu items here
     ],
   },
@@ -343,15 +310,5 @@ const isSubmenuOpen = (groupIndex, itemIndex) => {
   );
 };
 
-const startTransition = (el) => {
-  el.style.height = "auto";
-  const height = el.scrollHeight;
-  el.style.height = "0px";
-  el.offsetHeight; // force reflow
-  el.style.height = height + "px";
-};
 
-const endTransition = (el) => {
-  el.style.height = "";
-};
 </script>

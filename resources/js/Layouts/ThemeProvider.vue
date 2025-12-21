@@ -5,6 +5,7 @@
 
 <script>
 import { ref, onMounted } from 'vue'
+import { usePage } from '@inertiajs/vue3'
 
 const theme = ref('light')
 
@@ -22,12 +23,23 @@ export function useTheme() {
 export default {
   name: 'ThemeProvider',
   setup() {
+    const { props } = usePage()
+
     onMounted(() => {
       const saved = localStorage.getItem('theme')
-      if (saved) theme.value = saved
-      else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-        theme.value = 'dark'
+      const isAdmin = props.value?.auth?.user?.role === 'admin'
+
+      if (isAdmin) {
+        // Force light theme for admin users and persist it
+        theme.value = 'light'
+        localStorage.setItem('theme', 'light')
+      } else if (saved) {
+        theme.value = saved
+      } else {
+        // Default to light theme when there is no saved preference
+        theme.value = 'light'
       }
+
       document.documentElement.classList.toggle('dark', theme.value === 'dark')
     })
   },

@@ -8,7 +8,7 @@
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
         </svg>
       </button>
-      <div v-if="showDropdown" class="absolute top-full left-0 mt-1 bg-white text-black rounded shadow-md w-max z-50">
+      <div v-if="showDropdown" class="absolute top-full left-0 mt-1 bg-white dark:bg-gray-800 text-black dark:text-white rounded shadow-md w-max z-50">
         <button v-for="lang in languages" :key="lang.code" @click="setLang(lang.code)"
           class="block w-full text-left px-3 py-1 hover:bg-gray-200 transition text-[13px]">
           {{ lang.label }}
@@ -52,7 +52,7 @@
                       clip-rule="evenodd"/>
               </svg>
             </button>
-            <ul v-if="showAboutDropdown" class="absolute top-full left-0 mt-1 bg-white text-black rounded shadow-md w-52 z-50">
+            <ul v-if="showAboutDropdown" class="absolute top-full left-0 mt-1 bg-white dark:bg-gray-800 text-black dark:text-white rounded shadow-md w-52 z-50">
               <li v-for="item in aboutItems" :key="item">
                 <Link 
                   :href="item.href" 
@@ -79,7 +79,7 @@
                       clip-rule="evenodd"/>
               </svg>
             </button>
-            <ul v-if="showSupportDropdown" class="absolute top-full left-0 mt-1 bg-white text-black rounded shadow-md w-52 z-50">
+            <ul v-if="showSupportDropdown" class="absolute top-full left-0 mt-1 bg-white dark:bg-gray-800 text-black dark:text-white rounded shadow-md w-52 z-50">
               <li v-for="item in supportItems" :key="item.label">
                 <Link 
                   :href="item.href" 
