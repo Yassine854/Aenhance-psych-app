@@ -79,9 +79,18 @@ Route::get('/how-it-works', function () {
 
 Route::get('/dashboard', function () {
     $user = Auth::user();
-    if ($user && $user->role === 'admin') {
-        return Inertia::render('Admin/Dashboard');
+    if ($user) {
+        if ($user->isAdmin()) {
+            return Inertia::render('Admin/Dashboard');
+        }
+        if ($user->isPsychologist()) {
+            return Inertia::render('Psychologist/Dashboard');
+        }
+        if ($user->isPatient()) {
+            return Inertia::render('Patient/Dashboard');
+        }
     }
+    // Fallback for unexpected cases
     return Inertia::render('Dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 

@@ -56,7 +56,7 @@
     >
       <nav class="mb-6">
         <div class="flex flex-col gap-4">
-          <div v-for="(menuGroup, groupIndex) in menuGroups" :key="groupIndex">
+          <div v-for="(menuGroup, groupIndex) in filteredMenuGroups" :key="groupIndex">
             <h2
               :class="[
                 'mb-4 text-xs uppercase flex leading-[20px] text-gray-400',
@@ -239,6 +239,14 @@ import BoxCubeIcon from "@/icons/BoxCubeIcon.vue";
 import { useSidebar } from "@/composables/useSidebar";
 
 const { isExpanded, isMobileOpen, isHovered, openSubmenu } = useSidebar();
+import { usePage } from '@inertiajs/vue3'
+
+const page = usePage()
+const currentRole = computed(() => {
+  return (
+    page.props?.value?.auth?.user?.role ?? page.props?.auth?.user?.role ?? null
+  )
+})
 
 const menuGroups = [
   {
@@ -248,10 +256,12 @@ const menuGroups = [
         icon: GridIcon,
         name: "Dashboard",
         subItems: [{ name: "Ecommerce", path: "/", pro: false }],
+        // visible to all
       },
       {
         name: "Psychologists",
         icon: ListIcon,
+        roles: ['ADMIN'], // only admins should see this
         subItems: [
           { name: "Licensed Psychologists", path: "/form-elements", pro: false },
           { name: "All Psychologists", path: "/form-elements", pro: false },
@@ -259,29 +269,42 @@ const menuGroups = [
           { name: "Payments", path: "/form-elements", pro: false },
         ],
       },
-{
+      {
         name: "Patients",
         icon: ListIcon,
+        roles: ['ADMIN', 'PSYCHOLOGIST'], // admins and psychologists
         subItems: [
           { name: "Patient Records", path: "/form-elements", pro: false },
           { name: "All Patients", path: "/form-elements", pro: false },
           { name: "Payment follow-up", path: "/form-elements", pro: false },
         ],
       },
-
-{
+      {
         name: "Page Settings",
         icon: ListIcon,
+        roles: ['ADMIN'],
         subItems: [
           { name: "Ressources", path: "/form-elements", pro: false },
           { name: "Blogs", path: "/form-elements", pro: false },
         ],
       },
-      
       // ... Add other menu items here
     ],
   },
 ];
+
+const isItemVisible = (item) => {
+  if (!item.roles || !Array.isArray(item.roles)) return true
+  const role = currentRole.value
+  if (!role) return false
+  return item.roles.includes(role)
+}
+
+const filteredMenuGroups = computed(() => {
+  return menuGroups
+    .map((g) => ({ ...g, items: g.items.filter((i) => isItemVisible(i)) }))
+    .filter((g) => g.items.length)
+})
 
 const isActive = (path) => window.location.pathname === path
 
