@@ -5,10 +5,10 @@
       @click.prevent="toggleDropdown"
     >
       <span class="mr-3 overflow-hidden rounded-full h-11 w-11">
-        <img src="/images/user/owner.jpg" alt="User" />
+        <img :src="user.role === 'ADMIN' ? '/storage/aenhance.svg' : '/images/user/owner.jpg'" :alt="user.name" />
       </span>
 
-      <span class="block mr-1 font-medium text-theme-sm">Musharof </span>
+      <span class="block mr-1 font-medium text-theme-sm">{{ user.name }}</span>
 
       <ChevronDownIcon :class="{ 'rotate-180': dropdownOpen }" />
     </button>
@@ -20,15 +20,15 @@
     >
       <div>
         <span class="block font-medium text-gray-700 text-theme-sm dark:text-gray-400">
-          Musharof Chowdhury
+          {{ user.name }}
         </span>
         <span class="mt-0.5 block text-theme-xs text-gray-500 dark:text-gray-400">
-          randomuser@pimjo.com
+          {{ user.email }}
         </span>
       </div>
 
       <ul class="flex flex-col gap-1 pt-4 pb-3 border-b border-gray-200 dark:border-gray-800">
-        <li v-for="item in menuItems" :key="item.href">
+        <li v-for="item in visibleMenuItems" :key="item.text">
           <Link
             :href="item.href"
             class="flex items-center gap-3 px-3 py-2 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
@@ -58,18 +58,22 @@
 
 <script setup>
 import { UserCircleIcon, ChevronDownIcon, LogoutIcon, SettingsIcon, InfoCircleIcon } from '@/icons'
-import { Link } from '@inertiajs/vue3'
+import { Link, usePage } from '@inertiajs/vue3'
 import { Inertia } from '@inertiajs/inertia'
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 
 const dropdownOpen = ref(false)
 const dropdownRef = ref(null)
+const page = usePage()
+const user = computed(() => page.props?.value?.auth?.user ?? page.props.auth.user) 
 
-const menuItems = [
-  { href: '/profile', icon: UserCircleIcon, text: 'Edit profile' },
-  { href: '/chat', icon: SettingsIcon, text: 'Account settings' },
-  { href: '/profile', icon: InfoCircleIcon, text: 'Support' },
-]
+const menuItems = computed(() => [
+  { href: route('profile.edit'), icon: UserCircleIcon, text: 'Edit profile', disabled: user.value?.role === 'ADMIN' },
+  { href: route('profile.edit'), icon: SettingsIcon, text: 'Account settings', disabled: false },
+  { href: '/support', icon: InfoCircleIcon, text: 'Support', disabled: user.value?.role === 'ADMIN' },
+])
+
+const visibleMenuItems = computed(() => menuItems.value.filter(i => !i.disabled));
 
 const toggleDropdown = () => {
   dropdownOpen.value = !dropdownOpen.value

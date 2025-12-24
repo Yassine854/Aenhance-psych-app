@@ -112,6 +112,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/psychologist/appointments', [PsychologistController::class, 'appointments']);
     Route::get('/psychologist/patients', [PsychologistController::class, 'patients']);
 
+    // Psychologist profile CRUD
+    Route::resource('psychologist-profiles', \App\Http\Controllers\PsychologistProfileController::class);
+
     // Appointment routes (patient + psychologist + admin)
     Route::get('/appointments', [AppointmentController::class, 'index']);
     Route::post('/appointments', [AppointmentController::class, 'store']);

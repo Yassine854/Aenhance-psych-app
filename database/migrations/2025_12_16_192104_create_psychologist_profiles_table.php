@@ -13,8 +13,20 @@ return new class extends Migration
             $table->foreignId('user_id')
                   ->constrained()
                   ->cascadeOnDelete();
+            $table->string('first_name');
+            $table->string('last_name');
             $table->string('specialization');
-            $table->string('license_number')->unique();
+            $table->string('diploma'); // license ,master
+            $table->string('cin'); //Proof
+            $table->string('gender')->nullable();
+            $table->string('country')->nullable();
+            $table->string('city')->nullable();
+            $table->string('address')->nullable();
+            $table->date('date_of_birth')->nullable();
+            $table->text('bio')->nullable();
+            $table->decimal('price_per_session', 8, 2);
+            $table->boolean('is_approved')->default(false);
+            $table->string('profile_image_url')->nullable();
             $table->timestamps();
         });
     }

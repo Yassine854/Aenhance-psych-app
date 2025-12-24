@@ -1,4 +1,5 @@
 <script setup>
+import { computed } from 'vue'
 import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
@@ -14,12 +15,38 @@ defineProps({
     },
 });
 
-const user = usePage().props.auth.user;
+const page = usePage();
+const user = computed(() => page.props?.value?.auth?.user ?? page.props.auth.user);
+const isAdmin = computed(() => user.value?.role === 'ADMIN');
 
 const form = useForm({
-    name: user.name,
-    email: user.email,
+    name: user.value.name,
+    email: user.value.email,
 });
+
+const submit = () => {
+    form.patch(route('profile.update'), {
+        onSuccess: () => {
+            // Immediately update the shared Inertia auth.user props so nav updates without waiting for a full page visit
+            if (page.props?.value) {
+                page.props.value = {
+                    ...page.props.value,
+                    auth: {
+                        ...page.props.value.auth,
+                        user: {
+                            ...page.props.value.auth.user,
+                            name: form.name,
+                            email: form.email,
+                        },
+                    },
+                }
+            } else if (page.props?.auth) {
+                page.props.auth.user.name = form.name;
+                page.props.auth.user.email = form.email;
+            }
+        }
+    })
+}
 </script>
 
 <template>
@@ -32,7 +59,7 @@ const form = useForm({
             </p>
         </header>
 
-        <form @submit.prevent="form.patch(route('profile.update'))" class="mt-6 space-y-6">
+        <form @submit.prevent="submit" class="mt-6 space-y-6">
             <div>
                 <InputLabel for="name" value="Name" />
 
@@ -52,16 +79,19 @@ const form = useForm({
             <div>
                 <InputLabel for="email" value="Email" />
 
-                <TextInput
+                    <TextInput
                     id="email"
                     type="email"
                     class="mt-1 block w-full"
                     v-model="form.email"
+                    :disabled="isAdmin"
                     required
                     autocomplete="username"
                 />
 
                 <InputError class="mt-2" :message="form.errors.email" />
+
+                <p v-if="isAdmin" class="mt-2 text-sm text-gray-500">Email cannot be changed for admin accounts.</p>
             </div>
 
             <div v-if="mustVerifyEmail && user.email_verified_at === null">

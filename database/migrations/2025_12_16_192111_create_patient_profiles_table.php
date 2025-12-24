@@ -13,7 +13,10 @@ return new class extends Migration
             $table->foreignId('user_id')
                   ->constrained()
                   ->cascadeOnDelete();
-            $table->integer('age')->nullable();
+            $table->string('full_name');
+            $table->string('phone')->nullable();
+            $table->date('date_of_birth')->nullable();
+            $table->string('profile_image_url')->nullable();
             $table->text('mental_health_goals')->nullable();
             $table->timestamps();
         });
