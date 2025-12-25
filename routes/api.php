@@ -18,5 +18,10 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
+// Simple public test route for psychologist profiles (returns JSON)
+Route::get('/psychologist-profiles/test', function () {
+    return \App\Models\PsychologistProfile::with('user')->limit(50)->get();
+});
+
 
 

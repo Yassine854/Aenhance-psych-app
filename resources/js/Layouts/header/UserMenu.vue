@@ -67,11 +67,21 @@ const dropdownRef = ref(null)
 const page = usePage()
 const user = computed(() => page.props?.value?.auth?.user ?? page.props.auth.user) 
 
-const menuItems = computed(() => [
-  { href: route('profile.edit'), icon: UserCircleIcon, text: 'Edit profile', disabled: user.value?.role === 'ADMIN' },
-  { href: route('profile.edit'), icon: SettingsIcon, text: 'Account settings', disabled: false },
-  { href: '/support', icon: InfoCircleIcon, text: 'Support', disabled: user.value?.role === 'ADMIN' },
-])
+const menuItems = computed(() => {
+  if (user.value?.role === 'PSYCHOLOGIST') {
+    return [
+      { href: route('psychologist.profile.edit'), icon: UserCircleIcon, text: 'Edit profile', disabled: false },
+      { href: route('profile.edit'), icon: SettingsIcon, text: 'Account settings', disabled: false },
+      { href: '/support', icon: InfoCircleIcon, text: 'Support', disabled: false },
+    ]
+  }
+
+  return [
+    { href: route('profile.edit'), icon: UserCircleIcon, text: 'Edit profile', disabled: user.value?.role === 'ADMIN' },
+    { href: route('profile.edit'), icon: SettingsIcon, text: 'Account settings', disabled: false },
+    { href: '/support', icon: InfoCircleIcon, text: 'Support', disabled: user.value?.role === 'ADMIN' },
+  ]
+})
 
 const visibleMenuItems = computed(() => menuItems.value.filter(i => !i.disabled));
 
