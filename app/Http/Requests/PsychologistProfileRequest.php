@@ -13,11 +13,14 @@ class PsychologistProfileRequest extends FormRequest
 
     public function rules(): array
     {
+        // For create (POST) we require key fields; for update we make them nullable
+        $isCreate = $this->isMethod('post');
+
         return [
             'user_id' => ['nullable', 'exists:users,id'],
-            'first_name' => ['required', 'string', 'max:255'],
-            'last_name' => ['required', 'string', 'max:255'],
-            'specialization' => ['required', 'string', 'max:255'],
+            'first_name' => [$isCreate ? 'required' : 'nullable', 'string', 'max:255'],
+            'last_name' => [$isCreate ? 'required' : 'nullable', 'string', 'max:255'],
+            'specialization' => [$isCreate ? 'required' : 'nullable', 'string', 'max:255'],
             'diploma' => ['nullable', 'string', 'max:1024'],
             'cin' => ['nullable', 'string', 'max:1024'],
             'gender' => ['nullable', 'string', 'max:50'],
@@ -26,11 +29,11 @@ class PsychologistProfileRequest extends FormRequest
             'address' => ['nullable', 'string', 'max:255'],
             'date_of_birth' => ['nullable', 'date'],
             'bio' => ['nullable', 'string'],
-            'price_per_session' => ['required', 'numeric', 'min:0'],
-            'is_approved' => ['boolean'],
+            'price_per_session' => [$isCreate ? 'required' : 'nullable', 'numeric', 'min:0'],
+            'is_approved' => ['nullable', 'boolean'],
             'profile_image_url' => ['nullable', 'string', 'max:1024'],
 
-            // File uploads (handled server-side via Cloudinary)
+            // File uploads (optional on update)
             'profile_image' => ['nullable', 'image', 'max:2048'],
             'diploma_file' => ['nullable', 'mimes:pdf', 'max:5120'],
             'cin_file' => ['nullable', 'mimes:pdf', 'max:5120'],

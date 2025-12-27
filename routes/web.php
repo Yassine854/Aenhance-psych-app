@@ -134,7 +134,7 @@ Route::middleware(['auth'])->group(function () {
     // Psychologist self profile (for logged-in psychologist)
     Route::get('/psychologist/profile', [PsychologistProfileController::class, 'editSelf'])->name('psychologist.profile.edit');
     Route::post('/psychologist/profile', [PsychologistProfileController::class, 'storeSelf'])->name('psychologist.profile.store');
-    Route::match(['put','patch'], '/psychologist/profile', [PsychologistProfileController::class, 'updateSelf'])->name('psychologist.profile.update');
+    Route::match(['post', 'put', 'patch'], '/psychologist/profile/update', [PsychologistProfileController::class, 'updateSelf'])->name('psychologist.profile.update');
 
 });
 

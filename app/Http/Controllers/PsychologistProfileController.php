@@ -109,55 +109,52 @@ class PsychologistProfileController extends Controller
         }
 
         if ($request->hasFile('diploma_file')) {
-    $file = $request->file('diploma_file');
+            $file = $request->file('diploma_file');
 
-    try {
-        $uploaded = Cloudinary::uploadFile(
-            $file->getRealPath(), // path to temp file
-            [
-                'folder' => 'psychologist_profiles/diplomas', // different folder
-                'resource_type' => 'raw',
-                'use_filename' => true,
-                'unique_filename' => false,
-                'overwrite' => true,
-                'public_id' => pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME), // force name
-            ]
-        );
-
-        $data['diploma'] = $uploaded->getSecurePath(); // store URL in diploma field
-        $usedCloudinary = true;
-    } catch (\Throwable $e) {
-        Log::warning('Cloudinary diploma_file upload failed: '.$e->getMessage());
-        $path = $file->store('psychologist_profiles/diplomas', 'public');
-        $data['diploma'] = Storage::url($path);
-    }
-}
-
+            try {
+                $uploaded = Cloudinary::uploadFile(
+                    $file->getRealPath(),
+                    [
+                        'folder' => 'psychologist_profiles/diplomas',
+                        'resource_type' => 'raw',
+                        'use_filename' => true,
+                        'unique_filename' => false,
+                        'overwrite' => true,
+                        'public_id' => pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME),
+                    ]
+                );
+                $data['diploma'] = $uploaded->getSecurePath();
+                $usedCloudinary = true;
+            } catch (\Throwable $e) {
+                Log::warning('Cloudinary diploma_file upload failed: '.$e->getMessage());
+                $path = $file->store('psychologist_profiles/diplomas', 'public');
+                $data['diploma'] = Storage::url($path);
+            }
+        }
 
         if ($request->hasFile('cin_file')) {
-    $file = $request->file('cin_file');
+            $file = $request->file('cin_file');
 
-    try {
-        $uploaded = Cloudinary::uploadFile(
-            $file->getRealPath(), // path to temp file
-            [
-                'folder' => 'psychologist_profiles/cins',
-                'resource_type' => 'raw',
-                'use_filename' => true,
-                'unique_filename' => false,
-                'overwrite' => true,
-                'public_id' => pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME), // force name
-            ]
-        );
-
-        $data['cin'] = $uploaded->getSecurePath();
-        $usedCloudinary = true;
-    } catch (\Throwable $e) {
-        Log::warning('Cloudinary cin_file upload failed: '.$e->getMessage());
-        $path = $file->store('psychologist_profiles/cins', 'public');
-        $data['cin'] = Storage::url($path);
-    }
-}
+            try {
+                $uploaded = Cloudinary::uploadFile(
+                    $file->getRealPath(),
+                    [
+                        'folder' => 'psychologist_profiles/cins',
+                        'resource_type' => 'raw',
+                        'use_filename' => true,
+                        'unique_filename' => false,
+                        'overwrite' => true,
+                        'public_id' => pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME),
+                    ]
+                );
+                $data['cin'] = $uploaded->getSecurePath();
+                $usedCloudinary = true;
+            } catch (\Throwable $e) {
+                Log::warning('Cloudinary cin_file upload failed: '.$e->getMessage());
+                $path = $file->store('psychologist_profiles/cins', 'public');
+                $data['cin'] = Storage::url($path);
+            }
+        }
 
         $profile = PsychologistProfile::create($data);
 
@@ -178,9 +175,16 @@ class PsychologistProfileController extends Controller
             abort(404);
         }
 
+        // Get all validated input and use it directly for update
         $data = $request->validated();
+        $usedCloudinary = false;
 
-        $usedCloudinary = false; // track if cloudinary was used for any file
+        // DEBUG: Log what we received
+        Log::info('updateSelf received data', [
+            'validated' => $data,
+            'all_input' => $request->all(),
+            'profile_before' => $profile->toArray(),
+        ]);
 
         if ($request->hasFile('profile_image')) {
             try {
@@ -203,64 +207,76 @@ class PsychologistProfileController extends Controller
         }
 
        if ($request->hasFile('diploma_file')) {
-    $file = $request->file('diploma_file');
-    $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
-    $extension = $file->getClientOriginalExtension() ?: 'pdf';
+            $file = $request->file('diploma_file');
+            $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+            $extension = $file->getClientOriginalExtension() ?: 'pdf';
 
-    try {
-        $uploaded = Cloudinary::uploadFile(
-            $file->getRealPath(),
-            [
-                'folder' => 'psychologist_profiles/diplomas',
-                'resource_type' => 'raw',
-                'use_filename' => true,
-                'unique_filename' => false,
-                'overwrite' => true,
-                'filename' => $originalName,
-                'format' => $extension, // force correct extension
-            ]
-        );
-        $data['diploma'] = $uploaded->getSecurePath();
-        $usedCloudinary = true;
-    } catch (\Throwable $e) {
-        Log::warning('Cloudinary diploma_file upload failed: '.$e->getMessage());
-        $path = $file->store('psychologist_profiles/diplomas', 'public');
-        $data['diploma'] = Storage::url($path);
-    }
-}
+            try {
+                $uploaded = Cloudinary::uploadFile(
+                    $file->getRealPath(),
+                    [
+                        'folder' => 'psychologist_profiles/diplomas',
+                        'resource_type' => 'raw',
+                        'use_filename' => true,
+                        'unique_filename' => false,
+                        'overwrite' => true,
+                        'filename' => $originalName,
+                        'format' => $extension,
+                    ]
+                );
+                $data['diploma'] = $uploaded->getSecurePath();
+                $usedCloudinary = true;
+            } catch (\Throwable $e) {
+                Log::warning('Cloudinary diploma_file upload failed: '.$e->getMessage());
+                $path = $file->store('psychologist_profiles/diplomas', 'public');
+                $data['diploma'] = Storage::url($path);
+            }
+        }
 
-if ($request->hasFile('cin_file')) {
-    $file = $request->file('cin_file');
-    $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
-    $extension = $file->getClientOriginalExtension() ?: 'pdf';
+        if ($request->hasFile('cin_file')) {
+            $file = $request->file('cin_file');
+            $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+            $extension = $file->getClientOriginalExtension() ?: 'pdf';
 
-    try {
-        $uploaded = Cloudinary::uploadFile(
-            $file->getRealPath(),
-            [
-                'folder' => 'psychologist_profiles/cins',
-                'resource_type' => 'raw',
-                'use_filename' => true,
-                'unique_filename' => false,
-                'overwrite' => true,
-                'filename' => $originalName,
-                'format' => $extension, // force correct extension
-            ]
-        );
-        $data['cin'] = $uploaded->getSecurePath();
-        $usedCloudinary = true;
-    } catch (\Throwable $e) {
-        Log::warning('Cloudinary cin_file upload failed: '.$e->getMessage());
-        $path = $file->store('psychologist_profiles/cins', 'public');
-        $data['cin'] = Storage::url($path);
-    }
-}
+            try {
+                $uploaded = Cloudinary::uploadFile(
+                    $file->getRealPath(),
+                    [
+                        'folder' => 'psychologist_profiles/cins',
+                        'resource_type' => 'raw',
+                        'use_filename' => true,
+                        'unique_filename' => false,
+                        'overwrite' => true,
+                        'filename' => $originalName,
+                        'format' => $extension,
+                    ]
+                );
+                $data['cin'] = $uploaded->getSecurePath();
+                $usedCloudinary = true;
+            } catch (\Throwable $e) {
+                Log::warning('Cloudinary cin_file upload failed: '.$e->getMessage());
+                $path = $file->store('psychologist_profiles/cins', 'public');
+                $data['cin'] = Storage::url($path);
+            }
+        }
 
-        
+        // Remove file inputs (not stored directly) and keep only fillable fields
+        unset($data['profile_image'], $data['diploma_file'], $data['cin_file']);
 
-        $profile->update($data);
+        // DEBUG: Log final data before save
+        Log::info('updateSelf saving data', ['data_to_save' => $data]);
 
-        Log::info('Psychologist profile updated', ['id' => $profile->id, 'usedCloudinary' => $usedCloudinary]);
+        // Update and save the profile
+        $profile->fill($data);
+        $saved = $profile->save();
+
+        // DEBUG: Log result
+        Log::info('Psychologist profile updated', [
+            'id' => $profile->id,
+            'saved' => $saved,
+            'profile_after' => $profile->fresh()->toArray(),
+            'usedCloudinary' => $usedCloudinary,
+        ]);
 
         return redirect()->route('psychologist.profile.edit');
     }

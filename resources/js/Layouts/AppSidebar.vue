@@ -13,43 +13,16 @@
     @mouseenter="!isExpanded && (isHovered = true)"
     @mouseleave="isHovered = false"
   >
-  <div
-  :class="[
-    'py-8 flex transition-[justify-content,padding] duration-300 ease-in-out',
-    isExpanded || isHovered || isMobileOpen
-      ? 'justify-start px-4'
-      : 'justify-center',
-  ]"
->
-  <Link
-    href="/"
-    :class="!isExpanded && !isHovered ? 'mx-auto' : ''"
-  >
-    <img
-      v-if="isExpanded || isHovered || isMobileOpen"
-      class="dark:hidden"
-      src="/storage/aenhance.svg"
-      alt="Logo"
-      width="80"
-      height="60"
-    />
-    <img
-      v-if="isExpanded || isHovered || isMobileOpen"
-      class="hidden dark:block"
-      src="/storage/aenhance.svg"
-      alt="Logo"
-      width="150"
-      height="40"
-    />
-    <img
-      v-else
-      src="/storage/aenhance.svg"
-      alt="Logo"
-      width="50"
-      height="50"
-    />
-  </Link>
-</div>
+  <div class="py-8 flex justify-center items-center transition-[justify-content,padding] duration-300 ease-in-out">
+    <Link href="/">
+      <img
+        src="/storage/aenhance.svg"
+        alt="Logo"
+        class="block"
+        style="width: 120px; height: 90px; object-fit: contain;"
+      />
+    </Link>
+  </div>
 
     <div
       class="flex flex-col overflow-y-auto duration-300 ease-linear no-scrollbar"
