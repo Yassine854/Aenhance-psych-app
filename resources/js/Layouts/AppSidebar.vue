@@ -231,16 +231,25 @@ const menuGroups = [
         subItems: [{ name: "Ecommerce", path: "/", pro: false }],
         // visible to all
       },
+      // Admin: direct links for psychologists (use same style as other items)
       {
         name: "Psychologists",
         icon: ListIcon,
-        roles: ['ADMIN'], // only admins should see this
-        subItems: [
-          { name: "Licensed Psychologists", path: "/form-elements", pro: false },
-          { name: "All Psychologists", path: "/form-elements", pro: false },
-          { name: "Subscriptions", path: "/form-elements", pro: false },
-          { name: "Payments", path: "/form-elements", pro: false },
-        ],
+        roles: ['ADMIN'],
+        path: "/psychologist-profiles",
+      },
+      {
+        name: "Add Psychologist",
+        icon: ListIcon,
+        roles: ['ADMIN'],
+        path: "/psychologist-profiles/create",
+      },
+      // Psychologist: self profile entry
+      {
+        name: "My Profile",
+        icon: UserCircleIcon,
+        roles: ['PSYCHOLOGIST'],
+        path: "/psychologist/profile",
       },
       {
         name: "Patients",

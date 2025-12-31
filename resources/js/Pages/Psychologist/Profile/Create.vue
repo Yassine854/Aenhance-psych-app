@@ -100,7 +100,7 @@
       </div>
 
       <!-- Right-side image upload panel (visually outside main form but belongs to it) -->
-      <aside class="md:w-1/4 w-full flex-shrink-0 relative z-0 mt-16 lg:mt-0">
+      <aside class="md:w-1/4 w-full flex-shrink-0 mt-16 lg:mt-0">
         <div class="bg-white p-4 rounded-lg shadow flex flex-col items-center gap-4">
           <div @click.prevent="triggerProfileInput" class="group relative w-32 h-32 bg-gray-100 rounded-full overflow-hidden flex items-center justify-center cursor-pointer hover:ring-2 hover:ring-indigo-300 transition" title="Click to change profile photo">
             <img v-if="profilePreview" :src="profilePreview" class="w-full h-full object-cover" />

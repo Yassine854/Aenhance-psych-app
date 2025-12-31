@@ -5,7 +5,7 @@
       @click.prevent="toggleDropdown"
     >
       <span class="mr-3 overflow-hidden rounded-full h-11 w-11">
-        <img :src="user.role === 'ADMIN' ? '/storage/aenhance.svg' : '/images/user/owner.jpg'" :alt="user.name" />
+        <img :src="avatarSrc" :alt="user.name" />
       </span>
 
       <span class="block mr-1 font-medium text-theme-sm">{{ user.name }}</span>
@@ -65,7 +65,26 @@ import { ref, onMounted, onUnmounted, computed } from 'vue'
 const dropdownOpen = ref(false)
 const dropdownRef = ref(null)
 const page = usePage()
-const user = computed(() => page.props?.value?.auth?.user ?? page.props.auth.user) 
+const user = computed(() => page.props?.value?.auth?.user ?? page.props.auth.user)
+
+// Try multiple prop paths to find a psychologist's profile image URL.
+// Fallbacks ensure we don't break for other roles or missing data.
+const profileImageUrl = computed(() => {
+  const p = page.props?.value ?? page.props
+  return (
+    // Common patterns for passing profile data via Inertia props
+    p?.psychologist?.profile?.profile_image_url ||
+    p?.profile?.profile_image_url ||
+    user.value?.profile_image_url ||
+    null
+  )
+})
+
+const avatarSrc = computed(() => {
+  if (user.value?.role === 'ADMIN') return '/storage/aenhance.svg'
+  if (user.value?.role === 'PSYCHOLOGIST' && profileImageUrl.value) return profileImageUrl.value
+  return '/images/user/owner.jpg'
+})
 
 const menuItems = computed(() => {
   if (user.value?.role === 'PSYCHOLOGIST') {

@@ -29,11 +29,29 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        $user = $request->user();
+
+        // Derive a globally available avatar URL for psychologists
+        $profileImageUrl = null;
+        if ($user && method_exists($user, 'isPsychologist') && $user->isPsychologist()) {
+            $profileImageUrl = optional($user->psychologistProfile)->profile_image_url;
+        }
+
         return [
             ...parent::share($request),
             'auth' => [
-                'user' => $request->user(),
+                'user' => $user ? [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'role' => $user->role,
+                    'profile_image_url' => $profileImageUrl,
+                ] : null,
             ],
+            // Also expose a simple profile object for flexible front-end usage
+            'profile' => $profileImageUrl ? [
+                'profile_image_url' => $profileImageUrl,
+            ] : null,
         ];
     }
 }

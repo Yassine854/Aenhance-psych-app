@@ -123,7 +123,9 @@ class PsychologistProfileController extends Controller
                         'public_id' => pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME),
                     ]
                 );
-                $data['diploma'] = $uploaded->getSecurePath();
+                // Fix URL to use /raw/upload/ for proper PDF viewing
+                $url = $uploaded->getSecurePath();
+                $data['diploma'] = str_replace('/image/upload/', '/raw/upload/', $url);
                 $usedCloudinary = true;
             } catch (\Throwable $e) {
                 Log::warning('Cloudinary diploma_file upload failed: '.$e->getMessage());
@@ -147,7 +149,9 @@ class PsychologistProfileController extends Controller
                         'public_id' => pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME),
                     ]
                 );
-                $data['cin'] = $uploaded->getSecurePath();
+                // Fix URL to use /raw/upload/ for proper PDF viewing
+                $url = $uploaded->getSecurePath();
+                $data['cin'] = str_replace('/image/upload/', '/raw/upload/', $url);
                 $usedCloudinary = true;
             } catch (\Throwable $e) {
                 Log::warning('Cloudinary cin_file upload failed: '.$e->getMessage());
@@ -224,7 +228,9 @@ class PsychologistProfileController extends Controller
                         'format' => $extension,
                     ]
                 );
-                $data['diploma'] = $uploaded->getSecurePath();
+                // Fix URL to use /raw/upload/ for proper PDF viewing
+                $url = $uploaded->getSecurePath();
+                $data['diploma'] = str_replace('/image/upload/', '/raw/upload/', $url);
                 $usedCloudinary = true;
             } catch (\Throwable $e) {
                 Log::warning('Cloudinary diploma_file upload failed: '.$e->getMessage());
@@ -251,7 +257,9 @@ class PsychologistProfileController extends Controller
                         'format' => $extension,
                     ]
                 );
-                $data['cin'] = $uploaded->getSecurePath();
+                // Fix URL to use /raw/upload/ for proper PDF viewing
+                $url = $uploaded->getSecurePath();
+                $data['cin'] = str_replace('/image/upload/', '/raw/upload/', $url);
                 $usedCloudinary = true;
             } catch (\Throwable $e) {
                 Log::warning('Cloudinary cin_file upload failed: '.$e->getMessage());
