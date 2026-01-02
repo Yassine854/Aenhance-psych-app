@@ -442,7 +442,6 @@ async function submitProfile() {
 
     const headers = {
       'X-Requested-With': 'XMLHttpRequest',
-      'X-Inertia': 'true',
       'Accept': 'application/json',
     }
     
@@ -458,14 +457,6 @@ async function submitProfile() {
       body: fd,
       credentials: 'same-origin',
     })
-
-    if (res.status === 409) {
-      const location = res.headers.get('x-inertia-location')
-      if (location) {
-        window.location.href = location
-        return
-      }
-    }
 
     if (!res.ok) {
       const fallback = 'Failed to save profile'
@@ -504,8 +495,9 @@ async function submitProfile() {
       return
     }
 
-    emit('saved')
-    Inertia.reload({ only: ['profiles'], preserveScroll: true })
+    let updated = null
+    try { updated = await res.json() } catch {}
+    emit('saved', { type: 'profile', profile: updated?.profile || null })
   } catch (e) {
     generalError.value = e?.message || 'Error saving profile'
   } finally {
@@ -551,9 +543,15 @@ async function submitAccount() {
       accountError.value = msg
       return
     }
-    
-    emit('saved')
-    Inertia.reload({ only: ['profiles'], preserveScroll: true })
+
+    emit('saved', {
+      type: 'account',
+      user: {
+        id: props.psychologist.user.id,
+        name: payload.name,
+        email: payload.email,
+      },
+    })
   } finally {
     accountSaving.value = false
   }
@@ -581,8 +579,13 @@ async function toggleActivation() {
       credentials: 'same-origin',
     })
 
-    emit('saved')
-    Inertia.reload({ only: ['profiles'], preserveScroll: true })
+    emit('saved', {
+      type: 'account',
+      user: {
+        id: props.psychologist.user.id,
+        is_active: !props.psychologist.user.is_active,
+      },
+    })
   } catch {}
 }
 </script>

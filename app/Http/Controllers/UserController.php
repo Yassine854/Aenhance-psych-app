@@ -69,4 +69,11 @@ class UserController extends Controller
         $user->update(['is_active' => 1]);
         return response()->json(['message' => 'User activated', 'is_active' => 1]);
     }
+
+    // Delete user (Admin)
+    public function destroy(User $user)
+    {
+        $user->delete();
+        return response()->json(['message' => 'User deleted']);
+    }
 }

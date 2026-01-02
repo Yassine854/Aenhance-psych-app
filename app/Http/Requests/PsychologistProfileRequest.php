@@ -38,10 +38,10 @@ class PsychologistProfileRequest extends FormRequest
             'is_approved' => ['nullable', 'boolean'],
             'profile_image_url' => ['nullable', 'string', 'max:1024'],
 
-            // File uploads (optional on update)
+            // File uploads (required on create, optional on update)
             'profile_image' => ['nullable', 'image', 'max:2048'],
-            'diploma_file' => ['nullable', 'mimes:pdf', 'max:5120'],
-            'cin_file' => ['nullable', 'mimes:pdf', 'max:5120'],
+            'diploma_file' => [$isCreate ? 'required' : 'nullable', 'mimes:pdf', 'max:5120'],
+            'cin_file' => [$isCreate ? 'required' : 'nullable', 'mimes:pdf', 'max:5120'],
         ];
     }
 }

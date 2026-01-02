@@ -11,9 +11,24 @@ use Inertia\Response;
 use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
+use Illuminate\Database\QueryException;
+use Symfony\Component\HttpFoundation\Response as HttpResponse;
 
 class PsychologistProfileController extends Controller
 {
+    public function approve(Request $request, PsychologistProfile $psychologistProfile): HttpResponse
+    {
+        $psychologistProfile->is_approved = true;
+        $psychologistProfile->save();
+
+        if ($request->expectsJson()) {
+            return response()->noContent();
+        }
+
+        return redirect()->back();
+    }
+
     public function index(Request $request)
     {
         // Load psychologist profiles with their users efficiently
@@ -47,15 +62,61 @@ class PsychologistProfileController extends Controller
         return Inertia::render('Admin/Psychologist/Create');
     }
 
-    public function store(PsychologistProfileRequest $request): RedirectResponse
+    public function store(PsychologistProfileRequest $request): HttpResponse
     {
+        Log::info('Store method called', [
+            'has_new_user_name' => $request->has('new_user_name'),
+            'has_diploma_file' => $request->hasFile('diploma_file'),
+            'has_cin_file' => $request->hasFile('cin_file'),
+        ]);
+        
         $data = $request->validated();
-        if (empty($data['user_id'])) {
-            $data['user_id'] = $request->user()->id;
+        
+        Log::info('Data after validation', ['data_keys' => array_keys($data)]);
+        
+        // Check if we need to create a user first (from admin create form)
+        $userToCreate = null;
+        if ($request->has('new_user_name') && $request->has('new_user_email') && $request->has('new_user_password')) {
+            $userToCreate = [
+                'name' => $request->input('new_user_name'),
+                'email' => $request->input('new_user_email'),
+                'password' => $request->input('new_user_password'),
+                'role' => 'PSYCHOLOGIST',
+            ];
+            Log::info('User creation data prepared', ['email' => $userToCreate['email']]);
         }
+        
+        // Start a database transaction so both user and profile are created together or not at all
+        \DB::beginTransaction();
+        
+        try {
+            // Create user first if needed
+            if ($userToCreate) {
+                $validated = validator($userToCreate, [
+                    'name' => 'required',
+                    'email' => 'required|email|unique:users',
+                    'password' => 'required|min:6',
+                    'role' => 'required|in:ADMIN,PSYCHOLOGIST,PATIENT',
+                ])->validate();
+                
+                $user = \App\Models\User::create([
+                    'name' => $validated['name'],
+                    'email' => $validated['email'],
+                    'password' => \Hash::make($validated['password']),
+                    'role' => $validated['role'],
+                ]);
+                
+                Log::info('User created successfully', ['user_id' => $user->id]);
+                
+                $data['user_id'] = $user->id;
+            } elseif (empty($data['user_id'])) {
+                $data['user_id'] = $request->user()->id;
+            }
+            
+            Log::info('user_id set in data', ['user_id' => $data['user_id'] ?? 'NOT SET']);
 
-        // Optional uploads (match update/storeSelf behavior)
-        if ($request->hasFile('profile_image')) {
+            // Optional uploads (match update/storeSelf behavior)
+            if ($request->hasFile('profile_image')) {
             try {
                 $uploaded = Cloudinary::upload($request->file('profile_image')->getRealPath(), [
                     'folder' => 'psychologist_profiles',
@@ -89,11 +150,15 @@ class PsychologistProfileController extends Controller
                 );
                 $url = $uploaded->getSecurePath();
                 $data['diploma'] = str_replace('/image/upload/', '/raw/upload/', $url);
+                Log::info('Diploma uploaded to Cloudinary', ['url' => $data['diploma']]);
             } catch (\Throwable $e) {
                 Log::warning('Cloudinary diploma_file upload failed: '.$e->getMessage());
                 $path = $file->store('psychologist_profiles/diplomas', 'public');
                 $data['diploma'] = Storage::url($path);
+                Log::info('Diploma stored locally', ['path' => $data['diploma']]);
             }
+        } else {
+            Log::error('No diploma_file in request!');
         }
 
         if ($request->hasFile('cin_file')) {
@@ -113,20 +178,101 @@ class PsychologistProfileController extends Controller
                 );
                 $url = $uploaded->getSecurePath();
                 $data['cin'] = str_replace('/image/upload/', '/raw/upload/', $url);
+                Log::info('CIN uploaded to Cloudinary', ['url' => $data['cin']]);
             } catch (\Throwable $e) {
                 Log::warning('Cloudinary cin_file upload failed: '.$e->getMessage());
                 $path = $file->store('psychologist_profiles/cins', 'public');
                 $data['cin'] = Storage::url($path);
+                Log::info('CIN stored locally', ['path' => $data['cin']]);
             }
+        } else {
+            Log::error('No cin_file in request!');
         }
 
         unset($data['profile_image'], $data['diploma_file'], $data['cin_file']);
 
-        $profile = PsychologistProfile::create($data);
+        Log::info('About to create profile', [
+            'user_id' => $data['user_id'] ?? 'MISSING',
+            'has_diploma' => isset($data['diploma']),
+            'has_cin' => isset($data['cin']),
+            'diploma_value' => $data['diploma'] ?? 'NOT SET',
+            'cin_value' => $data['cin'] ?? 'NOT SET',
+        ]);
 
-        // After creating via admin, go back to the list instead of opening Edit
+        $profile = PsychologistProfile::create($data);
+        
+        Log::info('Profile created successfully', ['profile_id' => $profile->id]);
+        
+        // Commit the transaction - both user and profile created successfully
+        \DB::commit();
+
+        // If this was an XHR/JSON request (our admin modal uses fetch), return JSON (no redirects).
+        if ($request->expectsJson()) {
+            return response()->json([
+                'profile' => $profile->fresh()->load('user'),
+            ], 201);
+        }
+
+        // After creating via admin (non-XHR), go back to the list instead of opening Edit
         return redirect()->route('psychologist-profiles.index');
+    } catch (ValidationException $e) {
+        \DB::rollBack();
+
+        if ($request->expectsJson()) {
+            return response()->json(['errors' => $e->errors()], 422);
+        }
+
+        return back()->withErrors($e->errors())->withInput();
+    } catch (QueryException $e) {
+        \DB::rollBack();
+
+        Log::error('Database error creating psychologist', [
+            'error' => $e->getMessage(),
+            'code' => $e->getCode(),
+        ]);
+
+        // Duplicate entry / unique constraint.
+        if ($e->getCode() == 23000 || str_contains($e->getMessage(), 'Duplicate entry')) {
+            $errors = [];
+
+            // Most likely: duplicate email
+            if (str_contains($e->getMessage(), 'users_email_unique') || str_contains($e->getMessage(), 'email')) {
+                $errors['new_user_email'] = ['This email is already registered'];
+            } else {
+                $errors['general'] = ['This record already exists'];
+            }
+
+            if ($request->expectsJson()) {
+                return response()->json(['errors' => $errors], 422);
+            }
+
+            return back()->withErrors($errors)->withInput();
+        }
+
+        $fallbackErrors = ['general' => ['Database error: Unable to create psychologist']];
+        if ($request->expectsJson()) {
+            return response()->json(['errors' => $fallbackErrors], 500);
+        }
+
+        return back()->withErrors($fallbackErrors)->withInput();
+    } catch (\Throwable $e) {
+        // Rollback the transaction - nothing is created
+        \DB::rollBack();
+        
+        Log::error('Error creating psychologist', [
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ]);
+        
+        $message = 'An error occurred while creating psychologist';
+
+        if ($request->expectsJson()) {
+            return response()->json(['message' => $message], 500);
+        }
+
+        return back()->withErrors(['general' => $message])->withInput();
     }
+}
 
     // Self-profile edit for logged-in psychologist
     public function editSelf(Request $request)
@@ -479,6 +625,12 @@ class PsychologistProfileController extends Controller
 
         $psychologistProfile->update($data);
 
+        if ($request->expectsJson()) {
+            return response()->json([
+                'profile' => $psychologistProfile->fresh()->load('user'),
+            ]);
+        }
+
         // For admin modal edits (Inertia XHR), return 204 to avoid navigating to Edit page
         if ($request->header('X-Inertia')) {
             return response()->noContent();
@@ -505,6 +657,10 @@ class PsychologistProfileController extends Controller
     public function destroy(PsychologistProfile $psychologistProfile): RedirectResponse
     {
         $psychologistProfile->delete();
+
+        if (request()->expectsJson()) {
+            return response()->noContent();
+        }
 
         return redirect()->route('psychologist-profiles.index');
     }
