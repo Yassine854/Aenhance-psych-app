@@ -19,12 +19,12 @@ return new class extends Migration
             $table->string('diploma'); // license ,master
             $table->string('cin'); //Proof
             $table->string('gender')->nullable();
-            $table->string('country')->nullable();
-            $table->string('city')->nullable();
+            $table->string('country');
+            $table->string('city');
             $table->string('phone');
             $table->string('country_code', 10)->nullable();
             $table->string('address')->nullable();
-            $table->date('date_of_birth')->nullable();
+            $table->date('date_of_birth');
             $table->text('bio')->nullable();
             $table->decimal('price_per_session', 8, 2);
             $table->boolean('is_approved')->default(false);

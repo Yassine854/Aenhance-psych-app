@@ -39,12 +39,18 @@
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <InputLabel value="Country" />
-              <TextInput class="mt-1 block w-full" v-model="form.country" />
+              <select v-model="countryCode" class="mt-1 block w-full rounded-md border-gray-300">
+                <option value="">Select country</option>
+                <option v-for="c in countriesList" :key="c.isoCode" :value="c.isoCode">{{ c.name }}</option>
+              </select>
               <InputError class="mt-2" :message="form.errors.country" />
             </div>
             <div>
               <InputLabel value="City" />
-              <TextInput class="mt-1 block w-full" v-model="form.city" />
+              <select v-model="form.city" class="mt-1 block w-full rounded-md border-gray-300" :disabled="!form.country">
+                <option value="">{{ form.country ? 'Select city' : 'Select country first' }}</option>
+                <option v-for="ct in cities" :key="ct" :value="ct">{{ ct }}</option>
+              </select>
               <InputError class="mt-2" :message="form.errors.city" />
             </div>
           </div>
@@ -53,6 +59,25 @@
             <InputLabel value="Address" />
             <TextInput class="mt-1 block w-full" v-model="form.address" />
             <InputError class="mt-2" :message="form.errors.address" />
+          </div>
+
+          <div>
+            <InputLabel value="Phone" />
+            <div class="mt-1 flex">
+              <input
+                v-model="dialCode"
+                readonly
+                class="w-24 rounded-l-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-700"
+                placeholder="+___"
+              />
+              <input
+                v-model="nationalNumber"
+                inputmode="tel"
+                class="block w-full rounded-r-md border border-l-0 border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500"
+                placeholder="Enter phone number"
+              />
+            </div>
+            <InputError class="mt-2" :message="form.errors.phone" />
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -130,11 +155,12 @@
 <script setup>
 import { useForm } from '@inertiajs/vue3'
 import { Link, usePage } from '@inertiajs/vue3'
-import { ref } from 'vue'
+import { ref, computed, watch, nextTick } from 'vue'
 import InputLabel from '@/Components/InputLabel.vue'
 import TextInput from '@/Components/TextInput.vue'
 import InputError from '@/Components/InputError.vue'
 import PrimaryButton from '@/Components/PrimaryButton.vue'
+import { getCountries, getCitiesByCountryName, splitInternationalPhoneNumber } from '@/utils/geoData'
 
 const props = defineProps({ profile: Object })
 
@@ -164,11 +190,50 @@ const form = useForm({
   country: props.profile?.country || '',
   city: props.profile?.city || '',
   address: props.profile?.address || '',
+  phone: props.profile?.phone || '',
+  country_code: props.profile?.country_code || '',
 })
 
 const files = ref({ profile_image: null, diploma_file: null, cin_file: null })
 const profilePreview = ref(form.profile_image_url)
 const profileInput = ref(null)
+
+// Country/City/Phone helpers
+const countriesList = ref(getCountries())
+const countryCode = ref('')
+const dialCode = ref('')
+const nationalNumber = ref('')
+
+const dialCodes = computed(() => countriesList.value.map(c => c.dialCode).filter(Boolean))
+
+const cities = computed(() => {
+  if (!form.country) return []
+  return getCitiesByCountryName(form.country).map(c => c.name)
+})
+
+function syncPhoneToForm() {
+  form.country_code = dialCode.value || ''
+  form.phone = `${dialCode.value || ''}${nationalNumber.value || ''}`
+}
+
+// Initialize country/city/phone from existing profile
+const found = countriesList.value.find(c => c.name === (props.profile?.country || ''))
+countryCode.value = found?.isoCode || ''
+
+const parsed = splitInternationalPhoneNumber(props.profile?.phone || '', dialCodes.value)
+dialCode.value = parsed.dialCode || (found?.dialCode || '')
+nationalNumber.value = parsed.nationalNumber || ''
+syncPhoneToForm()
+
+watch(countryCode, (code) => {
+  const c = countriesList.value.find(x => x.isoCode === code)
+  form.country = c?.name || ''
+  form.city = ''
+  dialCode.value = c?.dialCode || ''
+  syncPhoneToForm()
+})
+
+watch([dialCode, nationalNumber], () => syncPhoneToForm())
 
 function onFileChange(field, event) {
   const file = event.target.files[0]
@@ -180,6 +245,7 @@ function onFileChange(field, event) {
 }
 
 function submit() {
+  syncPhoneToForm()
   form.post(route('psychologist.profile.update'), { forceFormData: true })
 }
 
