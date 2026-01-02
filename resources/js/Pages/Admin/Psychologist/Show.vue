@@ -53,6 +53,36 @@ import AdminLayout from '@/Layouts/AdminLayout.vue'
 
 const props = defineProps({ profile: Object })
 
+const InfoRow = {
+  props: {
+    label: { type: String, required: true },
+    value: { default: null },
+  },
+  template: `
+    <div>
+      <div class="text-xs text-gray-500">{{ label }}</div>
+      <div class="text-sm text-gray-900">{{ value ?? '-' }}</div>
+    </div>
+  `,
+}
+
+const AttachmentCard = {
+  props: {
+    title: { type: String, required: true },
+    href: { type: String, required: true },
+  },
+  template: `
+    <a
+      :href="href"
+      target="_blank"
+      class="block p-4 rounded-lg border border-gray-200 hover:border-indigo-300 hover:shadow transition"
+    >
+      <div class="font-medium text-gray-900 mb-1">{{ title }}</div>
+      <div class="text-sm text-indigo-600">Open</div>
+    </a>
+  `,
+}
+
 function formatCurrency(value) {
   if (value == null) return '-'
   const n = Number(value)
@@ -70,15 +100,4 @@ export default {
   layout: AdminLayout,
   name: 'Admin/Psychologist/Show'
 }
-</script>
-
-<!-- Small components -->
-<script setup>
-const InfoRow = ({ label, value }) => ({
-  template: `<div><div class='text-xs text-gray-500'>${label}</div><div class='text-sm text-gray-900'>${value ?? '-'}</div></div>`
-})
-
-const AttachmentCard = ({ title, href }) => ({
-  template: `<a href='${href}' target='_blank' class='block p-4 rounded-lg border border-gray-200 hover:border-indigo-300 hover:shadow transition'><div class='font-medium text-gray-900 mb-1'>${title}</div><div class='text-sm text-indigo-600'>Open</div></a>`
-})
 </script>

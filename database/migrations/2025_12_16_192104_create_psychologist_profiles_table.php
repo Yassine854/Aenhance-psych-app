@@ -21,6 +21,8 @@ return new class extends Migration
             $table->string('gender')->nullable();
             $table->string('country')->nullable();
             $table->string('city')->nullable();
+            $table->string('phone');
+            $table->string('country_code', 10)->nullable();
             $table->string('address')->nullable();
             $table->date('date_of_birth')->nullable();
             $table->text('bio')->nullable();

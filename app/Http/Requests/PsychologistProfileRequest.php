@@ -13,14 +13,19 @@ class PsychologistProfileRequest extends FormRequest
 
     public function rules(): array
     {
-        // For create (POST) we require key fields; for update we make them nullable
-        $isCreate = $this->isMethod('post');
+        // For create we require key fields; for update we make them nullable.
+        // Be robust to method spoofing when the client sends POST with _method=PUT/PATCH.
+        $spoofed = strtoupper((string) $this->input('_method', ''));
+        $effectiveMethod = $spoofed !== '' ? $spoofed : strtoupper($this->method());
+        $isCreate = $effectiveMethod === 'POST';
 
         return [
             'user_id' => ['nullable', 'exists:users,id'],
             'first_name' => [$isCreate ? 'required' : 'nullable', 'string', 'max:255'],
             'last_name' => [$isCreate ? 'required' : 'nullable', 'string', 'max:255'],
             'specialization' => [$isCreate ? 'required' : 'nullable', 'string', 'max:255'],
+            'phone' => [$isCreate ? 'required' : 'nullable', 'string', 'max:50'],
+            'country_code' => ['nullable', 'string', 'max:10'],
             'diploma' => ['nullable', 'string', 'max:1024'],
             'cin' => ['nullable', 'string', 'max:1024'],
             'gender' => ['nullable', 'string', 'max:50'],

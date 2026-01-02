@@ -14,6 +14,8 @@ class PsychologistProfile extends Model
         'first_name',
         'last_name',
         'specialization',
+        'phone',
+        'country_code',
         'diploma',
         'cin',
         'gender',
