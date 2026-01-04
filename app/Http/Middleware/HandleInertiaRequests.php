@@ -31,10 +31,14 @@ class HandleInertiaRequests extends Middleware
     {
         $user = $request->user();
 
-        // Derive a globally available avatar URL for psychologists
+        // Derive a globally available avatar URL
         $profileImageUrl = null;
-        if ($user && method_exists($user, 'isPsychologist') && $user->isPsychologist()) {
-            $profileImageUrl = optional($user->psychologistProfile)->profile_image_url;
+        if ($user) {
+            if (method_exists($user, 'isPsychologist') && $user->isPsychologist()) {
+                $profileImageUrl = optional($user->psychologistProfile)->profile_image_url;
+            } elseif (method_exists($user, 'isPatient') && $user->isPatient()) {
+                $profileImageUrl = optional($user->patientProfile)->profile_image_url;
+            }
         }
 
         return [

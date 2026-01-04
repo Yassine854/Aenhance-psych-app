@@ -1,6 +1,5 @@
 <script setup>
 import Checkbox from '@/Components/Checkbox.vue';
-import GuestLayout from '@/Layouts/GuestLayout.vue';
 import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
@@ -30,65 +29,94 @@ const submit = () => {
 </script>
 
 <template>
-    <GuestLayout>
-        <Head title="Log in" />
+    <Head title="Log in" />
 
-        <div v-if="status" class="mb-4 font-medium text-sm text-green-600">
-            {{ status }}
-        </div>
-
-        <form @submit.prevent="submit">
-            <div>
-                <InputLabel for="email" value="Email" />
-
-                <TextInput
-                    id="email"
-                    type="email"
-                    class="mt-1 block w-full"
-                    v-model="form.email"
-                    required
-                    autofocus
-                    autocomplete="username"
-                />
-
-                <InputError class="mt-2" :message="form.errors.email" />
-            </div>
-
-            <div class="mt-4">
-                <InputLabel for="password" value="Password" />
-
-                <TextInput
-                    id="password"
-                    type="password"
-                    class="mt-1 block w-full"
-                    v-model="form.password"
-                    required
-                    autocomplete="current-password"
-                />
-
-                <InputError class="mt-2" :message="form.errors.password" />
-            </div>
-
-            <div class="block mt-4">
-                <label class="flex items-center">
-                    <Checkbox name="remember" v-model:checked="form.remember" />
-                    <span class="ms-2 text-sm text-gray-600">Remember me</span>
-                </label>
-            </div>
-
-            <div class="flex items-center justify-end mt-4">
+    <div class="min-h-screen bg-gradient-to-br from-[#af5166] via-[#af5166] to-[#5997ac] flex items-center justify-center px-4 py-10">
+        <div class="w-full max-w-md">
+            <div class="flex items-center justify-center mb-6">
                 <Link
-                    v-if="canResetPassword"
-                    :href="route('password.request')"
-                    class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                    :href="route('home')"
+                    class="inline-flex items-center gap-3 rounded-2xl bg-white/95 px-4 py-3 shadow-xl ring-1 ring-white/40 backdrop-blur hover:bg-white transition"
+                    aria-label="Go to home"
+                    title="Home"
                 >
-                    Forgot your password?
+                    <img src="/storage/aenhance.svg" alt="AEfhance" class="h-14 sm:h-16 w-auto object-contain" />
                 </Link>
-
-                <PrimaryButton class="ms-4" :class="{ 'opacity-25': form.processing }" :disabled="form.processing">
-                    Log in
-                </PrimaryButton>
             </div>
-        </form>
-    </GuestLayout>
+
+            <div class="bg-white/95 backdrop-blur rounded-2xl shadow-2xl border border-white/30 overflow-hidden">
+                <div class="px-6 py-6">
+                    <h1 class="text-2xl font-semibold text-gray-900">Welcome back</h1>
+                    <p class="mt-1 text-sm text-gray-600">Log in to continue.</p>
+
+                    <div v-if="status" class="mt-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+                        {{ status }}
+                    </div>
+
+                    <form @submit.prevent="submit" class="mt-6 space-y-4">
+                        <div>
+                            <InputLabel for="email" value="Email" />
+                            <TextInput
+                                id="email"
+                                type="email"
+                                class="mt-1 block w-full"
+                                v-model="form.email"
+                                required
+                                autofocus
+                                autocomplete="username"
+                            />
+                            <InputError class="mt-2" :message="form.errors.email" />
+                        </div>
+
+                        <div>
+                            <InputLabel for="password" value="Password" />
+                            <TextInput
+                                id="password"
+                                type="password"
+                                class="mt-1 block w-full"
+                                v-model="form.password"
+                                required
+                                autocomplete="current-password"
+                            />
+                            <InputError class="mt-2" :message="form.errors.password" />
+                        </div>
+
+                        <div class="flex items-center justify-between pt-1">
+                            <label class="flex items-center">
+                                <Checkbox name="remember" v-model:checked="form.remember" />
+                                <span class="ms-2 text-sm text-gray-600">Remember me</span>
+                            </label>
+
+                            <Link
+                                v-if="canResetPassword"
+                                :href="route('password.request')"
+                                class="text-sm text-[#5997ac] hover:underline"
+                            >
+                                Forgot?
+                            </Link>
+                        </div>
+
+                        <div class="pt-2">
+                            <PrimaryButton
+                                class="w-full justify-center"
+                                :class="{ 'opacity-25': form.processing }"
+                                :disabled="form.processing"
+                            >
+                                Log in
+                            </PrimaryButton>
+                        </div>
+
+                        <div class="pt-2 text-center text-sm text-gray-600">
+                            <span>New here?</span>
+                            <Link :href="route('register')" class="text-[#af5166] font-medium hover:underline">Create an account</Link>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="px-6 py-4 bg-gradient-to-r from-[#af5166]/10 to-[#5997ac]/10 border-t border-gray-100">
+                    <div class="text-xs text-gray-600">By continuing, you agree to our Terms & Privacy Policy.</div>
+                </div>
+            </div>
+        </div>
+    </div>
 </template>

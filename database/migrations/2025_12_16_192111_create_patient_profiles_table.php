@@ -13,11 +13,15 @@ return new class extends Migration
             $table->foreignId('user_id')
                   ->constrained()
                   ->cascadeOnDelete();
-            $table->string('full_name');
+            $table->string('first_name');
+            $table->string('last_name');
+            $table->date('date_of_birth');
+            $table->string('gender')->nullable();
+            $table->string('country')->nullable();
+            $table->string('city')->nullable();
             $table->string('phone')->nullable();
-            $table->date('date_of_birth')->nullable();
+            $table->string('country_code', 10)->nullable();
             $table->string('profile_image_url')->nullable();
-            $table->text('mental_health_goals')->nullable();
             $table->timestamps();
         });
     }

@@ -32,9 +32,12 @@ class PsychologistProfileController extends Controller
     public function index(Request $request)
     {
         // Load psychologist profiles with their users efficiently
-        $profiles = PsychologistProfile::with(['user' => function ($query) {
+        $profiles = PsychologistProfile::with([
+            'user' => function ($query) {
             $query->where('role', 'PSYCHOLOGIST');
-        }])->whereHas('user', function ($query) {
+            },
+            'availabilities',
+        ])->whereHas('user', function ($query) {
             $query->where('role', 'PSYCHOLOGIST');
         })->paginate(15);
 
@@ -54,7 +57,7 @@ class PsychologistProfileController extends Controller
             abort(404);
         }
 
-        return response()->json(PsychologistProfile::with('user')->get());
+        return response()->json(PsychologistProfile::with(['user', 'availabilities'])->get());
     }
 
     public function create(): Response
@@ -71,6 +74,12 @@ class PsychologistProfileController extends Controller
         ]);
         
         $data = $request->validated();
+
+        $availabilities = [];
+        if (isset($data['availabilities']) && is_array($data['availabilities'])) {
+            $availabilities = $data['availabilities'];
+        }
+        unset($data['availabilities']);
         
         Log::info('Data after validation', ['data_keys' => array_keys($data)]);
         
@@ -200,6 +209,11 @@ class PsychologistProfileController extends Controller
         ]);
 
         $profile = PsychologistProfile::create($data);
+
+        if (! empty($availabilities)) {
+            // Each slot: day_of_week, start_time, end_time
+            $profile->availabilities()->createMany($availabilities);
+        }
         
         Log::info('Profile created successfully', ['profile_id' => $profile->id]);
         
@@ -209,7 +223,7 @@ class PsychologistProfileController extends Controller
         // If this was an XHR/JSON request (our admin modal uses fetch), return JSON (no redirects).
         if ($request->expectsJson()) {
             return response()->json([
-                'profile' => $profile->fresh()->load('user'),
+                'profile' => $profile->fresh()->load(['user', 'availabilities']),
             ], 201);
         }
 
@@ -530,6 +544,14 @@ class PsychologistProfileController extends Controller
         
         // Start with validated scalar fields
         $data = $request->validated();
+
+        // Pull out availability slots (if present) and update them separately.
+        // PsychologistProfile is not fillable for this key.
+        $availabilities = null;
+        if (array_key_exists('availabilities', $data)) {
+            $availabilities = $data['availabilities'];
+            unset($data['availabilities']);
+        }
         
         // DEBUG: Log validated data
         Log::info('Validated data', [
@@ -623,11 +645,27 @@ class PsychologistProfileController extends Controller
 
         Log::info('Admin update profile', ['id' => $psychologistProfile->id, 'usedCloudinary' => $usedCloudinary, 'data' => $data]);
 
-        $psychologistProfile->update($data);
+        \DB::beginTransaction();
+        try {
+            $psychologistProfile->update($data);
+
+            // If the client sent availabilities (including empty array), replace existing.
+            if ($availabilities !== null && is_array($availabilities)) {
+                $psychologistProfile->availabilities()->delete();
+                if (! empty($availabilities)) {
+                    $psychologistProfile->availabilities()->createMany($availabilities);
+                }
+            }
+
+            \DB::commit();
+        } catch (\Throwable $e) {
+            \DB::rollBack();
+            throw $e;
+        }
 
         if ($request->expectsJson()) {
             return response()->json([
-                'profile' => $psychologistProfile->fresh()->load('user'),
+                'profile' => $psychologistProfile->fresh()->load(['user', 'availabilities']),
             ]);
         }
 
@@ -643,14 +681,14 @@ class PsychologistProfileController extends Controller
     public function show(PsychologistProfile $psychologistProfile): Response
     {
         return Inertia::render('Admin/Psychologist/Show', [
-            'profile' => $psychologistProfile->load('user'),
+            'profile' => $psychologistProfile->load(['user', 'availabilities']),
         ]);
     }
 
     public function edit(PsychologistProfile $psychologistProfile): Response
     {
         return Inertia::render('Admin/Psychologist/Edit', [
-            'profile' => $psychologistProfile->load('user'),
+            'profile' => $psychologistProfile->load(['user', 'availabilities']),
         ]);
     }
 

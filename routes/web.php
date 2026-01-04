@@ -5,7 +5,12 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\PsychologistController;
 use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\PsychologistProfileController;
+use App\Http\Controllers\PatientProfileController;
+use App\Http\Controllers\Patient\PatientSelfProfileController;
 use Illuminate\Foundation\Application;
+use Illuminate\Http\Request;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -24,6 +29,7 @@ Route::get('/', function () {
     return Inertia::render('Welcome', [
         'canLogin' => Route::has('login'),
         'canRegister' => Route::has('register'),
+        'authUser' => Auth::user(),
         'laravelVersion' => Application::VERSION,
         'phpVersion' => PHP_VERSION,
     ]);
@@ -91,7 +97,7 @@ Route::get('/dashboard', function () {
             return Inertia::render('Psychologist/Dashboard');
         }
         if ($user->isPatient()) {
-            return Inertia::render('Patient/Dashboard');
+            return redirect()->route('home');
         }
     }
     // Fallback for unexpected cases
@@ -127,6 +133,15 @@ Route::middleware(['auth'])->group(function () {
     Route::match(['put','patch'], '/psychologist-profiles/{psychologist_profile}', [PsychologistProfileController::class, 'update'])->name('psychologist-profiles.update');
     Route::delete('/psychologist-profiles/{psychologist_profile}', [PsychologistProfileController::class, 'destroy'])->name('psychologist-profiles.destroy');
 
+    // Patient profile CRUD (explicit routes)
+    Route::get('/patient-profiles', [PatientProfileController::class, 'index'])->name('patient-profiles.index');
+    Route::get('/patient-profiles/create', [PatientProfileController::class, 'create'])->name('patient-profiles.create');
+    Route::post('/patient-profiles', [PatientProfileController::class, 'store'])->name('patient-profiles.store');
+    Route::get('/patient-profiles/{patient_profile}', [PatientProfileController::class, 'show'])->name('patient-profiles.show');
+    Route::get('/patient-profiles/{patient_profile}/edit', [PatientProfileController::class, 'edit'])->name('patient-profiles.edit');
+    Route::match(['put','patch'], '/patient-profiles/{patient_profile}', [PatientProfileController::class, 'update'])->name('patient-profiles.update');
+    Route::delete('/patient-profiles/{patient_profile}', [PatientProfileController::class, 'destroy'])->name('patient-profiles.destroy');
+
     // Appointment routes (patient + psychologist + admin)
     Route::get('/appointments', [AppointmentController::class, 'index']);
     Route::post('/appointments', [AppointmentController::class, 'store']);
@@ -137,6 +152,26 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/psychologist/profile', [PsychologistProfileController::class, 'editSelf'])->name('psychologist.profile.edit');
     Route::post('/psychologist/profile', [PsychologistProfileController::class, 'storeSelf'])->name('psychologist.profile.store');
     Route::match(['post', 'put', 'patch'], '/psychologist/profile/update', [PsychologistProfileController::class, 'updateSelf'])->name('psychologist.profile.update');
+
+    // Patient account settings (patient-facing page)
+    Route::get('/patient/account', function (Request $request) {
+        $user = $request->user();
+        if (! $user || ! method_exists($user, 'isPatient') || ! $user->isPatient()) {
+            return redirect()->route('dashboard');
+        }
+
+        return Inertia::render('Patient/Account', [
+            'canLogin' => Route::has('login'),
+            'canRegister' => Route::has('register'),
+            'authUser' => $user,
+            'mustVerifyEmail' => $user instanceof MustVerifyEmail,
+            'status' => session('status'),
+        ]);
+    })->name('patient.account');
+
+    // Patient profile (patient-facing page)
+    Route::get('/patient/profile', [PatientSelfProfileController::class, 'edit'])->name('patient.profile');
+    Route::post('/patient/profile', [PatientSelfProfileController::class, 'update'])->name('patient.profile.update');
 
 });
 

@@ -9,8 +9,19 @@ class PatientProfile extends Model
 {
     protected $fillable = [
         'user_id',
-        'age',
-        'mental_health_goals',
+        'first_name',
+        'last_name',
+        'date_of_birth',
+        'gender',
+        'country',
+        'city',
+        'phone',
+        'country_code',
+        'profile_image_url',
+    ];
+
+    protected $casts = [
+        'date_of_birth' => 'date',
     ];
 
     public function user()

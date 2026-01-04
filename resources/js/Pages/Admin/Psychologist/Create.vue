@@ -215,6 +215,75 @@
               <p v-if="form.errors.bio" class="mt-1 text-sm text-red-600">{{ form.errors.bio }}</p>
             </div>
 
+            <!-- AVAILABILITY SECTION -->
+            <div class="border-t border-gray-200 pt-6">
+              <div class="flex items-center justify-between">
+                <h3 class="text-lg font-semibold text-gray-900">Availability <span class="text-red-500">*</span></h3>
+                <div class="text-sm text-gray-500">Weekly slots (day + time)</div>
+              </div>
+
+              <p v-if="availabilityRequiredError" class="mt-2 text-sm text-red-600">
+                {{ availabilityRequiredError }}
+              </p>
+
+              <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div v-for="d in daysOfWeek" :key="d.value" class="rounded-xl border border-gray-200 bg-white p-4">
+                  <div class="flex items-center justify-between">
+                    <div class="font-semibold text-gray-900">{{ d.label }}</div>
+                    <button
+                      type="button"
+                      @click="addSlotForDay(d.value)"
+                      class="px-3 py-1.5 text-sm bg-[rgb(89,151,172)] text-white rounded-lg shadow hover:opacity-90 font-medium"
+                    >
+                      Add slot
+                    </button>
+                  </div>
+
+                  <div v-if="availabilityByDay[d.value].length" class="mt-3 space-y-2">
+                    <div
+                      v-for="(slot, idx) in availabilityByDay[d.value]"
+                      :key="idx"
+                      class="flex items-end gap-2"
+                    >
+                      <div class="flex-1">
+                        <label class="text-xs font-medium text-gray-600">Start</label>
+                        <input
+                          type="time"
+                          v-model="slot.start_time"
+                          @change="onSlotChanged(d.value)"
+                          class="mt-1 block w-full rounded-md border-gray-300 focus:ring-2 focus:ring-[rgb(89,151,172)]"
+                        />
+                      </div>
+                      <div class="flex-1">
+                        <label class="text-xs font-medium text-gray-600">End</label>
+                        <input
+                          type="time"
+                          v-model="slot.end_time"
+                          @change="onSlotChanged(d.value)"
+                          class="mt-1 block w-full rounded-md border-gray-300 focus:ring-2 focus:ring-[rgb(89,151,172)]"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        @click="removeSlotForDay(d.value, idx)"
+                        class="px-3 py-2 text-sm text-red-600 hover:text-red-800"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+
+                  <div v-else class="mt-3 text-sm text-gray-500">
+                    No slots added.
+                  </div>
+
+                  <p v-if="availabilityErrorsByDay[d.value]" class="mt-2 text-sm text-red-600">
+                    {{ availabilityErrorsByDay[d.value] }}
+                  </p>
+                </div>
+              </div>
+            </div>
+
             <!-- Submit buttons -->
             <div class="flex items-center gap-3 pt-4">
               <button :disabled="creating" class="px-5 py-2.5 bg-[rgb(141,61,79)] text-white rounded-lg shadow hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed font-medium">
@@ -275,6 +344,131 @@ const form = useForm({
 const newUser = ref({ name: '', email: '', password: '' })
 const newUserErrors = ref({ name: '', email: '', password: '' })
 
+const daysOfWeek = [
+  { value: 0, label: 'Sunday' },
+  { value: 1, label: 'Monday' },
+  { value: 2, label: 'Tuesday' },
+  { value: 3, label: 'Wednesday' },
+  { value: 4, label: 'Thursday' },
+  { value: 5, label: 'Friday' },
+  { value: 6, label: 'Saturday' },
+]
+
+const emptyWeeklyAvailability = () => ({
+  0: [],
+  1: [],
+  2: [],
+  3: [],
+  4: [],
+  5: [],
+  6: [],
+})
+
+const availabilityByDay = ref(emptyWeeklyAvailability())
+const availabilityErrorsByDay = ref({
+  0: '',
+  1: '',
+  2: '',
+  3: '',
+  4: '',
+  5: '',
+  6: '',
+})
+
+const availabilityRequiredError = ref('')
+
+function clearAvailabilityErrors() {
+  availabilityErrorsByDay.value = { 0: '', 1: '', 2: '', 3: '', 4: '', 5: '', 6: '' }
+  availabilityRequiredError.value = ''
+}
+
+function timeToMinutes(t) {
+  if (!t || typeof t !== 'string') return null
+  const m = t.match(/^(\d{2}):(\d{2})$/)
+  if (!m) return null
+  const hh = Number(m[1])
+  const mm = Number(m[2])
+  if (Number.isNaN(hh) || Number.isNaN(mm)) return null
+  return hh * 60 + mm
+}
+
+function sortSlots(day) {
+  availabilityByDay.value[day].sort((a, b) => {
+    const am = timeToMinutes(a.start_time) ?? 0
+    const bm = timeToMinutes(b.start_time) ?? 0
+    return am - bm
+  })
+}
+
+function validateDaySlots(day) {
+  availabilityErrorsByDay.value[day] = ''
+  const slots = availabilityByDay.value[day]
+  if (!slots.length) return true
+
+  // Basic validation: start/end set, end > start, no overlaps.
+  const normalized = slots
+    .map((s, idx) => ({
+      idx,
+      start: timeToMinutes(s.start_time),
+      end: timeToMinutes(s.end_time),
+    }))
+
+  for (const s of normalized) {
+    if (s.start === null || s.end === null) {
+      availabilityErrorsByDay.value[day] = 'Please set start and end time for all slots.'
+      return false
+    }
+    if (s.end <= s.start) {
+      availabilityErrorsByDay.value[day] = 'End time must be after start time.'
+      return false
+    }
+  }
+
+  const sorted = [...normalized].sort((a, b) => a.start - b.start)
+  for (let i = 1; i < sorted.length; i++) {
+    const prev = sorted[i - 1]
+    const cur = sorted[i]
+    if (cur.start < prev.end) {
+      availabilityErrorsByDay.value[day] = 'Slots overlap. Please adjust times.'
+      return false
+    }
+  }
+
+  return true
+}
+
+function onSlotChanged(day) {
+  availabilityRequiredError.value = ''
+  sortSlots(day)
+  validateDaySlots(day)
+}
+
+function addSlotForDay(day) {
+  availabilityErrorsByDay.value[day] = ''
+  availabilityRequiredError.value = ''
+  availabilityByDay.value[day].push({ start_time: '09:00', end_time: '12:00' })
+  onSlotChanged(day)
+}
+
+function removeSlotForDay(day, index) {
+  availabilityByDay.value[day].splice(index, 1)
+  onSlotChanged(day)
+}
+
+const flattenedAvailabilities = computed(() => {
+  const out = []
+  for (const d of daysOfWeek) {
+    for (const slot of availabilityByDay.value[d.value] || []) {
+      out.push({
+        day_of_week: d.value,
+        start_time: slot.start_time,
+        end_time: slot.end_time,
+      })
+    }
+  }
+  return out
+})
+
 const cities = computed(() => {
   if (!form.country) return []
   return getCitiesByCountryName(form.country).map(c => c.name)
@@ -319,6 +513,8 @@ watch(() => props.show, (isShowing) => {
     dialCode.value = ''
     nationalNumber.value = ''
     generalError.value = null
+    availabilityByDay.value = emptyWeeklyAvailability()
+    clearAvailabilityErrors()
   }
 })
 
@@ -344,7 +540,7 @@ async function ensureCsrfToken() {
   if (m1) return { token: decodeURIComponent(m1[1]), type: 'cookie' }
   
   try {
-    await fetch('/sanctum/csrf-cookie', { method: 'GET', credentials: 'same-origin' })
+    await fetch('/sanctum/csrf-cookie', { method: 'GET', credentials: 'include' })
   } catch {}
   
   const m2 = document.cookie.match(/XSRF-TOKEN=([^;]+)/)
@@ -355,6 +551,7 @@ async function submitCreate() {
   form.clearErrors()
   generalError.value = null
   newUserErrors.value = { name: '', email: '', password: '' }
+  clearAvailabilityErrors()
   
   creating.value = true
   try {
@@ -424,14 +621,39 @@ async function submitCreate() {
       return
     }
 
+    // Availability is required: at least one slot across the week.
+    if (!flattenedAvailabilities.value.length) {
+      availabilityRequiredError.value = 'Please add at least one availability slot.'
+      generalError.value = 'Please add at least one availability slot.'
+      creating.value = false
+      return
+    }
+
+    // Validate availability across days (only validate days that have slots)
+    let availabilityOk = true
+    for (const d of daysOfWeek) {
+      if ((availabilityByDay.value[d.value] || []).length) {
+        if (!validateDaySlots(d.value)) availabilityOk = false
+      }
+    }
+    if (!availabilityOk) {
+      generalError.value = 'Please fix availability slot errors.'
+      creating.value = false
+      return
+    }
+
     // Prepare all data in a single request (user + profile)
     // Backend will create both in a transaction
     const cleanPhone = (form.phone || '').replace(/\D/g, '')
     
     const csrf = await ensureCsrfToken()
     const fd = new FormData()
-    
-    if (csrf.token) fd.append('_token', csrf.token)
+
+    // IMPORTANT:
+    // - Laravel reads `_token` first (expects the *plain* CSRF token)
+    // - `XSRF-TOKEN` cookie is encrypted in this app (see EncryptCookies::$except)
+    // So only include `_token` when we have the meta (plain) token.
+    if (csrf.type === 'meta' && csrf.token) fd.append('_token', csrf.token)
     
     // User account data (will be created by backend)
     fd.append('new_user_name', newUser.value.name)
@@ -458,6 +680,10 @@ async function submitCreate() {
     fd.append('cin_file', form.cin_file)
     if (form.profile_image) fd.append('profile_image', form.profile_image)
 
+    if (flattenedAvailabilities.value.length) {
+      fd.append('availabilities', JSON.stringify(flattenedAvailabilities.value))
+    }
+
     const headers = {
       'X-Requested-With': 'XMLHttpRequest',
       'Accept': 'application/json',
@@ -469,11 +695,12 @@ async function submitCreate() {
       headers['X-XSRF-TOKEN'] = csrf.token
     }
     
-    const res = await fetch(route('psychologist-profiles.store'), {
+    const url = route('psychologist-profiles.store', undefined, false)
+    const res = await fetch(url, {
       method: 'POST',
       headers: headers,
       body: fd,
-      credentials: 'same-origin',
+      credentials: 'include',
     })
 
     if (!res.ok) {

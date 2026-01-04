@@ -238,12 +238,6 @@ const menuGroups = [
         roles: ['ADMIN'],
         path: "/psychologist-profiles",
       },
-      {
-        name: "Add Psychologist",
-        icon: ListIcon,
-        roles: ['ADMIN'],
-        path: "/psychologist-profiles/create",
-      },
       // Psychologist: self profile entry
       {
         name: "My Profile",
@@ -254,10 +248,10 @@ const menuGroups = [
       {
         name: "Patients",
         icon: ListIcon,
-        roles: ['ADMIN', 'PSYCHOLOGIST'], // admins and psychologists
+        roles: ['ADMIN', 'PSYCHOLOGIST'], 
         subItems: [
           { name: "Patient Records", path: "/form-elements", pro: false },
-          { name: "All Patients", path: "/form-elements", pro: false },
+          { name: "All Patients", path: "/patient-profiles", pro: false },
           { name: "Payment follow-up", path: "/form-elements", pro: false },
         ],
       },

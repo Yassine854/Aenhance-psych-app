@@ -16,12 +16,80 @@
       </div>
     </div>
 
-    <div class="flex gap-2.5">
-      <Link v-if="!authUser && canLogin" :href="route('login')"
+    <div class="flex gap-2.5 items-center">
+      <!-- Patient menu (shown when a patient is logged in) -->
+      <div v-if="isPatient" class="relative">
+        <button
+          type="button"
+          @click="showPatientMenu = !showPatientMenu"
+          class="flex items-center gap-2 px-3.5 py-1.5 bg-white/10 text-white text-[12px] rounded-full border border-white/20 hover:bg-white/20 transition"
+        >
+          <span class="inline-flex h-7 w-7 items-center justify-center rounded-full overflow-hidden ring-2 ring-white/25 bg-white/10">
+            <img
+              v-if="patientAvatarUrl"
+              :src="patientAvatarUrl"
+              alt="Profile"
+              class="h-full w-full object-cover"
+            />
+            <span v-else class="text-[11px] font-semibold tracking-wide">{{ patientInitials }}</span>
+          </span>
+          <span class="max-w-[180px] truncate">{{ patientDisplayName }}</span>
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+          </svg>
+        </button>
+
+        <div
+          v-if="showPatientMenu"
+          class="absolute right-0 top-full mt-1 bg-white dark:bg-gray-800 text-black dark:text-white rounded shadow-md w-56 z-50 overflow-hidden"
+        >
+          <Link
+            :href="route('patient.profile')"
+            class="block w-full text-left px-4 py-2 hover:bg-gray-100 transition text-[13px]"
+            @click="showPatientMenu = false"
+          >
+            Profile info
+          </Link>
+          <Link
+            :href="route('patient.account')"
+            class="block w-full text-left px-4 py-2 hover:bg-gray-100 transition text-[13px]"
+            @click="showPatientMenu = false"
+          >
+            Account info
+          </Link>
+          <Link
+            href="/appointments"
+            class="block w-full text-left px-4 py-2 hover:bg-gray-100 transition text-[13px]"
+            @click="showPatientMenu = false"
+          >
+            Appointments
+          </Link>
+          <Link
+            href="/appointments"
+            class="block w-full text-left px-4 py-2 hover:bg-gray-100 transition text-[13px]"
+            @click="showPatientMenu = false"
+          >
+            History
+          </Link>
+          <div class="border-t border-gray-200"></div>
+          <Link
+            :href="route('logout')"
+            method="post"
+            as="button"
+            class="block w-full text-left px-4 py-2 hover:bg-gray-100 transition text-[13px]"
+            @click="showPatientMenu = false"
+          >
+            Log out
+          </Link>
+        </div>
+      </div>
+
+      <!-- Guest auth buttons -->
+      <Link v-if="!resolvedAuthUser && canLogin" :href="route('login')"
         class="px-3.5 py-1.5 bg-[#5997ac] text-white text-[12px] rounded flex items-center gap-1.5 justify-center hover:bg-[#467891] transition">
         🔓 {{ t("login") }}
       </Link>
-      <Link v-if="!authUser && canRegister" :href="route('register')"
+      <Link v-if="!resolvedAuthUser && canRegister" :href="route('register')"
         class="px-3.5 py-1.5 bg-[#f6aec2] text-white text-[12px] rounded flex items-center gap-1.5 justify-center hover:bg-[#e190b0] transition">
         👤 {{ t("register") }}
       </Link>
@@ -167,7 +235,7 @@
 </template>
 
 <script setup>
-import { Link } from "@inertiajs/vue3";
+import { Link, usePage } from "@inertiajs/vue3";
 import { useI18n } from "vue-i18n";
 import { ref, onMounted, computed } from "vue";
 
@@ -177,12 +245,52 @@ const props = defineProps({
   authUser: { type: Object },
 });
 
+const page = usePage()
+
+const resolvedAuthUser = computed(() => {
+  const fromPage = page.props?.auth?.user || null
+  const fromProp = props.authUser || null
+  if (!fromPage) return fromProp
+  if (!fromProp) return fromPage
+
+  return {
+    ...fromPage,
+    ...fromProp,
+    profile_image_url: fromProp.profile_image_url ?? fromPage.profile_image_url ?? null,
+  }
+})
+
 const showDropdown = ref(false);
 const showAboutDropdown = ref(false);
 const showSupportDropdown = ref(false);
 const showMobileMenu = ref(false);
+const showPatientMenu = ref(false)
 const { t, locale } = useI18n();
 const currentLang = ref("");
+
+const isPatient = computed(() => {
+  const role = (resolvedAuthUser.value?.role ?? '').toString().trim().toUpperCase()
+  return !!resolvedAuthUser.value && role === 'PATIENT'
+})
+
+const patientDisplayName = computed(() => {
+  return resolvedAuthUser.value?.name || resolvedAuthUser.value?.email || 'Account'
+})
+
+const patientAvatarUrl = computed(() => {
+  const url = resolvedAuthUser.value?.profile_image_url
+  if (!url) return null
+  if (typeof url !== 'string') return null
+  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('/')) return url
+  return `/${url}`
+})
+
+const patientInitials = computed(() => {
+  const source = (resolvedAuthUser.value?.name || resolvedAuthUser.value?.email || 'A').trim()
+  const parts = source.split(/\s+/).filter(Boolean)
+  const initials = parts.slice(0, 2).map((p) => p[0]).join('')
+  return (initials || 'A').toUpperCase()
+})
 
 // Languages list
 const languages = [
@@ -197,6 +305,7 @@ function setLang(lang) {
   currentLang.value = languages.find((l) => l.code === lang).label;
   localStorage.setItem("locale", lang);
   showDropdown.value = false;
+  showPatientMenu.value = false
   
   // Set document direction based on language
   if (lang === 'ar') {

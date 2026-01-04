@@ -72,17 +72,17 @@ class User extends Authenticatable
 
     public function isAdmin()
 {
-    return $this->role === 'ADMIN';
+        return strtoupper(trim((string) $this->role)) === 'ADMIN';
 }
 
 public function isPsychologist()
 {
-    return $this->role === 'PSYCHOLOGIST';
+    return strtoupper(trim((string) $this->role)) === 'PSYCHOLOGIST';
 }
 
 public function isPatient()
 {
-    return $this->role === 'PATIENT';
+    return strtoupper(trim((string) $this->role)) === 'PATIENT';
 }
 
 }

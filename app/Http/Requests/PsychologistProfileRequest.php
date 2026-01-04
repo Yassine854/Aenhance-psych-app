@@ -3,12 +3,27 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Arr;
 
 class PsychologistProfileRequest extends FormRequest
 {
     public function authorize(): bool
     {
         return $this->user() !== null; // require auth; refine as needed
+    }
+
+    protected function prepareForValidation(): void
+    {
+        // Admin Create.vue posts availabilities as JSON in FormData.
+        $raw = $this->input('availabilities');
+        if (is_string($raw) && $raw !== '') {
+            try {
+                $decoded = json_decode($raw, true, 512, JSON_THROW_ON_ERROR);
+                $this->merge(['availabilities' => $decoded]);
+            } catch (\Throwable $e) {
+                // Leave as-is; validation will surface a clean error.
+            }
+        }
     }
 
     public function rules(): array
@@ -42,6 +57,39 @@ class PsychologistProfileRequest extends FormRequest
             'profile_image' => ['nullable', 'image', 'max:2048'],
             'diploma_file' => [$isCreate ? 'required' : 'nullable', 'mimes:pdf', 'max:5120'],
             'cin_file' => [$isCreate ? 'required' : 'nullable', 'mimes:pdf', 'max:5120'],
+
+            // Weekly availability slots
+            'availabilities' => ['nullable', 'array'],
+            'availabilities.*.day_of_week' => ['required', 'integer', 'between:0,6'],
+            'availabilities.*.start_time' => ['required', 'date_format:H:i'],
+            'availabilities.*.end_time' => [
+                'required',
+                'date_format:H:i',
+                function ($attribute, $value, $fail) {
+                    // attribute looks like availabilities.0.end_time
+                    $parts = explode('.', (string) $attribute);
+                    $index = $parts[1] ?? null;
+                    if ($index === null) {
+                        return;
+                    }
+
+                    $slots = $this->input('availabilities', []);
+                    $start = Arr::get($slots, $index . '.start_time');
+                    if (!is_string($start) || !is_string($value)) {
+                        return;
+                    }
+
+                    $startTs = strtotime('1970-01-01 ' . $start);
+                    $endTs = strtotime('1970-01-01 ' . $value);
+                    if ($startTs === false || $endTs === false) {
+                        return;
+                    }
+
+                    if ($endTs <= $startTs) {
+                        $fail('The end time must be after the start time.');
+                    }
+                },
+            ],
         ];
     }
 }

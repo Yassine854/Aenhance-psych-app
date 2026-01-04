@@ -57,6 +57,23 @@
               <div class="text-sm font-semibold text-gray-900">Bio</div>
               <p class="mt-2 text-sm text-gray-700 whitespace-pre-line">{{ psychologist.bio || '—' }}</p>
             </div>
+
+            <div class="rounded-xl border border-gray-200 p-4">
+              <div class="text-sm font-semibold text-gray-900">Availability</div>
+
+              <div v-if="!groupedAvailabilities.length" class="mt-2 text-sm text-gray-500">No availability set.</div>
+
+              <div v-else class="mt-3 space-y-3">
+                <div v-for="day in groupedAvailabilities" :key="day.day" class="rounded-lg border border-gray-200 px-3 py-2">
+                  <div class="text-xs font-semibold text-gray-900">{{ day.label }}</div>
+                  <div class="mt-1 flex flex-wrap gap-2">
+                    <span v-for="(slot, idx) in day.slots" :key="idx" class="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-800">
+                      {{ slot.start_time }} - {{ slot.end_time }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
           <!-- Right column -->
@@ -145,12 +162,64 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
+
 const props = defineProps({
   show: Boolean,
   psychologist: Object,
 })
 
 defineEmits(['close'])
+
+const daysOfWeek = [
+  { value: 0, label: 'Sunday' },
+  { value: 1, label: 'Monday' },
+  { value: 2, label: 'Tuesday' },
+  { value: 3, label: 'Wednesday' },
+  { value: 4, label: 'Thursday' },
+  { value: 5, label: 'Friday' },
+  { value: 6, label: 'Saturday' },
+]
+
+function normalizeTime(t) {
+  if (!t) return ''
+  const s = String(t)
+  const m = s.match(/^(\d{2}:\d{2})/)
+  return m ? m[1] : s
+}
+
+function timeToMinutes(t) {
+  const m = String(t || '').match(/^(\d{2}):(\d{2})$/)
+  if (!m) return null
+  const hh = Number(m[1])
+  const mm = Number(m[2])
+  if (Number.isNaN(hh) || Number.isNaN(mm)) return null
+  return hh * 60 + mm
+}
+
+const groupedAvailabilities = computed(() => {
+  const list = props.psychologist?.availabilities || []
+  if (!Array.isArray(list) || !list.length) return []
+
+  const byDay = new Map()
+  for (const a of list) {
+    const day = Number(a?.day_of_week)
+    if (Number.isNaN(day) || day < 0 || day > 6) continue
+    if (!byDay.has(day)) byDay.set(day, [])
+    byDay.get(day).push({
+      start_time: normalizeTime(a?.start_time),
+      end_time: normalizeTime(a?.end_time),
+    })
+  }
+
+  return daysOfWeek
+    .map(d => {
+      const slots = byDay.get(d.value) || []
+      slots.sort((a, b) => (timeToMinutes(a.start_time) ?? 0) - (timeToMinutes(b.start_time) ?? 0))
+      return { day: d.value, label: d.label, slots }
+    })
+    .filter(d => d.slots.length > 0)
+})
 
 function formatCurrency(value) {
   if (value == null) return '-'
