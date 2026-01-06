@@ -19,6 +19,12 @@ const specialisationOptions = computed(() =>
     (props.specialisations || []).map((s) => ({ value: s.id, label: s.name }))
 )
 
+const psychologistLanguageOptions = [
+    { value: 'english', label: 'English' },
+    { value: 'french', label: 'French' },
+    { value: 'arabic', label: 'Arabic' },
+]
+
 const form = useForm({
     role: 'PATIENT',
 
@@ -41,6 +47,7 @@ const form = useForm({
     // Psychologist profile
     psych_first_name: '',
     psych_last_name: '',
+    psych_languages: [],
     specialisation_ids: [],
     psych_date_of_birth: '',
     psych_gender: '',
@@ -300,6 +307,10 @@ function goNextFromProfile() {
     }
     if (!Array.isArray(form.specialisation_ids) || form.specialisation_ids.length < 1) {
         stepError.value = 'Please select at least one specialisation.'
+        return
+    }
+    if (!Array.isArray(form.psych_languages) || form.psych_languages.length < 1) {
+        stepError.value = 'Please select at least one language.'
         return
     }
     if (!form.psych_date_of_birth) {
@@ -668,6 +679,22 @@ const submit = () => {
                                         />
                                     </div>
                                     <InputError class="mt-2" :message="form.errors.specialisation_ids" />
+                                </div>
+
+                                <div class="md:col-span-2">
+                                    <InputLabel for="psych_languages" value="Languages" />
+                                    <div class="mt-1">
+                                        <Multiselect
+                                            id="psych_languages"
+                                            v-model="form.psych_languages"
+                                            :options="psychologistLanguageOptions"
+                                            mode="tags"
+                                            :close-on-select="false"
+                                            :searchable="true"
+                                            placeholder="Select one or more"
+                                        />
+                                    </div>
+                                    <InputError class="mt-2" :message="form.errors.psych_languages" />
                                 </div>
 
                                 <div>

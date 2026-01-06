@@ -56,7 +56,8 @@
       "noBio": "لا توجد نبذة متاحة.",
       "na": "غير متاح",
       "unknownName": "أخصائي نفسي",
-      "learnMore": "الخدمات"
+      "learnMore": "الخدمات",
+      "select": "اختر"
     },
     "workshop": {
       "title": "ورشة عمل",

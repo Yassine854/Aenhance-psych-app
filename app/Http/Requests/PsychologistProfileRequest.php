@@ -24,6 +24,19 @@ class PsychologistProfileRequest extends FormRequest
                 // Leave as-is; validation will surface a clean error.
             }
         }
+
+        // Some clients may send languages as a JSON string in FormData.
+        $rawLang = $this->input('languages');
+        if (is_string($rawLang) && $rawLang !== '') {
+            try {
+                $decoded = json_decode($rawLang, true, 512, JSON_THROW_ON_ERROR);
+                if (is_array($decoded)) {
+                    $this->merge(['languages' => $decoded]);
+                }
+            } catch (\Throwable $e) {
+                // Leave as-is; validation will surface a clean error.
+            }
+        }
     }
 
     public function rules(): array
@@ -38,6 +51,8 @@ class PsychologistProfileRequest extends FormRequest
             'user_id' => ['nullable', 'exists:users,id'],
             'first_name' => [$isCreate ? 'required' : 'nullable', 'string', 'max:255'],
             'last_name' => [$isCreate ? 'required' : 'nullable', 'string', 'max:255'],
+            'languages' => ['required', 'array', 'min:1'],
+            'languages.*' => ['required', 'string', 'distinct', 'in:english,french,arabic'],
             'specialisation_ids' => [$isCreate ? 'required' : 'nullable', 'array', 'min:1'],
             'specialisation_ids.*' => ['integer', 'distinct', 'exists:specialisations,id'],
             'phone' => [$isCreate ? 'required' : 'nullable', 'string', 'max:50'],

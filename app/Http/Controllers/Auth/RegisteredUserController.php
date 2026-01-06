@@ -44,6 +44,17 @@ class RegisteredUserController extends Controller
     {
         $role = strtoupper((string) $request->input('role', 'PATIENT'));
 
+        // If sent as FormData, arrays may arrive as JSON strings.
+        if ($role === 'PSYCHOLOGIST') {
+            $rawLang = $request->input('psych_languages');
+            if (is_string($rawLang) && $rawLang !== '') {
+                $decoded = json_decode($rawLang, true);
+                if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                    $request->merge(['psych_languages' => $decoded]);
+                }
+            }
+        }
+
         $validated = $request->validate([
             'role' => ['required', 'in:PATIENT,PSYCHOLOGIST'],
 
@@ -66,6 +77,8 @@ class RegisteredUserController extends Controller
             // Psychologist profile fields
             'psych_first_name' => [$role === 'PSYCHOLOGIST' ? 'required' : 'nullable', 'string', 'max:255'],
             'psych_last_name' => [$role === 'PSYCHOLOGIST' ? 'required' : 'nullable', 'string', 'max:255'],
+            'psych_languages' => [$role === 'PSYCHOLOGIST' ? 'required' : 'nullable', 'array', 'min:1'],
+            'psych_languages.*' => ['required', 'string', 'distinct', 'in:english,french,arabic'],
             'specialisation_ids' => [$role === 'PSYCHOLOGIST' ? 'required' : 'nullable', 'array', 'min:1'],
             'specialisation_ids.*' => ['integer', 'distinct', 'exists:specialisations,id'],
             'psych_date_of_birth' => [$role === 'PSYCHOLOGIST' ? 'required' : 'nullable', 'date'],
@@ -292,6 +305,7 @@ class RegisteredUserController extends Controller
                 'user_id' => $user->id,
                 'first_name' => $validated['psych_first_name'],
                 'last_name' => $validated['psych_last_name'],
+                'languages' => $validated['psych_languages'],
                 'diploma' => $diplomaUrl,
                 'cin' => $cinUrl,
                 'cv' => $cvUrl,

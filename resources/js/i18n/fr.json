@@ -57,7 +57,8 @@
       "noBio": "Aucune biographie disponible.",
       "na": "N/A",
       "unknownName": "Psychologue",
-      "learnMore": "Services"
+      "learnMore": "Services",
+      "select": "Choisir"
     },
     "workshop": {
       "title": "Atelier",

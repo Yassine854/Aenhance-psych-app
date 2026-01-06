@@ -86,6 +86,37 @@ function availabilityLines(profile) {
     return `${day} · ${start}–${end}`;
   });
 }
+
+function languageLabel(lang) {
+  const v = String(lang || '').toLowerCase();
+  if (locale.value === 'fr') {
+    if (v === 'english') return 'Anglais';
+    if (v === 'french') return 'Français';
+    if (v === 'arabic') return 'Arabe';
+  }
+  if (locale.value === 'ar') {
+    if (v === 'english') return 'الإنجليزية';
+    if (v === 'french') return 'الفرنسية';
+    if (v === 'arabic') return 'العربية';
+  }
+  if (v === 'english') return 'English';
+  if (v === 'french') return 'French';
+  if (v === 'arabic') return 'Arabic';
+  return String(lang || '').trim();
+}
+
+function languagesFor(profile) {
+  const langs = Array.isArray(profile?.languages) ? profile.languages : [];
+  return langs.map(languageLabel).filter(Boolean);
+}
+
+function selectHref(profile) {
+  const target = props.canLogin ? route("login") : route("register");
+  const params = new URLSearchParams();
+  params.set("redirect", route("services.consultation"));
+  params.set("psychologist_profile_id", String(profile?.id ?? ""));
+  return `${target}?${params.toString()}`;
+}
 </script>
 
 <template>
@@ -145,59 +176,61 @@ function availabilityLines(profile) {
         <div
           v-for="profile in profiles"
           :key="profile.id"
-          class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden"
+          class="group bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col h-full"
         >
-          <div class="p-6">
-            <div class="flex items-start gap-4">
-              <div class="flex-shrink-0">
-                <div class="h-14 w-14 rounded-full overflow-hidden ring-2 ring-[#5997ac]/20 bg-gray-100 flex items-center justify-center">
-                  <img
-                    v-if="avatarUrl(profile)"
-                    :src="avatarUrl(profile)"
-                    alt="Profile"
-                    class="h-full w-full object-cover"
-                  />
-                  <span v-else class="text-sm font-semibold text-gray-700">{{ initials(profile) }}</span>
-                </div>
-              </div>
-
-              <div class="min-w-0 flex-1">
-                <div class="flex items-start justify-between gap-2">
-                  <h3 class="text-base font-semibold text-gray-900 truncate">
-                    {{ fullName(profile) }}
-                  </h3>
-                  <span
-                    v-if="profile.is_approved"
-                    class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-[#5997ac]/10 text-[#5997ac]"
-                  >
-                    {{ t("services.consultation.verified") }}
-                  </span>
-                </div>
-
-                <p class="mt-1 text-sm text-gray-700">
-                  <span class="font-medium">{{ t("services.consultation.specialization") }}:</span>
-                  <span>{{ (profile.specialisations || []).map(s => s.name).join(', ') || t("services.consultation.na") }}</span>
-                </p>
-
-                <p class="mt-1 text-sm text-gray-700" v-if="profile.city || profile.country">
-                  <span class="font-medium">{{ t("services.consultation.location") }}:</span>
-                  <span>{{ [profile.city, profile.country].filter(Boolean).join(", ") }}</span>
-                </p>
-
-                <p class="mt-1 text-sm text-gray-700" v-if="profile.gender">
-                  <span class="font-medium">{{ t("services.consultation.gender") }}:</span>
-                  <span>{{ profile.gender }}</span>
-                </p>
-              </div>
+          <div class="relative h-60 bg-gray-100 overflow-hidden">
+            <img
+              v-if="avatarUrl(profile)"
+              :src="avatarUrl(profile)"
+              alt="Profile"
+              class="h-full w-full object-contain bg-gray-100"
+            />
+            <div
+              v-else
+              class="h-full w-full flex items-center justify-center bg-gradient-to-br from-[#5997ac]/15 to-[#e8b4b8]/15"
+            >
+              <span class="text-3xl font-semibold text-gray-700">{{ initials(profile) }}</span>
             </div>
 
-            <div class="mt-4">
-              <p class="text-sm text-gray-700 leading-relaxed line-clamp-4">
-                {{ profile.bio || t("services.consultation.noBio") }}
-              </p>
+            <div class="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/60 to-transparent"></div>
+
+            <div class="absolute top-3 left-3 flex flex-wrap items-center gap-2">
+              <span
+                v-if="profile.is_approved"
+                class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-white/95 text-[#5997ac] ring-1 ring-[#5997ac]/25 backdrop-blur"
+              >
+                {{ t("services.consultation.verified") }}
+              </span>
             </div>
 
-            <div class="mt-4 flex items-center justify-between gap-3">
+            <div class="absolute bottom-3 left-4 right-4">
+              <h3 class="text-lg font-semibold text-white leading-snug line-clamp-2">
+                {{ fullName(profile) }}
+              </h3>
+            </div>
+          </div>
+
+          <div class="p-5 flex-1 flex flex-col">
+            <p class="text-sm text-gray-700">
+              <span class="font-medium">{{ t("services.consultation.specialization") }}:</span>
+              <span>{{ (profile.specialisations || []).map(s => s.name).join(', ') || t("services.consultation.na") }}</span>
+            </p>
+
+            <div v-if="languagesFor(profile).length" class="mt-3 flex flex-wrap gap-2">
+              <span
+                v-for="label in languagesFor(profile)"
+                :key="`lang-body-${profile.id}-${label}`"
+                class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-[#5997ac]/10 text-[#5997ac]"
+              >
+                {{ label }}
+              </span>
+            </div>
+
+            <p class="mt-3 text-sm text-gray-700 leading-relaxed line-clamp-3">
+              {{ profile.bio || t("services.consultation.noBio") }}
+            </p>
+
+            <div class="mt-4 flex items-center justify-between gap-4">
               <div class="text-sm">
                 <span class="text-gray-500">{{ t("services.consultation.price") }}</span>
                 <div class="font-semibold text-gray-900">{{ formatPrice(profile.price_per_session) }}</div>
@@ -211,20 +244,13 @@ function availabilityLines(profile) {
                 <div v-else class="text-xs text-gray-600">{{ t("services.consultation.availabilityUnknown") }}</div>
               </div>
             </div>
-          </div>
 
-          <div class="px-6 py-4 border-t border-gray-200 bg-gray-50">
-            <div class="flex items-center justify-between gap-3">
-              <span class="text-xs text-gray-600 truncate">
-                {{ profile.user?.email || "" }}
-              </span>
-              <Link
-                :href="route('services.index')"
-                class="inline-flex items-center justify-center px-3 py-1.5 rounded-md bg-white border border-gray-200 text-gray-700 text-xs font-medium hover:bg-gray-100 transition"
-              >
-                {{ t("services.consultation.learnMore") }}
-              </Link>
-            </div>
+            <Link
+              :href="selectHref(profile)"
+              class="mt-auto inline-flex w-full items-center justify-center px-4 py-2 rounded-md bg-[#5997ac] text-white text-sm font-semibold hover:opacity-90 transition"
+            >
+              {{ t("services.consultation.select") }}
+            </Link>
           </div>
         </div>
       </div>

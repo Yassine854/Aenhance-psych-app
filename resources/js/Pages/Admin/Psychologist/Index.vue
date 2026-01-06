@@ -343,15 +343,15 @@ function clearFlash() {
 }
 
 async function ensureCsrfToken() {
+  const m1 = document.cookie.match(/XSRF-TOKEN=([^;]+)/)
+  if (m1) return { token: decodeURIComponent(m1[1]), type: 'cookie' }
+
   const tokenEl = document.querySelector('meta[name="csrf-token"]')
   const metaToken = tokenEl?.getAttribute('content') || ''
   if (metaToken) return { token: metaToken, type: 'meta' }
 
-  const m1 = document.cookie.match(/XSRF-TOKEN=([^;]+)/)
-  if (m1) return { token: decodeURIComponent(m1[1]), type: 'cookie' }
-
   try {
-    await fetch('/sanctum/csrf-cookie', { method: 'GET', credentials: 'same-origin' })
+    await fetch('/sanctum/csrf-cookie', { method: 'GET', credentials: 'include' })
   } catch {}
 
   const m2 = document.cookie.match(/XSRF-TOKEN=([^;]+)/)

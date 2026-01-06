@@ -9,6 +9,24 @@ window.axios = axios;
 
 window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 
+// Ensure CSRF/XSRF cookies are included and used consistently.
+window.axios.defaults.withCredentials = true;
+window.axios.defaults.xsrfCookieName = 'XSRF-TOKEN';
+window.axios.defaults.xsrfHeaderName = 'X-XSRF-TOKEN';
+
+// If the session/CSRF expires (419), refresh to obtain a new token.
+window.axios.interceptors.response.use(
+	(response) => response,
+	(error) => {
+		const status = error?.response?.status;
+		if (status === 419) {
+			window.location.reload();
+			return;
+		}
+		return Promise.reject(error);
+	}
+);
+
 /**
  * Echo exposes an expressive API for subscribing to channels and listening
  * for events that are broadcast by Laravel. Echo and event broadcasting

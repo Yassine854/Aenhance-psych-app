@@ -25,6 +25,7 @@ return new class extends Migration
             $table->string('country_code', 10)->nullable();
             $table->string('address')->nullable();
             $table->date('date_of_birth');
+            $table->json('languages');
             $table->text('bio')->nullable();
             $table->decimal('price_per_session', 8, 2);
             $table->boolean('is_approved')->default(false);

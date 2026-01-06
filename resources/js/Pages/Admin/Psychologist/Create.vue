@@ -64,8 +64,8 @@
           <div class="space-y-4">
             <h3 class="text-lg font-semibold text-gray-900">Profile Details</h3>
 
-            <!-- Row 1: First, Last, Specialisations -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <!-- Row 1: First, Last -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
                 <label class="text-sm font-medium text-gray-700">First Name <span class="text-red-500">*</span></label>
                 <input v-model="form.first_name" class="mt-1 block w-full rounded-md border-gray-300 focus:ring-2 focus:ring-[rgb(89,151,172)]" />
@@ -76,6 +76,10 @@
                 <input v-model="form.last_name" class="mt-1 block w-full rounded-md border-gray-300 focus:ring-2 focus:ring-[rgb(89,151,172)]" />
                 <p v-if="form.errors.last_name" class="mt-1 text-sm text-red-600">{{ form.errors.last_name }}</p>
               </div>
+            </div>
+
+            <!-- Row 2: Specialisations, Languages -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
                 <label class="text-sm font-medium text-gray-700">Specialisations <span class="text-red-500">*</span></label>
                 <div class="mt-1">
@@ -89,6 +93,21 @@
                   />
                 </div>
                 <p v-if="form.errors.specialisation_ids" class="mt-1 text-sm text-red-600">{{ form.errors.specialisation_ids }}</p>
+              </div>
+
+              <div>
+                <label class="text-sm font-medium text-gray-700">Languages <span class="text-red-500">*</span></label>
+                <div class="mt-1">
+                  <Multiselect
+                    v-model="form.languages"
+                    :options="languageOptions"
+                    mode="tags"
+                    :close-on-select="false"
+                    :searchable="true"
+                    placeholder="Select one or more"
+                  />
+                </div>
+                <p v-if="form.errors.languages" class="mt-1 text-sm text-red-600">{{ form.errors.languages }}</p>
               </div>
             </div>
 
@@ -341,6 +360,12 @@ const specialisationOptions = computed(() =>
   (props.specialisations || []).map((s) => ({ value: s.id, label: s.name }))
 )
 
+const languageOptions = [
+  { value: 'english', label: 'English' },
+  { value: 'french', label: 'French' },
+  { value: 'arabic', label: 'Arabic' },
+]
+
 const countriesList = ref(getCountries())
 const countryCode = ref('')
 const dialCode = ref('')
@@ -357,6 +382,7 @@ const form = useForm({
   user_id: '',
   first_name: '',
   last_name: '',
+  languages: [],
   specialisation_ids: [],
   price_per_session: 0,
   phone: '',
@@ -566,17 +592,17 @@ function onDrop(field, e) {
 }
 
 async function ensureCsrfToken() {
+  const m1 = document.cookie.match(/XSRF-TOKEN=([^;]+)/)
+  if (m1) return { token: decodeURIComponent(m1[1]), type: 'cookie' }
+
   const tokenEl = document.querySelector('meta[name="csrf-token"]')
   const metaToken = tokenEl?.getAttribute('content') || ''
   if (metaToken) return { token: metaToken, type: 'meta' }
-  
-  const m1 = document.cookie.match(/XSRF-TOKEN=([^;]+)/)
-  if (m1) return { token: decodeURIComponent(m1[1]), type: 'cookie' }
-  
+
   try {
     await fetch('/sanctum/csrf-cookie', { method: 'GET', credentials: 'include' })
   } catch {}
-  
+
   const m2 = document.cookie.match(/XSRF-TOKEN=([^;]+)/)
   return m2 ? { token: decodeURIComponent(m2[1]), type: 'cookie' } : { token: '', type: 'none' }
 }
@@ -616,6 +642,10 @@ async function submitCreate() {
     }
     if (!Array.isArray(form.specialisation_ids) || form.specialisation_ids.length < 1) {
       form.setError('specialisation_ids', 'Please select at least one specialisation')
+      hasProfileErrors = true
+    }
+    if (!Array.isArray(form.languages) || form.languages.length < 1) {
+      form.setError('languages', 'Please select at least one language')
       hasProfileErrors = true
     }
     if (!form.date_of_birth) {
@@ -704,6 +734,11 @@ async function submitCreate() {
     ;(form.specialisation_ids || []).forEach((id) => {
       if (id !== null && id !== undefined && String(id) !== '') {
         fd.append('specialisation_ids[]', String(id))
+      }
+    })
+    ;(form.languages || []).forEach((lang) => {
+      if (lang !== null && lang !== undefined && String(lang) !== '') {
+        fd.append('languages[]', String(lang))
       }
     })
     fd.append('price_per_session', String(form.price_per_session ?? 0))

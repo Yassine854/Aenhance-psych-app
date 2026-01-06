@@ -31,6 +31,15 @@ class ServicesController extends Controller
             ->orderBy('first_name')
             ->get()
             ->map(function (PsychologistProfile $profile) {
+                $languages = $profile->languages;
+                if (is_string($languages) && $languages !== '') {
+                    $decoded = json_decode($languages, true);
+                    $languages = (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) ? $decoded : [];
+                }
+                if (! is_array($languages)) {
+                    $languages = [];
+                }
+
                 return [
                     'id' => $profile->id,
                     'first_name' => $profile->first_name,
@@ -39,9 +48,7 @@ class ServicesController extends Controller
                         ->sortBy('name')
                         ->values()
                         ->map(fn ($s) => ['id' => $s->id, 'name' => $s->name]),
-                    'gender' => $profile->gender,
-                    'country' => $profile->country,
-                    'city' => $profile->city,
+                    'languages' => array_values(array_unique(array_filter($languages))),
                     'bio' => $profile->bio,
                     'price_per_session' => $profile->price_per_session,
                     'profile_image_url' => $profile->profile_image_url,
@@ -49,7 +56,6 @@ class ServicesController extends Controller
                     'user' => $profile->user ? [
                         'id' => $profile->user->id,
                         'name' => $profile->user->name,
-                        'email' => $profile->user->email,
                     ] : null,
                     'availabilities' => $profile->availabilities
                         ->sortBy(['day_of_week', 'start_time'])

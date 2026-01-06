@@ -13,6 +13,7 @@ class PsychologistProfile extends Model
         'user_id',
         'first_name',
         'last_name',
+        'languages',
         'phone',
         'country_code',
         'diploma',
@@ -31,6 +32,7 @@ class PsychologistProfile extends Model
 
     protected $casts = [
         'date_of_birth' => 'date',
+        'languages' => 'array',
         'price_per_session' => 'decimal:2',
         'is_approved' => 'boolean',
     ];

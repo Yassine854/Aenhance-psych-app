@@ -56,7 +56,8 @@
       "noBio": "No bio provided.",
       "na": "N/A",
       "unknownName": "Psychologist",
-      "learnMore": "Services"
+      "learnMore": "Services",
+      "select": "Select"
     },
     "workshop": {
       "title": "Workshop",

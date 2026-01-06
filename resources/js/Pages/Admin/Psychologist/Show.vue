@@ -12,6 +12,7 @@
               <div class="text-xl font-semibold leading-tight">{{ psychologist.first_name }} {{ psychologist.last_name }}</div>
               <div class="text-sm opacity-90">
                 Psychologist #{{ psychologist.id }} • {{ (psychologist.specialisations || []).map(s => s.name).join(', ') || '—' }}
+                <span v-if="formatLanguages(psychologist.languages)"> • {{ formatLanguages(psychologist.languages) }}</span>
               </div>
               <div class="mt-2 inline-flex items-center gap-2">
                 <span :class="psychologist.is_approved ? 'bg-white text-[rgb(89,151,172)]' : 'bg-white/20 text-white'" class="px-3 py-1 rounded-full text-xs font-semibold">
@@ -104,6 +105,10 @@
                   <div class="flex items-start justify-between gap-4">
                     <dt class="text-xs font-medium text-gray-500">Specialization</dt>
                     <dd class="text-sm font-medium text-gray-900 text-right">{{ (psychologist.specialisations || []).map(s => s.name).join(', ') || '—' }}</dd>
+                  </div>
+                  <div class="flex items-start justify-between gap-4">
+                    <dt class="text-xs font-medium text-gray-500">Languages</dt>
+                    <dd class="text-sm font-medium text-gray-900 text-right">{{ formatLanguages(psychologist.languages) || '—' }}</dd>
                   </div>
                   <div class="flex items-start justify-between gap-4">
                     <dt class="text-xs font-medium text-gray-500">Gender</dt>
@@ -245,6 +250,19 @@ function formatDate(value) {
   } catch {
     return '-'
   }
+}
+
+function formatLanguages(value) {
+  const list = Array.isArray(value) ? value : []
+  if (!list.length) return ''
+  return list
+    .map((l) => {
+      const s = String(l || '').trim()
+      if (!s) return ''
+      return s.charAt(0).toUpperCase() + s.slice(1)
+    })
+    .filter(Boolean)
+    .join(', ')
 }
 </script>
 

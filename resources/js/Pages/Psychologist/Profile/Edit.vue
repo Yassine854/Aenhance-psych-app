@@ -34,6 +34,20 @@
               <InputError class="mt-2" :message="form.errors.specialisation_ids" />
             </div>
             <div>
+              <InputLabel value="Languages" />
+              <div class="mt-1">
+                <Multiselect
+                  v-model="form.languages"
+                  :options="languageOptions"
+                  mode="tags"
+                  :close-on-select="false"
+                  :searchable="true"
+                  placeholder="Select one or more"
+                />
+              </div>
+              <InputError class="mt-2" :message="form.errors.languages" />
+            </div>
+            <div>
               <InputLabel value="Gender" />
               <select v-model="form.gender" class="mt-1 block w-full rounded-md border-gray-300">
                 <option value="">Select gender</option>
@@ -190,6 +204,12 @@ const specialisationOptions = computed(() =>
   (props.specialisations || []).map((s) => ({ value: s.id, label: s.name }))
 )
 
+const languageOptions = [
+  { value: 'english', label: 'English' },
+  { value: 'french', label: 'French' },
+  { value: 'arabic', label: 'Arabic' },
+]
+
 // Format date for HTML date input (YYYY-MM-DD)
 function formatDateForInput(dateValue) {
   if (!dateValue) return null
@@ -202,6 +222,7 @@ const form = useForm({
   _method: 'PUT',
   first_name: props.profile?.first_name || '',
   last_name: props.profile?.last_name || '',
+  languages: Array.isArray(props.profile?.languages) ? props.profile.languages : [],
   specialisation_ids: (props.profile?.specialisations || []).map(s => s.id),
   bio: props.profile?.bio || '',
   price_per_session: props.profile?.price_per_session || 0,
