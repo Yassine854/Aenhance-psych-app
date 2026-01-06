@@ -6,6 +6,18 @@ import TextInput from '@/Components/TextInput.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { computed, ref, watch } from 'vue'
 import { getCountries, getCitiesByCountryName } from '@/utils/geoData'
+import Multiselect from '@vueform/multiselect'
+
+const props = defineProps({
+    specialisations: {
+        type: Array,
+        default: () => [],
+    },
+})
+
+const specialisationOptions = computed(() =>
+    (props.specialisations || []).map((s) => ({ value: s.id, label: s.name }))
+)
 
 const form = useForm({
     role: 'PATIENT',
@@ -29,7 +41,7 @@ const form = useForm({
     // Psychologist profile
     psych_first_name: '',
     psych_last_name: '',
-    specialization: '',
+    specialisation_ids: [],
     psych_date_of_birth: '',
     psych_gender: '',
     psych_country: '',
@@ -42,6 +54,7 @@ const form = useForm({
     profile_image: null,
     diploma_file: null,
     cin_file: null,
+    cv_file: null,
 });
 
 const isPatient = computed(() => String(form.role || '').toUpperCase() === 'PATIENT')
@@ -218,6 +231,7 @@ const stepError = ref('')
 const patientProfileInput = ref(null)
 const psychCinInput = ref(null)
 const psychDiplomaInput = ref(null)
+const psychCvInput = ref(null)
 const psychProfileInput = ref(null)
 
 const patientImagePreview = computed(() => {
@@ -232,6 +246,7 @@ const psychImagePreview = computed(() => {
 
 const diplomaLabel = computed(() => form.diploma_file?.name || 'Drag & drop or click')
 const cinLabel = computed(() => form.cin_file?.name || 'Drag & drop or click')
+const cvLabel = computed(() => form.cv_file?.name || 'Drag & drop or click')
 
 function goNext() {
     stepError.value = ''
@@ -283,8 +298,8 @@ function goNextFromProfile() {
         stepError.value = 'Last name is required.'
         return
     }
-    if (!form.specialization || !String(form.specialization).trim()) {
-        stepError.value = 'Specialization is required.'
+    if (!Array.isArray(form.specialisation_ids) || form.specialisation_ids.length < 1) {
+        stepError.value = 'Please select at least one specialisation.'
         return
     }
     if (!form.psych_date_of_birth) {
@@ -315,6 +330,10 @@ function goNextFromProfile() {
         stepError.value = 'CIN (PDF) is required.'
         return
     }
+    if (!form.cv_file) {
+        stepError.value = 'CV (PDF) is required.'
+        return
+    }
 
     step.value = 3
 }
@@ -334,7 +353,7 @@ function onDrop(field, e) {
     if (!file) return
 
     if ((field === 'patient_profile_image' || field === 'profile_image') && !file.type.startsWith('image/')) return
-    if ((field === 'diploma_file' || field === 'cin_file') && file.type !== 'application/pdf') return
+    if ((field === 'diploma_file' || field === 'cin_file' || field === 'cv_file') && file.type !== 'application/pdf') return
 
     form[field] = file
 }
@@ -636,9 +655,19 @@ const submit = () => {
                                 </div>
 
                                 <div class="md:col-span-2">
-                                    <InputLabel for="specialization" value="Specialization" />
-                                    <TextInput id="specialization" type="text" class="mt-1 block w-full" v-model="form.specialization" required />
-                                    <InputError class="mt-2" :message="form.errors.specialization" />
+                                    <InputLabel for="specialisation_ids" value="Specialisations" />
+                                    <div class="mt-1">
+                                        <Multiselect
+                                            id="specialisation_ids"
+                                            v-model="form.specialisation_ids"
+                                            :options="specialisationOptions"
+                                            mode="tags"
+                                            :close-on-select="false"
+                                            :searchable="true"
+                                            placeholder="Search and select"
+                                        />
+                                    </div>
+                                    <InputError class="mt-2" :message="form.errors.specialisation_ids" />
                                 </div>
 
                                 <div>
@@ -771,6 +800,20 @@ const submit = () => {
                                     </div>
                                     <input ref="psychCinInput" id="cin_file" type="file" accept="application/pdf" class="hidden" @change="(e) => onFileChange('cin_file', e)" required />
                                     <InputError class="mt-2" :message="form.errors.cin_file" />
+                                </div>
+
+                                <div>
+                                    <InputLabel for="cv_file" value="CV (PDF)" />
+                                    <div
+                                        @click="psychCvInput?.click()"
+                                        @drop.prevent="onDrop('cv_file', $event)"
+                                        @dragover.prevent
+                                        class="mt-1 border-2 border-dashed border-gray-300 rounded-lg p-3 text-center text-sm text-gray-600 hover:border-[rgb(89,151,172)] hover:bg-gray-50 transition cursor-pointer"
+                                    >
+                                        {{ cvLabel }}
+                                    </div>
+                                    <input ref="psychCvInput" id="cv_file" type="file" accept="application/pdf" class="hidden" @change="(e) => onFileChange('cv_file', e)" required />
+                                    <InputError class="mt-2" :message="form.errors.cv_file" />
                                 </div>
                             </div>
 

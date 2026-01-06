@@ -134,7 +134,14 @@
           </li>
 
           <!-- Other links -->
-          <li><a href="#" class="px-3 py-1 text-gray-700 font-medium hover:bg-gray-100 transition">{{ t('nav.services') }}</a></li>
+          <li>
+            <Link
+              :href="route('services.index')"
+              class="px-3 py-1 text-gray-700 font-medium hover:bg-gray-100 transition"
+            >
+              {{ t('nav.services') }}
+            </Link>
+          </li>
           
           <!-- Support Dropdown -->
           <li class="relative">
@@ -200,7 +207,15 @@
           </li>
 
           <!-- Other links -->
-          <li><a href="#" class="block px-3 py-2 text-gray-700 font-medium hover:bg-gray-100 transition">{{ t('nav.services') }}</a></li>
+          <li>
+            <Link
+              :href="route('services.index')"
+              class="block px-3 py-2 text-gray-700 font-medium hover:bg-gray-100 transition"
+              @click="showMobileMenu = false"
+            >
+              {{ t('nav.services') }}
+            </Link>
+          </li>
           
           <!-- Support Dropdown (Mobile) -->
           <li>

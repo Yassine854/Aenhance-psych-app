@@ -13,11 +13,11 @@ class PsychologistProfile extends Model
         'user_id',
         'first_name',
         'last_name',
-        'specialization',
         'phone',
         'country_code',
         'diploma',
         'cin',
+        'cv',
         'gender',
         'country',
         'city',
@@ -43,5 +43,15 @@ class PsychologistProfile extends Model
     public function availabilities()
     {
         return $this->hasMany(PsychologistAvailability::class, 'psychologist_id');
+    }
+
+    public function specialisations()
+    {
+        return $this->belongsToMany(
+            Specialisation::class,
+            'psychologist_profile_specialisation',
+            'psychologist_profile_id',
+            'specialisation_id'
+        )->withTimestamps();
     }
 }

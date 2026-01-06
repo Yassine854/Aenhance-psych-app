@@ -105,7 +105,7 @@
                     </div>
                   </div>
                 </td>
-                <td class="px-4 py-3 text-sm text-gray-700">{{ p.specialization || '-' }}</td>
+                <td class="px-4 py-3 text-sm text-gray-700">{{ (p.specialisations || []).map(s => s.name).join(', ') || '-' }}</td>
                 <td class="px-4 py-3 text-sm text-gray-700">{{ formatCurrency(p.price_per_session) }}</td>
                 <td class="px-4 py-3">
                   <span :class="p.is_approved ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'" class="inline-flex items-center px-2 py-1 rounded text-xs font-medium">
@@ -168,13 +168,13 @@
       </div>
 
       <!-- Create Modal -->
-      <Create :show="modal === 'create'" @close="closeModal" @created="handleCreated" />
+      <Create :show="modal === 'create'" :specialisations="props.specialisations" @close="closeModal" @created="handleCreated" />
 
       <!-- Show Modal -->
       <Show :show="modal === 'show'" :psychologist="selected" @close="closeModal" />
 
       <!-- Edit Modal -->
-      <Edit :show="modal === 'edit'" :psychologist="selected" @close="closeModal" @saved="handleSaved" />
+      <Edit :show="modal === 'edit'" :psychologist="selected" :specialisations="props.specialisations" @close="closeModal" @saved="handleSaved" />
     </div>
 </template>
 
@@ -188,7 +188,13 @@ import Show from './Show.vue'
 import SortIcon from './SortIcon.vue'
 import Swal from 'sweetalert2'
 
-const props = defineProps({ profiles: Object })
+const props = defineProps({
+  profiles: Object,
+  specialisations: {
+    type: Array,
+    default: () => [],
+  },
+})
 
 const profilesData = ref(props.profiles?.data ? [...props.profiles.data] : [])
 watch(
@@ -231,7 +237,7 @@ const filtered = computed(() => {
       case 'email':
         return String(p?.user?.email ?? '').toLowerCase().includes(q)
       case 'specialization':
-        return String(p?.specialization ?? '').toLowerCase().includes(q)
+        return String((p?.specialisations || []).map(s => s?.name).filter(Boolean).join(', ')).toLowerCase().includes(q)
       default:
         return false
     }
@@ -258,7 +264,7 @@ function getSortValue(p, key) {
     case 'name':
       return `${p?.first_name || ''} ${p?.last_name || ''}`.trim().toLowerCase()
     case 'specialization':
-      return String(p?.specialization || '').toLowerCase()
+      return String((p?.specialisations || []).map(s => s?.name).filter(Boolean).join(', ')).toLowerCase()
     case 'price':
       return Number(p?.price_per_session || 0)
     case 'approved':

@@ -13,6 +13,7 @@ import 'swiper/css/navigation'
 import 'swiper/css/pagination'
 import 'jsvectormap/dist/jsvectormap.css'
 import 'flatpickr/dist/flatpickr.css'
+import '@vueform/multiselect/themes/default.css'
 
 import VueApexCharts from 'vue3-apexcharts'
 

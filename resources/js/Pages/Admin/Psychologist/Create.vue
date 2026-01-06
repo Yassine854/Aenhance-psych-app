@@ -64,7 +64,7 @@
           <div class="space-y-4">
             <h3 class="text-lg font-semibold text-gray-900">Profile Details</h3>
 
-            <!-- Row 1: First, Last, Specialization -->
+            <!-- Row 1: First, Last, Specialisations -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div>
                 <label class="text-sm font-medium text-gray-700">First Name <span class="text-red-500">*</span></label>
@@ -77,9 +77,18 @@
                 <p v-if="form.errors.last_name" class="mt-1 text-sm text-red-600">{{ form.errors.last_name }}</p>
               </div>
               <div>
-                <label class="text-sm font-medium text-gray-700">Specialization <span class="text-red-500">*</span></label>
-                <input v-model="form.specialization" class="mt-1 block w-full rounded-md border-gray-300 focus:ring-2 focus:ring-[rgb(89,151,172)]" />
-                <p v-if="form.errors.specialization" class="mt-1 text-sm text-red-600">{{ form.errors.specialization }}</p>
+                <label class="text-sm font-medium text-gray-700">Specialisations <span class="text-red-500">*</span></label>
+                <div class="mt-1">
+                  <Multiselect
+                    v-model="form.specialisation_ids"
+                    :options="specialisationOptions"
+                    mode="tags"
+                    :close-on-select="false"
+                    :searchable="true"
+                    placeholder="Select one or more"
+                  />
+                </div>
+                <p v-if="form.errors.specialisation_ids" class="mt-1 text-sm text-red-600">{{ form.errors.specialisation_ids }}</p>
               </div>
             </div>
 
@@ -165,8 +174,8 @@
               </div>
             </div>
 
-            <!-- Uploads: CIN, Diploma, Profile image -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <!-- Uploads: CIN, Diploma, CV, Profile image -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
               <div>
                 <label class="text-sm font-medium text-gray-700">CIN (PDF) <span class="text-red-500">*</span></label>
                 <div 
@@ -192,6 +201,19 @@
                 </div>
                 <input ref="diplomaInput" type="file" accept="application/pdf" @change="onFileChange('diploma_file', $event)" class="hidden" />
                 <p v-if="form.errors.diploma_file" class="mt-1 text-sm text-red-600">{{ form.errors.diploma_file }}</p>
+              </div>
+              <div>
+                <label class="text-sm font-medium text-gray-700">CV (PDF) <span class="text-red-500">*</span></label>
+                <div 
+                  @click="cvInput?.click()" 
+                  @drop.prevent="onDrop('cv_file', $event)" 
+                  @dragover.prevent 
+                  class="mt-1 border-2 border-dashed border-gray-300 rounded-lg p-3 text-center text-sm text-gray-600 hover:border-[rgb(89,151,172)] hover:bg-gray-50 transition cursor-pointer"
+                >
+                  {{ cvLabel }}
+                </div>
+                <input ref="cvInput" type="file" accept="application/pdf" @change="onFileChange('cv_file', $event)" class="hidden" />
+                <p v-if="form.errors.cv_file" class="mt-1 text-sm text-red-600">{{ form.errors.cv_file }}</p>
               </div>
               <div>
                 <label class="text-sm font-medium text-gray-700">Profile Image</label>
@@ -303,12 +325,21 @@ import { ref, computed, watch } from 'vue'
 import { useForm } from '@inertiajs/vue3'
 import { Inertia } from '@inertiajs/inertia'
 import { getCountries, getCitiesByCountryName } from '@/utils/geoData'
+import Multiselect from '@vueform/multiselect'
 
 const props = defineProps({
   show: Boolean,
+  specialisations: {
+    type: Array,
+    default: () => [],
+  },
 })
 
 const emit = defineEmits(['close', 'created'])
+
+const specialisationOptions = computed(() =>
+  (props.specialisations || []).map((s) => ({ value: s.id, label: s.name }))
+)
 
 const countriesList = ref(getCountries())
 const countryCode = ref('')
@@ -319,13 +350,14 @@ const generalError = ref(null)
 
 const cinInput = ref(null)
 const diplomaInput = ref(null)
+const cvInput = ref(null)
 const profileInput = ref(null)
 
 const form = useForm({
   user_id: '',
   first_name: '',
   last_name: '',
-  specialization: '',
+  specialisation_ids: [],
   price_per_session: 0,
   phone: '',
   country_code: '',
@@ -339,6 +371,7 @@ const form = useForm({
   profile_image: null,
   diploma_file: null,
   cin_file: null,
+  cv_file: null,
 })
 
 const newUser = ref({ name: '', email: '', password: '' })
@@ -486,6 +519,7 @@ const fileNameFromUrl = (url) => {
 
 const diplomaLabel = computed(() => form.diploma_file?.name || 'Drag & drop or click')
 const cinLabel = computed(() => form.cin_file?.name || 'Drag & drop or click')
+const cvLabel = computed(() => form.cv_file?.name || 'Drag & drop or click')
 
 function syncPhoneToForm() {
   form.country_code = dialCode.value || ''
@@ -527,7 +561,7 @@ function onDrop(field, e) {
   const file = e?.dataTransfer?.files?.[0]
   if (!file) return
   if (field === 'profile_image' && !file.type.startsWith('image/')) return
-  if ((field === 'diploma_file' || field === 'cin_file') && file.type !== 'application/pdf') return
+  if ((field === 'diploma_file' || field === 'cin_file' || field === 'cv_file') && file.type !== 'application/pdf') return
   form[field] = file
 }
 
@@ -580,8 +614,8 @@ async function submitCreate() {
       form.setError('last_name', 'Last name is required')
       hasProfileErrors = true
     }
-    if (!form.specialization) {
-      form.setError('specialization', 'Specialization is required')
+    if (!Array.isArray(form.specialisation_ids) || form.specialisation_ids.length < 1) {
+      form.setError('specialisation_ids', 'Please select at least one specialisation')
       hasProfileErrors = true
     }
     if (!form.date_of_birth) {
@@ -610,6 +644,10 @@ async function submitCreate() {
     }
     if (!form.cin_file) {
       form.setError('cin_file', 'CIN is required')
+      hasProfileErrors = true
+    }
+    if (!form.cv_file) {
+      form.setError('cv_file', 'CV is required')
       hasProfileErrors = true
     }
 
@@ -663,7 +701,11 @@ async function submitCreate() {
     // Profile data
     fd.append('first_name', form.first_name ?? '')
     fd.append('last_name', form.last_name ?? '')
-    fd.append('specialization', form.specialization ?? '')
+    ;(form.specialisation_ids || []).forEach((id) => {
+      if (id !== null && id !== undefined && String(id) !== '') {
+        fd.append('specialisation_ids[]', String(id))
+      }
+    })
     fd.append('price_per_session', String(form.price_per_session ?? 0))
     fd.append('phone', cleanPhone)
     fd.append('country_code', form.country_code ?? '')
@@ -678,6 +720,7 @@ async function submitCreate() {
     // Append files (diploma and cin are required, profile_image is optional)
     fd.append('diploma_file', form.diploma_file)
     fd.append('cin_file', form.cin_file)
+    fd.append('cv_file', form.cv_file)
     if (form.profile_image) fd.append('profile_image', form.profile_image)
 
     if (flattenedAvailabilities.value.length) {

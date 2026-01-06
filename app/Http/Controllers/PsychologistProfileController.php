@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\PsychologistProfileRequest;
 use App\Models\PsychologistProfile;
+use App\Models\Specialisation;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -37,6 +38,7 @@ class PsychologistProfileController extends Controller
             $query->where('role', 'PSYCHOLOGIST');
             },
             'availabilities',
+            'specialisations',
         ])->whereHas('user', function ($query) {
             $query->where('role', 'PSYCHOLOGIST');
         })->paginate(15);
@@ -47,6 +49,7 @@ class PsychologistProfileController extends Controller
 
         return Inertia::render('Admin/Psychologist/Index', [
             'profiles' => $profiles,
+            'specialisations' => Specialisation::query()->orderBy('name')->get(['id', 'name']),
         ]);
     }
 
@@ -62,7 +65,9 @@ class PsychologistProfileController extends Controller
 
     public function create(): Response
     {
-        return Inertia::render('Admin/Psychologist/Create');
+        return Inertia::render('Admin/Psychologist/Create', [
+            'specialisations' => Specialisation::query()->orderBy('name')->get(['id', 'name']),
+        ]);
     }
 
     public function store(PsychologistProfileRequest $request): HttpResponse
@@ -74,6 +79,12 @@ class PsychologistProfileController extends Controller
         ]);
         
         $data = $request->validated();
+
+        $specialisationIds = [];
+        if (array_key_exists('specialisation_ids', $data)) {
+            $specialisationIds = is_array($data['specialisation_ids']) ? $data['specialisation_ids'] : [];
+            unset($data['specialisation_ids']);
+        }
 
         $availabilities = [];
         if (isset($data['availabilities']) && is_array($data['availabilities'])) {
@@ -198,7 +209,35 @@ class PsychologistProfileController extends Controller
             Log::error('No cin_file in request!');
         }
 
-        unset($data['profile_image'], $data['diploma_file'], $data['cin_file']);
+        if ($request->hasFile('cv_file')) {
+            $file = $request->file('cv_file');
+
+            try {
+                $uploaded = Cloudinary::uploadFile(
+                    $file->getRealPath(),
+                    [
+                        'folder' => 'psychologist_profiles/cvs',
+                        'resource_type' => 'raw',
+                        'use_filename' => true,
+                        'unique_filename' => false,
+                        'overwrite' => true,
+                        'public_id' => pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME),
+                    ]
+                );
+                $url = $uploaded->getSecurePath();
+                $data['cv'] = str_replace('/image/upload/', '/raw/upload/', $url);
+                Log::info('CV uploaded to Cloudinary', ['url' => $data['cv']]);
+            } catch (\Throwable $e) {
+                Log::warning('Cloudinary cv_file upload failed: '.$e->getMessage());
+                $path = $file->store('psychologist_profiles/cvs', 'public');
+                $data['cv'] = Storage::url($path);
+                Log::info('CV stored locally', ['path' => $data['cv']]);
+            }
+        } else {
+            Log::error('No cv_file in request!');
+        }
+
+        unset($data['profile_image'], $data['diploma_file'], $data['cin_file'], $data['cv_file']);
 
         Log::info('About to create profile', [
             'user_id' => $data['user_id'] ?? 'MISSING',
@@ -209,6 +248,11 @@ class PsychologistProfileController extends Controller
         ]);
 
         $profile = PsychologistProfile::create($data);
+
+        $specialisationIds = array_values(array_unique(array_map('intval', $specialisationIds)));
+        if (! empty($specialisationIds)) {
+            $profile->specialisations()->sync($specialisationIds);
+        }
 
         if (! empty($availabilities)) {
             // Each slot: day_of_week, start_time, end_time
@@ -223,7 +267,7 @@ class PsychologistProfileController extends Controller
         // If this was an XHR/JSON request (our admin modal uses fetch), return JSON (no redirects).
         if ($request->expectsJson()) {
             return response()->json([
-                'profile' => $profile->fresh()->load(['user', 'availabilities']),
+                'profile' => $profile->fresh()->load(['user', 'availabilities', 'specialisations']),
             ], 201);
         }
 
@@ -301,11 +345,13 @@ class PsychologistProfileController extends Controller
         if (! $profile) {
             return Inertia::render('Psychologist/Profile/Create', [
                 'user' => $user,
+                'specialisations' => Specialisation::query()->orderBy('name')->get(['id', 'name']),
             ]);
         }
 
         return Inertia::render('Psychologist/Profile/Edit', [
-            'profile' => $profile->load('user'),
+            'profile' => $profile->load(['user', 'specialisations']),
+            'specialisations' => Specialisation::query()->orderBy('name')->get(['id', 'name']),
         ]);
     }
 
@@ -318,6 +364,12 @@ class PsychologistProfileController extends Controller
 
         $data = $request->validated();
         $data['user_id'] = $user->id;
+
+        $specialisationIds = [];
+        if (array_key_exists('specialisation_ids', $data)) {
+            $specialisationIds = is_array($data['specialisation_ids']) ? $data['specialisation_ids'] : [];
+            unset($data['specialisation_ids']);
+        }
 
         $usedCloudinary = false; // track if cloudinary was used for any file
 
@@ -394,7 +446,37 @@ class PsychologistProfileController extends Controller
             }
         }
 
+        if ($request->hasFile('cv_file')) {
+            $file = $request->file('cv_file');
+
+            try {
+                $uploaded = Cloudinary::uploadFile(
+                    $file->getRealPath(),
+                    [
+                        'folder' => 'psychologist_profiles/cvs',
+                        'resource_type' => 'raw',
+                        'use_filename' => true,
+                        'unique_filename' => false,
+                        'overwrite' => true,
+                        'public_id' => pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME),
+                    ]
+                );
+                $url = $uploaded->getSecurePath();
+                $data['cv'] = str_replace('/image/upload/', '/raw/upload/', $url);
+                $usedCloudinary = true;
+            } catch (\Throwable $e) {
+                Log::warning('Cloudinary cv_file upload failed: '.$e->getMessage());
+                $path = $file->store('psychologist_profiles/cvs', 'public');
+                $data['cv'] = Storage::url($path);
+            }
+        }
+
         $profile = PsychologistProfile::create($data);
+
+        $specialisationIds = array_values(array_unique(array_map('intval', $specialisationIds)));
+        if (! empty($specialisationIds)) {
+            $profile->specialisations()->sync($specialisationIds);
+        }
 
         Log::info('Psychologist profile created', ['id' => $profile->id, 'usedCloudinary' => $usedCloudinary]);
 
@@ -421,6 +503,12 @@ class PsychologistProfileController extends Controller
         // Get all validated input and use it directly for update
         $data = $request->validated();
         $usedCloudinary = false;
+
+        $specialisationIds = null;
+        if (array_key_exists('specialisation_ids', $data)) {
+            $specialisationIds = is_array($data['specialisation_ids']) ? $data['specialisation_ids'] : [];
+            unset($data['specialisation_ids']);
+        }
 
         // DEBUG: Log what we received
         Log::info('updateSelf received data', [
@@ -507,8 +595,36 @@ class PsychologistProfileController extends Controller
             }
         }
 
+        if ($request->hasFile('cv_file')) {
+            $file = $request->file('cv_file');
+            $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+            $extension = $file->getClientOriginalExtension() ?: 'pdf';
+
+            try {
+                $uploaded = Cloudinary::uploadFile(
+                    $file->getRealPath(),
+                    [
+                        'folder' => 'psychologist_profiles/cvs',
+                        'resource_type' => 'raw',
+                        'use_filename' => true,
+                        'unique_filename' => false,
+                        'overwrite' => true,
+                        'filename' => $originalName,
+                        'format' => $extension,
+                    ]
+                );
+                $url = $uploaded->getSecurePath();
+                $data['cv'] = str_replace('/image/upload/', '/raw/upload/', $url);
+                $usedCloudinary = true;
+            } catch (\Throwable $e) {
+                Log::warning('Cloudinary cv_file upload failed: '.$e->getMessage());
+                $path = $file->store('psychologist_profiles/cvs', 'public');
+                $data['cv'] = Storage::url($path);
+            }
+        }
+
         // Remove file inputs (not stored directly) and keep only fillable fields
-        unset($data['profile_image'], $data['diploma_file'], $data['cin_file']);
+        unset($data['profile_image'], $data['diploma_file'], $data['cin_file'], $data['cv_file']);
 
         // DEBUG: Log final data before save
         Log::info('updateSelf saving data', ['data_to_save' => $data]);
@@ -516,6 +632,11 @@ class PsychologistProfileController extends Controller
         // Update and save the profile
         $profile->fill($data);
         $saved = $profile->save();
+
+        if ($specialisationIds !== null) {
+            $specialisationIds = array_values(array_unique(array_map('intval', $specialisationIds)));
+            $profile->specialisations()->sync($specialisationIds);
+        }
 
         // DEBUG: Log result
         Log::info('Psychologist profile updated', [
@@ -544,6 +665,12 @@ class PsychologistProfileController extends Controller
         
         // Start with validated scalar fields
         $data = $request->validated();
+
+        $specialisationIds = null;
+        if (array_key_exists('specialisation_ids', $data)) {
+            $specialisationIds = is_array($data['specialisation_ids']) ? $data['specialisation_ids'] : [];
+            unset($data['specialisation_ids']);
+        }
 
         // Pull out availability slots (if present) and update them separately.
         // PsychologistProfile is not fillable for this key.
@@ -640,14 +767,48 @@ class PsychologistProfileController extends Controller
             }
         }
 
+        // Handle CV PDF upload (expects 'cv_file')
+        if ($request->hasFile('cv_file')) {
+            $file = $request->file('cv_file');
+            $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+            $extension = $file->getClientOriginalExtension() ?: 'pdf';
+
+            try {
+                $uploaded = Cloudinary::uploadFile(
+                    $file->getRealPath(),
+                    [
+                        'folder' => 'psychologist_profiles/cvs',
+                        'resource_type' => 'raw',
+                        'use_filename' => true,
+                        'unique_filename' => false,
+                        'overwrite' => true,
+                        'filename' => $originalName,
+                        'format' => $extension,
+                    ]
+                );
+                $url = $uploaded->getSecurePath();
+                $data['cv'] = str_replace('/image/upload/', '/raw/upload/', $url);
+                $usedCloudinary = true;
+            } catch (\Throwable $e) {
+                Log::warning('Cloudinary cv_file upload failed: '.$e->getMessage());
+                $path = $file->store('psychologist_profiles/cvs', 'public');
+                $data['cv'] = Storage::url($path);
+            }
+        }
+
         // Remove raw file keys
-        unset($data['profile_image'], $data['diploma_file'], $data['cin_file']);
+        unset($data['profile_image'], $data['diploma_file'], $data['cin_file'], $data['cv_file']);
 
         Log::info('Admin update profile', ['id' => $psychologistProfile->id, 'usedCloudinary' => $usedCloudinary, 'data' => $data]);
 
         \DB::beginTransaction();
         try {
             $psychologistProfile->update($data);
+
+            if ($specialisationIds !== null && is_array($specialisationIds)) {
+                $specialisationIds = array_values(array_unique(array_map('intval', $specialisationIds)));
+                $psychologistProfile->specialisations()->sync($specialisationIds);
+            }
 
             // If the client sent availabilities (including empty array), replace existing.
             if ($availabilities !== null && is_array($availabilities)) {
@@ -665,7 +826,7 @@ class PsychologistProfileController extends Controller
 
         if ($request->expectsJson()) {
             return response()->json([
-                'profile' => $psychologistProfile->fresh()->load(['user', 'availabilities']),
+                'profile' => $psychologistProfile->fresh()->load(['user', 'availabilities', 'specialisations']),
             ]);
         }
 
@@ -681,14 +842,15 @@ class PsychologistProfileController extends Controller
     public function show(PsychologistProfile $psychologistProfile): Response
     {
         return Inertia::render('Admin/Psychologist/Show', [
-            'profile' => $psychologistProfile->load(['user', 'availabilities']),
+            'profile' => $psychologistProfile->load(['user', 'availabilities', 'specialisations']),
         ]);
     }
 
     public function edit(PsychologistProfile $psychologistProfile): Response
     {
         return Inertia::render('Admin/Psychologist/Edit', [
-            'profile' => $psychologistProfile->load(['user', 'availabilities']),
+            'profile' => $psychologistProfile->load(['user', 'availabilities', 'specialisations']),
+            'specialisations' => Specialisation::query()->orderBy('name')->get(['id', 'name']),
         ]);
     }
 

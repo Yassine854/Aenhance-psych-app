@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\PatientProfile;
 use App\Models\PsychologistProfile;
+use App\Models\Specialisation;
 use App\Models\User;
 use App\Providers\RouteServiceProvider;
 use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
@@ -27,7 +28,11 @@ class RegisteredUserController extends Controller
      */
     public function create(): Response
     {
-        return Inertia::render('Auth/Register');
+        return Inertia::render('Auth/Register', [
+            'specialisations' => Specialisation::query()
+                ->orderBy('name')
+                ->get(['id', 'name']),
+        ]);
     }
 
     /**
@@ -61,7 +66,8 @@ class RegisteredUserController extends Controller
             // Psychologist profile fields
             'psych_first_name' => [$role === 'PSYCHOLOGIST' ? 'required' : 'nullable', 'string', 'max:255'],
             'psych_last_name' => [$role === 'PSYCHOLOGIST' ? 'required' : 'nullable', 'string', 'max:255'],
-            'specialization' => [$role === 'PSYCHOLOGIST' ? 'required' : 'nullable', 'string', 'max:255'],
+            'specialisation_ids' => [$role === 'PSYCHOLOGIST' ? 'required' : 'nullable', 'array', 'min:1'],
+            'specialisation_ids.*' => ['integer', 'distinct', 'exists:specialisations,id'],
             'psych_date_of_birth' => [$role === 'PSYCHOLOGIST' ? 'required' : 'nullable', 'date'],
             'psych_gender' => ['nullable', 'string', 'max:50'],
             'psych_country' => [$role === 'PSYCHOLOGIST' ? 'required' : 'nullable', 'string', 'max:255'],
@@ -74,6 +80,7 @@ class RegisteredUserController extends Controller
             'profile_image' => ['nullable', 'file', 'image', 'max:5120'],
             'diploma_file' => [$role === 'PSYCHOLOGIST' ? 'required' : 'nullable', 'file', 'mimes:pdf', 'max:10240'],
             'cin_file' => [$role === 'PSYCHOLOGIST' ? 'required' : 'nullable', 'file', 'mimes:pdf', 'max:10240'],
+            'cv_file' => [$role === 'PSYCHOLOGIST' ? 'required' : 'nullable', 'file', 'mimes:pdf', 'max:10240'],
 
             // Psychologist availability (JSON string from the frontend)
             'availabilities' => [$role === 'PSYCHOLOGIST' ? 'required' : 'nullable', 'string'],
@@ -266,13 +273,28 @@ class RegisteredUserController extends Controller
                 }
             }
 
+            $cvUrl = '';
+            if ($request->hasFile('cv_file')) {
+                try {
+                    $uploaded = Cloudinary::uploadFile($request->file('cv_file')->getRealPath(), [
+                        'folder' => 'psychologist_profiles/cvs',
+                        'resource_type' => 'raw',
+                    ]);
+                    $cvUrl = method_exists($uploaded, 'getSecurePath') ? $uploaded->getSecurePath() : '';
+                    $cvUrl = str_replace('/image/upload/', '/raw/upload/', $cvUrl);
+                } catch (\Throwable $e) {
+                    $path = $request->file('cv_file')->store('psychologist_profiles/cvs', 'public');
+                    $cvUrl = Storage::url($path);
+                }
+            }
+
             $profile = PsychologistProfile::create([
                 'user_id' => $user->id,
                 'first_name' => $validated['psych_first_name'],
                 'last_name' => $validated['psych_last_name'],
-                'specialization' => $validated['specialization'],
                 'diploma' => $diplomaUrl,
                 'cin' => $cinUrl,
+                'cv' => $cvUrl,
                 'gender' => $validated['psych_gender'] ?? null,
                 'country' => $validated['psych_country'],
                 'city' => $validated['psych_city'],
@@ -285,6 +307,11 @@ class RegisteredUserController extends Controller
                 'is_approved' => false,
                 'profile_image_url' => $profileImageUrl,
             ]);
+
+            $specialisationIds = array_values(array_unique($validated['specialisation_ids'] ?? []));
+            if (! empty($specialisationIds)) {
+                $profile->specialisations()->sync($specialisationIds);
+            }
 
             if (!empty($availabilities)) {
                 $profile->availabilities()->createMany($availabilities);

@@ -7,6 +7,8 @@ use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\PsychologistProfileController;
 use App\Http\Controllers\PatientProfileController;
 use App\Http\Controllers\Patient\PatientSelfProfileController;
+use App\Http\Controllers\ServicesController;
+use App\Http\Controllers\SpecialisationController;
 use Illuminate\Foundation\Application;
 use Illuminate\Http\Request;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
@@ -86,6 +88,10 @@ Route::get('/how-it-works', function () {
     ]);
 })->name('how-it-works');
 
+// Services (public)
+Route::get('/services', [ServicesController::class, 'index'])->name('services.index');
+Route::get('/services/consultation', [ServicesController::class, 'consultation'])->name('services.consultation');
+
 
 Route::get('/dashboard', function () {
     $user = Auth::user();
@@ -118,6 +124,12 @@ Route::middleware(['auth'])->group(function () {
     Route::patch('/users/{user}', [UserController::class, 'update']);
     Route::patch('/users/{user}/deactivate', [UserController::class, 'deactivate']);
     Route::patch('/users/{user}/activate', [UserController::class, 'activate']);
+
+    // Specialisations (Admin)
+    Route::get('/specialisations', [SpecialisationController::class, 'index'])->name('specialisations.index');
+    Route::post('/specialisations', [SpecialisationController::class, 'store'])->name('specialisations.store');
+    Route::patch('/specialisations/{specialisation}', [SpecialisationController::class, 'update'])->name('specialisations.update');
+    Route::delete('/specialisations/{specialisation}', [SpecialisationController::class, 'destroy'])->name('specialisations.destroy');
 
     // Psychologist routes
     Route::get('/psychologist/appointments', [PsychologistController::class, 'appointments']);

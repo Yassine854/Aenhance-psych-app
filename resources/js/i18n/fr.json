@@ -25,6 +25,50 @@
     ]
   }
 ,
+  "services": {
+    "banner": {
+      "title": "Nos Services",
+      "home": "Accueil",
+      "current": "Services"
+    },
+    "title": "Services pour les patients",
+    "subtitle": "Choisissez le type d’accompagnement qui vous convient. Commencez par une consultation individuelle ou participez à un atelier encadré.",
+    "consultation": {
+      "title": "Consultation",
+      "intro": "Des séances individuelles avec un psychologue. Consultez les profils, les spécialités et les tarifs pour trouver la bonne personne.",
+      "cta": "Voir les psychologues",
+      "banner": {
+        "title": "Consultation",
+        "home": "Accueil",
+        "services": "Services",
+        "current": "Consultation"
+      },
+      "subtitle": "Parcourez tous les psychologues approuvés et consultez les informations importantes pour les patients.",
+      "back": "Retour aux services",
+      "empty": "Aucun psychologue n’est disponible pour le moment.",
+      "verified": "Vérifié",
+      "specialization": "Spécialité",
+      "location": "Lieu",
+      "gender": "Genre",
+      "price": "Prix par séance",
+      "priceUnknown": "Prix non défini",
+      "availability": "Disponibilité",
+      "availabilityUnknown": "Non publiée",
+      "noBio": "Aucune biographie disponible.",
+      "na": "N/A",
+      "unknownName": "Psychologue",
+      "learnMore": "Services"
+    },
+    "workshop": {
+      "title": "Atelier",
+      "intro": "Des sessions en groupe axées sur des compétences pratiques (stress, anxiété, communication, etc.) dans un cadre bienveillant.",
+      "cta": "Bientôt disponible"
+    },
+    "note": {
+      "title": "Besoin d’aide pour choisir ?",
+      "body": "Si vous ne savez pas par où commencer, choisissez Consultation pour explorer les psychologues et obtenir des conseils personnalisés."
+    }
+  },
 "carousel": {
   "slide1": {
     "title": "Accessibilité",

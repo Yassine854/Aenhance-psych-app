@@ -24,6 +24,50 @@
       "How It Works"
     ]
   },
+  "services": {
+    "banner": {
+      "title": "Our Services",
+      "home": "Home",
+      "current": "Services"
+    },
+    "title": "Services for Patients",
+    "subtitle": "Choose the type of support that fits your needs. Start with a private consultation or join a workshop designed to help you grow with guidance.",
+    "consultation": {
+      "title": "Consultation",
+      "intro": "One-to-one sessions with a licensed psychologist. Explore profiles, specialties, and session pricing to find your best match.",
+      "cta": "Explore Psychologists",
+      "banner": {
+        "title": "Consultation",
+        "home": "Home",
+        "services": "Services",
+        "current": "Consultation"
+      },
+      "subtitle": "Browse all approved psychologists and review the information that matters to patients.",
+      "back": "Back to Services",
+      "empty": "No psychologists are available right now.",
+      "verified": "Verified",
+      "specialization": "Specialization",
+      "location": "Location",
+      "gender": "Gender",
+      "price": "Price per session",
+      "priceUnknown": "Price not set",
+      "availability": "Availability",
+      "availabilityUnknown": "Not published",
+      "noBio": "No bio provided.",
+      "na": "N/A",
+      "unknownName": "Psychologist",
+      "learnMore": "Services"
+    },
+    "workshop": {
+      "title": "Workshop",
+      "intro": "Group sessions focused on practical skills (stress, anxiety, communication, and more). Learn and practice in a supportive environment.",
+      "cta": "Coming soon"
+    },
+    "note": {
+      "title": "Need help choosing?",
+      "body": "If you’re not sure where to start, pick Consultation to explore psychologists and get personalized guidance." 
+    }
+  },
   "carousel": {
   "slide1": {
     "title": "Accessibility",

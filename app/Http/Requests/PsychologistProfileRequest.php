@@ -38,11 +38,13 @@ class PsychologistProfileRequest extends FormRequest
             'user_id' => ['nullable', 'exists:users,id'],
             'first_name' => [$isCreate ? 'required' : 'nullable', 'string', 'max:255'],
             'last_name' => [$isCreate ? 'required' : 'nullable', 'string', 'max:255'],
-            'specialization' => [$isCreate ? 'required' : 'nullable', 'string', 'max:255'],
+            'specialisation_ids' => [$isCreate ? 'required' : 'nullable', 'array', 'min:1'],
+            'specialisation_ids.*' => ['integer', 'distinct', 'exists:specialisations,id'],
             'phone' => [$isCreate ? 'required' : 'nullable', 'string', 'max:50'],
             'country_code' => ['nullable', 'string', 'max:10'],
             'diploma' => ['nullable', 'string', 'max:1024'],
             'cin' => ['nullable', 'string', 'max:1024'],
+            'cv' => ['nullable', 'string', 'max:1024'],
             'gender' => ['nullable', 'string', 'max:50'],
             'country' => ['nullable', 'string', 'max:100'],
             'city' => ['nullable', 'string', 'max:100'],
@@ -57,6 +59,7 @@ class PsychologistProfileRequest extends FormRequest
             'profile_image' => ['nullable', 'image', 'max:2048'],
             'diploma_file' => [$isCreate ? 'required' : 'nullable', 'mimes:pdf', 'max:5120'],
             'cin_file' => [$isCreate ? 'required' : 'nullable', 'mimes:pdf', 'max:5120'],
+            'cv_file' => [$isCreate ? 'required' : 'nullable', 'mimes:pdf', 'max:5120'],
 
             // Weekly availability slots
             'availabilities' => ['nullable', 'array'],

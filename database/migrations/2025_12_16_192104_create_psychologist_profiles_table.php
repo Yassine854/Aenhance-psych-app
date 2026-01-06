@@ -15,9 +15,9 @@ return new class extends Migration
                   ->cascadeOnDelete();
             $table->string('first_name');
             $table->string('last_name');
-            $table->string('specialization');
             $table->string('diploma'); // license ,master
             $table->string('cin'); //Proof
+            $table->string('cv');
             $table->string('gender')->nullable();
             $table->string('country');
             $table->string('city');

@@ -10,7 +10,9 @@
             <div v-else class="h-14 w-14 rounded-full bg-white/20 flex items-center justify-center text-white text-sm">No</div>
             <div class="text-white">
               <div class="text-xl font-semibold leading-tight">{{ psychologist.first_name }} {{ psychologist.last_name }}</div>
-              <div class="text-sm opacity-90">Psychologist #{{ psychologist.id }} • {{ psychologist.specialization || '—' }}</div>
+              <div class="text-sm opacity-90">
+                Psychologist #{{ psychologist.id }} • {{ (psychologist.specialisations || []).map(s => s.name).join(', ') || '—' }}
+              </div>
               <div class="mt-2 inline-flex items-center gap-2">
                 <span :class="psychologist.is_approved ? 'bg-white text-[rgb(89,151,172)]' : 'bg-white/20 text-white'" class="px-3 py-1 rounded-full text-xs font-semibold">
                   {{ psychologist.is_approved ? 'Approved' : 'Pending' }}
@@ -41,6 +43,15 @@
                   <span class="text-xs font-semibold text-[rgb(141,61,79)]">View</span>
                 </a>
                 <div v-else class="rounded-lg border border-dashed border-gray-200 px-3 py-2 text-sm text-gray-500">Diploma not available</div>
+
+                <a v-if="psychologist.cv" :href="psychologist.cv" target="_blank" rel="noopener" class="flex items-center justify-between gap-3 rounded-lg border border-gray-200 px-3 py-2 hover:bg-gray-50">
+                  <div class="min-w-0">
+                    <div class="text-sm font-medium text-gray-900">CV (PDF)</div>
+                    <div class="text-xs text-gray-500 truncate">Open document</div>
+                  </div>
+                  <span class="text-xs font-semibold text-[rgb(141,61,79)]">View</span>
+                </a>
+                <div v-else class="rounded-lg border border-dashed border-gray-200 px-3 py-2 text-sm text-gray-500">CV not available</div>
 
                 <a v-if="psychologist.cin" :href="psychologist.cin" target="_blank" rel="noopener" class="flex items-center justify-between gap-3 rounded-lg border border-gray-200 px-3 py-2 hover:bg-gray-50">
                   <div class="min-w-0">
@@ -92,7 +103,7 @@
                   </div>
                   <div class="flex items-start justify-between gap-4">
                     <dt class="text-xs font-medium text-gray-500">Specialization</dt>
-                    <dd class="text-sm font-medium text-gray-900 text-right">{{ psychologist.specialization || '—' }}</dd>
+                    <dd class="text-sm font-medium text-gray-900 text-right">{{ (psychologist.specialisations || []).map(s => s.name).join(', ') || '—' }}</dd>
                   </div>
                   <div class="flex items-start justify-between gap-4">
                     <dt class="text-xs font-medium text-gray-500">Gender</dt>

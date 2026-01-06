@@ -238,6 +238,12 @@ const menuGroups = [
         roles: ['ADMIN'],
         path: "/psychologist-profiles",
       },
+      {
+        name: "Specialisations",
+        icon: ListIcon,
+        roles: ['ADMIN'],
+        path: "/specialisations",
+      },
       // Psychologist: self profile entry
       {
         name: "My Profile",

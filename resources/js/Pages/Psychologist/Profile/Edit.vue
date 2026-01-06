@@ -20,9 +20,18 @@
               <InputError class="mt-2" :message="form.errors.last_name" />
             </div>
             <div>
-              <InputLabel value="Specialization" />
-              <TextInput class="mt-1 block w-full" v-model="form.specialization" />
-              <InputError class="mt-2" :message="form.errors.specialization" />
+              <InputLabel value="Specialisations" />
+              <div class="mt-1">
+                <Multiselect
+                  v-model="form.specialisation_ids"
+                  :options="specialisationOptions"
+                  mode="tags"
+                  :close-on-select="false"
+                  :searchable="true"
+                  placeholder="Select one or more"
+                />
+              </div>
+              <InputError class="mt-2" :message="form.errors.specialisation_ids" />
             </div>
             <div>
               <InputLabel value="Gender" />
@@ -103,7 +112,7 @@
             <InputError class="mt-2" :message="form.errors.bio" />
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <InputLabel value="Diploma (PDF)" />
               <input @change="onFileChange('diploma_file', $event)" type="file" accept="application/pdf" class="mt-1 block w-full" />
@@ -115,6 +124,12 @@
               <input @change="onFileChange('cin_file', $event)" type="file" accept="application/pdf" class="mt-1 block w-full" />
               <div v-if="form.cin && !files.cin_file" class="mt-2 text-sm text-gray-600">Current: <a :href="form.cin" target="_blank">View</a></div>
               <InputError class="mt-2" :message="form.errors.cin_file" />
+            </div>
+            <div>
+              <InputLabel value="CV (PDF)" />
+              <input @change="onFileChange('cv_file', $event)" type="file" accept="application/pdf" class="mt-1 block w-full" />
+              <div v-if="form.cv && !files.cv_file" class="mt-2 text-sm text-gray-600">Current: <a :href="form.cv" target="_blank">View</a></div>
+              <InputError class="mt-2" :message="form.errors.cv_file" />
             </div>
           </div>
 
@@ -161,8 +176,19 @@ import TextInput from '@/Components/TextInput.vue'
 import InputError from '@/Components/InputError.vue'
 import PrimaryButton from '@/Components/PrimaryButton.vue'
 import { getCountries, getCitiesByCountryName, splitInternationalPhoneNumber } from '@/utils/geoData'
+import Multiselect from '@vueform/multiselect'
 
-const props = defineProps({ profile: Object })
+const props = defineProps({
+  profile: Object,
+  specialisations: {
+    type: Array,
+    default: () => [],
+  },
+})
+
+const specialisationOptions = computed(() =>
+  (props.specialisations || []).map((s) => ({ value: s.id, label: s.name }))
+)
 
 // Format date for HTML date input (YYYY-MM-DD)
 function formatDateForInput(dateValue) {
@@ -176,16 +202,18 @@ const form = useForm({
   _method: 'PUT',
   first_name: props.profile?.first_name || '',
   last_name: props.profile?.last_name || '',
-  specialization: props.profile?.specialization || '',
+  specialisation_ids: (props.profile?.specialisations || []).map(s => s.id),
   bio: props.profile?.bio || '',
   price_per_session: props.profile?.price_per_session || 0,
   date_of_birth: formatDateForInput(props.profile?.date_of_birth),
   profile_image_url: props.profile?.profile_image_url || null,
   diploma: props.profile?.diploma || null,
   cin: props.profile?.cin || null,
+  cv: props.profile?.cv || null,
   profile_image: null,
   diploma_file: null,
   cin_file: null,
+  cv_file: null,
   gender: props.profile?.gender || '',
   country: props.profile?.country || '',
   city: props.profile?.city || '',
@@ -194,7 +222,7 @@ const form = useForm({
   country_code: props.profile?.country_code || '',
 })
 
-const files = ref({ profile_image: null, diploma_file: null, cin_file: null })
+const files = ref({ profile_image: null, diploma_file: null, cin_file: null, cv_file: null })
 const profilePreview = ref(form.profile_image_url)
 const profileInput = ref(null)
 

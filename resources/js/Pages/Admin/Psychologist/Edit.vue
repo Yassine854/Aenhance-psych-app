@@ -10,7 +10,9 @@
             <div v-else class="h-14 w-14 rounded-full bg-white/20 flex items-center justify-center text-white">No</div>
             <div class="text-white">
               <div class="text-xl font-semibold">{{ psychologist.first_name }} {{ psychologist.last_name }}</div>
-              <div class="text-sm opacity-90">Psychologist #{{ psychologist.id }} • {{ psychologist.specialization || '—' }}</div>
+              <div class="text-sm opacity-90">
+                Psychologist #{{ psychologist.id }} • {{ (psychologist.specialisations || []).map(s => s.name).join(', ') || '—' }}
+              </div>
             </div>
           </div>
           <button @click="$emit('close')" class="text-white/90 hover:text-white text-2xl leading-none">✕</button>
@@ -47,7 +49,7 @@
             </div>
           </div>
           
-          <!-- Row 1: First, Last, Specialization -->
+          <!-- Row 1: First, Last, Specialisations -->
           <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div>
               <label class="text-sm font-medium text-gray-700">First name <span class="text-red-500">*</span></label>
@@ -60,9 +62,18 @@
               <p v-if="form.errors.last_name" class="mt-1 text-sm text-red-600">{{ form.errors.last_name }}</p>
             </div>
             <div>
-              <label class="text-sm font-medium text-gray-700">Specialization <span class="text-red-500">*</span></label>
-              <input v-model="form.specialization" class="mt-1 block w-full rounded-md border-gray-300 focus:ring-2 focus:ring-[rgb(89,151,172)]" />
-              <p v-if="form.errors.specialization" class="mt-1 text-sm text-red-600">{{ form.errors.specialization }}</p>
+              <label class="text-sm font-medium text-gray-700">Specialisations <span class="text-red-500">*</span></label>
+              <div class="mt-1">
+                <Multiselect
+                  v-model="form.specialisation_ids"
+                  :options="specialisationOptions"
+                  mode="tags"
+                  :close-on-select="false"
+                  :searchable="true"
+                  placeholder="Select one or more"
+                />
+              </div>
+              <p v-if="form.errors.specialisation_ids" class="mt-1 text-sm text-red-600">{{ form.errors.specialisation_ids }}</p>
             </div>
           </div>
 
@@ -138,8 +149,8 @@
             </div>
           </div>
 
-          <!-- Uploads: CIN, Diploma, Profile image -->
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <!-- Uploads: CIN, Diploma, CV, Profile image -->
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
             <div>
               <label class="text-sm font-medium text-gray-700">CIN (PDF) <span class="text-red-500">*</span></label>
               <div class="mt-1 group relative flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 p-4 text-center cursor-pointer transition hover:bg-gray-100 hover:border-[rgb(89,151,172)]" @click="() => cinInput?.click()" @dragover.prevent @drop.prevent="onDrop('cin_file', $event)">
@@ -161,6 +172,17 @@
                 </div>
               </div>
               <p v-if="form.errors.diploma_file || form.errors.diploma" class="mt-1 text-sm text-red-600">{{ form.errors.diploma_file || form.errors.diploma }}</p>
+            </div>
+            <div>
+              <label class="text-sm font-medium text-gray-700">CV (PDF) <span class="text-red-500">*</span></label>
+              <div class="mt-1 group relative flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 p-4 text-center cursor-pointer transition hover:bg-gray-100 hover:border-[rgb(89,151,172)]" @click="() => cvInput?.click()" @dragover.prevent @drop.prevent="onDrop('cv_file', $event)">
+                <input ref="cvInput" type="file" accept="application/pdf" class="hidden" @change="onFileChange('cv_file', $event)" />
+                <div class="flex items-center gap-2 text-gray-600">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" viewBox="0 0 24 24" fill="currentColor"><path d="M6 2h9l5 5v13a2 2 0 01-2 2H6a2 2 0 01-2-2V4a2 2 0 012-2zm8 1.5V8h4.5L14 3.5z"/></svg>
+                  <span class="text-xs">{{ cvLabel }}</span>
+                </div>
+              </div>
+              <p v-if="form.errors.cv_file || form.errors.cv" class="mt-1 text-sm text-red-600">{{ form.errors.cv_file || form.errors.cv }}</p>
             </div>
             <div>
               <label class="text-sm font-medium text-gray-700">Profile image</label>
@@ -315,13 +337,22 @@ import { ref, computed, watch, nextTick } from 'vue'
 import { useForm } from '@inertiajs/vue3'
 import { Inertia } from '@inertiajs/inertia'
 import { getCountries, getCitiesByCountryName, splitInternationalPhoneNumber } from '@/utils/geoData'
+import Multiselect from '@vueform/multiselect'
 
 const props = defineProps({
   show: Boolean,
-  psychologist: Object
+  psychologist: Object,
+  specialisations: {
+    type: Array,
+    default: () => [],
+  },
 })
 
 const emit = defineEmits(['close', 'saved'])
+
+const specialisationOptions = computed(() =>
+  (props.specialisations || []).map((s) => ({ value: s.id, label: s.name }))
+)
 
 const section = ref('profile')
 const countriesList = ref(getCountries())
@@ -336,6 +367,7 @@ const accountForm = ref({ name: '', email: '', password: '' })
 
 const cinInput = ref(null)
 const diplomaInput = ref(null)
+const cvInput = ref(null)
 const profileInput = ref(null)
 
 const form = useForm({
@@ -343,7 +375,7 @@ const form = useForm({
   _method: 'PUT',
   first_name: '',
   last_name: '',
-  specialization: '',
+  specialisation_ids: [],
   price_per_session: 0,
   phone: '',
   country_code: '',
@@ -357,9 +389,11 @@ const form = useForm({
   profile_image_url: '',
   diploma: '',
   cin: '',
+  cv: '',
   profile_image: null,
   diploma_file: null,
   cin_file: null,
+  cv_file: null,
 })
 
 const cities = computed(() => {
@@ -381,6 +415,7 @@ const fileNameFromUrl = (url) => {
 
 const diplomaLabel = computed(() => form.diploma_file?.name || fileNameFromUrl(props.psychologist?.diploma || form.diploma) || 'Drag & drop or click')
 const cinLabel = computed(() => form.cin_file?.name || fileNameFromUrl(props.psychologist?.cin || form.cin) || 'Drag & drop or click')
+const cvLabel = computed(() => form.cv_file?.name || fileNameFromUrl(props.psychologist?.cv || form.cv) || 'Drag & drop or click')
 
 const daysOfWeek = [
   { value: 0, label: 'Sunday' },
@@ -556,7 +591,7 @@ watch(() => props.psychologist, async (p) => {
   
   form.first_name = p.first_name || ''
   form.last_name = p.last_name || ''
-  form.specialization = p.specialization || ''
+  form.specialisation_ids = (p.specialisations || []).map(s => s.id)
   form.price_per_session = p.price_per_session || 0
   form.phone = p.phone || ''
   form.country_code = p.country_code || ''
@@ -568,6 +603,7 @@ watch(() => props.psychologist, async (p) => {
   form.profile_image_url = p.profile_image_url || ''
   form.diploma = p.diploma || ''
   form.cin = p.cin || ''
+  form.cv = p.cv || ''
 
   availabilityByDay.value = parsedAvailabilitiesByDay(p.availabilities)
   clearAvailabilityErrors()
@@ -597,7 +633,7 @@ function onDrop(field, e) {
   const file = e?.dataTransfer?.files?.[0]
   if (!file) return
   if (field === 'profile_image' && !file.type.startsWith('image/')) return
-  if ((field === 'diploma_file' || field === 'cin_file') && file.type !== 'application/pdf') return
+  if ((field === 'diploma_file' || field === 'cin_file' || field === 'cv_file') && file.type !== 'application/pdf') return
   form[field] = file
 }
 
@@ -628,6 +664,12 @@ async function submitProfile() {
   
   saving.value = true
   try {
+    if (!Array.isArray(form.specialisation_ids) || form.specialisation_ids.length < 1) {
+      form.setError('specialisation_ids', 'Please select at least one specialisation')
+      generalError.value = 'Please select at least one specialisation.'
+      return
+    }
+
     // Availability is required: at least one slot across the week.
     if (!flattenedAvailabilities.value.length) {
       availabilityRequiredError.value = 'Please add at least one availability slot.'
@@ -654,7 +696,11 @@ async function submitProfile() {
     fd.append('_method', 'PUT')
     fd.append('first_name', form.first_name ?? '')
     fd.append('last_name', form.last_name ?? '')
-    fd.append('specialization', form.specialization ?? '')
+    ;(form.specialisation_ids || []).forEach((id) => {
+      if (id !== null && id !== undefined && String(id) !== '') {
+        fd.append('specialisation_ids[]', String(id))
+      }
+    })
     fd.append('price_per_session', String(form.price_per_session ?? 0))
     fd.append('phone', cleanPhone)
     fd.append('country_code', form.country_code ?? '')
@@ -668,9 +714,11 @@ async function submitProfile() {
     fd.append('profile_image_url', form.profile_image_url ?? '')
     fd.append('diploma', form.diploma ?? '')
     fd.append('cin', form.cin ?? '')
+    fd.append('cv', form.cv ?? '')
     if (form.profile_image) fd.append('profile_image', form.profile_image)
     if (form.diploma_file) fd.append('diploma_file', form.diploma_file)
     if (form.cin_file) fd.append('cin_file', form.cin_file)
+    if (form.cv_file) fd.append('cv_file', form.cv_file)
 
     fd.append('availabilities', JSON.stringify(flattenedAvailabilities.value))
 
