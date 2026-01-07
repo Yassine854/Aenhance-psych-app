@@ -58,14 +58,14 @@
             Account info
           </Link>
           <Link
-            href="/appointments"
+            :href="route('patient.appointments')"
             class="block w-full text-left px-4 py-2 hover:bg-gray-100 transition text-[13px]"
             @click="showPatientMenu = false"
           >
             Appointments
           </Link>
           <Link
-            href="/appointments"
+            :href="route('patient.appointments')"
             class="block w-full text-left px-4 py-2 hover:bg-gray-100 transition text-[13px]"
             @click="showPatientMenu = false"
           >

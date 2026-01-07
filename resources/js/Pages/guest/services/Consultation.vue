@@ -110,11 +110,27 @@ function languagesFor(profile) {
   return langs.map(languageLabel).filter(Boolean);
 }
 
+function specialisationsFor(profile) {
+  const items = Array.isArray(profile?.specialisations) ? profile.specialisations : [];
+  return items
+    .map((s) => (s?.name || '').trim())
+    .filter(Boolean);
+}
+
 function selectHref(profile) {
-  const target = props.canLogin ? route("login") : route("register");
+  const bookUrl = route('appointments.book', profile?.id);
+
+  const role = String(props.authUser?.role || '').toUpperCase();
+  if (props.authUser && role === 'PATIENT') {
+    return bookUrl;
+  }
+  if (props.authUser) {
+    return route('dashboard');
+  }
+
+  const target = props.canLogin ? route('login') : route('register');
   const params = new URLSearchParams();
-  params.set("redirect", route("services.consultation"));
-  params.set("psychologist_profile_id", String(profile?.id ?? ""));
+  params.set('redirect', bookUrl);
   return `${target}?${params.toString()}`;
 }
 </script>
@@ -150,22 +166,30 @@ function selectHref(profile) {
   <!-- Content -->
   <div class="bg-gray-50 py-12 md:py-16">
     <div class="container mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="flex items-start justify-between gap-4 mb-8">
-        <div>
-          <h2 class="text-2xl md:text-3xl font-bold text-[#5997ac]">
-            {{ t("services.consultation.title") }}
-          </h2>
-          <p class="mt-2 text-gray-700 max-w-3xl">
-            {{ t("services.consultation.subtitle") }}
-          </p>
-        </div>
-
+      <div class="mb-8">
         <Link
           :href="route('services.index')"
-          class="hidden sm:inline-flex items-center justify-center px-4 py-2 rounded-md bg-white border border-gray-200 text-gray-700 text-sm font-medium hover:bg-gray-100 transition"
+          class="inline-flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-900 transition"
         >
-          {{ t("services.consultation.back") }}
+          <span class="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white border border-gray-200">
+            <svg
+              class="w-4 h-4"
+              :class="locale === 'ar' ? 'rotate-180' : ''"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            </svg>
+          </span>
+          <span>{{ t("services.consultation.back") }}</span>
         </Link>
+
+        
+        <p class="mt-2 text-gray-700 max-w-3xl">
+          {{ t("services.consultation.subtitle") }}
+        </p>
       </div>
 
       <div v-if="!profiles.length" class="bg-white border border-gray-200 rounded-lg shadow-sm p-6 text-gray-700">
@@ -211,10 +235,18 @@ function selectHref(profile) {
           </div>
 
           <div class="p-5 flex-1 flex flex-col">
-            <p class="text-sm text-gray-700">
-              <span class="font-medium">{{ t("services.consultation.specialization") }}:</span>
-              <span>{{ (profile.specialisations || []).map(s => s.name).join(', ') || t("services.consultation.na") }}</span>
-            </p>
+            <div v-if="specialisationsFor(profile).length" class="flex flex-wrap gap-2">
+              <span
+                v-for="label in specialisationsFor(profile)"
+                :key="`spec-${profile.id}-${label}`"
+                class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-[#af5166]/10 text-[#af5166]"
+              >
+                {{ label }}
+              </span>
+            </div>
+            <div v-else class="text-xs text-gray-500">
+              {{ t("services.consultation.na") }}
+            </div>
 
             <div v-if="languagesFor(profile).length" class="mt-3 flex flex-wrap gap-2">
               <span
@@ -253,15 +285,6 @@ function selectHref(profile) {
             </Link>
           </div>
         </div>
-      </div>
-
-      <div class="sm:hidden mt-8">
-        <Link
-          :href="route('services.index')"
-          class="inline-flex items-center justify-center px-4 py-2 rounded-md bg-white border border-gray-200 text-gray-700 text-sm font-medium hover:bg-gray-100 transition"
-        >
-          {{ t("services.consultation.back") }}
-        </Link>
       </div>
     </div>
   </div>

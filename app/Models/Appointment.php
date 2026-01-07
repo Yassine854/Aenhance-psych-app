@@ -7,11 +7,19 @@ use Illuminate\Database\Eloquent\Model;
 
 class Appointment extends Model
 {
+    protected $casts = [
+        'scheduled_start' => 'datetime',
+        'scheduled_end' => 'datetime',
+    ];
+
     protected $fillable = [
         'patient_id',
         'psychologist_id',
-        'appointment_date',
+        'scheduled_start',
+        'scheduled_end',
         'status',
+        'price',
+        'currency',
     ];
 
     public function patient()

@@ -155,10 +155,18 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/patient-profiles/{patient_profile}', [PatientProfileController::class, 'destroy'])->name('patient-profiles.destroy');
 
     // Appointment routes (patient + psychologist + admin)
-    Route::get('/appointments', [AppointmentController::class, 'index']);
-    Route::post('/appointments', [AppointmentController::class, 'store']);
-    Route::patch('/appointments/{appointment}', [AppointmentController::class, 'update']);
-    Route::delete('/appointments/{appointment}', [AppointmentController::class, 'destroy']);
+    Route::get('/appointments', [AppointmentController::class, 'index'])->name('appointments.index');
+    Route::post('/appointments', [AppointmentController::class, 'store'])->name('appointments.store');
+    Route::patch('/appointments/{appointment}', [AppointmentController::class, 'update'])->name('appointments.update');
+    Route::delete('/appointments/{appointment}', [AppointmentController::class, 'destroy'])->name('appointments.destroy');
+
+    // Patient appointments UI
+    Route::get('/patient/appointments', [AppointmentController::class, 'patientIndex'])
+        ->name('patient.appointments');
+
+    // Patient booking flow
+    Route::get('/appointments/book/{psychologist_profile}', [AppointmentController::class, 'book'])
+        ->name('appointments.book');
 
     // Psychologist self profile (for logged-in psychologist)
     Route::get('/psychologist/profile', [PsychologistProfileController::class, 'editSelf'])->name('psychologist.profile.edit');

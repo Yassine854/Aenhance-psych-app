@@ -17,8 +17,13 @@ class AuthenticatedSessionController extends Controller
     /**
      * Display the login view.
      */
-    public function create(): Response
+    public function create(Request $request): Response
     {
+        $redirect = $request->query('redirect');
+        if (is_string($redirect) && $redirect !== '') {
+            $request->session()->put('url.intended', $redirect);
+        }
+
         return Inertia::render('Auth/Login', [
             'canResetPassword' => Route::has('password.request'),
             'status' => session('status'),
@@ -36,7 +41,7 @@ class AuthenticatedSessionController extends Controller
 
         $user = Auth::user();
         if ($user && method_exists($user, 'isPatient') && $user->isPatient()) {
-            return redirect('/');
+            return redirect()->intended('/');
         }
 
         return redirect()->intended(RouteServiceProvider::HOME);

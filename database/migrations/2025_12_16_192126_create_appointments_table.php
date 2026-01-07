@@ -19,18 +19,13 @@ return new class extends Migration
             $table->dateTime('scheduled_start');
             $table->dateTime('scheduled_end');
 
-            $table->timestamp('actual_start')->nullable();
-            $table->timestamp('actual_end')->nullable();
 
             $table->enum('status', [
                 'pending', 'confirmed', 'completed', 'cancelled', 'no_show'
             ])->default('pending');
 
             $table->decimal('price', 8, 2);
-            $table->string('currency', 10)->default('USD');
-
-            $table->enum('payment_status', ['unpaid', 'paid', 'refunded'])->default('unpaid');
-
+            $table->string('currency', 10)->default('TND');
             $table->timestamps();
         });
     }
