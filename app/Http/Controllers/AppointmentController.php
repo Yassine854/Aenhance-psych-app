@@ -3,11 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\Appointment;
+use App\Models\Payment;
 use App\Models\PsychologistProfile;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -276,6 +278,7 @@ class AppointmentController extends Controller
 
         $validated = $request->validate([
             'status' => 'required|in:pending,confirmed,completed,cancelled,no_show',
+            'cancellation_reason' => ['nullable', 'string', 'max:255'],
         ]);
 
         $requestedStatus = (string) $validated['status'];
@@ -294,14 +297,54 @@ class AppointmentController extends Controller
                 ]);
             }
 
-            $appointment->update(['status' => 'confirmed']);
+            DB::transaction(function () use ($appointment) {
+                $appointment->update(['status' => 'confirmed']);
 
-            // Inertia-friendly response.
-            return redirect()->back()->with('status', 'Appointment confirmed successfully.');
+                // Create (or update) a payment record.
+                // For now: skip payment gateway and mark as paid immediately.
+                $payment = Payment::query()
+                    ->where('appointment_id', $appointment->id)
+                    ->latest('id')
+                    ->first();
+
+                $payload = [
+                    'appointment_id' => $appointment->id,
+                    'amount' => $appointment->price,
+                    'currency' => (string) ($appointment->currency ?: 'TND'),
+                    'provider' => 'manual',
+                    'status' => 'paid',
+                    'paid_at' => now(),
+                ];
+
+                if ($payment) {
+                    $payment->update($payload);
+                } else {
+                    Payment::create($payload);
+                }
+            });
+
+            return redirect()->back()->with('status', 'Payment successful. Appointment confirmed.');
         }
 
         // Psychologist/Admin can update statuses (existing behavior).
-        $appointment->update(['status' => $requestedStatus]);
+        if ($requestedStatus === 'cancelled') {
+            $canceledBy = null;
+            if (method_exists($user, 'isAdmin') && $user->isAdmin()) {
+                $canceledBy = 'admin';
+            } elseif (method_exists($user, 'isPsychologist') && $user->isPsychologist()) {
+                $canceledBy = 'psychologist';
+            }
+
+            $appointment->update([
+                'status' => 'cancelled',
+                'canceled_by' => $canceledBy,
+                'canceled_by_user_id' => $user->id,
+                'cancellation_reason' => $validated['cancellation_reason'] ?? null,
+                'canceled_at' => now(),
+            ]);
+        } else {
+            $appointment->update(['status' => $requestedStatus]);
+        }
 
         if ($request->wantsJson()) {
             return $appointment;
@@ -318,6 +361,10 @@ class AppointmentController extends Controller
             abort(403);
         }
 
+        $validated = $request->validate([
+            'cancellation_reason' => ['nullable', 'string', 'max:255'],
+        ]);
+
         // Patient can only cancel their OWN pending appointment.
         if (method_exists($user, 'isPatient') && $user->isPatient()) {
             if ((int) $appointment->patient_id !== (int) $user->id) {
@@ -330,7 +377,32 @@ class AppointmentController extends Controller
             }
         }
 
-        $appointment->update(['status' => 'cancelled']);
+        $canceledBy = null;
+        if (method_exists($user, 'isPatient') && $user->isPatient()) {
+            $canceledBy = 'patient';
+        } elseif (method_exists($user, 'isAdmin') && $user->isAdmin()) {
+            $canceledBy = 'admin';
+        } elseif (method_exists($user, 'isPsychologist') && $user->isPsychologist()) {
+            $canceledBy = 'psychologist';
+        }
+
+        $reason = $validated['cancellation_reason'] ?? null;
+        if (! $reason) {
+            $reason = match ($canceledBy) {
+                'patient' => 'Cancelled by patient',
+                'psychologist' => 'Cancelled by psychologist',
+                'admin' => 'Cancelled by admin',
+                default => 'Cancelled',
+            };
+        }
+
+        $appointment->update([
+            'status' => 'cancelled',
+            'canceled_by' => $canceledBy,
+            'canceled_by_user_id' => $user->id,
+            'cancellation_reason' => $reason,
+            'canceled_at' => now(),
+        ]);
 
         if ($request->wantsJson()) {
             return response()->json(['message' => 'Appointment cancelled']);

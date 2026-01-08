@@ -10,6 +10,7 @@ class Appointment extends Model
     protected $casts = [
         'scheduled_start' => 'datetime',
         'scheduled_end' => 'datetime',
+        'canceled_at' => 'datetime',
     ];
 
     protected $fillable = [
@@ -18,6 +19,10 @@ class Appointment extends Model
         'scheduled_start',
         'scheduled_end',
         'status',
+        'canceled_by',
+        'canceled_by_user_id',
+        'cancellation_reason',
+        'canceled_at',
         'price',
         'currency',
     ];
@@ -30,6 +35,11 @@ class Appointment extends Model
     public function psychologist()
     {
         return $this->belongsTo(User::class, 'psychologist_id');
+    }
+
+    public function payments()
+    {
+        return $this->hasMany(Payment::class);
     }
 }
 

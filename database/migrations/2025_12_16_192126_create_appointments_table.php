@@ -11,19 +11,25 @@ return new class extends Migration
         Schema::create('appointments', function (Blueprint $table) {
             $table->id();
             $table->foreignId('patient_id')
-                  ->constrained('users')
-                  ->cascadeOnDelete();
+                ->nullable()
+                ->constrained('users')
+                ->nullOnDelete();
             $table->foreignId('psychologist_id')
-                  ->constrained('users')
-                  ->cascadeOnDelete();
+                ->nullable()
+                ->constrained('users')
+                ->nullOnDelete();
             $table->dateTime('scheduled_start');
             $table->dateTime('scheduled_end');
-
 
             $table->enum('status', [
                 'pending', 'confirmed', 'completed', 'cancelled', 'no_show'
             ])->default('pending');
 
+            $table->enum('canceled_by', ['patient', 'psychologist', 'admin'])->nullable();
+            $table->foreignId('canceled_by_user_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->string('cancellation_reason')->nullable();
+            $table->dateTime('canceled_at')->nullable();
+           
             $table->decimal('price', 8, 2);
             $table->string('currency', 10)->default('TND');
             $table->timestamps();

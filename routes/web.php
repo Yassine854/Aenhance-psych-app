@@ -4,6 +4,8 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\PsychologistController;
 use App\Http\Controllers\AppointmentController;
+use App\Http\Controllers\Psychologist\PsychologistAppointmentController;
+use App\Http\Controllers\Admin\AdminAppointmentController;
 use App\Http\Controllers\PsychologistProfileController;
 use App\Http\Controllers\PatientProfileController;
 use App\Http\Controllers\Patient\PatientSelfProfileController;
@@ -125,6 +127,10 @@ Route::middleware(['auth'])->group(function () {
     Route::patch('/users/{user}/deactivate', [UserController::class, 'deactivate']);
     Route::patch('/users/{user}/activate', [UserController::class, 'activate']);
 
+    // Appointments (Admin)
+    Route::get('/admin/appointments', [AdminAppointmentController::class, 'index'])->name('admin.appointments.index');
+    Route::patch('/admin/appointments/{appointment}', [AdminAppointmentController::class, 'update'])->name('admin.appointments.update');
+
     // Specialisations (Admin)
     Route::get('/specialisations', [SpecialisationController::class, 'index'])->name('specialisations.index');
     Route::post('/specialisations', [SpecialisationController::class, 'store'])->name('specialisations.store');
@@ -132,7 +138,10 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/specialisations/{specialisation}', [SpecialisationController::class, 'destroy'])->name('specialisations.destroy');
 
     // Psychologist routes
-    Route::get('/psychologist/appointments', [PsychologistController::class, 'appointments']);
+    Route::get('/psychologist/appointments', [PsychologistAppointmentController::class, 'index'])
+        ->name('psychologist.appointments.index');
+    Route::patch('/psychologist/appointments/{appointment}/cancel', [PsychologistAppointmentController::class, 'cancel'])
+        ->name('psychologist.appointments.cancel');
     Route::get('/psychologist/patients', [PsychologistController::class, 'patients']);
 
     // Psychologist profile CRUD (explicit routes)

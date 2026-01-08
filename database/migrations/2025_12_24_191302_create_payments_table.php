@@ -16,11 +16,15 @@ return new class extends Migration
             $table->foreignId('appointment_id')->constrained()->cascadeOnDelete();
             $table->decimal('amount', 8, 2);
             $table->string('currency', 10);
+            $table->string('transaction_id')->nullable()->unique();
             $table->string('provider'); // stripe, paypal
-            $table->enum('payment_status', ['pending', 'paid', 'failed', 'refunded']);
-            $table->string('transaction_id')->nullable();
+            $table->enum('status', ['pending', 'paid', 'failed', 'refunded'])->default('pending');
+            $table->enum('payment_method', ['card', 'wallet', 'bank_transfer'])->nullable();
+            $table->text('failure_reason')->nullable();
+            $table->text('refund_reason')->nullable();
+            $table->dateTime('paid_at')->nullable();
             $table->timestamps();
-});
+        });
     }
 
     /**
