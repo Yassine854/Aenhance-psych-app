@@ -142,6 +142,12 @@ Route::middleware(['auth'])->group(function () {
         ->name('psychologist.appointments.index');
     Route::patch('/psychologist/appointments/{appointment}/cancel', [PsychologistAppointmentController::class, 'cancel'])
         ->name('psychologist.appointments.cancel');
+
+    // Video call (Jitsi)
+    Route::post('/psychologist/appointments/{appointment}/video-call/start', [AppointmentController::class, 'startVideoCall'])
+        ->name('psychologist.appointments.video_call.start');
+    Route::get('/appointments/{appointment}/video-call', [AppointmentController::class, 'showVideoCall'])
+        ->name('appointments.video_call.show');
     Route::get('/psychologist/patients', [PsychologistController::class, 'patients']);
 
     // Psychologist profile CRUD (explicit routes)

@@ -7,6 +7,11 @@ use Illuminate\Database\Eloquent\Model;
 
 class Appointment extends Model
 {
+    public function session()
+    {
+        return $this->hasOne(AppointmentSession::class);
+    }
+
     protected $casts = [
         'scheduled_start' => 'datetime',
         'scheduled_end' => 'datetime',

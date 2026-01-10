@@ -156,6 +156,11 @@ function canCancel(a) {
   return String(a?.status || '').toLowerCase() === 'pending'
 }
 
+function canJoinCall(a) {
+  const s = String(a?.status || '').toLowerCase()
+  return s === 'confirmed' && !!a?.session_started_at
+}
+
 async function cancelAppointment(a) {
   if (!a?.id || !canCancel(a)) return
 
@@ -336,6 +341,14 @@ async function cancelAppointment(a) {
                 </div>
 
                 <div class="flex items-center gap-2 md:justify-end">
+                  <Link
+                    v-if="canJoinCall(a)"
+                    :href="route('appointments.video_call.show', a.id)"
+                    class="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-white border border-gray-200 text-gray-700 text-sm font-semibold hover:bg-gray-50 transition focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-300"
+                  >
+                    Join call
+                  </Link>
+
                   <button
                     v-if="canPay(a)"
                     type="button"

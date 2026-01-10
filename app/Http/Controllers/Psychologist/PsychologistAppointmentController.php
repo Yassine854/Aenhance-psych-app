@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Appointment;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -19,14 +20,17 @@ class PsychologistAppointmentController extends Controller
             return redirect()->route('dashboard');
         }
 
+        /** @var LengthAwarePaginator $appointments */
         $appointments = Appointment::query()
             ->where('psychologist_id', $user->id)
             ->with([
                 'patient:id,name,role',
+                'session:id,appointment_id,started_at',
             ])
             ->orderByDesc('scheduled_start')
-            ->paginate(15)
-            ->withQueryString();
+            ->paginate(15);
+
+        $appointments->withQueryString();
 
         $payload = $appointments->through(function (Appointment $a) {
             $start = $a->scheduled_start;
@@ -49,6 +53,7 @@ class PsychologistAppointmentController extends Controller
                 'canceled_at' => optional($a->canceled_at)->toISOString() ?? ($a->canceled_at ? (string) $a->canceled_at : null),
 
                 'can_cancel' => $canCancel,
+                'session_started_at' => optional($a->session?->started_at)->toISOString() ?? ($a->session?->started_at ? (string) $a->session->started_at : null),
             ];
         });
 

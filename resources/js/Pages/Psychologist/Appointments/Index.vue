@@ -162,6 +162,26 @@
               <td class="px-4 py-3 text-right">
                 <div class="flex flex-col items-end gap-2">
                   <div class="inline-flex flex-wrap items-center justify-end gap-2">
+                    <Link
+                      v-if="canJoinRoom(a)"
+                      :href="route('appointments.video_call.show', a.id)"
+                      class="inline-flex items-center justify-center h-8 px-2.5 rounded-lg border text-xs font-medium border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
+                      title="Join video call"
+                    >
+                      Join room
+                    </Link>
+
+                    <button
+                      v-else-if="canStartCall(a)"
+                      type="button"
+                      @click="startCall(a)"
+                      :disabled="startingCallId === a.id"
+                      class="inline-flex items-center justify-center h-8 px-2.5 rounded-lg border text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100"
+                      title="Start video call"
+                    >
+                      {{ startingCallId === a.id ? 'Starting…' : 'Start call' }}
+                    </button>
+
                     <button
                       v-if="canCancelAppointment(a)"
                       type="button"
@@ -399,6 +419,7 @@ const sorted = computed(() => {
 })
 
 const savingId = ref(null)
+const startingCallId = ref(null)
 
 function formatDate(value) {
   if (!value) return '—'
@@ -444,6 +465,33 @@ function canCancelAppointment(a) {
   if (!['pending', 'confirmed'].includes(status)) return false
   if (a?.can_cancel === true) return true
   return false
+}
+
+function canJoinRoom(a) {
+  const status = normalizeStatus(a?.status)
+  return status === 'confirmed' && !!a?.session_started_at
+}
+
+function canStartCall(a) {
+  const status = normalizeStatus(a?.status)
+  return status === 'confirmed' && !a?.session_started_at
+}
+
+function startCall(a) {
+  if (!a?.id || !canStartCall(a)) return
+  if (startingCallId.value) return
+
+  startingCallId.value = a.id
+  router.post(
+    route('psychologist.appointments.video_call.start', a.id),
+    {},
+    {
+      preserveScroll: true,
+      onFinish: () => {
+        startingCallId.value = null
+      },
+    }
+  )
 }
 
 function showCancelDisabled(a) {

@@ -3,14 +3,17 @@
 namespace App\Http\Controllers;
 
 use App\Models\Appointment;
+use App\Models\AppointmentSession;
 use App\Models\Payment;
 use App\Models\PsychologistProfile;
+use App\Services\JaaSJitsiJwt;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -166,6 +169,7 @@ class AppointmentController extends Controller
 
         $appointments = Appointment::query()
             ->where('patient_id', $user->id)
+            ->with(['session:id,appointment_id,started_at'])
             ->orderBy('scheduled_start')
             ->get([
                 'id',
@@ -203,6 +207,7 @@ class AppointmentController extends Controller
                 'status' => (string) $a->status,
                 'price' => $a->price,
                 'currency' => (string) ($a->currency ?: 'TND'),
+                'session_started_at' => optional($a->session?->started_at)->toISOString() ?? ($a->session?->started_at ? (string) $a->session->started_at : null),
             ];
         })->values();
 
@@ -299,6 +304,15 @@ class AppointmentController extends Controller
 
             DB::transaction(function () use ($appointment) {
                 $appointment->update(['status' => 'confirmed']);
+
+                // Ensure the related session exists (1:1 per appointment).
+                AppointmentSession::query()->firstOrCreate(
+                    ['appointment_id' => $appointment->id],
+                    [
+                        'room_id' => (string) Str::uuid(),
+                        'status' => 'active',
+                    ]
+                );
 
                 // Create (or update) a payment record.
                 // For now: skip payment gateway and mark as paid immediately.
@@ -409,5 +423,94 @@ class AppointmentController extends Controller
         }
 
         return redirect()->back()->with('status', 'Appointment cancelled successfully.');
+    }
+
+    /**
+     * Psychologist starts the video call.
+     * This marks the appointment session as started (patient can join after this).
+     */
+    public function startVideoCall(Request $request, Appointment $appointment)
+    {
+        $user = $request->user();
+        if (! $user || ! method_exists($user, 'isPsychologist') || ! $user->isPsychologist()) {
+            abort(403);
+        }
+
+        if ((int) $appointment->psychologist_id !== (int) $user->id) {
+            abort(403);
+        }
+
+        if (strtolower((string) $appointment->status) !== 'confirmed') {
+            return redirect()->back()->with('error', 'Video call can only be started for confirmed appointments.');
+        }
+
+        DB::transaction(function () use ($appointment) {
+            $session = AppointmentSession::query()->firstOrCreate(
+                ['appointment_id' => $appointment->id],
+                [
+                    'room_id' => (string) Str::uuid(),
+                    'status' => 'active',
+                ]
+            );
+
+            if (! $session->started_at) {
+                $session->update(['started_at' => now()]);
+            }
+        });
+
+        return redirect()->route('appointments.video_call.show', $appointment);
+    }
+
+    /**
+     * Embedded Jitsi video call page.
+     * Patient can join only after psychologist starts (started_at is set).
+     */
+    public function showVideoCall(Request $request, Appointment $appointment): Response|RedirectResponse
+    {
+        $user = $request->user();
+        if (! $user) {
+            return redirect()->route('dashboard');
+        }
+
+        $isParticipant = (
+            (int) $appointment->patient_id === (int) $user->id ||
+            (int) $appointment->psychologist_id === (int) $user->id
+        );
+
+        $isAdmin = method_exists($user, 'isAdmin') && $user->isAdmin();
+
+        if (! $isParticipant && ! $isAdmin) {
+            abort(403);
+        }
+
+        $session = AppointmentSession::query()->where('appointment_id', $appointment->id)->first();
+
+        if (! $session || ! $session->started_at) {
+            return redirect()->back()->with('error', 'Video call has not been started yet.');
+        }
+
+        $signalingUrl = (string) (config('app.signaling_url') ?: env('VITE_SIGNALING_URL', 'ws://localhost:3001'));
+
+        $payload = [
+            'appointmentId' => $appointment->id,
+            'roomId' => (string) $session->room_id,
+            'displayName' => (string) ($user->name ?? 'User'),
+            'signalingUrl' => $signalingUrl,
+        ];
+
+        if (method_exists($user, 'isPsychologist') && $user->isPsychologist()) {
+            $payload['role'] = 'psychologist';
+
+            return Inertia::render('Psychologist/Appointments/VideoCall', $payload);
+        }
+
+        $payload['role'] = 'patient';
+
+        return Inertia::render('Patient/Appointments/VideoCall', array_merge($payload, [
+            'canLogin' => Route::has('login'),
+            'canRegister' => Route::has('register'),
+            'authUser' => $user,
+            'status' => session('status'),
+        ]));
     }
 }
