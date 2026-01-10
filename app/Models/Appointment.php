@@ -28,6 +28,8 @@ class Appointment extends Model
         'canceled_by_user_id',
         'cancellation_reason',
         'canceled_at',
+        'no_show_by',
+        'no_show_user_id',
         'price',
         'currency',
     ];

@@ -34,16 +34,20 @@ function cleanup(ws) {
   if (!room) return
 
   const role = ws._role
+  const name = ws._name
+  const media = ws._media
   if (role && room.roles.get(role) === ws) {
     room.roles.delete(role)
   }
 
   room.peers.delete(ws)
   if (room.peers.size === 0) rooms.delete(roomId)
-  else broadcast(roomId, ws, { type: 'peer-left', role })
+  else broadcast(roomId, ws, { type: 'peer-left', role, name, media })
 
   ws._roomId = undefined
   ws._role = undefined
+  ws._name = undefined
+  ws._media = undefined
 }
 
 wss.on('error', (err) => {
@@ -58,6 +62,8 @@ wss.on('listening', () => {
 wss.on('connection', (ws) => {
   ws._roomId = undefined
   ws._role = undefined
+  ws._name = undefined
+  ws._media = { audioEnabled: true, videoEnabled: true }
 
   ws.on('message', (raw) => {
     let msg
@@ -79,12 +85,15 @@ wss.on('connection', (ws) => {
       if (!roomId) return safeSend(ws, { type: 'error', message: 'Missing roomId' })
 
       const role = String(msg.role || '').trim() || undefined
+      const name = String(msg.name || '').trim() || undefined
 
       // One room per socket.
       cleanup(ws)
 
       ws._roomId = roomId
       ws._role = role
+      ws._name = name
+      ws._media = { audioEnabled: true, videoEnabled: true }
 
       if (!rooms.has(roomId)) rooms.set(roomId, { peers: new Set(), roles: new Map() })
       const room = rooms.get(roomId)
@@ -106,8 +115,20 @@ wss.on('connection', (ws) => {
 
       room.peers.add(ws)
 
-      safeSend(ws, { type: 'joined', roomId, peerCount: room.peers.size })
-      broadcast(roomId, ws, { type: 'peer-joined', role })
+      const peers = []
+      for (const peer of room.peers) {
+        if (peer === ws) continue
+        peers.push({ role: peer._role, name: peer._name, media: peer._media })
+      }
+
+      safeSend(ws, {
+        type: 'joined',
+        roomId,
+        peerCount: room.peers.size,
+        you: { role: ws._role, name: ws._name },
+        peers,
+      })
+      broadcast(roomId, ws, { type: 'peer-joined', role, name, media: ws._media })
       return
     }
 
@@ -115,8 +136,33 @@ wss.on('connection', (ws) => {
     if (!roomId) return safeSend(ws, { type: 'error', message: 'Not joined' })
 
     // Forward signaling messages to the other peer(s) in the room.
+    // Include sender identity so the client can display names reliably.
     if (msg.type === 'offer' || msg.type === 'answer' || msg.type === 'ice') {
-      return broadcast(roomId, ws, msg)
+      return broadcast(roomId, ws, {
+        ...msg,
+        from: { role: ws._role, name: ws._name, media: ws._media },
+      })
+    }
+
+    if (msg.type === 'media') {
+      const audioEnabled = msg.audioEnabled === false ? false : true
+      const videoEnabled = msg.videoEnabled === false ? false : true
+      ws._media = { audioEnabled, videoEnabled }
+      return broadcast(roomId, ws, {
+        type: 'media',
+        role: ws._role,
+        name: ws._name,
+        media: ws._media,
+        from: { role: ws._role, name: ws._name, media: ws._media },
+      })
+    }
+
+    if (msg.type === 'session-ended') {
+      return broadcast(roomId, ws, {
+        type: 'session-ended',
+        endedAt: msg.endedAt || null,
+        from: { role: ws._role, name: ws._name, media: ws._media },
+      })
     }
   })
 

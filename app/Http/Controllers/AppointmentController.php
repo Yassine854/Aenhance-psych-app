@@ -169,7 +169,7 @@ class AppointmentController extends Controller
 
         $appointments = Appointment::query()
             ->where('patient_id', $user->id)
-            ->with(['session:id,appointment_id,started_at'])
+            ->with(['session:id,appointment_id,room_id,status,started_at'])
             ->orderBy('scheduled_start')
             ->get([
                 'id',
@@ -207,6 +207,9 @@ class AppointmentController extends Controller
                 'status' => (string) $a->status,
                 'price' => $a->price,
                 'currency' => (string) ($a->currency ?: 'TND'),
+                // A call "exists" once a session room_id exists. started_at is set only when both participants join.
+                'session_room_id' => (string) ($a->session?->room_id ?: ''),
+                'session_status' => (string) ($a->session?->status ?: ''),
                 'session_started_at' => optional($a->session?->started_at)->toISOString() ?? ($a->session?->started_at ? (string) $a->session->started_at : null),
             ];
         })->values();
@@ -427,7 +430,8 @@ class AppointmentController extends Controller
 
     /**
      * Psychologist starts the video call.
-     * This marks the appointment session as started (patient can join after this).
+     * This ensures the session exists and redirects to the call page.
+     * Session "started_at" is now set when BOTH participants actually join the room.
      */
     public function startVideoCall(Request $request, Appointment $appointment)
     {
@@ -452,18 +456,14 @@ class AppointmentController extends Controller
                     'status' => 'active',
                 ]
             );
-
-            if (! $session->started_at) {
-                $session->update(['started_at' => now()]);
-            }
         });
 
         return redirect()->route('appointments.video_call.show', $appointment);
     }
 
     /**
-     * Embedded Jitsi video call page.
-     * Patient can join only after psychologist starts (started_at is set).
+     * Video call page.
+     * Both participants can join; the session starts (started_at) when both join the room.
      */
     public function showVideoCall(Request $request, Appointment $appointment): Response|RedirectResponse
     {
@@ -483,11 +483,17 @@ class AppointmentController extends Controller
             abort(403);
         }
 
-        $session = AppointmentSession::query()->where('appointment_id', $appointment->id)->first();
-
-        if (! $session || ! $session->started_at) {
-            return redirect()->back()->with('error', 'Video call has not been started yet.');
+        if (strtolower((string) $appointment->status) !== 'confirmed') {
+            return redirect()->back()->with('error', 'Video call can only be joined for confirmed appointments.');
         }
+
+        $session = AppointmentSession::query()->firstOrCreate(
+            ['appointment_id' => $appointment->id],
+            [
+                'room_id' => (string) \Illuminate\Support\Str::uuid(),
+                'status' => 'active',
+            ]
+        );
 
         $signalingUrl = (string) (config('app.signaling_url') ?: env('VITE_SIGNALING_URL', 'ws://localhost:3001'));
 

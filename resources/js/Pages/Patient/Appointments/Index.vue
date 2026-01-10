@@ -158,7 +158,7 @@ function canCancel(a) {
 
 function canJoinCall(a) {
   const s = String(a?.status || '').toLowerCase()
-  return s === 'confirmed' && !!a?.session_started_at
+  return s === 'confirmed' && !!a?.session_room_id
 }
 
 async function cancelAppointment(a) {

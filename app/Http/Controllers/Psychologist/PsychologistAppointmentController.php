@@ -25,7 +25,7 @@ class PsychologistAppointmentController extends Controller
             ->where('psychologist_id', $user->id)
             ->with([
                 'patient:id,name,role',
-                'session:id,appointment_id,started_at',
+                'session:id,appointment_id,room_id,status,started_at',
             ])
             ->orderByDesc('scheduled_start')
             ->paginate(15);
@@ -53,6 +53,8 @@ class PsychologistAppointmentController extends Controller
                 'canceled_at' => optional($a->canceled_at)->toISOString() ?? ($a->canceled_at ? (string) $a->canceled_at : null),
 
                 'can_cancel' => $canCancel,
+                'session_room_id' => (string) ($a->session?->room_id ?: ''),
+                'session_status' => (string) ($a->session?->status ?: ''),
                 'session_started_at' => optional($a->session?->started_at)->toISOString() ?? ($a->session?->started_at ? (string) $a->session->started_at : null),
             ];
         });

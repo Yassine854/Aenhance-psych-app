@@ -9,6 +9,13 @@ window.axios = axios;
 
 window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 
+// Also send the CSRF token from the meta tag as a header.
+// This makes POST/PATCH/DELETE requests work even if the XSRF cookie is missing.
+const csrfToken = document.head.querySelector('meta[name="csrf-token"]');
+if (csrfToken) {
+	window.axios.defaults.headers.common['X-CSRF-TOKEN'] = csrfToken.getAttribute('content');
+}
+
 // Ensure CSRF/XSRF cookies are included and used consistently.
 window.axios.defaults.withCredentials = true;
 window.axios.defaults.xsrfCookieName = 'XSRF-TOKEN';

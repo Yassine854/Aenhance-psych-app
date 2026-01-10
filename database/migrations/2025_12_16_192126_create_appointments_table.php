@@ -30,6 +30,9 @@ return new class extends Migration
             $table->string('cancellation_reason')->nullable();
             $table->dateTime('canceled_at')->nullable();
            
+            $table->enum('no_show_by', ['patient', 'psychologist'])->nullable();
+            $table->foreignId('no_show_user_id')->nullable()->constrained('users')->nullOnDelete();
+
             $table->decimal('price', 8, 2);
             $table->string('currency', 10)->default('TND');
             $table->timestamps();

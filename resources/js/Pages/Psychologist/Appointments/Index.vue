@@ -469,12 +469,12 @@ function canCancelAppointment(a) {
 
 function canJoinRoom(a) {
   const status = normalizeStatus(a?.status)
-  return status === 'confirmed' && !!a?.session_started_at
+  return status === 'confirmed' && !!a?.session_room_id
 }
 
 function canStartCall(a) {
   const status = normalizeStatus(a?.status)
-  return status === 'confirmed' && !a?.session_started_at
+  return status === 'confirmed' && !a?.session_room_id
 }
 
 function startCall(a) {

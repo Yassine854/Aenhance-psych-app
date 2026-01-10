@@ -11,6 +11,7 @@ use App\Http\Controllers\PatientProfileController;
 use App\Http\Controllers\Patient\PatientSelfProfileController;
 use App\Http\Controllers\ServicesController;
 use App\Http\Controllers\SpecialisationController;
+use App\Http\Controllers\AppointmentSessionController;
 use Illuminate\Foundation\Application;
 use Illuminate\Http\Request;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
@@ -148,6 +149,16 @@ Route::middleware(['auth'])->group(function () {
         ->name('psychologist.appointments.video_call.start');
     Route::get('/appointments/{appointment}/video-call', [AppointmentController::class, 'showVideoCall'])
         ->name('appointments.video_call.show');
+
+    // Appointment session tracking (used by WebRTC call UI)
+    Route::get('/appointments/{appointment}/session', [AppointmentSessionController::class, 'show'])
+        ->name('appointments.session.show');
+    Route::post('/appointments/{appointment}/session/join', [AppointmentSessionController::class, 'join'])
+        ->name('appointments.session.join');
+    Route::post('/appointments/{appointment}/session/leave', [AppointmentSessionController::class, 'leave'])
+        ->name('appointments.session.leave');
+    Route::post('/appointments/{appointment}/session/end', [AppointmentSessionController::class, 'end'])
+        ->name('appointments.session.end');
     Route::get('/psychologist/patients', [PsychologistController::class, 'patients']);
 
     // Psychologist profile CRUD (explicit routes)
