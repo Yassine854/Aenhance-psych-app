@@ -170,7 +170,7 @@ class AppointmentController extends Controller
         $appointments = Appointment::query()
             ->where('patient_id', $user->id)
             ->with(['session:id,appointment_id,room_id,status,started_at'])
-            ->orderBy('scheduled_start')
+            ->orderByDesc('scheduled_start')
             ->get([
                 'id',
                 'patient_id',
@@ -180,7 +180,9 @@ class AppointmentController extends Controller
                 'status',
                 'price',
                 'currency',
+                'no_show_by',
                 'created_at',
+                
             ]);
 
         $psychologistUserIds = $appointments->pluck('psychologist_id')->unique()->values();
@@ -211,7 +213,8 @@ class AppointmentController extends Controller
                 'session_room_id' => (string) ($a->session?->room_id ?: ''),
                 'session_status' => (string) ($a->session?->status ?: ''),
                 'session_started_at' => optional($a->session?->started_at)->toISOString() ?? ($a->session?->started_at ? (string) $a->session->started_at : null),
-            ];
+                'missed_by' => $a->no_show_by,
+                ];
         })->values();
 
         return Inertia::render('Patient/Appointments/Index', [

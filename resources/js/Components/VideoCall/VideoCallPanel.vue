@@ -1,5 +1,6 @@
 <template>
-  <div class="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+  <div class="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden flex relative">
+    <div class="flex-1 flex flex-col">
     <div class="flex items-center justify-between gap-3 px-4 py-3 border-b border-gray-100 bg-gradient-to-r from-white to-gray-50">
       <div class="min-w-0">
         <div class="flex items-center gap-2 min-w-0">
@@ -254,7 +255,7 @@
           </button>
 
           <button
-            v-if="role === 'psychologist'"
+            v-if="role === 'psychologist' && callDurationSec >= 1500"
             type="button"
             class="control-btn"
             :class="(isEndingSession || sessionStatus === 'completed' || callEndedAt) ? 'bg-amber-500/60 text-white border-amber-400/30 cursor-not-allowed' : 'bg-amber-500 hover:bg-amber-600 text-white border-amber-400/40'"
@@ -297,11 +298,58 @@
         </div>
       </div>
     </div>
+    </div>
+    <!-- Floating chat toggle -->
+    <button
+      @click="toggleChat"
+      class="chat-toggle absolute right-4 bottom-4 z-40 inline-flex items-center justify-center h-12 w-12 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg focus:outline-none"
+      :title="showChat ? 'Close chat' : 'Open chat'"
+    >
+      <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      <span v-if="unreadCount > 0" class="chat-badge absolute -top-1 -right-1 inline-flex items-center justify-center h-5 min-w-[20px] px-1 rounded-full bg-red-600 text-white text-xs font-semibold">{{ unreadCount }}</span>
+    </button>
+
+    <transition name="slide-chat">
+      <div v-show="showChat" class="absolute top-0 right-0 bottom-0 z-50">
+        <VideoCallChat
+          :ws="ws"
+          :display-name="localDisplayName"
+          :role="props.role"
+          :session-active="sessionActive"
+          ref="chatRef"
+          @new-message="onNewMessage"
+          @chat-opened="clearUnread"
+          @close="showChat = false"
+        />
+      </div>
+    </transition>
   </div>
 </template>
 
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import VideoCallChat from './VideoCallChat.vue'
+// Chat state
+const chatRef = ref(null)
+const showChat = ref(false)
+const unreadCount = ref(0)
+const sessionActive = computed(() => !!callStartedAt.value && !callEndedAt.value)
+
+function toggleChat() {
+  showChat.value = !showChat.value
+  if (showChat.value) {
+    unreadCount.value = 0
+    if (chatRef.value && chatRef.value.scrollToBottom) chatRef.value.scrollToBottom()
+  }
+}
+
+function clearUnread() {
+  unreadCount.value = 0
+}
+
+function onNewMessage() {
+  if (!showChat.value) unreadCount.value++
+}
 import { Link, router, usePage } from '@inertiajs/vue3'
 import Swal from 'sweetalert2'
 
@@ -1269,7 +1317,11 @@ onMounted(async () => {
       } catch {
         return
       }
-
+      // Handle chat messages
+      if (msg.type === 'chat' && sessionActive.value && chatRef.value) {
+        chatRef.value.receiveMessage(msg.payload)
+        return
+      }
       if (msg.type === 'joined') {
         // If someone is already in the room, capture their identity and (if psychologist) start offer.
         if (Array.isArray(msg.peers) && msg.peers.length > 0) {
@@ -1463,4 +1515,18 @@ onBeforeUnmount(() => {
     opacity: 1;
   }
 }
+
+/* Chat slide-in transition and badge */
+.slide-chat-enter-active, .slide-chat-leave-active {
+  transition: transform 250ms ease, opacity 200ms ease;
+}
+.slide-chat-enter-from, .slide-chat-leave-to {
+  transform: translateX(100%);
+  opacity: 0;
+}
+.slide-chat-enter-to, .slide-chat-leave-from {
+  transform: translateX(0%);
+  opacity: 1;
+}
+.chat-badge { box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
 </style>

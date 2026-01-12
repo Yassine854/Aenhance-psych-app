@@ -144,6 +144,14 @@ wss.on('connection', (ws) => {
       })
     }
 
+    // Broadcast chat messages to all peers except sender
+    if (msg.type === 'chat') {
+      return broadcast(roomId, ws, {
+        type: 'chat',
+        payload: msg.payload,
+      })
+    }
+
     if (msg.type === 'media') {
       const audioEnabled = msg.audioEnabled === false ? false : true
       const videoEnabled = msg.videoEnabled === false ? false : true
