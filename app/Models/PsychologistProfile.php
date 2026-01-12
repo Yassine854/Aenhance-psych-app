@@ -16,7 +16,7 @@ class PsychologistProfile extends Model
         'languages',
         'phone',
         'country_code',
-        'diploma',
+        // diplomas moved to separate table
         'cin',
         'cv',
         'gender',
@@ -47,6 +47,11 @@ class PsychologistProfile extends Model
         return $this->hasMany(PsychologistAvailability::class, 'psychologist_id');
     }
 
+    public function diplomas()
+    {
+        return $this->hasMany(PsychologistDiploma::class, 'psychologist_profile_id');
+    }
+
     public function specialisations()
     {
         return $this->belongsToMany(
@@ -54,6 +59,16 @@ class PsychologistProfile extends Model
             'psychologist_profile_specialisation',
             'psychologist_profile_id',
             'specialisation_id'
+        )->withTimestamps();
+    }
+
+    public function expertises()
+    {
+        return $this->belongsToMany(
+            Expertise::class,
+            'psychologist_profile_expertise',
+            'psychologist_profile_id',
+            'expertise_id'
         )->withTimestamps();
     }
 }

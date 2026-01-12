@@ -45,139 +45,55 @@
             </h2>
             <ul class="flex flex-col gap-4">
               <li v-for="(item, index) in menuGroup.items" :key="item.name">
-                <button
-                  v-if="item.subItems"
-                  @click="toggleSubmenu(groupIndex, index)"
-                  :class="[
-                    'menu-item group w-full text-gray-700 dark:text-gray-300',
-                    {
-                      'menu-item-active bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100': isSubmenuOpen(groupIndex, index),
-                      'menu-item-inactive': !isSubmenuOpen(groupIndex, index),
-                    },
-                    !isExpanded && !isHovered
-                      ? 'lg:px-0 lg:justify-center'
-                      : 'lg:px-3 lg:justify-start',
-                  ]"
-                >
-                  <span
-                    :class="[
-                      'w-9 h-9 flex items-center justify-center',
-                      isSubmenuOpen(groupIndex, index)
-                        ? 'menu-item-icon-active text-gray-700 dark:text-gray-100'
-                        : 'menu-item-icon-inactive text-gray-500 dark:text-gray-400',
-                    ]"
+                <!-- Professional Dropdown Implementation -->
+                <div v-if="item.subItems">
+                  <button
+                    @click="openSubmenu = openSubmenu === item.name ? null : item.name"
+                    :aria-expanded="openSubmenu === item.name"
+                    :aria-controls="`dropdown-${item.name}`"
+                    class="menu-item group w-full flex items-center px-3 py-2 rounded transition text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-500"
                   >
-                    <component :is="item.icon" />
-                  </span>
-                  <span
-                    v-if="isExpanded || isHovered || isMobileOpen"
-                    class="menu-item-text"
-                    >{{ item.name }}</span
-                  >
-                  <ChevronDownIcon
-                    v-if="isExpanded || isHovered || isMobileOpen"
-                    :class="[
-                      'ml-auto w-5 h-5 transition-transform duration-200',
-                      {
-                        'rotate-180 text-brand-500': isSubmenuOpen(
-                          groupIndex,
-                          index
-                        ),
-                      },
-                    ]"
-                  />
-                </button>
-
-                <Link
-                  v-else-if="item.path"
-                  :href="item.path"
-                  :class="[
-                    'menu-item group text-gray-700 dark:text-gray-300',
-                    {
-                      'menu-item-active bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100': isActive(item.path),
-                      'menu-item-inactive': !isActive(item.path),
-                    },
-                  ]"
-                >
-                  <span
-                    :class="[
-                      'w-9 h-9 flex items-center justify-center',
-                      'w-9 h-9 flex items-center justify-center',
-                      isActive(item.path)
-                        ? 'menu-item-icon-active text-gray-700 dark:text-gray-100'
-                        : 'menu-item-icon-inactive text-gray-500 dark:text-gray-400',
-                    ]"
-                  >
-                    <component :is="item.icon" />
-                  </span>
-                  <span
-                    v-if="isExpanded || isHovered || isMobileOpen"
-                    class="menu-item-text"
-                    >{{ item.name }}</span
-                  >
-                </Link>
-
-                <div
-                  v-if="
-                    isSubmenuOpen(groupIndex, index) &&
-                    (isExpanded || isHovered || isMobileOpen)
-                  "
-                >
-                  <ul class="mt-2 space-y-1 ml-9">
-                    <li v-for="subItem in item.subItems" :key="subItem.name">
-                      <Link
-                        :href="subItem.path"
-                        :class="[
-                          'menu-dropdown-item text-gray-700 dark:text-gray-300',
-                          {
-                            'menu-dropdown-item-active bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100': isActive(
-                              subItem.path
-                            ),
-                            'menu-dropdown-item-inactive': !isActive(
-                              subItem.path
-                            ),
-                          },
-                        ]"
-                      >
-                        {{ subItem.name }}
-                        <span class="flex items-center gap-1 ml-auto">
-                          <span
-                            v-if="subItem.new"
-                            :class="[
-                              'menu-dropdown-badge bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200',
-                              {
-                                'menu-dropdown-badge-active': isActive(
-                                  subItem.path
-                                ),
-                                'menu-dropdown-badge-inactive': !isActive(
-                                  subItem.path
-                                ),
-                              },
+                    <span class="w-9 h-9 flex items-center justify-center">
+                      <component :is="item.icon" />
+                    </span>
+                    <span v-if="isExpanded || isHovered || isMobileOpen" class="menu-item-text">{{ item.name }}</span>
+                    <ChevronDownIcon
+                      v-if="isExpanded || isHovered || isMobileOpen"
+                      :class="[
+                        'ml-auto w-5 h-5 transition-transform duration-200',
+                        openSubmenu === item.name ? 'rotate-180 text-brand-500' : '',
+                      ]"
+                    />
+                  </button>
+                  <transition name="fade">
+                    <ul
+                      v-if="openSubmenu === item.name"
+                      :id="`dropdown-${item.name}`"
+                      class="mt-2 space-y-1 ml-6 bg-white/95 dark:bg-gray-900/80 backdrop-blur-sm rounded-lg shadow-md ring-1 ring-gray-100 dark:ring-gray-800 py-2 divide-y divide-gray-100 dark:divide-gray-800"
+                      role="menu"
+                    >
+                      <li v-for="subItem in item.subItems" :key="subItem.name" role="none">
+                        <Link
+                          :href="subItem.path"
+                          :class="[
+                              'relative flex items-center gap-3 px-4 py-2 transition-transform duration-150 ease-in-out text-gray-700 dark:text-gray-300',
+                              (isActive(subItem.path) || pressedItem === subItem.path)
+                                ? 'bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 font-semibold border-l-4 border-brand-500 pl-3'
+                                : 'hover:translate-x-1 hover:text-brand-600 dark:hover:text-brand-400',
                             ]"
-                          >
-                            new
-                          </span>
-                          <span
-                            v-if="subItem.pro"
-                            :class="[
-                              'menu-dropdown-badge bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200',
-                              {
-                                'menu-dropdown-badge-active': isActive(
-                                  subItem.path
-                                ),
-                                'menu-dropdown-badge-inactive': !isActive(
-                                  subItem.path
-                                ),
-                              },
-                            ]"
-                          >
-                            pro
-                          </span>
-                        </span>
-                      </Link>
-                    </li>
-                  </ul>
+                            @click="pressItem(item.name, subItem.path)"
+                            role="menuitem"
+                            tabindex="0"
+                        >
+                          <span class="w-2 h-2 rounded-full bg-gray-200 dark:bg-gray-700" aria-hidden="true"></span>
+                          <span class="truncate">{{ subItem.name }}</span>
+                        </Link>
+                      </li>
+                    </ul>
+                  </transition>
                 </div>
+                <!-- End Professional Dropdown -->
+                <!-- ...existing code for non-dropdown items... -->
               </li>
             </ul>
           </div>
@@ -189,7 +105,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, watch } from "vue";
 import { Link } from '@inertiajs/vue3'
 
 import {
@@ -210,11 +126,33 @@ import {
 import SidebarWidget from "./SidebarWidget.vue";
 import BoxCubeIcon from "@/icons/BoxCubeIcon.vue";
 import { useSidebar } from "@/composables/useSidebar";
+import { ref as vueRef } from "vue";
 
-const { isExpanded, isMobileOpen, isHovered, openSubmenu } = useSidebar();
+const sidebarState = useSidebar() || {};
+const isExpanded = sidebarState.isExpanded ?? vueRef(false);
+const isMobileOpen = sidebarState.isMobileOpen ?? vueRef(false);
+const isHovered = sidebarState.isHovered ?? vueRef(false);
+const openSubmenu = sidebarState.openSubmenu ?? vueRef(null);
 import { usePage } from '@inertiajs/vue3'
 
 const page = usePage()
+// pressedItem highlights clicked subitem until navigation updates the page URL
+const pressedItem = ref(null);
+const pressItem = (parentName, path) => {
+  pressedItem.value = path;
+  // ensure the parent dropdown stays open
+  try {
+    if (openSubmenu && typeof openSubmenu === 'object' && 'value' in openSubmenu) {
+      openSubmenu.value = parentName;
+    }
+  } catch (e) {
+    // ignore if openSubmenu is not writable
+  }
+};
+
+watch(() => page.url, () => {
+  pressedItem.value = null;
+});
 const currentRole = computed(() => {
   return (
     page.props?.value?.auth?.user?.role ?? page.props?.auth?.user?.role ?? null
@@ -232,18 +170,19 @@ const menuGroups = [
         // visible to all
       },
       // Admin: direct links for psychologists (use same style as other items)
+
+
       {
         name: "Psychologists",
         icon: ListIcon,
         roles: ['ADMIN'],
-        path: "/psychologist-profiles",
+        subItems: [
+          { name: "All Psychologists", path: "/psychologist-profiles", pro: false },
+          { name: "Specialisations", path: "/specialisations", pro: false },
+          { name: "Expertises", path: "/expertises", pro: false },
+        ],
       },
-      {
-        name: "Specialisations",
-        icon: ListIcon,
-        roles: ['ADMIN'],
-        path: "/specialisations",
-      },
+
       {
         name: "Appointments",
         icon: CalenderIcon,
@@ -300,7 +239,13 @@ const filteredMenuGroups = computed(() => {
     .filter((g) => g.items.length)
 })
 
-const isActive = (path) => window.location.pathname === path
+const isActive = (path) => {
+  // Support both exact and partial match for active state
+  if (!path) return false;
+  const current = window.location.pathname;
+  // Exact match or starts with path (for nested routes)
+  return current === path || current.startsWith(path + '/');
+}
 
 const toggleSubmenu = (groupIndex, itemIndex) => {
   const key = `${groupIndex}-${itemIndex}`;
@@ -318,13 +263,8 @@ const isAnySubmenuRouteActive = computed(() => {
 
 const isSubmenuOpen = (groupIndex, itemIndex) => {
   const key = `${groupIndex}-${itemIndex}`;
-  return (
-    openSubmenu.value === key ||
-    (isAnySubmenuRouteActive.value &&
-      menuGroups[groupIndex].items[itemIndex].subItems?.some((subItem) =>
-        isActive(subItem.path)
-      ))
-  );
+  // Only open if toggled, not automatically by route
+  return openSubmenu.value === key;
 };
 
 

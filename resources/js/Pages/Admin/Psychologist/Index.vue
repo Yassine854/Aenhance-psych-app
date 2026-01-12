@@ -168,13 +168,13 @@
       </div>
 
       <!-- Create Modal -->
-      <Create :show="modal === 'create'" :specialisations="props.specialisations" @close="closeModal" @created="handleCreated" />
+      <Create :show="modal === 'create'" :specialisations="props.specialisations" :expertises="props.expertises" @close="closeModal" @created="handleCreated" />
 
       <!-- Show Modal -->
       <Show :show="modal === 'show'" :psychologist="selected" @close="closeModal" />
 
       <!-- Edit Modal -->
-      <Edit :show="modal === 'edit'" :psychologist="selected" :specialisations="props.specialisations" @close="closeModal" @saved="handleSaved" />
+      <Edit :show="modal === 'edit'" :psychologist="selected" :specialisations="props.specialisations" :expertises="props.expertises" @close="closeModal" @saved="handleSaved" />
     </div>
 </template>
 
@@ -191,6 +191,10 @@ import Swal from 'sweetalert2'
 const props = defineProps({
   profiles: Object,
   specialisations: {
+    type: Array,
+    default: () => [],
+  },
+  expertises: {
     type: Array,
     default: () => [],
   },

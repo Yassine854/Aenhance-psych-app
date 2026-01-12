@@ -13,10 +13,18 @@ const props = defineProps({
         type: Array,
         default: () => [],
     },
+    expertises: {
+        type: Array,
+        default: () => [],
+    },
 })
 
 const specialisationOptions = computed(() =>
     (props.specialisations || []).map((s) => ({ value: s.id, label: s.name }))
+)
+
+const expertiseOptions = computed(() =>
+    (props.expertises || []).map((s) => ({ value: s.id, label: s.name }))
 )
 
 const psychologistLanguageOptions = [
@@ -49,6 +57,7 @@ const form = useForm({
     psych_last_name: '',
     psych_languages: [],
     specialisation_ids: [],
+    expertise_ids: [],
     psych_date_of_birth: '',
     psych_gender: '',
     psych_country: '',

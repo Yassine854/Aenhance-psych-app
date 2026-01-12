@@ -21,7 +21,7 @@ class ServicesController extends Controller
     public function consultation()
     {
         $profiles = PsychologistProfile::query()
-            ->with(['user', 'availabilities', 'specialisations'])
+            ->with(['user', 'availabilities', 'specialisations', 'expertises'])
             ->where('is_approved', true)
             ->whereHas('user', function ($query) {
                 $query->where('role', 'PSYCHOLOGIST')
@@ -45,6 +45,10 @@ class ServicesController extends Controller
                     'first_name' => $profile->first_name,
                     'last_name' => $profile->last_name,
                     'specialisations' => $profile->specialisations
+                        ->sortBy('name')
+                        ->values()
+                        ->map(fn ($s) => ['id' => $s->id, 'name' => $s->name]),
+                    'expertises' => $profile->expertises
                         ->sortBy('name')
                         ->values()
                         ->map(fn ($s) => ['id' => $s->id, 'name' => $s->name]),

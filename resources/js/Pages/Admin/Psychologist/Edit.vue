@@ -63,8 +63,8 @@
             </div>
           </div>
 
-          <!-- Row 2: Specialisations, Languages -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <!-- Row 2: Specialisations, Expertises, Languages -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div>
               <label class="text-sm font-medium text-gray-700">Specialisations <span class="text-red-500">*</span></label>
               <div class="mt-1">
@@ -78,6 +78,21 @@
                 />
               </div>
               <p v-if="form.errors.specialisation_ids" class="mt-1 text-sm text-red-600">{{ form.errors.specialisation_ids }}</p>
+            </div>
+
+            <div>
+              <label class="text-sm font-medium text-gray-700">Expertises</label>
+              <div class="mt-1">
+                <Multiselect
+                  v-model="form.expertise_ids"
+                  :options="expertiseOptions"
+                  mode="tags"
+                  :close-on-select="false"
+                  :searchable="true"
+                  placeholder="Select one or more"
+                />
+              </div>
+              <p v-if="form.errors.expertise_ids" class="mt-1 text-sm text-red-600">{{ form.errors.expertise_ids }}</p>
             </div>
 
             <div>
@@ -183,14 +198,14 @@
             </div>
             <div>
               <label class="text-sm font-medium text-gray-700">Diploma (PDF) <span class="text-red-500">*</span></label>
-              <div class="mt-1 group relative flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 p-4 text-center cursor-pointer transition hover:bg-gray-100 hover:border-[rgb(89,151,172)]" @click="() => diplomaInput?.click()" @dragover.prevent @drop.prevent="onDrop('diploma_file', $event)">
-                <input ref="diplomaInput" type="file" accept="application/pdf" class="hidden" @change="onFileChange('diploma_file', $event)" />
+              <div class="mt-1 group relative flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 p-4 text-center cursor-pointer transition hover:bg-gray-100 hover:border-[rgb(89,151,172)]" @click="() => diplomaInput?.click()" @dragover.prevent @drop.prevent="onDrop('diploma_files', $event)">
+                <input ref="diplomaInput" type="file" accept="application/pdf" class="hidden" @change="onFileChange('diploma_files', $event)" multiple />
                 <div class="flex items-center gap-2 text-gray-600">
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" viewBox="0 0 24 24" fill="currentColor"><path d="M6 2h9l5 5v13a2 2 0 01-2 2H6a2 2 0 01-2-2V4a2 2 0 012-2zm8 1.5V8h4.5L14 3.5z"/></svg>
                   <span class="text-xs">{{ diplomaLabel }}</span>
                 </div>
               </div>
-              <p v-if="form.errors.diploma_file || form.errors.diploma" class="mt-1 text-sm text-red-600">{{ form.errors.diploma_file || form.errors.diploma }}</p>
+              <p v-if="form.errors.diploma_files || form.errors.diploma_file || form.errors.diploma" class="mt-1 text-sm text-red-600">{{ form.errors.diploma_files || form.errors.diploma_file || form.errors.diploma }}</p>
             </div>
             <div>
               <label class="text-sm font-medium text-gray-700">CV (PDF) <span class="text-red-500">*</span></label>
@@ -365,12 +380,20 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  expertises: {
+    type: Array,
+    default: () => [],
+  },
 })
 
 const emit = defineEmits(['close', 'saved'])
 
 const specialisationOptions = computed(() =>
   (props.specialisations || []).map((s) => ({ value: s.id, label: s.name }))
+)
+
+const expertiseOptions = computed(() =>
+  (props.expertises || []).map((e) => ({ value: e.id, label: e.name }))
 )
 
 const languageOptions = [
@@ -402,6 +425,7 @@ const form = useForm({
   last_name: '',
   languages: [],
   specialisation_ids: [],
+  expertise_ids: [],
   price_per_session: 0,
   phone: '',
   country_code: '',
@@ -417,7 +441,7 @@ const form = useForm({
   cin: '',
   cv: '',
   profile_image: null,
-  diploma_file: null,
+  diploma_files: [],
   cin_file: null,
   cv_file: null,
 })
@@ -439,7 +463,19 @@ const fileNameFromUrl = (url) => {
   try { return String(url).split('/').pop() || '' } catch { return '' }
 }
 
-const diplomaLabel = computed(() => form.diploma_file?.name || fileNameFromUrl(props.psychologist?.diploma || form.diploma) || 'Drag & drop or click')
+const diplomaLabel = computed(() => {
+  if (Array.isArray(form.diploma_files) && form.diploma_files.length) {
+    if (form.diploma_files.length === 1) return form.diploma_files[0].name
+    return `${form.diploma_files.length} files selected`
+  }
+  // show existing diplomas count or filename
+  const existing = (props.psychologist?.diplomas || [])
+  if (Array.isArray(existing) && existing.length) {
+    if (existing.length === 1) return fileNameFromUrl(existing[0].file_url || existing[0])
+    return `${existing.length} files attached`
+  }
+  return fileNameFromUrl(props.psychologist?.diploma || form.diploma) || 'Drag & drop or click'
+})
 const cinLabel = computed(() => form.cin_file?.name || fileNameFromUrl(props.psychologist?.cin || form.cin) || 'Drag & drop or click')
 const cvLabel = computed(() => form.cv_file?.name || fileNameFromUrl(props.psychologist?.cv || form.cv) || 'Drag & drop or click')
 
@@ -619,6 +655,7 @@ watch(() => props.psychologist, async (p) => {
   form.last_name = p.last_name || ''
   form.languages = Array.isArray(p.languages) ? p.languages : []
   form.specialisation_ids = (p.specialisations || []).map(s => s.id)
+  form.expertise_ids = (p.expertises || []).map(e => e.id)
   form.price_per_session = p.price_per_session || 0
   form.phone = p.phone || ''
   form.country_code = p.country_code || ''
@@ -628,7 +665,7 @@ watch(() => props.psychologist, async (p) => {
   form.address = p.address || ''
   form.date_of_birth = formatDateForInput(p.date_of_birth)
   form.profile_image_url = p.profile_image_url || ''
-  form.diploma = p.diploma || ''
+  form.diploma = (Array.isArray(p.diplomas) && p.diplomas.length) ? (p.diplomas[0].file_url || '') : (p.diploma || '')
   form.cin = p.cin || ''
   form.cv = p.cv || ''
 
@@ -652,15 +689,33 @@ function formatDateForInput(dateValue) {
 }
 
 function onFileChange(field, e) {
-  const file = e?.target?.files?.[0] || null
+  const files = e?.target?.files || null
+  if (!files) return
+  if (field === 'diploma_files') {
+    form[field] = Array.from(files)
+    return
+  }
+  const file = files[0] || null
   form[field] = file
 }
 
 function onDrop(field, e) {
-  const file = e?.dataTransfer?.files?.[0]
-  if (!file) return
-  if (field === 'profile_image' && !file.type.startsWith('image/')) return
-  if ((field === 'diploma_file' || field === 'cin_file' || field === 'cv_file') && file.type !== 'application/pdf') return
+  const files = e?.dataTransfer?.files
+  if (!files || !files.length) return
+  if (field === 'profile_image') {
+    const file = files[0]
+    if (!file.type.startsWith('image/')) return
+    form[field] = file
+    return
+  }
+  if (field === 'diploma_files') {
+    const arr = Array.from(files).filter(f => f.type === 'application/pdf')
+    if (!arr.length) return
+    form[field] = arr
+    return
+  }
+  const file = files[0]
+  if ((field === 'cin_file' || field === 'cv_file') && file.type !== 'application/pdf') return
   form[field] = file
 }
 
@@ -723,14 +778,30 @@ async function submitProfile() {
     fd.append('_method', 'PUT')
     fd.append('first_name', form.first_name ?? '')
     fd.append('last_name', form.last_name ?? '')
-    ;(form.languages || []).forEach((lang) => {
-      if (lang !== null && lang !== undefined && String(lang) !== '') {
-        fd.append('languages[]', String(lang))
-      }
-    })
     ;(form.specialisation_ids || []).forEach((id) => {
       if (id !== null && id !== undefined && String(id) !== '') {
         fd.append('specialisation_ids[]', String(id))
+      }
+    })
+    // Append expertises robustly (may be ids, strings, or option objects)
+    if (Array.isArray(form.expertise_ids) && form.expertise_ids.length) {
+      (form.expertise_ids || []).forEach((it) => {
+        if (it === null || it === undefined) return
+        if (typeof it === 'object') {
+          const v = it.value ?? it.label ?? null
+          if (v !== null && v !== undefined && String(v) !== '') fd.append('expertise_ids[]', String(v))
+        } else {
+          if (String(it) !== '') fd.append('expertise_ids[]', String(it))
+        }
+      })
+    } else {
+      // If the user cleared all expertises, include an explicit empty array marker
+      // so the backend knows to sync to an empty set (remove existing pivot relations).
+      fd.append('expertise_ids', JSON.stringify([]))
+    }
+    ;(form.languages || []).forEach((lang) => {
+      if (lang !== null && lang !== undefined && String(lang) !== '') {
+        fd.append('languages[]', String(lang))
       }
     })
     fd.append('price_per_session', String(form.price_per_session ?? 0))
@@ -748,7 +819,9 @@ async function submitProfile() {
     fd.append('cin', form.cin ?? '')
     fd.append('cv', form.cv ?? '')
     if (form.profile_image) fd.append('profile_image', form.profile_image)
-    if (form.diploma_file) fd.append('diploma_file', form.diploma_file)
+    if (Array.isArray(form.diploma_files) && form.diploma_files.length) {
+      form.diploma_files.forEach((f) => fd.append('diploma_files[]', f))
+    }
     if (form.cin_file) fd.append('cin_file', form.cin_file)
     if (form.cv_file) fd.append('cv_file', form.cv_file)
 

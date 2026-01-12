@@ -50,7 +50,7 @@ class AppointmentController extends Controller
         }
 
         $profile = PsychologistProfile::query()
-            ->with(['user', 'availabilities', 'specialisations'])
+            ->with(['user', 'availabilities', 'specialisations', 'expertises'])
             ->whereKey($psychologist_profile->id)
             ->firstOrFail();
 
@@ -148,6 +148,10 @@ class AppointmentController extends Controller
                 'profile_image_url' => $profile->profile_image_url,
                 'price_per_session' => $profile->price_per_session,
                 'specialisations' => $profile->specialisations
+                    ->sortBy('name')
+                    ->values()
+                    ->map(fn ($s) => ['id' => $s->id, 'name' => $s->name]),
+                'expertises' => $profile->expertises
                     ->sortBy('name')
                     ->values()
                     ->map(fn ($s) => ['id' => $s->id, 'name' => $s->name]),

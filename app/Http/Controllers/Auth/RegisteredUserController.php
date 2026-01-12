@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\PatientProfile;
 use App\Models\PsychologistProfile;
 use App\Models\Specialisation;
+use App\Models\Expertise;
 use App\Models\User;
 use App\Providers\RouteServiceProvider;
 use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
@@ -37,6 +38,7 @@ class RegisteredUserController extends Controller
             'specialisations' => Specialisation::query()
                 ->orderBy('name')
                 ->get(['id', 'name']),
+            'expertises' => Expertise::query()->orderBy('name')->get(['id', 'name']),
         ]);
     }
 
@@ -86,6 +88,8 @@ class RegisteredUserController extends Controller
             'psych_languages.*' => ['required', 'string', 'distinct', 'in:english,french,arabic'],
             'specialisation_ids' => [$role === 'PSYCHOLOGIST' ? 'required' : 'nullable', 'array', 'min:1'],
             'specialisation_ids.*' => ['integer', 'distinct', 'exists:specialisations,id'],
+            'expertise_ids' => [$role === 'PSYCHOLOGIST' ? 'nullable' : 'nullable', 'array'],
+            'expertise_ids.*' => ['integer', 'distinct', 'exists:expertises,id'],
             'psych_date_of_birth' => [$role === 'PSYCHOLOGIST' ? 'required' : 'nullable', 'date'],
             'psych_gender' => ['nullable', 'string', 'max:50'],
             'psych_country' => [$role === 'PSYCHOLOGIST' ? 'required' : 'nullable', 'string', 'max:255'],
@@ -330,6 +334,11 @@ class RegisteredUserController extends Controller
             $specialisationIds = array_values(array_unique($validated['specialisation_ids'] ?? []));
             if (! empty($specialisationIds)) {
                 $profile->specialisations()->sync($specialisationIds);
+            }
+
+            $expertiseIds = array_values(array_unique($validated['expertise_ids'] ?? []));
+            if (! empty($expertiseIds)) {
+                $profile->expertises()->sync($expertiseIds);
             }
 
             if (!empty($availabilities)) {

@@ -37,6 +37,19 @@ class PsychologistProfileRequest extends FormRequest
                 // Leave as-is; validation will surface a clean error.
             }
         }
+
+        // Some clients may send expertise_ids as a JSON string when using FormData.
+        $rawExp = $this->input('expertise_ids');
+        if (is_string($rawExp) && $rawExp !== '') {
+            try {
+                $decoded = json_decode($rawExp, true, 512, JSON_THROW_ON_ERROR);
+                if (is_array($decoded)) {
+                    $this->merge(['expertise_ids' => $decoded]);
+                }
+            } catch (\Throwable $e) {
+                // Leave as-is; validation will surface a clean error.
+            }
+        }
     }
 
     public function rules(): array
@@ -55,6 +68,10 @@ class PsychologistProfileRequest extends FormRequest
             'languages.*' => ['required', 'string', 'distinct', 'in:english,french,arabic'],
             'specialisation_ids' => [$isCreate ? 'required' : 'nullable', 'array', 'min:1'],
             'specialisation_ids.*' => ['integer', 'distinct', 'exists:specialisations,id'],
+            'expertise_ids' => ['nullable', 'array'],
+            // Each item may be an existing id (integer) or a new tag/name (string/object).
+            // Validation is lenient here; controller will normalize/create names as needed.
+            'expertise_ids.*' => ['nullable', 'distinct'],
             'phone' => [$isCreate ? 'required' : 'nullable', 'string', 'max:50'],
             'country_code' => ['nullable', 'string', 'max:10'],
             'diploma' => ['nullable', 'string', 'max:1024'],
@@ -72,7 +89,10 @@ class PsychologistProfileRequest extends FormRequest
 
             // File uploads (required on create, optional on update)
             'profile_image' => ['nullable', 'image', 'max:2048'],
+            // Accept either a single file key for backward compatibility or multiple files under diploma_files[]
             'diploma_file' => [$isCreate ? 'required' : 'nullable', 'mimes:pdf', 'max:5120'],
+            'diploma_files' => [$isCreate ? 'required' : 'nullable', 'array'],
+            'diploma_files.*' => ['file', 'mimes:pdf', 'max:5120'],
             'cin_file' => [$isCreate ? 'required' : 'nullable', 'mimes:pdf', 'max:5120'],
             'cv_file' => [$isCreate ? 'required' : 'nullable', 'mimes:pdf', 'max:5120'],
 

@@ -11,6 +11,7 @@ use App\Http\Controllers\PatientProfileController;
 use App\Http\Controllers\Patient\PatientSelfProfileController;
 use App\Http\Controllers\ServicesController;
 use App\Http\Controllers\SpecialisationController;
+use App\Http\Controllers\ExpertiseController;
 use App\Http\Controllers\AppointmentSessionController;
 use Illuminate\Foundation\Application;
 use Illuminate\Http\Request;
@@ -137,6 +138,12 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/specialisations', [SpecialisationController::class, 'store'])->name('specialisations.store');
     Route::patch('/specialisations/{specialisation}', [SpecialisationController::class, 'update'])->name('specialisations.update');
     Route::delete('/specialisations/{specialisation}', [SpecialisationController::class, 'destroy'])->name('specialisations.destroy');
+
+    // Expertises (Admin)
+    Route::get('/expertises', [ExpertiseController::class, 'index'])->name('expertises.index');
+    Route::post('/expertises', [ExpertiseController::class, 'store'])->name('expertises.store');
+    Route::patch('/expertises/{expertise}', [ExpertiseController::class, 'update'])->name('expertises.update');
+    Route::delete('/expertises/{expertise}', [ExpertiseController::class, 'destroy'])->name('expertises.destroy');
 
     // Psychologist routes
     Route::get('/psychologist/appointments', [PsychologistAppointmentController::class, 'index'])
