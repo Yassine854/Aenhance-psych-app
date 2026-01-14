@@ -101,7 +101,7 @@ class RegisteredUserController extends Controller
             'price_per_session' => [$role === 'PSYCHOLOGIST' ? 'required' : 'nullable', 'numeric', 'min:0'],
             'profile_image' => ['nullable', 'file', 'image', 'max:5120'],
             'diploma_file' => [$role === 'PSYCHOLOGIST' ? 'required' : 'nullable', 'file', 'mimes:pdf', 'max:10240'],
-            'cin_file' => [$role === 'PSYCHOLOGIST' ? 'required' : 'nullable', 'file', 'mimes:pdf', 'max:10240'],
+            // CIN removed
             'cv_file' => [$role === 'PSYCHOLOGIST' ? 'required' : 'nullable', 'file', 'mimes:pdf', 'max:10240'],
 
             // Psychologist availability (JSON string from the frontend)
@@ -280,20 +280,7 @@ class RegisteredUserController extends Controller
                 }
             }
 
-            $cinUrl = '';
-            if ($request->hasFile('cin_file')) {
-                try {
-                    $uploaded = Cloudinary::uploadFile($request->file('cin_file')->getRealPath(), [
-                        'folder' => 'psychologist_profiles/cins',
-                        'resource_type' => 'raw',
-                    ]);
-                    $cinUrl = method_exists($uploaded, 'getSecurePath') ? $uploaded->getSecurePath() : '';
-                    $cinUrl = str_replace('/image/upload/', '/raw/upload/', $cinUrl);
-                } catch (\Throwable $e) {
-                    $path = $request->file('cin_file')->store('psychologist_profiles/cins', 'public');
-                    $cinUrl = Storage::url($path);
-                }
-            }
+            // CIN field removed - not collecting CIN on registration
 
             $cvUrl = '';
             if ($request->hasFile('cv_file')) {
@@ -316,7 +303,6 @@ class RegisteredUserController extends Controller
                 'last_name' => $validated['psych_last_name'],
                 'languages' => $validated['psych_languages'],
                 'diploma' => $diplomaUrl,
-                'cin' => $cinUrl,
                 'cv' => $cvUrl,
                 'gender' => $validated['psych_gender'] ?? null,
                 'country' => $validated['psych_country'],

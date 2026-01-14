@@ -74,8 +74,7 @@ class PsychologistProfileRequest extends FormRequest
             'expertise_ids.*' => ['nullable', 'distinct'],
             'phone' => [$isCreate ? 'required' : 'nullable', 'string', 'max:50'],
             'country_code' => ['nullable', 'string', 'max:10'],
-            'diploma' => ['nullable', 'string', 'max:1024'],
-            'cin' => ['nullable', 'string', 'max:1024'],
+            // diplomas are stored in the separate `psychologist_diplomas` table
             'cv' => ['nullable', 'string', 'max:1024'],
             'gender' => ['nullable', 'string', 'max:50'],
             'country' => ['nullable', 'string', 'max:100'],
@@ -90,10 +89,12 @@ class PsychologistProfileRequest extends FormRequest
             // File uploads (required on create, optional on update)
             'profile_image' => ['nullable', 'image', 'max:2048'],
             // Accept either a single file key for backward compatibility or multiple files under diploma_files[]
-            'diploma_file' => [$isCreate ? 'required' : 'nullable', 'mimes:pdf', 'max:5120'],
-            'diploma_files' => [$isCreate ? 'required' : 'nullable', 'array'],
+            // Accept either a single diploma file (legacy) or multiple diploma files.
+            // On create, require at least one of the two using required_without.
+            'diploma_file' => [$isCreate ? 'required_without:diploma_files' : 'nullable', 'mimes:pdf', 'max:5120'],
+            'diploma_files' => [$isCreate ? 'required_without:diploma_file' : 'nullable', 'array'],
             'diploma_files.*' => ['file', 'mimes:pdf', 'max:5120'],
-            'cin_file' => [$isCreate ? 'required' : 'nullable', 'mimes:pdf', 'max:5120'],
+            // CIN removed
             'cv_file' => [$isCreate ? 'required' : 'nullable', 'mimes:pdf', 'max:5120'],
 
             // Weekly availability slots

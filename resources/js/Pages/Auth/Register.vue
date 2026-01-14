@@ -69,7 +69,6 @@ const form = useForm({
     price_per_session: '',
     profile_image: null,
     diploma_file: null,
-    cin_file: null,
     cv_file: null,
 });
 
@@ -245,7 +244,6 @@ const step = ref(1)
 const stepError = ref('')
 
 const patientProfileInput = ref(null)
-const psychCinInput = ref(null)
 const psychDiplomaInput = ref(null)
 const psychCvInput = ref(null)
 const psychProfileInput = ref(null)
@@ -261,7 +259,6 @@ const psychImagePreview = computed(() => {
 })
 
 const diplomaLabel = computed(() => form.diploma_file?.name || 'Drag & drop or click')
-const cinLabel = computed(() => form.cin_file?.name || 'Drag & drop or click')
 const cvLabel = computed(() => form.cv_file?.name || 'Drag & drop or click')
 
 function goNext() {
@@ -346,8 +343,8 @@ function goNextFromProfile() {
         stepError.value = 'Diploma (PDF) is required.'
         return
     }
-    if (!form.cin_file) {
-        stepError.value = 'CIN (PDF) is required.'
+    if (!form.cv_file) {
+        stepError.value = 'CV (PDF) is required.'
         return
     }
     if (!form.cv_file) {
@@ -373,7 +370,7 @@ function onDrop(field, e) {
     if (!file) return
 
     if ((field === 'patient_profile_image' || field === 'profile_image') && !file.type.startsWith('image/')) return
-    if ((field === 'diploma_file' || field === 'cin_file' || field === 'cv_file') && file.type !== 'application/pdf') return
+    if ((field === 'diploma_file' || field === 'cv_file') && file.type !== 'application/pdf') return
 
     form[field] = file
 }
@@ -824,19 +821,7 @@ const submit = () => {
                                     <InputError class="mt-2" :message="form.errors.diploma_file" />
                                 </div>
 
-                                <div>
-                                    <InputLabel for="cin_file" value="CIN (PDF)" />
-                                    <div
-                                        @click="psychCinInput?.click()"
-                                        @drop.prevent="onDrop('cin_file', $event)"
-                                        @dragover.prevent
-                                        class="mt-1 border-2 border-dashed border-gray-300 rounded-lg p-3 text-center text-sm text-gray-600 hover:border-[rgb(89,151,172)] hover:bg-gray-50 transition cursor-pointer"
-                                    >
-                                        {{ cinLabel }}
-                                    </div>
-                                    <input ref="psychCinInput" id="cin_file" type="file" accept="application/pdf" class="hidden" @change="(e) => onFileChange('cin_file', e)" required />
-                                    <InputError class="mt-2" :message="form.errors.cin_file" />
-                                </div>
+                                <!-- CIN removed -->
 
                                 <div>
                                     <InputLabel for="cv_file" value="CV (PDF)" />

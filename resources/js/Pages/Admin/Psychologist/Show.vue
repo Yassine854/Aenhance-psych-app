@@ -36,13 +36,17 @@
             <div class="rounded-xl border border-gray-200 p-4">
               <div class="text-sm font-semibold text-gray-900">Documents</div>
               <div class="mt-3 space-y-2">
-                <a v-if="psychologist.diploma" :href="psychologist.diploma" target="_blank" rel="noopener" class="flex items-center justify-between gap-3 rounded-lg border border-gray-200 px-3 py-2 hover:bg-gray-50">
-                  <div class="min-w-0">
-                    <div class="text-sm font-medium text-gray-900">Diploma (PDF)</div>
-                    <div class="text-xs text-gray-500 truncate">Open document</div>
+                <div v-if="(displayPsychologist.diplomas || []).length">
+                  <div class="space-y-2">
+                    <a v-for="(d, idx) in displayPsychologist.diplomas" :key="d.id || idx" :href="d.file_url" target="_blank" rel="noopener" class="flex items-center justify-between gap-3 rounded-lg border border-gray-200 px-3 py-2 hover:bg-gray-50">
+                      <div class="min-w-0">
+                        <div class="text-sm font-medium text-gray-900">Diploma {{ idx + 1 }} (PDF)</div>
+                        <div class="text-xs text-gray-500 truncate">Open document</div>
+                      </div>
+                      <span class="text-xs font-semibold text-[rgb(141,61,79)]">View</span>
+                    </a>
                   </div>
-                  <span class="text-xs font-semibold text-[rgb(141,61,79)]">View</span>
-                </a>
+                </div>
                 <div v-else class="rounded-lg border border-dashed border-gray-200 px-3 py-2 text-sm text-gray-500">Diploma not available</div>
 
                 <a v-if="psychologist.cv" :href="psychologist.cv" target="_blank" rel="noopener" class="flex items-center justify-between gap-3 rounded-lg border border-gray-200 px-3 py-2 hover:bg-gray-50">
@@ -54,14 +58,7 @@
                 </a>
                 <div v-else class="rounded-lg border border-dashed border-gray-200 px-3 py-2 text-sm text-gray-500">CV not available</div>
 
-                <a v-if="psychologist.cin" :href="psychologist.cin" target="_blank" rel="noopener" class="flex items-center justify-between gap-3 rounded-lg border border-gray-200 px-3 py-2 hover:bg-gray-50">
-                  <div class="min-w-0">
-                    <div class="text-sm font-medium text-gray-900">CIN (PDF)</div>
-                    <div class="text-xs text-gray-500 truncate">Open document</div>
-                  </div>
-                  <span class="text-xs font-semibold text-[rgb(141,61,79)]">View</span>
-                </a>
-                <div v-else class="rounded-lg border border-dashed border-gray-200 px-3 py-2 text-sm text-gray-500">CIN not available</div>
+                <!-- CIN removed -->
               </div>
             </div>
 
@@ -178,12 +175,16 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
 
+import { computed } from 'vue'
 const props = defineProps({
   show: Boolean,
   psychologist: Object,
+  profile: Object,
 })
+
+// Always use psychologist if present, else fallback to profile
+const displayPsychologist = computed(() => props.psychologist || props.profile || {})
 
 defineEmits(['close'])
 
@@ -214,7 +215,7 @@ function timeToMinutes(t) {
 }
 
 const groupedAvailabilities = computed(() => {
-  const list = props.psychologist?.availabilities || []
+  const list = displayPsychologist.value?.availabilities || []
   if (!Array.isArray(list) || !list.length) return []
 
   const byDay = new Map()

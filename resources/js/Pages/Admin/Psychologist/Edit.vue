@@ -183,19 +183,8 @@
             </div>
           </div>
 
-          <!-- Uploads: CIN, Diploma, CV, Profile image -->
-          <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
-            <div>
-              <label class="text-sm font-medium text-gray-700">CIN (PDF) <span class="text-red-500">*</span></label>
-              <div class="mt-1 group relative flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 p-4 text-center cursor-pointer transition hover:bg-gray-100 hover:border-[rgb(89,151,172)]" @click="() => cinInput?.click()" @dragover.prevent @drop.prevent="onDrop('cin_file', $event)">
-                <input ref="cinInput" type="file" accept="application/pdf" class="hidden" @change="onFileChange('cin_file', $event)" />
-                <div class="flex items-center gap-2 text-gray-600">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" viewBox="0 0 24 24" fill="currentColor"><path d="M6 2h9l5 5v13a2 2 0 01-2 2H6a2 2 0 01-2-2V4a2 2 0 012-2zm8 1.5V8h4.5L14 3.5z"/></svg>
-                  <span class="text-xs">{{ cinLabel }}</span>
-                </div>
-              </div>
-              <p v-if="form.errors.cin_file || form.errors.cin" class="mt-1 text-sm text-red-600">{{ form.errors.cin_file || form.errors.cin }}</p>
-            </div>
+          <!-- Uploads: Diploma, CV, Profile image -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div>
               <label class="text-sm font-medium text-gray-700">Diploma (PDF) <span class="text-red-500">*</span></label>
               <div class="mt-1 group relative flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 p-4 text-center cursor-pointer transition hover:bg-gray-100 hover:border-[rgb(89,151,172)]" @click="() => diplomaInput?.click()" @dragover.prevent @drop.prevent="onDrop('diploma_files', $event)">
@@ -413,7 +402,6 @@ const accountSaving = ref(false)
 const accountError = ref('')
 const accountForm = ref({ name: '', email: '', password: '' })
 
-const cinInput = ref(null)
 const diplomaInput = ref(null)
 const cvInput = ref(null)
 const profileInput = ref(null)
@@ -437,12 +425,10 @@ const form = useForm({
   address: '',
   date_of_birth: '',
   profile_image_url: '',
-  diploma: '',
-  cin: '',
   cv: '',
   profile_image: null,
   diploma_files: [],
-  cin_file: null,
+  
   cv_file: null,
 })
 
@@ -476,7 +462,7 @@ const diplomaLabel = computed(() => {
   }
   return fileNameFromUrl(props.psychologist?.diploma || form.diploma) || 'Drag & drop or click'
 })
-const cinLabel = computed(() => form.cin_file?.name || fileNameFromUrl(props.psychologist?.cin || form.cin) || 'Drag & drop or click')
+// CIN field removed
 const cvLabel = computed(() => form.cv_file?.name || fileNameFromUrl(props.psychologist?.cv || form.cv) || 'Drag & drop or click')
 
 const daysOfWeek = [
@@ -665,8 +651,8 @@ watch(() => props.psychologist, async (p) => {
   form.address = p.address || ''
   form.date_of_birth = formatDateForInput(p.date_of_birth)
   form.profile_image_url = p.profile_image_url || ''
-  form.diploma = (Array.isArray(p.diplomas) && p.diplomas.length) ? (p.diplomas[0].file_url || '') : (p.diploma || '')
-  form.cin = p.cin || ''
+  // diplomas are stored in `p.diplomas` (psychologist_diplomas relation)
+  // CIN removed
   form.cv = p.cv || ''
 
   availabilityByDay.value = parsedAvailabilitiesByDay(p.availabilities)
@@ -715,7 +701,7 @@ function onDrop(field, e) {
     return
   }
   const file = files[0]
-  if ((field === 'cin_file' || field === 'cv_file') && file.type !== 'application/pdf') return
+  if (field === 'cv_file' && file.type !== 'application/pdf') return
   form[field] = file
 }
 
@@ -816,13 +802,12 @@ async function submitProfile() {
     fd.append('date_of_birth', form.date_of_birth ?? '')
     fd.append('profile_image_url', form.profile_image_url ?? '')
     fd.append('diploma', form.diploma ?? '')
-    fd.append('cin', form.cin ?? '')
     fd.append('cv', form.cv ?? '')
     if (form.profile_image) fd.append('profile_image', form.profile_image)
     if (Array.isArray(form.diploma_files) && form.diploma_files.length) {
       form.diploma_files.forEach((f) => fd.append('diploma_files[]', f))
     }
-    if (form.cin_file) fd.append('cin_file', form.cin_file)
+    
     if (form.cv_file) fd.append('cv_file', form.cv_file)
 
     fd.append('availabilities', JSON.stringify(flattenedAvailabilities.value))

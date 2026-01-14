@@ -9,6 +9,7 @@ class PsychologistProfile extends Model
 {
     use HasFactory;
 
+    protected $with = ['diplomas'];
     protected $fillable = [
         'user_id',
         'first_name',
@@ -17,7 +18,6 @@ class PsychologistProfile extends Model
         'phone',
         'country_code',
         // diplomas moved to separate table
-        'cin',
         'cv',
         'gender',
         'country',

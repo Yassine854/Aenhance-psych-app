@@ -126,18 +126,12 @@
             <InputError class="mt-2" :message="form.errors.bio" />
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <InputLabel value="Diploma (PDF)" />
               <input @change="onFileChange('diploma_file', $event)" type="file" accept="application/pdf" class="mt-1 block w-full" />
               <div v-if="form.diploma && !files.diploma_file" class="mt-2 text-sm text-gray-600">Current: <a :href="form.diploma" target="_blank">View</a></div>
               <InputError class="mt-2" :message="form.errors.diploma_file" />
-            </div>
-            <div>
-              <InputLabel value="CIN (PDF)" />
-              <input @change="onFileChange('cin_file', $event)" type="file" accept="application/pdf" class="mt-1 block w-full" />
-              <div v-if="form.cin && !files.cin_file" class="mt-2 text-sm text-gray-600">Current: <a :href="form.cin" target="_blank">View</a></div>
-              <InputError class="mt-2" :message="form.errors.cin_file" />
             </div>
             <div>
               <InputLabel value="CV (PDF)" />
@@ -229,11 +223,9 @@ const form = useForm({
   date_of_birth: formatDateForInput(props.profile?.date_of_birth),
   profile_image_url: props.profile?.profile_image_url || null,
   diploma: props.profile?.diploma || null,
-  cin: props.profile?.cin || null,
   cv: props.profile?.cv || null,
   profile_image: null,
   diploma_file: null,
-  cin_file: null,
   cv_file: null,
   gender: props.profile?.gender || '',
   country: props.profile?.country || '',
@@ -243,7 +235,7 @@ const form = useForm({
   country_code: props.profile?.country_code || '',
 })
 
-const files = ref({ profile_image: null, diploma_file: null, cin_file: null, cv_file: null })
+const files = ref({ profile_image: null, diploma_file: null, cv_file: null })
 const profilePreview = ref(form.profile_image_url)
 const profileInput = ref(null)
 

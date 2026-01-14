@@ -208,21 +208,8 @@
               </div>
             </div>
 
-            <!-- Uploads: CIN, Diploma, CV, Profile image -->
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
-              <div>
-                <label class="text-sm font-medium text-gray-700">CIN (PDF) <span class="text-red-500">*</span></label>
-                <div 
-                  @click="$refs.cinInput?.click()" 
-                  @drop.prevent="onDrop('cin_file', $event)" 
-                  @dragover.prevent 
-                  class="mt-1 border-2 border-dashed border-gray-300 rounded-lg p-3 text-center text-sm text-gray-600 hover:border-[rgb(89,151,172)] hover:bg-gray-50 transition cursor-pointer"
-                >
-                  {{ cinLabel }}
-                </div>
-                <input ref="cinInput" type="file" accept="application/pdf" @change="onFileChange('cin_file', $event)" class="hidden" />
-                <p v-if="form.errors.cin_file" class="mt-1 text-sm text-red-600">{{ form.errors.cin_file }}</p>
-              </div>
+            <!-- Uploads: Diploma, CV, Profile image -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div>
                 <label class="text-sm font-medium text-gray-700">Diploma (PDF) <span class="text-red-500">*</span></label>
                 <div 
@@ -396,7 +383,6 @@ const nationalNumber = ref('')
 const creating = ref(false)
 const generalError = ref(null)
 
-const cinInput = ref(null)
 const diplomaInput = ref(null)
 const cvInput = ref(null)
 const profileInput = ref(null)
@@ -420,7 +406,6 @@ const form = useForm({
   date_of_birth: '',
   profile_image: null,
   diploma_files: [],
-  cin_file: null,
   cv_file: null,
 })
 
@@ -574,7 +559,7 @@ const diplomaLabel = computed(() => {
   }
   return 'Drag & drop or click'
 })
-const cinLabel = computed(() => form.cin_file?.name || 'Drag & drop or click')
+// CIN removed
 const cvLabel = computed(() => form.cv_file?.name || 'Drag & drop or click')
 
 function syncPhoneToForm() {
@@ -628,7 +613,7 @@ function onDrop(field, e) {
     form[field] = file
     return
   }
-  // diplomas/cin/cv expect PDFs; allow multiple for diplomas
+  // diplomas/cv expect PDFs; allow multiple for diplomas
   if (field === 'diploma_files') {
     const arr = Array.from(files).filter(f => f.type === 'application/pdf')
     if (!arr.length) return
@@ -636,7 +621,7 @@ function onDrop(field, e) {
     return
   }
   const file = files[0]
-  if ((field === 'cin_file' || field === 'cv_file') && file.type !== 'application/pdf') return
+  if (field === 'cv_file' && file.type !== 'application/pdf') return
   form[field] = file
 }
 
@@ -721,10 +706,7 @@ async function submitCreate() {
       form.setError('diploma_files', 'Diploma is required')
       hasProfileErrors = true
     }
-    if (!form.cin_file) {
-      form.setError('cin_file', 'CIN is required')
-      hasProfileErrors = true
-    }
+    
     if (!form.cv_file) {
       form.setError('cv_file', 'CV is required')
       hasProfileErrors = true
@@ -821,7 +803,7 @@ async function submitCreate() {
     if (Array.isArray(form.diploma_files) && form.diploma_files.length) {
       form.diploma_files.forEach((f) => fd.append('diploma_files[]', f))
     }
-    if (form.cin_file) fd.append('cin_file', form.cin_file)
+    
     if (form.cv_file) fd.append('cv_file', form.cv_file)
     if (form.profile_image) fd.append('profile_image', form.profile_image)
 

@@ -112,16 +112,11 @@
             <InputError class="mt-2" :message="form.errors.bio" />
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <InputLabel value="Diploma (PDF)" />
               <input @change="onFileChange('diploma_file', $event)" type="file" accept="application/pdf" class="mt-1 block w-full" />
               <InputError class="mt-2" :message="form.errors.diploma_file" />
-            </div>
-            <div>
-              <InputLabel value="CIN (PDF)" />
-              <input @change="onFileChange('cin_file', $event)" type="file" accept="application/pdf" class="mt-1 block w-full" />
-              <InputError class="mt-2" :message="form.errors.cin_file" />
             </div>
             <div>
               <InputLabel value="CV (PDF)" />
@@ -196,7 +191,6 @@ const form = useForm({
   date_of_birth: null,
   profile_image: null,
   diploma_file: null,
-  cin_file: null,
   cv_file: null,
   gender: '',
   country: '',
@@ -206,7 +200,7 @@ const form = useForm({
   country_code: '',
 })
 
-const files = ref({ profile_image: null, diploma_file: null, cin_file: null, cv_file: null })
+const files = ref({ profile_image: null, diploma_file: null, cv_file: null })
 const profileInput = ref(null)
 const profilePreview = ref(null)
 
