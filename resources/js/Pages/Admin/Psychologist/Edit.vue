@@ -840,7 +840,11 @@ async function submitProfile() {
           const data = JSON.parse(raw)
           if (data?.errors) {
             Object.keys(data.errors).forEach(key => {
-              form.setError(key, data.errors[key][0])
+              let fieldKey = key
+              if (key.startsWith('diploma_files.')) {
+                fieldKey = 'diploma_files'
+              }
+              form.setError(fieldKey, data.errors[key][0])
             })
             return
           }

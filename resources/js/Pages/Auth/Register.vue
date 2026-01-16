@@ -53,22 +53,22 @@ const form = useForm({
     patient_profile_image: null,
 
     // Psychologist profile
-    psych_first_name: '',
-    psych_last_name: '',
-    psych_languages: [],
+    first_name: '',
+    last_name: '',
+    languages: [],
     specialisation_ids: [],
     expertise_ids: [],
-    psych_date_of_birth: '',
-    psych_gender: '',
-    psych_country: '',
-    psych_city: '',
-    psych_phone: '',
-    psych_country_code: '',
+    date_of_birth: '',
+    gender: '',
+    country: '',
+    city: '',
+    phone: '',
+    country_code: '',
     address: '',
     bio: '',
     price_per_session: '',
     profile_image: null,
-    diploma_file: null,
+    diploma_files: [],
     cv_file: null,
 });
 
@@ -103,28 +103,28 @@ const patientCities = computed(() => {
 })
 
 // Psychologist geo + phone
-const psychCountryCode = ref('')
-const psychDialCode = ref('')
-const psychNationalNumber = ref('')
+const countryCode = ref('')
+const dialCode = ref('')
+const nationalNumber = ref('')
 
-function syncPsychPhoneToForm() {
-    form.psych_country_code = psychDialCode.value || ''
-    form.psych_phone = psychNationalNumber.value || ''
+function syncPhoneToForm() {
+    form.country_code = dialCode.value || ''
+    form.phone = nationalNumber.value || ''
 }
 
-watch(psychCountryCode, (code) => {
+watch(countryCode, (code) => {
     const c = countriesList.value.find(x => x.isoCode === code)
-    form.psych_country = c?.name || ''
-    form.psych_city = ''
-    psychDialCode.value = c?.dialCode || ''
-    syncPsychPhoneToForm()
+    form.country = c?.name || ''
+    form.city = ''
+    dialCode.value = c?.dialCode || ''
+    syncPhoneToForm()
 })
 
-watch([psychDialCode, psychNationalNumber], () => syncPsychPhoneToForm())
+watch([dialCode, nationalNumber], () => syncPhoneToForm())
 
-const psychCities = computed(() => {
-    if (!form.psych_country) return []
-    return getCitiesByCountryName(form.psych_country).map(c => c.name)
+const cities = computed(() => {
+    if (!form.country) return []
+    return getCitiesByCountryName(form.country).map(c => c.name)
 })
 
 const daysOfWeek = [
@@ -244,21 +244,27 @@ const step = ref(1)
 const stepError = ref('')
 
 const patientProfileInput = ref(null)
-const psychDiplomaInput = ref(null)
-const psychCvInput = ref(null)
-const psychProfileInput = ref(null)
+const diplomaInput = ref(null)
+const cvInput = ref(null)
+const profileInput = ref(null)
 
 const patientImagePreview = computed(() => {
     if (form.patient_profile_image) return URL.createObjectURL(form.patient_profile_image)
     return ''
 })
 
-const psychImagePreview = computed(() => {
+const imagePreview = computed(() => {
     if (form.profile_image) return URL.createObjectURL(form.profile_image)
     return ''
 })
 
-const diplomaLabel = computed(() => form.diploma_file?.name || 'Drag & drop or click')
+const diplomaLabel = computed(() => {
+  if (Array.isArray(form.diploma_files) && form.diploma_files.length) {
+    if (form.diploma_files.length === 1) return form.diploma_files[0].name
+    return `${form.diploma_files.length} files selected`
+  }
+  return 'Drag & drop or click'
+})
 const cvLabel = computed(() => form.cv_file?.name || 'Drag & drop or click')
 
 function goNext() {
@@ -303,11 +309,11 @@ function goNextFromProfile() {
 
     // Psychologists go to availability step.
     // Keep checks minimal (HTML required + backend validation are still the source of truth).
-    if (!form.psych_first_name || !String(form.psych_first_name).trim()) {
+    if (!form.first_name || !String(form.first_name).trim()) {
         stepError.value = 'First name is required.'
         return
     }
-    if (!form.psych_last_name || !String(form.psych_last_name).trim()) {
+    if (!form.last_name || !String(form.last_name).trim()) {
         stepError.value = 'Last name is required.'
         return
     }
@@ -315,23 +321,23 @@ function goNextFromProfile() {
         stepError.value = 'Please select at least one specialisation.'
         return
     }
-    if (!Array.isArray(form.psych_languages) || form.psych_languages.length < 1) {
+    if (!Array.isArray(form.languages) || form.languages.length < 1) {
         stepError.value = 'Please select at least one language.'
         return
     }
-    if (!form.psych_date_of_birth) {
+    if (!form.date_of_birth) {
         stepError.value = 'Date of birth is required.'
         return
     }
-    if (!form.psych_country) {
+    if (!form.country) {
         stepError.value = 'Country is required.'
         return
     }
-    if (!form.psych_city) {
+    if (!form.city) {
         stepError.value = 'City is required.'
         return
     }
-    if (!psychNationalNumber.value || !String(psychNationalNumber.value).trim()) {
+    if (!nationalNumber.value || !String(nationalNumber.value).trim()) {
         stepError.value = 'Phone is required.'
         return
     }
@@ -339,12 +345,8 @@ function goNextFromProfile() {
         stepError.value = 'Price per session is required.'
         return
     }
-    if (!form.diploma_file) {
+    if (!Array.isArray(form.diploma_files) || form.diploma_files.length === 0) {
         stepError.value = 'Diploma (PDF) is required.'
-        return
-    }
-    if (!form.cv_file) {
-        stepError.value = 'CV (PDF) is required.'
         return
     }
     if (!form.cv_file) {
@@ -362,16 +364,40 @@ function goPreviousFromAvailability() {
 }
 
 function onFileChange(field, e) {
-    form[field] = e?.target?.files?.[0] || null
+  const files = e?.target?.files || null
+  if (!files) return
+  if (field === 'diploma_files') {
+    form[field] = Array.from(files)
+    return
+  }
+  const file = files[0] || null
+  form[field] = file
 }
 
 function onDrop(field, e) {
-    const file = e?.dataTransfer?.files?.[0]
-    if (!file) return
-
-    if ((field === 'patient_profile_image' || field === 'profile_image') && !file.type.startsWith('image/')) return
-    if ((field === 'diploma_file' || field === 'cv_file') && file.type !== 'application/pdf') return
-
+    const files = e?.dataTransfer?.files
+    if (!files || !files.length) return
+    if (field === 'patient_profile_image') {
+        const file = files[0]
+        if (!file.type.startsWith('image/')) return
+        form[field] = file
+        return
+    }
+    if (field === 'profile_image') {
+        const file = files[0]
+        if (!file.type.startsWith('image/')) return
+        form[field] = file
+        return
+    }
+    // diplomas/cv expect PDFs; allow multiple for diplomas
+    if (field === 'diploma_files') {
+        const arr = Array.from(files).filter(f => f.type === 'application/pdf')
+        if (!arr.length) return
+        form[field] = arr
+        return
+    }
+    const file = files[0]
+    if (field === 'cv_file' && file.type !== 'application/pdf') return
     form[field] = file
 }
 
@@ -660,15 +686,15 @@ const submit = () => {
 
                             <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <InputLabel for="psych_first_name" value="First name" />
-                                    <TextInput id="psych_first_name" type="text" class="mt-1 block w-full" v-model="form.psych_first_name" required />
-                                    <InputError class="mt-2" :message="form.errors.psych_first_name" />
+                                    <InputLabel for="first_name" value="First name" />
+                                    <TextInput id="first_name" type="text" class="mt-1 block w-full" v-model="form.first_name" required />
+                                    <InputError class="mt-2" :message="form.errors.first_name" />
                                 </div>
 
                                 <div>
-                                    <InputLabel for="psych_last_name" value="Last name" />
-                                    <TextInput id="psych_last_name" type="text" class="mt-1 block w-full" v-model="form.psych_last_name" required />
-                                    <InputError class="mt-2" :message="form.errors.psych_last_name" />
+                                    <InputLabel for="last_name" value="Last name" />
+                                    <TextInput id="last_name" type="text" class="mt-1 block w-full" v-model="form.last_name" required />
+                                    <InputError class="mt-2" :message="form.errors.last_name" />
                                 </div>
 
                                 <div class="md:col-span-2">
@@ -688,11 +714,11 @@ const submit = () => {
                                 </div>
 
                                 <div class="md:col-span-2">
-                                    <InputLabel for="psych_languages" value="Languages" />
+                                    <InputLabel for="languages" value="Languages" />
                                     <div class="mt-1">
                                         <Multiselect
-                                            id="psych_languages"
-                                            v-model="form.psych_languages"
+                                            id="languages"
+                                            v-model="form.languages"
                                             :options="psychologistLanguageOptions"
                                             mode="tags"
                                             :close-on-select="false"
@@ -700,20 +726,20 @@ const submit = () => {
                                             placeholder="Select one or more"
                                         />
                                     </div>
-                                    <InputError class="mt-2" :message="form.errors.psych_languages" />
+                                    <InputError class="mt-2" :message="form.errors.languages" />
                                 </div>
 
                                 <div>
-                                    <InputLabel for="psych_date_of_birth" value="Date of birth" />
-                                    <TextInput id="psych_date_of_birth" type="date" class="mt-1 block w-full" v-model="form.psych_date_of_birth" required />
-                                    <InputError class="mt-2" :message="form.errors.psych_date_of_birth" />
+                                    <InputLabel for="date_of_birth" value="Date of birth" />
+                                    <TextInput id="date_of_birth" type="date" class="mt-1 block w-full" v-model="form.date_of_birth" required />
+                                    <InputError class="mt-2" :message="form.errors.date_of_birth" />
                                 </div>
 
                                 <div>
-                                    <InputLabel for="psych_gender" value="Gender (optional)" />
+                                    <InputLabel for="gender" value="Gender (optional)" />
                                     <select
-                                        id="psych_gender"
-                                        v-model="form.psych_gender"
+                                        id="gender"
+                                        v-model="form.gender"
                                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#5997ac] focus:ring-[#5997ac]"
                                     >
                                         <option value="">Select gender</option>
@@ -721,66 +747,69 @@ const submit = () => {
                                         <option value="FEMALE">Female</option>
                                         <option value="OTHER">Other</option>
                                     </select>
-                                    <InputError class="mt-2" :message="form.errors.psych_gender" />
+                                    <InputError class="mt-2" :message="form.errors.gender" />
                                 </div>
 
                                 <div>
-                                    <InputLabel for="psych_country" value="Country" />
+                                    <InputLabel for="country" value="Country" />
                                     <select
-                                        id="psych_country"
-                                        v-model="psychCountryCode"
+                                        id="country"
+                                        v-model="countryCode"
                                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#5997ac] focus:ring-[#5997ac]"
                                         required
                                     >
                                         <option value="">Select country</option>
                                         <option v-for="c in countriesList" :key="c.isoCode" :value="c.isoCode">{{ c.name }}</option>
                                     </select>
-                                    <InputError class="mt-2" :message="form.errors.psych_country" />
+                                    <InputError class="mt-2" :message="form.errors.country" />
                                 </div>
 
                                 <div>
-                                    <InputLabel for="psych_city" value="City" />
+                                    <InputLabel for="city" value="City" />
                                     <select
-                                        id="psych_city"
-                                        v-model="form.psych_city"
+                                        id="city"
+                                        v-model="form.city"
                                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#5997ac] focus:ring-[#5997ac]"
-                                        :disabled="!form.psych_country"
+                                        :disabled="!form.country"
                                         required
                                     >
                                         <option value="">Select city</option>
-                                        <option v-for="ct in psychCities" :key="ct" :value="ct">{{ ct }}</option>
+                                        <option v-for="ct in cities" :key="ct" :value="ct">{{ ct }}</option>
                                     </select>
-                                    <InputError class="mt-2" :message="form.errors.psych_city" />
+                                    <InputError class="mt-2" :message="form.errors.city" />
                                 </div>
 
                                 <div>
-                                    <InputLabel for="psych_country_code" value="Phone" />
+                                    <InputLabel for="country_code" value="Phone" />
                                     <div class="mt-1 flex">
                                         <input
-                                            v-model="psychDialCode"
+                                            v-model="dialCode"
                                             readonly
                                             class="w-24 rounded-l-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-700"
                                             placeholder="+___"
                                         />
                                         <input
-                                            v-model="psychNationalNumber"
+                                            v-model="nationalNumber"
                                             inputmode="tel"
                                             class="block w-full rounded-r-md border border-l-0 border-gray-300 px-3 py-2 text-sm focus:border-[#5997ac] focus:ring-[#5997ac]"
                                             placeholder="Enter phone number"
                                             required
                                         />
                                     </div>
-                                    <InputError class="mt-2" :message="form.errors.psych_country_code" />
-                                    <InputError class="mt-2" :message="form.errors.psych_phone" />
+                                    <InputError class="mt-2" :message="form.errors.country_code" />
+                                    <InputError class="mt-2" :message="form.errors.phone" />
                                 </div>
 
                                 <div>
                                     <InputLabel for="price_per_session" value="Price per session" />
-                                    <TextInput id="price_per_session" type="number" class="mt-1 block w-full" v-model="form.price_per_session" required min="0" step="0.01" />
+                                    <div class="mt-1 flex">
+                                        <TextInput id="price_per_session" type="number" class="block w-full rounded-r-none" v-model="form.price_per_session" required min="0" step="0.01" />
+                                        <span class="inline-flex items-center px-3 rounded-r-md border border-l-0 border-gray-300 bg-gray-50 text-sm text-gray-700">Dt</span>
+                                    </div>
                                     <InputError class="mt-2" :message="form.errors.price_per_session" />
                                 </div>
 
-                                <div>
+                                <div class="md:col-span-2">
                                     <InputLabel for="address" value="Address (optional)" />
                                     <TextInput id="address" type="text" class="mt-1 block w-full" v-model="form.address" />
                                     <InputError class="mt-2" :message="form.errors.address" />
@@ -795,30 +824,30 @@ const submit = () => {
                                 <div class="md:col-span-2">
                                     <InputLabel for="profile_image" value="Profile image (optional)" />
                                     <div
-                                        @click="psychProfileInput?.click()"
+                                        @click="profileInput?.click()"
                                         @drop.prevent="onDrop('profile_image', $event)"
                                         @dragover.prevent
                                         class="mt-1 border-2 border-dashed border-gray-300 rounded-lg p-3 flex items-center justify-center hover:border-[rgb(89,151,172)] hover:bg-gray-50 transition cursor-pointer"
                                     >
-                                        <img v-if="psychImagePreview" :src="psychImagePreview" class="h-16 w-16 rounded-full object-cover" />
+                                        <img v-if="imagePreview" :src="imagePreview" class="h-16 w-16 rounded-full object-cover" />
                                         <span v-else class="text-sm text-gray-600">Drag & drop or click</span>
                                     </div>
-                                    <input ref="psychProfileInput" id="profile_image" type="file" accept="image/*" class="hidden" @change="(e) => onFileChange('profile_image', e)" />
+                                    <input ref="profileInput" id="profile_image" type="file" accept="image/*" class="hidden" @change="(e) => onFileChange('profile_image', e)" />
                                     <InputError class="mt-2" :message="form.errors.profile_image" />
                                 </div>
 
                                 <div>
-                                    <InputLabel for="diploma_file" value="Diploma (PDF)" />
+                                    <InputLabel for="diploma_files" value="Diploma (PDF)" />
                                     <div
-                                        @click="psychDiplomaInput?.click()"
-                                        @drop.prevent="onDrop('diploma_file', $event)"
+                                        @click="diplomaInput?.click()"
+                                        @drop.prevent="onDrop('diploma_files', $event)"
                                         @dragover.prevent
                                         class="mt-1 border-2 border-dashed border-gray-300 rounded-lg p-3 text-center text-sm text-gray-600 hover:border-[rgb(89,151,172)] hover:bg-gray-50 transition cursor-pointer"
                                     >
                                         {{ diplomaLabel }}
                                     </div>
-                                    <input ref="psychDiplomaInput" id="diploma_file" type="file" accept="application/pdf" class="hidden" @change="(e) => onFileChange('diploma_file', e)" required />
-                                    <InputError class="mt-2" :message="form.errors.diploma_file" />
+                                    <input ref="diplomaInput" id="diploma_files" type="file" accept="application/pdf" multiple class="hidden" @change="(e) => onFileChange('diploma_files', e)" required />
+                                    <InputError class="mt-2" :message="form.errors.diploma_files" />
                                 </div>
 
                                 <!-- CIN removed -->
@@ -826,14 +855,14 @@ const submit = () => {
                                 <div>
                                     <InputLabel for="cv_file" value="CV (PDF)" />
                                     <div
-                                        @click="psychCvInput?.click()"
+                                        @click="cvInput?.click()"
                                         @drop.prevent="onDrop('cv_file', $event)"
                                         @dragover.prevent
                                         class="mt-1 border-2 border-dashed border-gray-300 rounded-lg p-3 text-center text-sm text-gray-600 hover:border-[rgb(89,151,172)] hover:bg-gray-50 transition cursor-pointer"
                                     >
                                         {{ cvLabel }}
                                     </div>
-                                    <input ref="psychCvInput" id="cv_file" type="file" accept="application/pdf" class="hidden" @change="(e) => onFileChange('cv_file', e)" required />
+                                    <input ref="cvInput" id="cv_file" type="file" accept="application/pdf" class="hidden" @change="(e) => onFileChange('cv_file', e)" required />
                                     <InputError class="mt-2" :message="form.errors.cv_file" />
                                 </div>
                             </div>

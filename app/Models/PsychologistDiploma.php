@@ -11,7 +11,7 @@ class PsychologistDiploma extends Model
 
     protected $fillable = [
         'psychologist_profile_id',
-        'file_url'
+        'file_url',
     ];
 
     public function profile()

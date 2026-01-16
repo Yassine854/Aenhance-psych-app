@@ -87,15 +87,15 @@ class PsychologistProfileRequest extends FormRequest
             'profile_image_url' => ['nullable', 'string', 'max:1024'],
 
             // File uploads (required on create, optional on update)
-            'profile_image' => ['nullable', 'image', 'max:2048'],
+            'profile_image' => ['nullable', 'image', 'max:1024'],
             // Accept either a single file key for backward compatibility or multiple files under diploma_files[]
             // Accept either a single diploma file (legacy) or multiple diploma files.
             // On create, require at least one of the two using required_without.
-            'diploma_file' => [$isCreate ? 'required_without:diploma_files' : 'nullable', 'mimes:pdf', 'max:5120'],
+            'diploma_file' => [$isCreate ? 'required_without:diploma_files' : 'nullable', 'mimes:pdf', 'max:1024'],
             'diploma_files' => [$isCreate ? 'required_without:diploma_file' : 'nullable', 'array'],
-            'diploma_files.*' => ['file', 'mimes:pdf', 'max:5120'],
+            'diploma_files.*' => ['file', 'mimes:pdf', 'max:1024'],
             // CIN removed
-            'cv_file' => [$isCreate ? 'required' : 'nullable', 'mimes:pdf', 'max:5120'],
+            'cv_file' => [$isCreate ? 'required' : 'nullable', 'mimes:pdf', 'max:1024'],
 
             // Weekly availability slots
             'availabilities' => ['nullable', 'array'],

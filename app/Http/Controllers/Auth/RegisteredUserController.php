@@ -53,11 +53,11 @@ class RegisteredUserController extends Controller
 
         // If sent as FormData, arrays may arrive as JSON strings.
         if ($role === 'PSYCHOLOGIST') {
-            $rawLang = $request->input('psych_languages');
+            $rawLang = $request->input('languages');
             if (is_string($rawLang) && $rawLang !== '') {
                 $decoded = json_decode($rawLang, true);
                 if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
-                    $request->merge(['psych_languages' => $decoded]);
+                    $request->merge(['languages' => $decoded]);
                 }
             }
         }
@@ -79,30 +79,31 @@ class RegisteredUserController extends Controller
             'patient_city' => ['nullable', 'string', 'max:255'],
             'patient_phone' => ['nullable', 'string', 'max:50'],
             'patient_country_code' => ['nullable', 'string', 'max:10'],
-            'patient_profile_image' => ['nullable', 'file', 'image', 'max:5120'],
+            'patient_profile_image' => ['nullable', 'file', 'image', 'max:1024'],
 
             // Psychologist profile fields
-            'psych_first_name' => [$role === 'PSYCHOLOGIST' ? 'required' : 'nullable', 'string', 'max:255'],
-            'psych_last_name' => [$role === 'PSYCHOLOGIST' ? 'required' : 'nullable', 'string', 'max:255'],
-            'psych_languages' => [$role === 'PSYCHOLOGIST' ? 'required' : 'nullable', 'array', 'min:1'],
-            'psych_languages.*' => ['required', 'string', 'distinct', 'in:english,french,arabic'],
+            'first_name' => [$role === 'PSYCHOLOGIST' ? 'required' : 'nullable', 'string', 'max:255'],
+            'last_name' => [$role === 'PSYCHOLOGIST' ? 'required' : 'nullable', 'string', 'max:255'],
+            'languages' => [$role === 'PSYCHOLOGIST' ? 'required' : 'nullable', 'array', 'min:1'],
+            'languages.*' => ['required', 'string', 'distinct', 'in:english,french,arabic'],
             'specialisation_ids' => [$role === 'PSYCHOLOGIST' ? 'required' : 'nullable', 'array', 'min:1'],
             'specialisation_ids.*' => ['integer', 'distinct', 'exists:specialisations,id'],
             'expertise_ids' => [$role === 'PSYCHOLOGIST' ? 'nullable' : 'nullable', 'array'],
             'expertise_ids.*' => ['integer', 'distinct', 'exists:expertises,id'],
-            'psych_date_of_birth' => [$role === 'PSYCHOLOGIST' ? 'required' : 'nullable', 'date'],
-            'psych_gender' => ['nullable', 'string', 'max:50'],
-            'psych_country' => [$role === 'PSYCHOLOGIST' ? 'required' : 'nullable', 'string', 'max:255'],
-            'psych_city' => [$role === 'PSYCHOLOGIST' ? 'required' : 'nullable', 'string', 'max:255'],
-            'psych_phone' => [$role === 'PSYCHOLOGIST' ? 'required' : 'nullable', 'string', 'max:50'],
-            'psych_country_code' => ['nullable', 'string', 'max:10'],
+            'date_of_birth' => [$role === 'PSYCHOLOGIST' ? 'required' : 'nullable', 'date'],
+            'gender' => ['nullable', 'string', 'max:50'],
+            'country' => [$role === 'PSYCHOLOGIST' ? 'required' : 'nullable', 'string', 'max:255'],
+            'city' => [$role === 'PSYCHOLOGIST' ? 'required' : 'nullable', 'string', 'max:255'],
+            'phone' => [$role === 'PSYCHOLOGIST' ? 'required' : 'nullable', 'string', 'max:50'],
+            'country_code' => ['nullable', 'string', 'max:10'],
             'address' => ['nullable', 'string', 'max:255'],
             'bio' => ['nullable', 'string'],
             'price_per_session' => [$role === 'PSYCHOLOGIST' ? 'required' : 'nullable', 'numeric', 'min:0'],
-            'profile_image' => ['nullable', 'file', 'image', 'max:5120'],
-            'diploma_file' => [$role === 'PSYCHOLOGIST' ? 'required' : 'nullable', 'file', 'mimes:pdf', 'max:10240'],
+            'profile_image' => ['nullable', 'file', 'image', 'max:1024'],
+            'diploma_files' => [$role === 'PSYCHOLOGIST' ? 'required' : 'nullable', 'array', 'min:1'],
+            'diploma_files.*' => ['file', 'mimes:pdf', 'max:1024'],
             // CIN removed
-            'cv_file' => [$role === 'PSYCHOLOGIST' ? 'required' : 'nullable', 'file', 'mimes:pdf', 'max:10240'],
+            'cv_file' => [$role === 'PSYCHOLOGIST' ? 'required' : 'nullable', 'file', 'mimes:pdf', 'max:1024'],
 
             // Psychologist availability (JSON string from the frontend)
             'availabilities' => [$role === 'PSYCHOLOGIST' ? 'required' : 'nullable', 'string'],
@@ -264,19 +265,29 @@ class RegisteredUserController extends Controller
                 }
             }
 
-            // Diploma and CIN are required by schema; store a URL string.
-            $diplomaUrl = '';
-            if ($request->hasFile('diploma_file')) {
-                try {
-                    $uploaded = Cloudinary::uploadFile($request->file('diploma_file')->getRealPath(), [
-                        'folder' => 'psychologist_profiles/diplomas',
-                        'resource_type' => 'raw',
-                    ]);
-                    $diplomaUrl = method_exists($uploaded, 'getSecurePath') ? $uploaded->getSecurePath() : '';
-                    $diplomaUrl = str_replace('/image/upload/', '/raw/upload/', $diplomaUrl);
-                } catch (\Throwable $e) {
-                    $path = $request->file('diploma_file')->store('psychologist_profiles/diplomas', 'public');
-                    $diplomaUrl = Storage::url($path);
+            // Handle multiple diplomas
+            $diplomaUploads = [];
+            if ($request->hasFile('diploma_files')) {
+                $files = $request->file('diploma_files');
+                if (!is_array($files)) $files = [$files];
+                foreach ($files as $file) {
+                    try {
+                        $uploaded = Cloudinary::uploadFile($file->getRealPath(), [
+                            'folder' => 'psychologist_profiles/diplomas',
+                            'resource_type' => 'raw',
+                        ]);
+                        $url = $uploaded->getSecurePath();
+                        $url = str_replace('/image/upload/', '/raw/upload/', $url);
+                        $diplomaUploads[] = [
+                            'file_url' => $url,
+                        ];
+                    } catch (\Throwable $e) {
+                        $path = $file->store('psychologist_profiles/diplomas', 'public');
+                        $url = Storage::url($path);
+                        $diplomaUploads[] = [
+                            'file_url' => $url,
+                        ];
+                    }
                 }
             }
 
@@ -289,7 +300,7 @@ class RegisteredUserController extends Controller
                         'folder' => 'psychologist_profiles/cvs',
                         'resource_type' => 'raw',
                     ]);
-                    $cvUrl = method_exists($uploaded, 'getSecurePath') ? $uploaded->getSecurePath() : '';
+                    $cvUrl = $uploaded->getSecurePath();
                     $cvUrl = str_replace('/image/upload/', '/raw/upload/', $cvUrl);
                 } catch (\Throwable $e) {
                     $path = $request->file('cv_file')->store('psychologist_profiles/cvs', 'public');
@@ -299,23 +310,27 @@ class RegisteredUserController extends Controller
 
             $profile = PsychologistProfile::create([
                 'user_id' => $user->id,
-                'first_name' => $validated['psych_first_name'],
-                'last_name' => $validated['psych_last_name'],
-                'languages' => $validated['psych_languages'],
-                'diploma' => $diplomaUrl,
+                'first_name' => $validated['first_name'],
+                'last_name' => $validated['last_name'],
+                'languages' => $validated['languages'],
                 'cv' => $cvUrl,
-                'gender' => $validated['psych_gender'] ?? null,
-                'country' => $validated['psych_country'],
-                'city' => $validated['psych_city'],
-                'phone' => $validated['psych_phone'],
-                'country_code' => $validated['psych_country_code'] ?? null,
+                'gender' => $validated['gender'] ?? null,
+                'country' => $validated['country'],
+                'city' => $validated['city'],
+                'phone' => $validated['phone'],
+                'country_code' => $validated['country_code'] ?? null,
                 'address' => $validated['address'] ?? null,
-                'date_of_birth' => $validated['psych_date_of_birth'],
+                'date_of_birth' => $validated['date_of_birth'],
                 'bio' => $validated['bio'] ?? null,
                 'price_per_session' => $validated['price_per_session'],
                 'is_approved' => false,
                 'profile_image_url' => $profileImageUrl,
             ]);
+
+            // Attach uploaded diplomas
+            if (!empty($diplomaUploads)) {
+                $profile->diplomas()->createMany($diplomaUploads);
+            }
 
             $specialisationIds = array_values(array_unique($validated['specialisation_ids'] ?? []));
             if (! empty($specialisationIds)) {

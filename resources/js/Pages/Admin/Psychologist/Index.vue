@@ -130,6 +130,19 @@
                       </svg>
                     </button>
 
+                    <button
+                      v-if="p.is_approved"
+                      type="button"
+                      title="Disapprove"
+                      @click="disapproveProfile(p)"
+                      :disabled="approvingId === p.id"
+                      class="inline-flex items-center justify-center h-9 w-9 rounded-lg border border-gray-200 bg-white text-red-700 hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-5 w-5">
+                        <path fill-rule="evenodd" d="M5.47 5.47a.75.75 0 011.06 0L12 10.94l5.47-5.47a.75.75 0 111.06 1.06L13.06 12l5.47 5.47a.75.75 0 11-1.06 1.06L12 13.06l-5.47 5.47a.75.75 0 01-1.06-1.06L10.94 12 5.47 6.53a.75.75 0 010-1.06z" clip-rule="evenodd" />
+                      </svg>
+                    </button>
+
                     <button type="button" title="View" @click="openShow(p)" class="inline-flex items-center justify-center h-9 w-9 rounded-lg border border-gray-200 bg-white text-gray-700 hover:bg-gray-50">
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-5 w-5">
                         <path d="M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z" />
@@ -144,9 +157,9 @@
                       </svg>
                     </button>
 
-                    <button type="button" title="Delete" @click="confirmDelete(p)" class="inline-flex items-center justify-center h-9 w-9 rounded-lg border border-gray-200 bg-white text-red-700 hover:bg-red-50">
+                    <button type="button" :title="p.user?.is_active ? 'Deactivate' : 'Activate'" @click="toggleActivation(p)" :disabled="activatingId === p.user?.id" :class="p.user?.is_active ? 'text-red-700 hover:bg-red-50' : 'text-green-700 hover:bg-green-50'" class="inline-flex items-center justify-center h-9 w-9 rounded-lg border border-gray-200 bg-white disabled:opacity-50 disabled:cursor-not-allowed">
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-5 w-5">
-                        <path fill-rule="evenodd" d="M9 3.75A.75.75 0 0 1 9.75 3h4.5a.75.75 0 0 1 .75.75V6h4.5a.75.75 0 0 1 0 1.5h-1.06l-.84 12.02A2.25 2.25 0 0 1 15.36 21H8.64a2.25 2.25 0 0 1-2.244-2.48L5.56 7.5H4.5a.75.75 0 0 1 0-1.5H9V3.75Zm1.5 2.25h3V4.5h-3V6Zm-1.44 3.75a.75.75 0 0 1 .81.69l.75 9a.75.75 0 1 1-1.5.12l-.75-9a.75.75 0 0 1 .69-.81Zm6.69.69a.75.75 0 0 0-1.5.12l.75 9a.75.75 0 1 0 1.5-.12l-.75-9Z" clip-rule="evenodd" />
+                        <path fill-rule="evenodd" d="M12 2.25a.75.75 0 01.75.75v9a.75.75 0 01-1.5 0V3a.75.75 0 01.75-.75zM6.166 5.106a.75.75 0 010 1.06 8.25 8.25 0 1011.668 0 .75.75 0 011.06-1.06c3.808 3.807 3.808 9.98 0 13.788-3.807 3.808-9.98 3.808-13.788 0-3.808-3.807-3.808-9.98 0-13.788a.75.75 0 011.06 0z" clip-rule="evenodd" />
                       </svg>
                     </button>
                   </div>
@@ -325,6 +338,7 @@ const modal = ref(null) // 'create' | 'show' | 'edit' | null
 const selected = ref(null)
 
 const approvingId = ref(null)
+const activatingId = ref(null)
 
 const flashMessage = ref('')
 let flashTimer = null
@@ -538,6 +552,145 @@ async function approveProfile(p) {
     })
   } finally {
     approvingId.value = null
+  }
+}
+
+async function disapproveProfile(p) {
+  if (!p || !p.is_approved) return
+
+  const name = `${p?.first_name || ''} ${p?.last_name || ''}`.trim() || `#${p?.id ?? ''}`
+
+  const result = await Swal.fire({
+    title: 'Disapprove psychologist?',
+    text: `Disapprove ${name} and mark this profile as pending?`,
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonText: 'Yes, disapprove',
+    cancelButtonText: 'Cancel',
+    reverseButtons: true,
+    focusCancel: true,
+    confirmButtonColor: 'rgb(141,61,79)',
+  })
+
+  if (!result.isConfirmed) return
+
+  approvingId.value = p.id
+  try {
+    const csrf = await ensureCsrfToken()
+    const headers = {
+      'X-Requested-With': 'XMLHttpRequest',
+      'Accept': 'application/json',
+    }
+
+    if (csrf.type === 'meta' && csrf.token) {
+      headers['X-CSRF-TOKEN'] = csrf.token
+    } else if (csrf.type === 'cookie' && csrf.token) {
+      headers['X-XSRF-TOKEN'] = csrf.token
+    }
+
+    const res = await fetch(route('psychologist-profiles.disapprove', p.id), {
+      method: 'PATCH',
+      headers,
+      credentials: 'same-origin',
+    })
+
+    if (!res.ok) {
+      await Swal.fire({
+        title: 'Disapprove failed',
+        text: 'Could not disapprove this psychologist. Please try again.',
+        icon: 'error',
+      })
+      return
+    }
+
+    const idx = profilesData.value.findIndex(x => x?.id === p.id)
+    if (idx !== -1) {
+      profilesData.value[idx] = { ...profilesData.value[idx], is_approved: false }
+    }
+
+    Swal.fire({
+      title: 'Disapproved',
+      text: 'Psychologist disapproved successfully.',
+      icon: 'success',
+      timer: 1200,
+      showConfirmButton: false,
+    })
+  } finally {
+    approvingId.value = null
+  }
+}
+
+async function toggleActivation(p) {
+  if (!p?.user) return
+
+  const name = `${p?.first_name || ''} ${p?.last_name || ''}`.trim() || `#${p?.id ?? ''}`
+  const action = p.user.is_active ? 'deactivate' : 'activate'
+  const actionText = p.user.is_active ? 'Deactivate' : 'Activate'
+
+  const result = await Swal.fire({
+    title: `${actionText} account?`,
+    text: `Are you sure you want to ${action} the account for ${name}?`,
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonText: `Yes, ${action}`,
+    cancelButtonText: 'Cancel',
+    reverseButtons: true,
+    focusCancel: true,
+    confirmButtonColor: p.user.is_active ? 'rgb(141,61,79)' : 'rgb(89,151,172)',
+  })
+
+  if (!result.isConfirmed) return
+
+  activatingId.value = p.user.id
+  try {
+    const csrf = await ensureCsrfToken()
+    const headers = { 'X-Requested-With': 'XMLHttpRequest' }
+
+    if (csrf.type === 'meta' && csrf.token) {
+      headers['X-CSRF-TOKEN'] = csrf.token
+    } else if (csrf.type === 'cookie' && csrf.token) {
+      headers['X-XSRF-TOKEN'] = csrf.token
+    }
+
+    const url = p.user.is_active
+      ? `/users/${p.user.id}/deactivate`
+      : `/users/${p.user.id}/activate`
+
+    const res = await fetch(url, {
+      method: 'PATCH',
+      headers,
+      credentials: 'include',
+    })
+
+    if (!res.ok) {
+      await Swal.fire({
+        title: `${actionText} failed`,
+        text: `Could not ${action} this account. Please try again.`,
+        icon: 'error',
+      })
+      return
+    }
+
+    const idx = profilesData.value.findIndex(x => x?.user?.id === p.user.id)
+    if (idx !== -1) {
+      profilesData.value[idx] = {
+        ...profilesData.value[idx],
+        user: {
+          ...profilesData.value[idx].user,
+          is_active: !p.user.is_active,
+        },
+      }
+    }
+
+    Swal.fire({
+      title: `${actionText}d`,
+      text: `Account ${action}d successfully.`,
+      icon: 'success',
+      timer: 1200,
+      showConfirmButton: false,
+    })
+  } finally {
+    activatingId.value = null
   }
 }
 

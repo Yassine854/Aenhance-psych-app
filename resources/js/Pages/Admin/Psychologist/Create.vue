@@ -848,7 +848,11 @@ async function submitCreate() {
               } else if (key === 'new_user_password') {
                 newUserErrors.value.password = data.errors[key][0]
               } else {
-                form.setError(key, data.errors[key][0])
+                let fieldKey = key
+                if (key.startsWith('diploma_files.')) {
+                  fieldKey = 'diploma_files'
+                }
+                form.setError(fieldKey, data.errors[key][0])
               }
             })
             creating.value = false

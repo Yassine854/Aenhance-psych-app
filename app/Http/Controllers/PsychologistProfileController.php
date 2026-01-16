@@ -28,65 +28,114 @@ class PsychologistProfileController extends Controller
     public static function getCloudinaryPublicId($url)
     {
         $parts = parse_url($url);
-        if (!isset($parts['path'])) {
-            return null;
-        }
-        $path = $parts['path'];
-        // Remove leading /image/upload/ or /raw/upload/
-        $path = preg_replace('#^/(image|raw)/upload/#', '', $path);
-        // Remove version (v1234567890/)
-        $path = preg_replace('#^v[0-9]+/#', '', $path);
-        // Remove file extension
-        $path = preg_replace('/\.[^.\/]+$/', '', $path);
-        // Remove leading slash if present
-        $path = ltrim($path, '/');
-        return $path;
+            if (empty($url)) return null;
+
+            $path = parse_url($url, PHP_URL_PATH);
+            if (! $path) return null;
+
+            // Find the '/upload/' anchor which comes after the cloud name segment.
+            $anchor = '/upload/';
+            $pos = strpos($path, $anchor);
+            if ($pos !== false) {
+                $p = substr($path, $pos + strlen($anchor));
+            } else {
+                // Fallback: remove first segment (likely cloud name) then proceed
+                $trimmed = ltrim($path, '/');
+                $parts = explode('/', $trimmed);
+                if (count($parts) > 1 && ($parts[1] === 'image' || $parts[1] === 'raw' || $parts[0] !== 'image')) {
+                    // remove first segment (cloud name)
+                    array_shift($parts);
+                }
+                $p = implode('/', $parts);
+            }
+
+            // Remove optional version prefix like 'v123456/'
+            $p = preg_replace('#^v\d+/#', '', $p);
+            // Remove file extension
+            $p = preg_replace('/\.[^.\/]+$/', '', $p);
+            // Trim any leading/trailing slashes and decode
+            return urldecode(trim($p, '/'));
     }
-    public function approve(Request $request, PsychologistProfile $psychologistProfile): HttpResponse
+
+    /**
+     * Delete a Cloudinary resource by its full URL.
+     * Tries as image first, then raw. Returns true on success.
+     */
+    private static function deleteCloudinaryFile(?string $url): bool
     {
-        $psychologistProfile->is_approved = true;
-        $psychologistProfile->save();
+        if (empty($url)) return false;
 
-        if ($request->expectsJson()) {
-            return response()->noContent();
+        $publicId = self::getCloudinaryPublicId($url);
+        if (empty($publicId)) return false;
+        try {
+            // Try Admin API delete as image first (PDFs in your account appear under image)
+            try {
+                $res = Cloudinary::admin()->deleteAssets([$publicId], ['resource_type' => 'image', 'invalidate' => true]);
+                Log::info('Cloudinary admin deleteAssets(image) response', ['public_id' => $publicId, 'response' => $res]);
+                if (is_object($res)) $arr = $res->getArrayCopy(); else $arr = (array)$res;
+                if (isset($arr['deleted']) && array_key_exists($publicId, $arr['deleted']) && $arr['deleted'][$publicId] === 'deleted') {
+                    return true;
+                }
+            } catch (\Throwable $e) {
+                Log::warning('Admin deleteAssets(image) failed: '.$e->getMessage(), ['public_id' => $publicId]);
+            }
+
+            // Try Admin API delete as raw
+            try {
+                $res2 = Cloudinary::admin()->deleteAssets([$publicId], ['resource_type' => 'raw', 'invalidate' => true]);
+                Log::info('Cloudinary admin deleteAssets(raw) response', ['public_id' => $publicId, 'response' => $res2]);
+                if (is_object($res2)) $arr2 = $res2->getArrayCopy(); else $arr2 = (array)$res2;
+                if (isset($arr2['deleted']) && array_key_exists($publicId, $arr2['deleted']) && $arr2['deleted'][$publicId] === 'deleted') {
+                    return true;
+                }
+            } catch (\Throwable $e) {
+                Log::warning('Admin deleteAssets(raw) failed: '.$e->getMessage(), ['public_id' => $publicId]);
+            }
+
+            // Fallback to uploader destroy for raw then image
+            try {
+                $r = Cloudinary::destroy($publicId, ['resource_type' => 'raw', 'invalidate' => true]);
+                Log::info('Cloudinary destroy(raw) fallback response', ['public_id' => $publicId, 'response' => $r]);
+                if (is_array($r) && isset($r['result']) && in_array(strtolower((string)$r['result']), ['ok', 'deleted', 'not found', 'not_found'], true)) return true;
+            } catch (\Throwable $e) {
+                Log::warning('Destroy(raw) fallback failed: '.$e->getMessage(), ['public_id' => $publicId]);
+            }
+
+            try {
+                $r2 = Cloudinary::destroy($publicId, ['resource_type' => 'image', 'invalidate' => true]);
+                Log::info('Cloudinary destroy(image) fallback response', ['public_id' => $publicId, 'response' => $r2]);
+                if (is_array($r2) && isset($r2['result']) && in_array(strtolower((string)$r2['result']), ['ok', 'deleted', 'not found', 'not_found'], true)) return true;
+            } catch (\Throwable $e) {
+                Log::warning('Destroy(image) fallback failed: '.$e->getMessage(), ['public_id' => $publicId]);
+            }
+
+            return false;
+        } catch (\Throwable $e) {
+            Log::error('deleteCloudinaryFile unexpected error: '.$e->getMessage(), ['public_id' => $publicId]);
+            return false;
         }
-
-        return redirect()->back();
     }
-
-    public function index(Request $request)
+    /**
+     * Display a listing of psychologist profiles for admin.
+     */
+    public function index(Request $request): Response
     {
-        // Load psychologist profiles with their users efficiently
-        $profiles = PsychologistProfile::with([
-            'user' => function ($query) {
-            $query->where('role', 'PSYCHOLOGIST');
-            },
-            'availabilities',
-            'specialisations',
-            'expertises',
-        ])->whereHas('user', function ($query) {
-            $query->where('role', 'PSYCHOLOGIST');
-        })->paginate(15);
+        $query = PsychologistProfile::query()->with(['user', 'specialisations', 'expertises', 'diplomas', 'availabilities']);
 
-        if ($request->wantsJson()) {
-            return response()->json($profiles);
+        if ($request->filled('q')) {
+            $q = $request->input('q');
+            $query->whereHas('user', function($u) use ($q) {
+                $u->where('name', 'like', "%{$q}%")
+                  ->orWhere('email', 'like', "%{$q}%");
+            })->orWhere('phone', 'like', "%{$q}%");
         }
+
+        $profiles = $query->orderBy('id', 'desc')->paginate(15)->withQueryString();
 
         return Inertia::render('Admin/Psychologist/Index', [
             'profiles' => $profiles,
-            'specialisations' => Specialisation::query()->orderBy('name')->get(['id', 'name']),
-            'expertises' => Expertise::query()->orderBy('name')->get(['id', 'name']),
+            'filters' => $request->only(['q']),
         ]);
-    }
-
-    // Local-only helper to return JSON without auth (for Postman testing)
-    public function testJson()
-    {
-        if (!app()->environment('local')) {
-            abort(404);
-        }
-
-        return response()->json(PsychologistProfile::with(['user', 'availabilities'])->get());
     }
 
     public function create(): Response
@@ -219,7 +268,7 @@ class PsychologistProfileController extends Controller
                     // fallback: force raw path
                     $url = preg_replace('#/(?:v\d+/)?upload/#', '/raw/upload/', $url);
                 }
-                $diplomaUploads[] = ['file_url' => $url, 'original_name' => $file->getClientOriginalName()];
+                $diplomaUploads[] = ['file_url' => $url];
                 Log::info('Diploma uploaded to Cloudinary', ['url' => $url]);
             } catch (\Throwable $e) {
                 Log::error('Cloudinary diploma_file upload failed: '.$e->getMessage());
@@ -231,7 +280,6 @@ class PsychologistProfileController extends Controller
 
         if ($request->hasFile('cv_file')) {
             $file = $request->file('cv_file');
-
             try {
                 $uploaded = Cloudinary::uploadFile(
                     $file->getRealPath(),
@@ -252,22 +300,12 @@ class PsychologistProfileController extends Controller
                     $url = preg_replace('#/(?:v\d+/)?upload/#', '/raw/upload/', $url);
                 }
                 $data['cv'] = $url;
-                Log::info('CV uploaded to Cloudinary', ['url' => $data['cv']]);
+                Log::info('CV uploaded to Cloudinary', ['url' => $url]);
             } catch (\Throwable $e) {
                 Log::error('Cloudinary cv_file upload failed: '.$e->getMessage());
                 throw new \Exception('CV upload failed: '.$e->getMessage());
             }
-        } else {
-            Log::error('No cv_file in request!');
         }
-
-        unset($data['profile_image'], $data['diploma_file'], $data['diploma_files'], $data['cv_file']);
-
-        Log::info('About to create profile', [
-            'user_id' => $data['user_id'] ?? 'MISSING',
-            'has_diploma' => isset($data['diploma']),
-            'diploma_value' => $data['diploma'] ?? 'NOT SET',
-        ]);
 
 
         $profile = PsychologistProfile::create($data);
@@ -446,6 +484,42 @@ class PsychologistProfileController extends Controller
             $files = [];
         }
 
+        // If the user uploaded new diploma files, remove any existing diplomas
+        // that the client didn't ask to keep. Client may provide an array
+        // `keep_diploma_ids` containing diploma IDs to preserve. If none
+        // provided, treat uploads as a full replacement and remove all old ones.
+        if (! empty($files)) {
+            $keep = $request->input('keep_diploma_ids', []);
+            if (! is_array($keep)) $keep = [$keep];
+            $keep = array_map('intval', array_filter($keep));
+            $existing = $user->psychologistProfile ? $user->psychologistProfile->diplomas()->get() : collect();
+            foreach ($existing as $ex) {
+                if (! in_array((int)$ex->id, $keep, true)) {
+                    try {
+                        self::deleteCloudinaryFile($ex->file_url);
+                    } catch (\Throwable $e) {
+                        Log::warning('Failed deleting old diploma from Cloudinary', ['id' => $ex->id, 'error' => $e->getMessage()]);
+                    }
+                    try { $ex->delete(); } catch (\Throwable $e) { Log::warning('Failed deleting old diploma record', ['id'=>$ex->id,'error'=>$e->getMessage()]); }
+                }
+            }
+        }
+
+        // If uploading new diploma(s), delete all existing diplomas first (like CV behavior)
+        if (! empty($files)) {
+            // Ensure $profile is assigned before using it
+            $profile = $user->psychologistProfile;
+            try {
+                $existing = $profile ? $profile->diplomas()->get() : collect();
+                foreach ($existing as $ex) {
+                    try { self::deleteCloudinaryFile($ex->file_url); } catch (\Throwable $e) { Log::warning('Failed deleting old diploma (admin)', ['id'=>$ex->id,'error'=>$e->getMessage()]); }
+                    try { $ex->delete(); } catch (\Throwable $e) { Log::warning('Failed deleting old diploma record (admin)', ['id'=>$ex->id,'error'=>$e->getMessage()]); }
+                }
+            } catch (\Throwable $e) {
+                Log::warning('Failed to enumerate existing diplomas for deletion (admin): '.$e->getMessage());
+            }
+        }
+
         foreach ($files as $file) {
             if (! $file) continue;
             $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
@@ -471,13 +545,16 @@ class PsychologistProfileController extends Controller
                 } else if (!str_contains($url, '/raw/upload/')) {
                     $url = preg_replace('#/(?:v\d+/)?upload/#', '/raw/upload/', $url);
                 }
-                $diplomaUploads[] = ['file_url' => $url, 'original_name' => $file->getClientOriginalName()];
+                $diplomaUploads[] = ['file_url' => $url];
                 $usedCloudinary = true;
             } catch (\Throwable $e) {
                 Log::error('Cloudinary diploma_file upload failed: '.$e->getMessage());
                 throw new \Exception('Diploma upload failed: '.$e->getMessage());
             }
         }
+
+        // NOTE: existing diplomas (for the authenticated user) were already
+        // removed above before uploading when needed. No further action here.
 
         // CIN field removed - no longer processing cin_file for self profile
 
@@ -548,36 +625,7 @@ class PsychologistProfileController extends Controller
             abort(404);
         }
 
-        // Delete old CV from Cloudinary before uploading new one
-        if ($request->hasFile('cv_file') && !empty($profile->cv)) {
-            $publicId = self::getCloudinaryPublicId($profile->cv);
-            Log::info('Attempting to delete old CV from Cloudinary', ['cv_url' => $profile->cv, 'public_id' => $publicId]);
-                try {
-                    // Try deleting as image first
-                    $destroyResultImage = Cloudinary::destroy($publicId, [
-                        'resource_type' => 'image',
-                        'invalidate' => true
-                    ]);
-                    // If not deleted, try as raw
-                    $destroyResultRaw = Cloudinary::destroy($publicId, [
-                        'resource_type' => 'raw',
-                        'invalidate' => true
-                    ]);
-                } catch (\Throwable $e) {
-                    // ...existing code...
-                }
-            $profile->cv = null;
-            $profile->save();
-        }
-        $user = $request->user();
-        if (! $user || ! method_exists($user, 'isPsychologist') || ! $user->isPsychologist()) {
-            abort(403);
-        }
-
-        $profile = $user->psychologistProfile;
-        if (! $profile) {
-            abort(404);
-        }
+        // (If a new CV is uploaded below we'll delete the old one before storing)
 
         // Get all validated input and use it directly for update
         $data = $request->validated();
@@ -603,6 +651,14 @@ class PsychologistProfileController extends Controller
         ]);
 
         if ($request->hasFile('profile_image')) {
+            // If an existing profile image URL is present, try to delete it first
+            if (! empty($profile->profile_image_url)) {
+                try {
+                    self::deleteCloudinaryFile($profile->profile_image_url);
+                } catch (\Throwable $e) {
+                    Log::error('Failed to delete previous profile_image: '.$e->getMessage());
+                }
+            }
             try {
                 $uploaded = Cloudinary::upload($request->file('profile_image')->getRealPath(), [
                     'folder' => 'psychologist_profiles',
@@ -622,6 +678,19 @@ class PsychologistProfileController extends Controller
         }
 
         // Handle diploma_file upload
+        // If uploading new diploma(s), delete all existing diplomas first (like CV behavior)
+        if ($request->hasFile('diploma_file') || $request->hasFile('diploma_files')) {
+            try {
+                $existing = $profile->diplomas()->get();
+                foreach ($existing as $ex) {
+                    try { self::deleteCloudinaryFile($ex->file_url); } catch (\Throwable $e) { Log::warning('Failed deleting old diploma (self update)', ['id'=>$ex->id,'error'=>$e->getMessage()]); }
+                    try { $ex->delete(); } catch (\Throwable $e) { Log::warning('Failed deleting old diploma record (self update)', ['id'=>$ex->id,'error'=>$e->getMessage()]); }
+                }
+            } catch (\Throwable $e) {
+                Log::warning('Failed to enumerate existing diplomas for deletion (self update): '.$e->getMessage());
+            }
+        }
+
         if ($request->hasFile('diploma_file')) {
             $file = $request->file('diploma_file');
             $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
@@ -654,6 +723,14 @@ class PsychologistProfileController extends Controller
 
         // Handle cv_file upload
         if ($request->hasFile('cv_file')) {
+            // Delete previous CV if present
+            if (! empty($profile->cv)) {
+                try {
+                    self::deleteCloudinaryFile($profile->cv);
+                } catch (\Throwable $e) {
+                    Log::error('Failed to delete previous CV: '.$e->getMessage());
+                }
+            }
             $file = $request->file('cv_file');
             $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
             $extension = $file->getClientOriginalExtension() ?: 'pdf';
@@ -754,6 +831,14 @@ class PsychologistProfileController extends Controller
 
         // Handle profile image upload
         if ($request->hasFile('profile_image')) {
+            // Delete existing profile image if present
+            if (! empty($psychologistProfile->profile_image_url)) {
+                try {
+                    self::deleteCloudinaryFile($psychologistProfile->profile_image_url);
+                } catch (\Throwable $e) {
+                    Log::error('Failed to delete previous profile_image (admin update): '.$e->getMessage());
+                }
+            }
             try {
                 $uploaded = Cloudinary::upload($request->file('profile_image')->getRealPath(), [
                     'folder' => 'psychologist_profiles',
@@ -783,6 +868,15 @@ class PsychologistProfileController extends Controller
             $files = [];
         }
 
+        if (!empty($files)) {
+            // Delete existing diplomas
+            $existingDiplomas = $psychologistProfile->diplomas;
+            foreach ($existingDiplomas as $diploma) {
+                self::deleteCloudinaryFile($diploma->file_url);
+                $diploma->delete();
+            }
+        }
+
         foreach ($files as $file) {
             if (! $file) continue;
             $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
@@ -802,7 +896,7 @@ class PsychologistProfileController extends Controller
                     ]
                 );
                 $url = method_exists($uploaded, 'getSecurePath') ? $uploaded->getSecurePath() : (method_exists($uploaded, 'getPath') ? $uploaded->getPath() : null);
-                $diplomaUploads[] = ['file_url' => $url, 'original_name' => $file->getClientOriginalName()];
+                $diplomaUploads[] = ['file_url' => $url];
                 $usedCloudinary = true;
             } catch (\Throwable $e) {
                 Log::error('Cloudinary diploma_file upload failed: '.$e->getMessage());
@@ -810,10 +904,21 @@ class PsychologistProfileController extends Controller
             }
         }
 
+        // If there are new diploma uploads, any existing diplomas not kept
+        // will already have been deleted above; new diplomas will be attached below.
+
         // CIN field removed - no longer processing cin_file on admin update
 
         // Handle CV PDF upload (expects 'cv_file')
         if ($request->hasFile('cv_file')) {
+            // Delete previous CV if present
+            if (! empty($psychologistProfile->cv)) {
+                try {
+                    self::deleteCloudinaryFile($psychologistProfile->cv);
+                } catch (\Throwable $e) {
+                    Log::error('Failed to delete previous CV (admin update): '.$e->getMessage());
+                }
+            }
             $file = $request->file('cv_file');
             $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
             $extension = $file->getClientOriginalExtension() ?: 'pdf';
@@ -928,6 +1033,20 @@ class PsychologistProfileController extends Controller
         }
 
         return redirect()->route('psychologist-profiles.index');
+    }
+
+    public function approve(PsychologistProfile $psychologistProfile): HttpResponse
+    {
+        $psychologistProfile->update(['is_approved' => true]);
+
+        return response()->json(['message' => 'Psychologist approved successfully']);
+    }
+
+    public function disapprove(PsychologistProfile $psychologistProfile): HttpResponse
+    {
+        $psychologistProfile->update(['is_approved' => false]);
+
+        return response()->json(['message' => 'Psychologist disapproved successfully']);
     }
 
     /**

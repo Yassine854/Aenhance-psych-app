@@ -175,6 +175,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/psychologist-profiles/{psychologist_profile}', [PsychologistProfileController::class, 'show'])->name('psychologist-profiles.show');
     Route::get('/psychologist-profiles/{psychologist_profile}/edit', [PsychologistProfileController::class, 'edit'])->name('psychologist-profiles.edit');
     Route::patch('/psychologist-profiles/{psychologist_profile}/approve', [PsychologistProfileController::class, 'approve'])->name('psychologist-profiles.approve');
+    Route::patch('/psychologist-profiles/{psychologist_profile}/disapprove', [PsychologistProfileController::class, 'disapprove'])->name('psychologist-profiles.disapprove');
     Route::match(['put','patch'], '/psychologist-profiles/{psychologist_profile}', [PsychologistProfileController::class, 'update'])->name('psychologist-profiles.update');
     Route::delete('/psychologist-profiles/{psychologist_profile}', [PsychologistProfileController::class, 'destroy'])->name('psychologist-profiles.destroy');
 
