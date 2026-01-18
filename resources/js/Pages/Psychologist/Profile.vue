@@ -132,7 +132,7 @@ function onCvChange(e) {
 }
 
 function addLanguage() {
-  if (selectedLanguage.value && !form.languages.includes(selectedLanguage.value)) {
+  if (selectedLanguage.value && !form.languages.some(lang => lang.toLowerCase() === selectedLanguage.value.toLowerCase())) {
     form.languages.push(selectedLanguage.value)
     selectedLanguage.value = ''
   }
@@ -237,6 +237,40 @@ watch(() => Object.keys(form.errors).length, (errorCount, oldErrorCount) => {
       </div>
     </div>
 
+    <!-- Approval Status Message -->
+    <div v-if="!profile?.is_approved" class="mx-auto max-w-6xl px-4 py-6">
+      <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
+        <div class="flex items-center gap-3">
+          <div class="w-5 h-5 text-yellow-600 flex-shrink-0">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+            </svg>
+          </div>
+          <div>
+            <h3 class="text-sm font-medium text-yellow-800">Profile Under Review</h3>
+            <p class="text-sm text-yellow-700 mt-1">Your profile is currently waiting for approval. You can still update your information, but it won't be visible to patients until approved.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Approved Status Message -->
+    <div v-else-if="profile?.is_approved" class="mx-auto max-w-6xl px-4 py-6">
+      <div class="bg-green-50 border border-green-200 rounded-xl p-4">
+        <div class="flex items-center gap-3">
+          <div class="w-5 h-5 text-green-600 flex-shrink-0">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+          </div>
+          <div>
+            <h3 class="text-sm font-medium text-green-800">Profile Approved</h3>
+            <p class="text-sm text-green-700 mt-1">Congratulations! Your profile has been approved and is now visible to patients. You can continue updating your information as needed.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="mx-auto max-w-6xl px-4 py-8">
       <form @submit.prevent="submit" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <!-- Profile Photo Section - Displayed first on mobile/tablet -->
@@ -278,6 +312,13 @@ watch(() => Object.keys(form.errors).length, (errorCount, oldErrorCount) => {
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
                     </svg>
                   </div>
+                </div>
+
+                <!-- Verification Badge -->
+                <div v-if="profile?.is_approved" class="absolute -top-2 -left-2 w-7 h-7 bg-blue-500 rounded-full flex items-center justify-center ring-2 ring-white shadow-sm">
+                  <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
+                  </svg>
                 </div>
 
                 <label class="absolute -bottom-2 -right-2 h-10 w-10 rounded-full bg-[#5997ac] text-white shadow-lg flex items-center justify-center cursor-pointer hover:bg-[#4a7a95] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#5997ac] transition-colors duration-200">
@@ -338,6 +379,7 @@ watch(() => Object.keys(form.errors).length, (errorCount, oldErrorCount) => {
               <div class="w-full space-y-2">
                 <InputLabel class="text-sm font-medium text-gray-700">
                   Price per session (TND) <span class="text-red-500">*</span>
+                  <span v-if="profile?.is_approved" class="text-xs text-gray-500 font-normal"></span>
                 </InputLabel>
                 <div class="relative">
                   <div class="relative">
@@ -346,6 +388,8 @@ watch(() => Object.keys(form.errors).length, (errorCount, oldErrorCount) => {
                       type="number"
                       step="0.01"
                       min="0"
+                      :readonly="profile?.is_approved"
+                      :class="profile?.is_approved ? 'bg-gray-100 cursor-not-allowed' : ''"
                       class="w-full pl-16 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#5997ac] focus:border-transparent transition-colors duration-200"
                       placeholder="0.00"
                     />
@@ -755,7 +799,7 @@ watch(() => Object.keys(form.errors).length, (errorCount, oldErrorCount) => {
                       </div>
                     </div>
                     <div class="text-xs text-gray-500 bg-gray-50 p-2 rounded-lg">
-                      Accepted formats: PDF. Maximum 10MB per file.
+                      Accepted format: PDF. Maximum 1MB per file.
                     </div>
                     <InputError class="mt-2" :message="form.errors.diploma_files" />
                   </div>
@@ -839,14 +883,9 @@ watch(() => Object.keys(form.errors).length, (errorCount, oldErrorCount) => {
                         @change="onCvChange"
                         class="block w-full text-sm text-gray-500 file:mr-4 file:py-3 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-[#5997ac] file:text-white hover:file:bg-[#467891] file:cursor-pointer transition-colors duration-200"
                       />
-                      <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
-                        </svg>
-                      </div>
                     </div>
                     <div class="text-xs text-gray-500 bg-gray-50 p-2 rounded-lg">
-                      Accepted formats: PDF, DOC, DOCX. Maximum 10MB.
+                      Accepted format: PDF. Maximum 1MB
                     </div>
                     <InputError class="mt-2" :message="form.errors.cv" />
                   </div>

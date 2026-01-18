@@ -49,6 +49,14 @@ class LoginRequest extends FormRequest
             ]);
         }
 
+        $user = Auth::user();
+        if ($user && $user->is_active == 0) {
+            Auth::logout();
+            throw ValidationException::withMessages([
+                'email' => 'Your account is blocked. Please contact support.',
+            ]);
+        }
+
         RateLimiter::clear($this->throttleKey());
     }
 
