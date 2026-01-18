@@ -43,30 +43,55 @@
           v-if="showPatientMenu"
           class="absolute right-0 top-full mt-1 bg-white dark:bg-gray-800 text-black dark:text-white rounded shadow-md w-56 z-50 overflow-hidden"
         >
+          <!-- Profile Header -->
+          <div class="px-4 py-3 border-b border-gray-200 bg-gray-50 dark:bg-gray-700">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-full overflow-hidden ring-2 ring-gray-200 dark:ring-gray-600">
+                <img
+                  v-if="patientAvatarUrl"
+                  :src="patientAvatarUrl"
+                  alt="Profile"
+                  class="w-full h-full object-cover"
+                />
+                <div v-else class="w-full h-full bg-[#f6aec2] flex items-center justify-center text-white font-semibold">
+                  {{ patientInitials }}
+                </div>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="text-sm font-medium text-gray-900 dark:text-white truncate">
+                  {{ patientDisplayName }}
+                </div>
+                <div class="text-xs text-gray-500 dark:text-gray-400 truncate">
+                  Patient
+                </div>
+              </div>
+            </div>
+          </div>
+
           <Link
             :href="route('patient.profile')"
-            class="block w-full text-left px-4 py-2 hover:bg-gray-100 transition text-[13px]"
+            class="block w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition text-[13px]"
             @click="showPatientMenu = false"
           >
             Profile info
           </Link>
           <Link
             :href="route('patient.account')"
-            class="block w-full text-left px-4 py-2 hover:bg-gray-100 transition text-[13px]"
+            class="block w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition text-[13px]"
             @click="showPatientMenu = false"
           >
             Account info
           </Link>
           <Link
             :href="route('patient.appointments')"
-            class="block w-full text-left px-4 py-2 hover:bg-gray-100 transition text-[13px]"
+            class="block w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition text-[13px]"
             @click="showPatientMenu = false"
           >
             Appointments
           </Link>
           <Link
             :href="route('patient.appointments')"
-            class="block w-full text-left px-4 py-2 hover:bg-gray-100 transition text-[13px]"
+            class="block w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition text-[13px]"
             @click="showPatientMenu = false"
           >
             History
@@ -76,8 +101,92 @@
             :href="route('logout')"
             method="post"
             as="button"
-            class="block w-full text-left px-4 py-2 hover:bg-gray-100 transition text-[13px]"
+            class="block w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition text-[13px]"
             @click="showPatientMenu = false"
+          >
+            Log out
+          </Link>
+        </div>
+      </div>
+      <!-- Psychologist menu (shown when a psychologist is logged in) -->
+      <div v-if="isPsychologist" class="relative">
+        <button
+          type="button"
+          @click="showPsychologistMenu = !showPsychologistMenu"
+          class="flex items-center gap-2 px-3.5 py-1.5 bg-white/10 text-white text-[12px] rounded-full border border-white/20 hover:bg-white/20 transition"
+        >
+          <span class="inline-flex h-7 w-7 items-center justify-center rounded-full overflow-hidden ring-2 ring-white/25 bg-white/10">
+            <img
+              v-if="psychologistAvatarUrl"
+              :src="psychologistAvatarUrl"
+              alt="Profile"
+              class="h-full w-full object-cover"
+            />
+            <span v-else class="text-[11px] font-semibold tracking-wide">{{ psychologistInitials }}</span>
+          </span>
+          <span class="max-w-[180px] truncate">{{ psychologistDisplayName }}</span>
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+          </svg>
+        </button>
+
+        <div
+          v-if="showPsychologistMenu"
+          class="absolute right-0 top-full mt-1 bg-white dark:bg-gray-800 text-black dark:text-white rounded shadow-md w-56 z-50 overflow-hidden"
+        >
+          <!-- Profile Header -->
+          <div class="px-4 py-3 border-b border-gray-200 bg-gray-50 dark:bg-gray-700">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-full overflow-hidden ring-2 ring-gray-200 dark:ring-gray-600">
+                <img
+                  v-if="psychologistAvatarUrl"
+                  :src="psychologistAvatarUrl"
+                  alt="Profile"
+                  class="w-full h-full object-cover"
+                />
+                <div v-else class="w-full h-full bg-[#5997ac] flex items-center justify-center text-white font-semibold">
+                  {{ psychologistInitials }}
+                </div>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="text-sm font-medium text-gray-900 dark:text-white truncate">
+                  {{ psychologistDisplayName }}
+                </div>
+                <div class="text-xs text-gray-500 dark:text-gray-400 truncate">
+                  Psychologist
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <Link
+            :href="route('psychologist.profile.self')"
+            class="block w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition text-[13px]"
+            @click="showPsychologistMenu = false"
+          >
+            Edit profile
+          </Link>
+          <Link
+            :href="route('psychologist.account')"
+            class="block w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition text-[13px]"
+            @click="showPsychologistMenu = false"
+          >
+            Account settings
+          </Link>
+          <Link
+            :href="route('psychologist.appointments.index')"
+            class="block w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition text-[13px]"
+            @click="showPsychologistMenu = false"
+          >
+            Appointments
+          </Link>
+          <div class="border-t border-gray-200"></div>
+          <Link
+            :href="route('logout')"
+            method="post"
+            as="button"
+            class="block w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition text-[13px]"
+            @click="showPsychologistMenu = false"
           >
             Log out
           </Link>
@@ -280,6 +389,7 @@ const showAboutDropdown = ref(false);
 const showSupportDropdown = ref(false);
 const showMobileMenu = ref(false);
 const showPatientMenu = ref(false)
+const showPsychologistMenu = ref(false)
 const { t, locale } = useI18n();
 const currentLang = ref("");
 
@@ -307,6 +417,30 @@ const patientInitials = computed(() => {
   return (initials || 'A').toUpperCase()
 })
 
+const isPsychologist = computed(() => {
+  const role = (resolvedAuthUser.value?.role ?? '').toString().trim().toUpperCase()
+  return !!resolvedAuthUser.value && role === 'PSYCHOLOGIST'
+})
+
+const psychologistDisplayName = computed(() => {
+  return resolvedAuthUser.value?.name || resolvedAuthUser.value?.email || 'Account'
+})
+
+const psychologistAvatarUrl = computed(() => {
+  const url = resolvedAuthUser.value?.profile_image_url
+  if (!url) return null
+  if (typeof url !== 'string') return null
+  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('/')) return url
+  return `/${url}`
+})
+
+const psychologistInitials = computed(() => {
+  const source = (resolvedAuthUser.value?.name || resolvedAuthUser.value?.email || 'A').trim()
+  const parts = source.split(/\s+/).filter(Boolean)
+  const initials = parts.slice(0, 2).map((p) => p[0]).join('')
+  return (initials || 'A').toUpperCase()
+})
+
 // Languages list
 const languages = [
   { code: "en", label: "🇬🇧 English" },
@@ -321,6 +455,7 @@ function setLang(lang) {
   localStorage.setItem("locale", lang);
   showDropdown.value = false;
   showPatientMenu.value = false
+  showPsychologistMenu.value = false
   
   // Set document direction based on language
   if (lang === 'ar') {

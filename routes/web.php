@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\AdminAppointmentController;
 use App\Http\Controllers\PsychologistProfileController;
 use App\Http\Controllers\PatientProfileController;
 use App\Http\Controllers\Patient\PatientSelfProfileController;
+use App\Http\Controllers\Psychologist\PsychologistSelfProfileController;
 use App\Http\Controllers\ServicesController;
 use App\Http\Controllers\SpecialisationController;
 use App\Http\Controllers\ExpertiseController;
@@ -32,13 +33,20 @@ use Inertia\Inertia;
 */
 
 Route::get('/', function () {
-    return Inertia::render('Welcome', [
+    $user = Auth::user();
+    $props = [
         'canLogin' => Route::has('login'),
         'canRegister' => Route::has('register'),
-        'authUser' => Auth::user(),
+        'authUser' => $user,
         'laravelVersion' => Application::VERSION,
         'phpVersion' => PHP_VERSION,
-    ]);
+    ];
+
+    if ($user && $user->isPsychologist()) {
+        $props['psychologist'] = $user->psychologistProfile;
+    }
+
+    return Inertia::render('Welcome', $props);
 })->name('home');
 
 
@@ -104,7 +112,7 @@ Route::get('/dashboard', function () {
             return Inertia::render('Admin/Dashboard');
         }
         if ($user->isPsychologist()) {
-            return Inertia::render('Psychologist/Dashboard');
+            return redirect()->route('home');
         }
         if ($user->isPatient()) {
             return redirect()->route('home');
@@ -226,6 +234,26 @@ Route::middleware(['auth'])->group(function () {
     // Patient profile (patient-facing page)
     Route::get('/patient/profile', [PatientSelfProfileController::class, 'edit'])->name('patient.profile');
     Route::post('/patient/profile', [PatientSelfProfileController::class, 'update'])->name('patient.profile.update');
+
+    // Psychologist account settings (psychologist-facing page)
+    Route::get('/psychologist/account', function (Request $request) {
+        $user = $request->user();
+        if (! $user || ! method_exists($user, 'isPsychologist') || ! $user->isPsychologist()) {
+            return redirect()->route('dashboard');
+        }
+
+        return Inertia::render('Psychologist/Account', [
+            'canLogin' => Route::has('login'),
+            'canRegister' => Route::has('register'),
+            'authUser' => $user,
+            'mustVerifyEmail' => $user instanceof MustVerifyEmail,
+            'status' => session('status'),
+        ]);
+    })->name('psychologist.account');
+
+    // Psychologist profile (psychologist-facing page)
+    Route::get('/psychologist/profile/edit', [PsychologistSelfProfileController::class, 'edit'])->name('psychologist.profile.self');
+    Route::post('/psychologist/profile/edit', [PsychologistSelfProfileController::class, 'update'])->name('psychologist.profile.self.update');
 
 });
 

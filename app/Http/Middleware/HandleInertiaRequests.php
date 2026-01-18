@@ -31,6 +31,11 @@ class HandleInertiaRequests extends Middleware
     {
         $user = $request->user();
 
+        // Load relationships if user exists
+        if ($user) {
+            $user->load(['psychologistProfile', 'patientProfile']);
+        }
+
         // Derive a globally available avatar URL
         $profileImageUrl = null;
         if ($user) {
@@ -50,6 +55,8 @@ class HandleInertiaRequests extends Middleware
                     'email' => $user->email,
                     'role' => $user->role,
                     'profile_image_url' => $profileImageUrl,
+                    'psychologistProfile' => $user->psychologistProfile,
+                    'patientProfile' => $user->patientProfile,
                 ] : null,
             ],
             // Also expose a simple profile object for flexible front-end usage

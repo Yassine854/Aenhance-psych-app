@@ -1,3 +1,19 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Vueform Multiselect theme overrides (must be OUTSIDE @layer so Tailwind doesn't purge it) */
+.multiselect {
+  --ms-tag-bg: rgb(89 151 172 / var(--tw-bg-opacity, 1));
+  --ms-option-bg-selected: rgb(89 151 172 / var(--tw-bg-opacity, 1));
+  --ms-option-bg-selected-pointed: rgb(89 151 172 / var(--tw-bg-opacity, 1));
+}
+
+.multiselect-tag {
+  background: rgb(89 151 172 / var(--tw-bg-opacity, 1)) !important;
+}
+
+.multiselect-option.is-selected,
+.multiselect-option.is-selected.is-pointed {
+  background: rgb(89 151 172 / var(--tw-bg-opacity, 1)) !important;
+}
