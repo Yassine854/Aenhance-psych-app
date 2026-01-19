@@ -71,4 +71,9 @@ class PsychologistProfile extends Model
             'expertise_id'
         )->withTimestamps();
     }
+
+    public function verificationDetails()
+    {
+        return $this->hasOne(PsychologistVerificationDetails::class);
+    }
 }

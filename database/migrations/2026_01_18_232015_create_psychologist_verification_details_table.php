@@ -16,7 +16,8 @@ return new class extends Migration
 
             $table->foreignId('psychologist_profile_id')
                   ->constrained('psychologist_profiles')
-                  ->cascadeOnDelete();
+                  ->cascadeOnDelete()
+                  ->name('fk_pvd_profile');
             
           $table->string('rib');
           $table->string('bank_name');

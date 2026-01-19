@@ -210,11 +210,6 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/appointments/book/{psychologist_profile}', [AppointmentController::class, 'book'])
         ->name('appointments.book');
 
-    // Psychologist self profile (for logged-in psychologist)
-    Route::get('/psychologist/profile', [PsychologistProfileController::class, 'editSelf'])->name('psychologist.profile.edit');
-    Route::post('/psychologist/profile', [PsychologistProfileController::class, 'storeSelf'])->name('psychologist.profile.store');
-    Route::match(['post', 'put', 'patch'], '/psychologist/profile/update', [PsychologistProfileController::class, 'updateSelf'])->name('psychologist.profile.update');
-
     // Patient account settings (patient-facing page)
     Route::get('/patient/account', function (Request $request) {
         $user = $request->user();
@@ -254,6 +249,10 @@ Route::middleware(['auth'])->group(function () {
     // Psychologist profile (psychologist-facing page)
     Route::get('/psychologist/profile/edit', [PsychologistSelfProfileController::class, 'edit'])->name('psychologist.profile.self');
     Route::post('/psychologist/profile/edit', [PsychologistSelfProfileController::class, 'update'])->name('psychologist.profile.self.update');
+
+    // Psychologist verification
+    Route::get('/psychologist/verification/create', [PsychologistSelfProfileController::class, 'createVerification'])->name('psychologist.verification.create');
+    Route::post('/psychologist/verification/store', [PsychologistSelfProfileController::class, 'storeVerification'])->name('psychologist.verification.store');
 
 });
 

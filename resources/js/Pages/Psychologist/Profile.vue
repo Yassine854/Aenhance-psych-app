@@ -20,6 +20,7 @@ const props = defineProps({
   expertises: Array,
   cv_required: Boolean,
   diplomas_required: Boolean,
+  verification_details: Object,
   status: String,
 })
 
@@ -263,9 +264,26 @@ watch(() => Object.keys(form.errors).length, (errorCount, oldErrorCount) => {
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
             </svg>
           </div>
-          <div>
+          <div class="flex-1">
             <h3 class="text-sm font-medium text-green-800">Profile Approved</h3>
             <p class="text-sm text-green-700 mt-1">Congratulations! Your profile has been approved and is now visible to patients. You can continue updating your information as needed.</p>
+            <div v-if="!verification_details" class="mt-3">
+              <Link :href="route('psychologist.verification.create')" class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-yellow-600 hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 transition-colors duration-200">
+                <svg class="-ml-0.5 mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                </svg>
+                Complete Verification
+              </Link>
+            </div>
+            <div v-else class="mt-3">
+              <Link :href="route('psychologist.verification.create')" class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-gradient-to-r from-[#af5166] to-[#c66b85] hover:from-[#9b4759] hover:to-[#b55f75] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#af5166] transition-all duration-200">
+                <svg class="-ml-0.5 mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                </svg>
+                View Verification Details
+              </Link>
+            </div>
           </div>
         </div>
       </div>

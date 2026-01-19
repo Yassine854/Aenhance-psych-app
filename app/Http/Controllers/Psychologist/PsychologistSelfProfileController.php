@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\PsychologistProfile;
 use App\Models\Specialisation;
 use App\Models\Expertise;
+use App\Models\PsychologistVerificationDetails;
 use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -104,6 +105,7 @@ class PsychologistSelfProfileController extends Controller
             'canRegister' => Route::has('register'),
             'authUser' => $user,
             'profile' => $profile ? $profile->load(['diplomas', 'specialisations', 'expertises']) : null,
+            'verification_details' => $profile ? $profile->verificationDetails : null,
             'specialisations' => Specialisation::all(),
             'expertises' => Expertise::all(),
             'cv_required' => $profile ? !$profile->cv : true,
@@ -265,5 +267,138 @@ class PsychologistSelfProfileController extends Controller
         }
 
         return redirect()->route('psychologist.profile.self')->with('status', 'Profile updated successfully.');
+    }
+
+    public function createVerification(Request $request): Response
+    {
+        $user = $request->user();
+        if (! $user || ! method_exists($user, 'isPsychologist') || ! $user->isPsychologist()) {
+            return Inertia::render('Welcome', [
+                'canLogin' => Route::has('login'),
+                'canRegister' => Route::has('register'),
+                'authUser' => $user,
+            ]);
+        }
+
+        $profile = $user->psychologistProfile;
+        if (!$profile || !$profile->is_approved) {
+            return redirect()->route('psychologist.profile.self')->with('error', 'Your profile must be approved first.');
+        }
+
+        $verification_details = $profile->verificationDetails;
+
+        // Transform data for Vue component
+        if ($verification_details) {
+            $verification_details = $verification_details->load('diplomas')->toArray();
+            // Convert single identity file URL to array for Vue component compatibility
+            if (isset($verification_details['identity_file_url']) && $verification_details['identity_file_url']) {
+                $verification_details['identity_files_urls'] = [$verification_details['identity_file_url']];
+            } else {
+                $verification_details['identity_files_urls'] = [];
+            }
+            // Convert diploma files to array for Vue component compatibility
+            if (isset($verification_details['diplomas']) && is_array($verification_details['diplomas'])) {
+                $verification_details['diploma_files_urls'] = array_map(function($diploma) {
+                    return $diploma['file_url'];
+                }, $verification_details['diplomas']);
+            } else {
+                $verification_details['diploma_files_urls'] = [];
+            }
+        }
+
+        return Inertia::render('Psychologist/VerificationDetails', [
+            'canLogin' => Route::has('login'),
+            'canRegister' => Route::has('register'),
+            'authUser' => $user,
+            'verification_details' => $verification_details,
+            'status' => session('status'),
+        ]);
+    }
+
+    public function storeVerification(Request $request)
+    {
+        $user = $request->user();
+        $profile = $user->psychologistProfile;
+
+        if (!$profile || !$profile->is_approved) {
+            return redirect()->route('psychologist.profile.self')->with('error', 'Your profile must be approved first.');
+        }
+
+        $request->validate([
+            'rib' => 'required|string|max:255',
+            'bank_name' => 'required|string|max:255',
+            'bank_account_number' => 'required|string|max:255',
+            'bank_account_name' => 'required|string|max:255',
+            'rib_file' => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120', // 5MB
+            'identity_type' => 'required|string|max:255',
+            'identity_number' => 'required|string|max:255',
+            'identity_file' => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120', // 5MB
+            'diploma_files' => 'required|array|min:1',
+            'diploma_files.*' => 'file|mimes:pdf,jpg,jpeg,png|max:5120', // 5MB
+        ]);
+
+        // Upload RIB file
+        $ribUrl = null;
+        if ($request->hasFile('rib_file')) {
+            try {
+                $uploadedFile = Cloudinary::upload($request->file('rib_file')->getRealPath(), [
+                    'folder' => 'psychologist_verifications/rib',
+                    'public_id' => 'rib_' . $profile->id . '_' . time(),
+                ]);
+                $ribUrl = $uploadedFile->getSecurePath();
+            } catch (\Throwable $e) {
+                Log::warning('Cloudinary RIB upload failed: ' . $e->getMessage());
+                return back()->withErrors(['rib_file' => 'Failed to upload RIB file. Please try again.']);
+            }
+        }
+
+        // Upload identity file
+        $identityUrl = null;
+        if ($request->hasFile('identity_file')) {
+            try {
+                $uploadedFile = Cloudinary::upload($request->file('identity_file')->getRealPath(), [
+                    'folder' => 'psychologist_verifications/identity',
+                    'public_id' => 'identity_' . $profile->id . '_' . time(),
+                ]);
+                $identityUrl = $uploadedFile->getSecurePath();
+            } catch (\Throwable $e) {
+                Log::warning('Cloudinary identity upload failed: ' . $e->getMessage());
+                return back()->withErrors(['identity_file' => 'Failed to upload identity file. Please try again.']);
+            }
+        }
+
+        // Create verification details
+        $verificationDetails = PsychologistVerificationDetails::create([
+            'psychologist_profile_id' => $profile->id,
+            'rib' => $request->rib,
+            'bank_name' => $request->bank_name,
+            'bank_account_number' => $request->bank_account_number,
+            'bank_account_name' => $request->bank_account_name,
+            'rib_file_url' => $ribUrl,
+            'identity_type' => $request->identity_type,
+            'identity_number' => $request->identity_number,
+            'identity_file_url' => $identityUrl,
+            'verification_status' => 'pending',
+        ]);
+
+        // Upload diploma files
+        if ($request->hasFile('diploma_files')) {
+            foreach ($request->file('diploma_files') as $file) {
+                try {
+                    $uploadedFile = Cloudinary::upload($file->getRealPath(), [
+                        'folder' => 'psychologist_verifications/diplomas',
+                        'public_id' => 'diploma_' . $verificationDetails->id . '_' . time() . '_' . uniqid(),
+                    ]);
+                    $url = $uploadedFile->getSecurePath();
+                    if ($url) {
+                        $verificationDetails->diplomas()->create(['file_url' => $url]);
+                    }
+                } catch (\Throwable $e) {
+                    Log::warning('Cloudinary diploma upload failed: ' . $e->getMessage());
+                }
+            }
+        }
+
+        return redirect()->route('psychologist.verification.create')->with('status', 'Verification details submitted successfully. Your documents will be reviewed shortly.');
     }
 }

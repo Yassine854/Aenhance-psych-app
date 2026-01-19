@@ -15,7 +15,8 @@ return new class extends Migration
             $table->id();
             $table->foreignId('psychologist_verification_details_id')
                   ->constrained('psychologist_verification_details')
-                  ->cascadeOnDelete();
+                  ->cascadeOnDelete()
+                  ->name('fk_diplomas_details');
             $table->string('file_url');
             $table->timestamps();
         });
