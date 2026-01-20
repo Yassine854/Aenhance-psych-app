@@ -1,7 +1,7 @@
 <template>
   <div v-if="show && psychologist" class="fixed inset-0 z-[1000] flex items-center justify-center">
     <div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[1000]" @click="$emit('close')"></div>
-    <div class="relative w-full max-w-6xl rounded-2xl shadow-2xl overflow-hidden z-[1001]">
+    <div class="relative w-full max-w-7xl rounded-2xl shadow-2xl overflow-hidden z-[1001]">
       <!-- Gradient header -->
       <div class="bg-gradient-to-r from-[rgb(141,61,79)] to-[rgb(89,151,172)] p-6">
         <div class="flex items-start justify-between gap-4">
@@ -162,6 +162,101 @@
                   <dd class="text-sm font-medium text-gray-900 text-right">{{ psychologist.user?.email || '—' }}</dd>
                 </div>
               </dl>
+            </div>
+
+            <!-- Verification details moved below to a full-width card for better layout -->
+          </div>
+        </div>
+
+        <!-- Full-width Verification Details card -->
+        <div v-if="displayPsychologist.verification_details" class="mt-6 rounded-2xl border border-gray-200 p-6 bg-white">
+          <div class="flex items-start justify-between gap-4">
+            <div>
+              <div class="text-lg font-semibold text-gray-900">Verification Details</div>
+              <div class="text-sm text-gray-500 mt-1">Documents and bank/account information submitted by the psychologist.</div>
+              <div v-if="displayPsychologist.verification_details.rejection_reason" class="mt-3 text-sm text-red-700 bg-red-50 border border-red-100 rounded px-3 py-2">
+                <div class="font-semibold">Rejection reason</div>
+                <div class="mt-1 text-sm">{{ displayPsychologist.verification_details.rejection_reason }}</div>
+              </div>
+            </div>
+            <div>
+              <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold" :class="displayPsychologist.verification_details.verification_status === 'approved' ? 'bg-green-100 text-green-700' : (displayPsychologist.verification_details.verification_status === 'rejected' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700')">
+                {{ (displayPsychologist.verification_details.verification_status || 'pending').charAt(0).toUpperCase() + (displayPsychologist.verification_details.verification_status || 'pending').slice(1) }}
+              </span>
+            </div>
+          </div>
+
+          <div class="mt-5 grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="md:col-span-1 space-y-3">
+              <div class="text-xs font-medium text-gray-500">RIB</div>
+              <div class="text-sm font-medium text-gray-900">{{ displayPsychologist.verification_details.rib || '—' }}</div>
+
+              <div class="text-xs font-medium text-gray-500 mt-4">Bank Name</div>
+              <div class="text-sm font-medium text-gray-900">{{ displayPsychologist.verification_details.bank_name || '—' }}</div>
+
+              <div class="text-xs font-medium text-gray-500 mt-4">Account Number</div>
+              <div class="text-sm font-medium text-gray-900">{{ displayPsychologist.verification_details.bank_account_number || '—' }}</div>
+
+              <div class="text-xs font-medium text-gray-500 mt-4">Account Holder</div>
+              <div class="text-sm font-medium text-gray-900">{{ displayPsychologist.verification_details.bank_account_name || '—' }}</div>
+
+              <div class="text-xs font-medium text-gray-500 mt-4">Identity</div>
+              <div class="text-sm font-medium text-gray-900">{{ displayPsychologist.verification_details.identity_type || '—' }} {{ displayPsychologist.verification_details.identity_number ? ('— ' + displayPsychologist.verification_details.identity_number) : '' }}</div>
+            </div>
+
+            <div class="md:col-span-1"></div>
+
+            <div class="md:col-span-1 space-y-3">
+              <!-- RIB Document card styled like diplomas -->
+              <div>
+                <div class="text-xs font-medium text-gray-500">RIB Document</div>
+                <div class="mt-2">
+                  <div v-if="displayPsychologist.verification_details.rib_file_url">
+                    <a :href="displayPsychologist.verification_details.rib_file_url" target="_blank" rel="noopener" class="flex items-center justify-between gap-3 rounded-lg border border-gray-200 px-3 py-2 hover:bg-gray-50">
+                      <div class="min-w-0">
+                        <div class="text-sm font-medium text-gray-900">RIB (PDF)</div>
+                        <div class="text-xs text-gray-500 truncate">Open document</div>
+                      </div>
+                      <span class="text-xs font-semibold text-[rgb(141,61,79)]">View</span>
+                    </a>
+                  </div>
+                  <div v-else class="text-sm text-gray-500">No RIB document uploaded</div>
+                </div>
+              </div>
+
+              <!-- Identity files styled like diplomas -->
+              <div class="mt-3">
+                <div class="text-xs font-medium text-gray-500">Identity Documents</div>
+                <div class="mt-2 space-y-2">
+                  <div v-if="(displayPsychologist.verification_details.identity_files_urls || []).length">
+                    <a v-for="(f, i) in displayPsychologist.verification_details.identity_files_urls" :key="i" :href="f" target="_blank" rel="noopener" class="flex items-center justify-between gap-3 rounded-lg border border-gray-200 px-3 py-2 hover:bg-gray-50">
+                      <div class="min-w-0">
+                        <div class="text-sm font-medium text-gray-900">Identity {{ i+1 }}</div>
+                        <div class="text-xs text-gray-500 truncate">Open document</div>
+                      </div>
+                      <span class="text-xs font-semibold text-[rgb(141,61,79)]">View</span>
+                    </a>
+                  </div>
+                  <div v-else class="text-sm text-gray-500">No identity document uploaded</div>
+                </div>
+              </div>
+
+              <!-- Diplomas (kept below) -->
+              <div class="mt-3">
+                <div class="text-xs font-medium text-gray-500">Verification Diplomas</div>
+                <div class="mt-2 space-y-2">
+                  <div v-if="(displayPsychologist.verification_details.diploma_files_urls || []).length">
+                    <a v-for="(d, idx) in displayPsychologist.verification_details.diploma_files_urls" :key="idx" :href="d" target="_blank" rel="noopener" class="flex items-center justify-between gap-3 rounded-lg border border-gray-200 px-3 py-2 hover:bg-gray-50">
+                      <div class="min-w-0">
+                        <div class="text-sm font-medium text-gray-900">Diploma {{ idx + 1 }}</div>
+                        <div class="text-xs text-gray-500 truncate">Open document</div>
+                      </div>
+                      <span class="text-xs font-semibold text-[rgb(141,61,79)]">View</span>
+                    </a>
+                  </div>
+                  <div v-else class="text-sm text-gray-500">No verification diplomas uploaded</div>
+                </div>
+              </div>
             </div>
           </div>
         </div>

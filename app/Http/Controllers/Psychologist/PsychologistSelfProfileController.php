@@ -324,72 +324,126 @@ class PsychologistSelfProfileController extends Controller
             return redirect()->route('psychologist.profile.self')->with('error', 'Your profile must be approved first.');
         }
 
-        $request->validate([
-            'rib' => 'required|string|max:255',
-            'bank_name' => 'required|string|max:255',
-            'bank_account_number' => 'required|string|max:255',
-            'bank_account_name' => 'required|string|max:255',
-            'rib_file' => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120', // 5MB
-            'identity_type' => 'required|string|max:255',
-            'identity_number' => 'required|string|max:255',
-            'identity_file' => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120', // 5MB
-            'diploma_files' => 'required|array|min:1',
-            'diploma_files.*' => 'file|mimes:pdf,jpg,jpeg,png|max:5120', // 5MB
-        ]);
+        // If there is an existing verification record, make validation less strict (files optional) so
+        // the psychologist can edit rejected verification details. If no existing record, require files.
+        $existing = $profile->verificationDetails;
 
-        // Upload RIB file
-        $ribUrl = null;
+        $rules = [
+            'rib' => 'nullable|string|max:255',
+            'bank_name' => 'nullable|string|max:255',
+            'bank_account_number' => 'nullable|string|max:255',
+            'bank_account_name' => 'nullable|string|max:255',
+            'rib_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120', // 5MB
+            'identity_type' => 'nullable|string|max:255',
+            'identity_number' => 'nullable|string|max:255',
+            'identity_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120', // 5MB
+            'diploma_files' => 'nullable|array|min:1',
+            'diploma_files.*' => 'file|mimes:pdf,jpg,jpeg,png|max:5120', // 5MB
+        ];
+
+        if (! $existing) {
+            // first submission must provide required fields and at least one diploma
+            $rules = [
+                'rib' => 'required|string|max:255',
+                'bank_name' => 'required|string|max:255',
+                'bank_account_number' => 'required|string|max:255',
+                'bank_account_name' => 'required|string|max:255',
+                'rib_file' => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120', // 5MB
+                'identity_type' => 'required|string|max:255',
+                'identity_number' => 'required|string|max:255',
+                'identity_file' => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120', // 5MB
+                'diploma_files' => 'required|array|min:1',
+                'diploma_files.*' => 'file|mimes:pdf,jpg,jpeg,png|max:5120', // 5MB
+            ];
+        }
+
+        $validated = $request->validate($rules);
+
+        // Upload or replace RIB file
+        $ribUrl = $existing->rib_file_url ?? null;
         if ($request->hasFile('rib_file')) {
+            // delete old if exists
+            if (! empty($ribUrl)) {
+                self::deleteCloudinaryFile($ribUrl);
+            }
             try {
                 $uploadedFile = Cloudinary::upload($request->file('rib_file')->getRealPath(), [
                     'folder' => 'psychologist_verifications/rib',
                     'public_id' => 'rib_' . $profile->id . '_' . time(),
                 ]);
-                $ribUrl = $uploadedFile->getSecurePath();
+                $ribUrl = method_exists($uploadedFile, 'getSecurePath') ? $uploadedFile->getSecurePath() : null;
             } catch (\Throwable $e) {
                 Log::warning('Cloudinary RIB upload failed: ' . $e->getMessage());
                 return back()->withErrors(['rib_file' => 'Failed to upload RIB file. Please try again.']);
             }
         }
 
-        // Upload identity file
-        $identityUrl = null;
+        // Upload or replace identity file
+        $identityUrl = $existing->identity_file_url ?? null;
         if ($request->hasFile('identity_file')) {
+            if (! empty($identityUrl)) {
+                self::deleteCloudinaryFile($identityUrl);
+            }
             try {
                 $uploadedFile = Cloudinary::upload($request->file('identity_file')->getRealPath(), [
                     'folder' => 'psychologist_verifications/identity',
                     'public_id' => 'identity_' . $profile->id . '_' . time(),
                 ]);
-                $identityUrl = $uploadedFile->getSecurePath();
+                $identityUrl = method_exists($uploadedFile, 'getSecurePath') ? $uploadedFile->getSecurePath() : null;
             } catch (\Throwable $e) {
                 Log::warning('Cloudinary identity upload failed: ' . $e->getMessage());
                 return back()->withErrors(['identity_file' => 'Failed to upload identity file. Please try again.']);
             }
         }
 
-        // Create verification details
-        $verificationDetails = PsychologistVerificationDetails::create([
-            'psychologist_profile_id' => $profile->id,
-            'rib' => $request->rib,
-            'bank_name' => $request->bank_name,
-            'bank_account_number' => $request->bank_account_number,
-            'bank_account_name' => $request->bank_account_name,
-            'rib_file_url' => $ribUrl,
-            'identity_type' => $request->identity_type,
-            'identity_number' => $request->identity_number,
-            'identity_file_url' => $identityUrl,
-            'verification_status' => 'pending',
-        ]);
+        // Create or update verification details
+        if (! $existing) {
+            $verificationDetails = PsychologistVerificationDetails::create([
+                'psychologist_profile_id' => $profile->id,
+                'rib' => $request->rib,
+                'bank_name' => $request->bank_name,
+                'bank_account_number' => $request->bank_account_number,
+                'bank_account_name' => $request->bank_account_name,
+                'rib_file_url' => $ribUrl,
+                'identity_type' => $request->identity_type,
+                'identity_number' => $request->identity_number,
+                'identity_file_url' => $identityUrl,
+                'verification_status' => 'pending',
+            ]);
+        } else {
+            $existing->rib = $request->filled('rib') ? $request->rib : $existing->rib;
+            $existing->bank_name = $request->filled('bank_name') ? $request->bank_name : $existing->bank_name;
+            $existing->bank_account_number = $request->filled('bank_account_number') ? $request->bank_account_number : $existing->bank_account_number;
+            $existing->bank_account_name = $request->filled('bank_account_name') ? $request->bank_account_name : $existing->bank_account_name;
+            $existing->rib_file_url = $ribUrl;
+            $existing->identity_type = $request->filled('identity_type') ? $request->identity_type : $existing->identity_type;
+            $existing->identity_number = $request->filled('identity_number') ? $request->identity_number : $existing->identity_number;
+            $existing->identity_file_url = $identityUrl;
+            // When resubmitting, reset status to pending and clear rejection reason
+            $existing->verification_status = 'pending';
+            $existing->rejection_reason = null;
+            $existing->save();
+            $verificationDetails = $existing;
+        }
 
-        // Upload diploma files
+        // If new diploma files uploaded, remove old diplomas and create new ones
         if ($request->hasFile('diploma_files')) {
+            // delete old diploma files
+            $oldDiplomas = $verificationDetails->diplomas()->get();
+            foreach ($oldDiplomas as $d) {
+                if (! empty($d->file_url)) {
+                    self::deleteCloudinaryFile($d->file_url);
+                }
+            }
+            $verificationDetails->diplomas()->delete();
+
             foreach ($request->file('diploma_files') as $file) {
                 try {
                     $uploadedFile = Cloudinary::upload($file->getRealPath(), [
                         'folder' => 'psychologist_verifications/diplomas',
                         'public_id' => 'diploma_' . $verificationDetails->id . '_' . time() . '_' . uniqid(),
                     ]);
-                    $url = $uploadedFile->getSecurePath();
+                    $url = method_exists($uploadedFile, 'getSecurePath') ? $uploadedFile->getSecurePath() : null;
                     if ($url) {
                         $verificationDetails->diplomas()->create(['file_url' => $url]);
                     }

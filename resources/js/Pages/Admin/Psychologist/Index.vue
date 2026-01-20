@@ -383,8 +383,23 @@ function closeModal() {
   selected.value = null
 }
 
-function openShow(p) {
+async function openShow(p) {
+  // Set basic selection immediately so UI can reflect it if needed
   selected.value = p
+
+  // Try to fetch full verification details for this profile and merge them
+  try {
+    const url = route('psychologist.verification.admin.show', p.id, false)
+    const res = await fetch(url, { credentials: 'include', headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' } })
+    if (res.ok) {
+      const data = await res.json()
+      selected.value = { ...p, verification_details: data?.verification || null }
+    }
+  } catch (e) {
+    // ignore network errors - we'll still open the modal with available data
+    console.warn('Failed to fetch verification details', e)
+  }
+
   modal.value = 'show'
 }
 

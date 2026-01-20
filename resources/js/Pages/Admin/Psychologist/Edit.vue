@@ -15,7 +15,16 @@
               </div>
             </div>
           </div>
-          <button @click="$emit('close')" class="text-white/90 hover:text-white text-2xl leading-none">✕</button>
+              <div class="flex items-center gap-3">
+            <div v-if="section === 'verification'">
+              <select v-model="verificationForm.verification_status" @change="handleStatusChange" :class="[verificationForm.verification_status === 'approved' ? 'bg-green-600' : (verificationForm.verification_status === 'rejected' ? 'bg-red-600' : 'bg-yellow-500'), 'text-white rounded-full px-5 py-1 text-sm font-semibold focus:outline-none w-40']">
+                <option value="pending">Pending</option>
+                <option value="approved">Approved</option>
+                <option value="rejected">Rejected</option>
+              </select>
+            </div>
+            <button @click="$emit('close')" class="text-white/90 hover:text-white text-2xl leading-none">✕</button>
+          </div>
         </div>
         <!-- Tabs -->
         <div class="mt-4 flex items-center gap-2">
@@ -24,6 +33,9 @@
           </button>
           <button @click="section='account'" :class="section==='account' ? 'bg-white text-gray-900 shadow' : 'bg-white/20 text-white hover:bg-white/30'" class="px-4 py-2 rounded-lg transition">
             Account
+          </button>
+          <button @click="section='verification'" :class="section==='verification' ? 'bg-white text-gray-900 shadow' : 'bg-white/20 text-white hover:bg-white/30'" class="px-4 py-2 rounded-lg transition">
+            Verification Details
           </button>
         </div>
       </div>
@@ -117,9 +129,9 @@
               <label class="text-sm font-medium text-gray-700">Gender</label>
               <select v-model="form.gender" class="mt-1 block w-full rounded-md border-gray-300 focus:ring-2 focus:ring-[rgb(89,151,172)]">
                 <option value="">Select gender</option>
-                <option value="male">Male</option>
-                <option value="female">Female</option>
-                <option value="other">Other</option>
+                  <option value="MALE">Male</option>
+                  <option value="FEMALE">Female</option>
+                  <option value="OTHER">Other</option>
               </select>
               <p v-if="form.errors.gender" class="mt-1 text-sm text-red-600">{{ form.errors.gender }}</p>
             </div>
@@ -306,7 +318,7 @@
         </form>
 
         <!-- Account section -->
-        <form v-else @submit.prevent="submitAccount" class="space-y-6">
+        <form v-else-if="section==='account'" @submit.prevent="submitAccount" class="space-y-6">
           <div v-if="accountError" class="p-4 bg-red-50 border border-red-200 rounded-lg">
             <div class="flex items-start gap-3">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor">
@@ -350,6 +362,212 @@
             <button type="button" @click="$emit('close')" class="text-sm text-gray-600">Cancel</button>
           </div>
         </form>
+
+        <!-- Verification section -->
+        <form v-else-if="section==='verification'" @submit.prevent="submitVerification" class="space-y-6">
+          <div v-if="verificationError" class="p-4 bg-red-50 border border-red-200 rounded-lg">
+            <div class="flex items-start gap-3">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+              </svg>
+              <div class="flex-1">
+                <h3 class="text-sm font-medium text-red-800">Error saving verification</h3>
+                <p class="mt-1 text-sm text-red-700">{{ verificationError }}</p>
+              </div>
+              <button @click="verificationError = ''" type="button" class="text-red-400 hover:text-red-600">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          
+
+          <!-- Bank Information Section -->
+          <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+            <div class="bg-gradient-to-r from-[#5997ac] to-[#7ba8b7] px-6 py-4">
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
+                  <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
+                  </svg>
+                </div>
+                <div>
+                  <h2 class="text-lg font-semibold text-white">Bank Information</h2>
+                  <p class="text-sm text-white/80">Banking details for payments</p>
+                </div>
+                
+              </div>
+            </div>
+            <div class="p-6 sm:p-8">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="space-y-2">
+                  <label class="text-sm font-medium text-gray-700">RIB (Relevé d'Identité Bancaire) <span class="text-red-500">*</span></label>
+                  <input v-model="verificationForm.rib" type="text" class="mt-1 block w-full rounded-md border-gray-300 focus:ring-2 focus:ring-[#5997ac]" placeholder="Enter RIB number" />
+                  <p v-if="verificationErrors.rib" class="mt-1 text-sm text-red-600">{{ verificationErrors.rib }}</p>
+                </div>
+
+                <div class="space-y-2">
+                  <label class="text-sm font-medium text-gray-700">Bank Name <span class="text-red-500">*</span></label>
+                  <input v-model="verificationForm.bank_name" type="text" class="mt-1 block w-full rounded-md border-gray-300 focus:ring-2 focus:ring-[#5997ac]" placeholder="Enter bank name" />
+                  <p v-if="verificationErrors.bank_name" class="mt-1 text-sm text-red-600">{{ verificationErrors.bank_name }}</p>
+                </div>
+
+                <div class="space-y-2">
+                  <label class="text-sm font-medium text-gray-700">Account Number <span class="text-red-500">*</span></label>
+                  <input v-model="verificationForm.bank_account_number" type="text" class="mt-1 block w-full rounded-md border-gray-300 focus:ring-2 focus:ring-[#5997ac]" placeholder="Enter account number" />
+                  <p v-if="verificationErrors.bank_account_number" class="mt-1 text-sm text-red-600">{{ verificationErrors.bank_account_number }}</p>
+                </div>
+
+                <div class="space-y-2">
+                  <label class="text-sm font-medium text-gray-700">Account Holder Name <span class="text-red-500">*</span></label>
+                  <input v-model="verificationForm.bank_account_name" type="text" class="mt-1 block w-full rounded-md border-gray-300 focus:ring-2 focus:ring-[#5997ac]" placeholder="Enter account holder name" />
+                  <p v-if="verificationErrors.bank_account_name" class="mt-1 text-sm text-red-600">{{ verificationErrors.bank_account_name }}</p>
+                </div>
+
+                <div class="md:col-span-2 space-y-2">
+                  <div class="flex items-center gap-3 mb-4">
+                    <div class="w-10 h-10 bg-[#5997ac]/10 rounded-lg flex items-center justify-center">
+                      <svg class="w-5 h-5 text-[#5997ac]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 class="text-sm font-semibold text-gray-900">RIB Document <span class="text-red-500">*</span></h3>
+                      <p class="text-xs text-gray-600">Upload bank statement document</p>
+                    </div>
+                  </div>
+
+                  <div class="mt-1 group relative flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 p-4 text-center cursor-pointer transition hover:bg-gray-100 hover:border-[#5997ac]" @click="() => ribFileInput?.click()" @dragover.prevent @drop.prevent="onDropVerification('rib_file', $event)">
+                    <input ref="ribFileInput" type="file" accept=".pdf,.jpg,.jpeg,.png" class="hidden" @change="onFileChangeVerification('rib_file', $event)" />
+                    <div class="flex items-center gap-2 text-gray-600">
+                      <svg class="w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                      </svg>
+                      <span class="text-xs">{{ ribFileLabel }}</span>
+                    </div>
+                  </div>
+                  <p v-if="verificationErrors.rib_file || verificationErrors.rib_file_url" class="mt-1 text-sm text-red-600">{{ verificationErrors.rib_file || verificationErrors.rib_file_url }}</p>
+                  <div class="text-xs text-gray-500 bg-gray-50 p-2 rounded-lg">Accepted formats: PDF, JPG, PNG. Maximum 5MB.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Identity Information Section -->
+          <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+            <div class="bg-gradient-to-r from-[#5997ac] to-[#7ba8b7] px-6 py-4">
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
+                  <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2"></path>
+                  </svg>
+                </div>
+                <div>
+                  <h2 class="text-lg font-semibold text-white">Identity Information</h2>
+                  <p class="text-sm text-white/80">Personal identification details</p>
+                </div>
+              </div>
+            </div>
+            <div class="p-6 sm:p-8">
+              <div class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label class="text-sm font-medium text-gray-700">Identity Type <span class="text-red-500">*</span></label>
+                    <select v-model="verificationForm.identity_type" class="mt-1 block w-full rounded-md border-gray-300 focus:ring-2 focus:ring-[#5997ac]">
+                      <option value="">Select type</option>
+                      <option value="CIN">CIN</option>
+                      <option value="PASSPORT">Passport</option>
+                      <option value="DRIVING_LICENSE">Driving License</option>
+                    </select>
+                      <p v-if="verificationErrors.identity_type" class="mt-1 text-sm text-red-600">{{ verificationErrors.identity_type }}</p>
+                  </div>
+                  <div>
+                    <label class="text-sm font-medium text-gray-700">Identity Number <span class="text-red-500">*</span></label>
+                    <input v-model="verificationForm.identity_number" type="text" class="mt-1 block w-full rounded-md border-gray-300 focus:ring-2 focus:ring-[#5997ac]" placeholder="Enter identity number" />
+                    <p v-if="verificationErrors.identity_number" class="mt-1 text-sm text-red-600">{{ verificationErrors.identity_number }}</p>
+                  </div>
+                </div>
+
+                <div class="space-y-2">
+                  <div class="flex items-center gap-3 mb-4">
+                    <div class="w-10 h-10 bg-[#5997ac]/10 rounded-lg flex items-center justify-center">
+                      <svg class="w-5 h-5 text-[#5997ac]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2"></path>
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 class="text-sm font-semibold text-gray-900">Identity Document <span class="text-red-500">*</span></h3>
+                      <p class="text-xs text-gray-600">Upload identification document</p>
+                    </div>
+                  </div>
+
+                  <div class="mt-1 group relative flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 p-4 text-center cursor-pointer transition hover:bg-gray-100 hover:border-[#5997ac]" @click="() => identityFileInput?.click()" @dragover.prevent @drop.prevent="onDropVerification('identity_file', $event)">
+                    <input ref="identityFileInput" type="file" accept=".pdf,.jpg,.jpeg,.png" class="hidden" @change="onFileChangeVerification('identity_file', $event)" />
+                    <div class="flex items-center gap-2 text-gray-600">
+                      <svg class="w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                      </svg>
+                      <span class="text-xs">{{ identityFileLabel }}</span>
+                    </div>
+                  </div>
+                  <p v-if="verificationErrors.identity_file || verificationErrors.identity_files_urls" class="mt-1 text-sm text-red-600">{{ verificationErrors.identity_file || verificationErrors.identity_files_urls }}</p>
+                  <div class="text-xs text-gray-500 bg-gray-50 p-2 rounded-lg">Accepted formats: PDF, JPG, PNG. Maximum 5MB.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Diplomas Section -->
+          <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+            <div class="bg-gradient-to-r from-[#5997ac] to-[#7ba8b7] px-6 py-4">
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
+                  <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z M12 14l9-5-9-5-9 5 9 5z"></path>
+                  </svg>
+                </div>
+                <div>
+                  <h2 class="text-lg font-semibold text-white">Professional Diplomas</h2>
+                  <p class="text-sm text-white/80">Educational qualifications</p>
+                </div>
+              </div>
+            </div>
+            <div class="p-6 sm:p-8">
+              <div class="space-y-4">
+                <div class="flex items-center gap-3 mb-4">
+                  <div class="w-10 h-10 bg-[#5997ac]/10 rounded-lg flex items-center justify-center">
+                    <svg class="w-5 h-5 text-[#5997ac]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 class="text-sm font-semibold text-gray-900">Diplomas Copies <span class="text-red-500">*</span></h3>
+                    <p class="text-xs text-gray-600">Upload professional qualifications</p>
+                  </div>
+                </div>
+
+                <div class="mt-1 group relative flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 p-4 text-center cursor-pointer transition hover:bg-gray-100 hover:border-[#5997ac]" @click="() => diplomaFileInput?.click()" @dragover.prevent @drop.prevent="onDropVerification('diploma_files', $event)">
+                  <input ref="diplomaFileInput" type="file" multiple accept=".pdf,.jpg,.jpeg,.png" class="hidden" @change="onFileChangeVerification('diploma_files', $event)" />
+                  <div class="flex items-center gap-2 text-gray-600">
+                    <svg class="w-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                    </svg>
+                    <span class="text-xs">{{ diplomaFilesLabel }}</span>
+                  </div>
+                </div>
+                <p v-if="verificationErrors.diploma_files" class="mt-1 text-sm text-red-600">{{ verificationErrors.diploma_files }}</p>
+                <div class="text-xs text-gray-500 bg-gray-50 p-2 rounded-lg">Accepted formats: PDF, JPG, PNG. Maximum 5MB each.</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <button :disabled="verificationSaving" class="px-4 py-2 bg-[#5997ac] text-white rounded-lg shadow hover:opacity-90">Save Verification</button>
+            <button type="button" @click="$emit('close')" class="text-sm text-gray-600">Cancel</button>
+          </div>
+        </form>
       </div>
     </div>
   </div>
@@ -361,6 +579,7 @@ import { useForm } from '@inertiajs/vue3'
 import { Inertia } from '@inertiajs/inertia'
 import { getCountries, getCitiesByCountryName, splitInternationalPhoneNumber } from '@/utils/geoData'
 import Multiselect from '@vueform/multiselect'
+import Swal from 'sweetalert2'
 
 const props = defineProps({
   show: Boolean,
@@ -401,6 +620,29 @@ const generalError = ref(null)
 const accountSaving = ref(false)
 const accountError = ref('')
 const accountForm = ref({ name: '', email: '', password: '' })
+
+const verificationSaving = ref(false)
+const verificationError = ref('')
+const verificationErrors = ref({})
+const verificationForm = ref({
+  rib: '',
+  bank_name: '',
+  bank_account_number: '',
+  bank_account_name: '',
+  rib_file: null,
+  identity_type: '',
+  identity_number: '',
+  identity_file: null,
+  diploma_files: [],
+  verification_status: 'pending',
+  rejection_reason: '',
+})
+
+const remoteVerification = ref(null)
+
+const ribFileInput = ref(null)
+const identityFileInput = ref(null)
+const diplomaFileInput = ref(null)
 
 const diplomaInput = ref(null)
 const cvInput = ref(null)
@@ -464,6 +706,19 @@ const diplomaLabel = computed(() => {
 })
 // CIN field removed
 const cvLabel = computed(() => form.cv_file?.name || fileNameFromUrl(props.psychologist?.cv || form.cv) || 'Drag & drop or click')
+
+const ribFileLabel = computed(() => verificationForm.value.rib_file?.name || fileNameFromUrl(remoteVerification.value?.rib_file_url || props.psychologist?.verification_details?.rib_file_url) || 'Drag & drop or click')
+const identityFileLabel = computed(() => verificationForm.value.identity_file?.name || fileNameFromUrl((remoteVerification.value?.identity_files_urls || props.psychologist?.verification_details?.identity_files_urls)?.[0]) || 'Drag & drop or click')
+const diplomaFilesLabel = computed(() => {
+  if (verificationForm.value.diploma_files.length > 0) {
+    return verificationForm.value.diploma_files.length === 1 ? verificationForm.value.diploma_files[0].name : `${verificationForm.value.diploma_files.length} files selected`
+  }
+  const existing = (remoteVerification.value?.diploma_files_urls) || props.psychologist?.verification_details?.diploma_files_urls || []
+  if (existing.length > 0) {
+    return existing.length === 1 ? fileNameFromUrl(existing[0]) : `${existing.length} files attached`
+  }
+  return 'Drag & drop or click'
+})
 
 const daysOfWeek = [
   { value: 0, label: 'Sunday' },
@@ -626,8 +881,103 @@ watch(() => section.value, (sec) => {
     accountForm.value.name = u?.name || ''
     accountForm.value.email = u?.email || ''
     accountForm.value.password = ''
+  } else if (sec === 'verification') {
+    verificationErrors.value = {}
+    const vd = props.psychologist?.verification_details
+    if (vd) {
+      remoteVerification.value = vd
+      verificationForm.value = {
+        rib: vd?.rib || '',
+        bank_name: vd?.bank_name || '',
+        bank_account_number: vd?.bank_account_number || '',
+        bank_account_name: vd?.bank_account_name || '',
+        rib_file: null,
+        identity_type: vd?.identity_type || '',
+        identity_number: vd?.identity_number || '',
+        identity_file: null,
+        diploma_files: [],
+        verification_status: vd?.verification_status || 'pending',
+        rejection_reason: vd?.rejection_reason || '',
+      }
+      previousVerificationStatus.value = verificationForm.value.verification_status || 'pending'
+    } else if (props.psychologist?.id) {
+      ;(async () => {
+        try {
+          const url = route('psychologist.verification.admin.show', props.psychologist.id, false)
+          const res = await fetch(url, { credentials: 'include', headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' } })
+          if (!res.ok) return
+          const data = await res.json()
+          const v = data?.verification || null
+          remoteVerification.value = v
+          verificationForm.value = {
+            rib: v?.rib || '',
+            bank_name: v?.bank_name || '',
+            bank_account_number: v?.bank_account_number || '',
+            bank_account_name: v?.bank_account_name || '',
+            rib_file: null,
+            identity_type: v?.identity_type || '',
+            identity_number: v?.identity_number || '',
+            identity_file: null,
+            diploma_files: [],
+            verification_status: v?.verification_status || 'pending',
+            rejection_reason: v?.rejection_reason || '',
+          }
+          previousVerificationStatus.value = verificationForm.value.verification_status || 'pending'
+        } catch (e) {
+          // ignore
+        }
+      })()
+    } else {
+      verificationForm.value = {
+        rib: '',
+        bank_name: '',
+        bank_account_number: '',
+        bank_account_name: '',
+        rib_file: null,
+        identity_type: '',
+        identity_number: '',
+        identity_file: null,
+        diploma_files: [],
+        verification_status: 'pending',
+        rejection_reason: '',
+      }
+    }
   }
 })
+
+const previousVerificationStatus = ref('pending')
+
+async function handleStatusChange() {
+  const newStatus = verificationForm.value.verification_status || 'pending'
+  // If choosing rejected, prompt for a rejection reason
+  if (newStatus === 'rejected') {
+    const { value: reason, isConfirmed } = await Swal.fire({
+      title: 'Enter rejection reason',
+      input: 'textarea',
+      inputLabel: 'Reason',
+      inputPlaceholder: 'Describe why this verification is rejected',
+      showCancelButton: true,
+      confirmButtonText: 'Reject',
+      cancelButtonText: 'Cancel',
+      inputValidator: (val) => {
+        if (!val || !String(val).trim()) return 'Please enter a rejection reason'
+        return null
+      }
+    })
+
+    if (isConfirmed) {
+      verificationForm.value.rejection_reason = reason
+      previousVerificationStatus.value = 'rejected'
+    } else {
+      // revert
+      verificationForm.value.verification_status = previousVerificationStatus.value || 'pending'
+    }
+  } else {
+    // approved or pending -> clear rejection reason
+    verificationForm.value.rejection_reason = ''
+    previousVerificationStatus.value = newStatus
+  }
+}
 
 watch(() => props.psychologist, async (p) => {
   if (!p) return
@@ -639,7 +989,7 @@ watch(() => props.psychologist, async (p) => {
   
   form.first_name = p.first_name || ''
   form.last_name = p.last_name || ''
-  form.languages = Array.isArray(p.languages) ? p.languages : []
+  form.languages = Array.isArray(p.languages) ? p.languages.map(lang => (typeof lang === 'string' ? lang.toLowerCase() : lang)) : []
   form.specialisation_ids = (p.specialisations || []).map(s => s.id)
   form.expertise_ids = (p.expertises || []).map(e => e.id)
   form.price_per_session = p.price_per_session || 0
@@ -703,6 +1053,31 @@ function onDrop(field, e) {
   const file = files[0]
   if (field === 'cv_file' && file.type !== 'application/pdf') return
   form[field] = file
+}
+
+function onFileChangeVerification(field, e) {
+  const files = e?.target?.files || null
+  if (!files) return
+  if (field === 'diploma_files') {
+    verificationForm.value[field] = Array.from(files)
+    return
+  }
+  const file = files[0] || null
+  verificationForm.value[field] = file
+}
+
+function onDropVerification(field, e) {
+  const files = e?.dataTransfer?.files
+  if (!files || !files.length) return
+  if (field === 'diploma_files') {
+    const arr = Array.from(files).filter(f => f.type === 'application/pdf' || f.type.startsWith('image/'))
+    if (!arr.length) return
+    verificationForm.value[field] = arr
+    return
+  }
+  const file = files[0]
+  if (!file.type.startsWith('image/') && file.type !== 'application/pdf') return
+  verificationForm.value[field] = file
 }
 
 async function ensureCsrfToken() {
@@ -834,6 +1209,7 @@ async function submitProfile() {
     if (!res.ok) {
       const fallback = 'Failed to save profile'
       const raw = await res.text().catch(() => '')
+      console.log('Response status:', res.status, 'Response text:', raw)
       let message = fallback
       if (raw) {
         try {
@@ -964,6 +1340,98 @@ async function toggleActivation() {
       },
     })
   } catch {}
+}
+
+async function submitVerification() {
+  if (!props.psychologist) return
+  verificationSaving.value = true
+  verificationError.value = ''
+  verificationErrors.value = {}
+  try {
+    // If creating a new verification (no existing verification details), require a diploma
+    const creatingVerification = !remoteVerification.value && !props.psychologist?.verification_details
+    if (creatingVerification) {
+      const existingDiplomas = (remoteVerification.value?.diploma_files_urls) || (props.psychologist?.verification_details?.diploma_files_urls) || (props.psychologist?.diplomas || [])
+      const existingCount = Array.isArray(existingDiplomas) ? existingDiplomas.length : 0
+      const hasUploaded = Array.isArray(verificationForm.value.diploma_files) && verificationForm.value.diploma_files.length > 0
+      if (existingCount === 0 && !hasUploaded) {
+        verificationErrors.value.diploma_files = 'Please upload at least one diploma copy.'
+        verificationSaving.value = false
+        return
+      }
+    }
+    const csrf = await ensureCsrfToken()
+    const fd = new FormData()
+
+    if (csrf.type === 'meta' && csrf.token) fd.append('_token', csrf.token)
+    fd.append('_method', 'PUT')
+
+    // Add form data
+    Object.keys(verificationForm.value).forEach(key => {
+      const value = verificationForm.value[key]
+      if (key === 'diploma_files' && Array.isArray(value)) {
+        value.forEach(file => fd.append('diploma_files[]', file))
+      } else if (value !== null && value !== undefined && value !== '') {
+        fd.append(key, value)
+      }
+    })
+
+    const headers = {
+      'X-Requested-With': 'XMLHttpRequest',
+      'Accept': 'application/json',
+    }
+    
+    if (csrf.type === 'meta' && csrf.token) {
+      headers['X-CSRF-TOKEN'] = csrf.token
+    } else if (csrf.type === 'cookie' && csrf.token) {
+      headers['X-XSRF-TOKEN'] = csrf.token
+    }
+    
+    const url = route('psychologist.verification.admin.update', props.psychologist.id, false)
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: headers,
+      body: fd,
+      credentials: 'include',
+    })
+
+    if (!res.ok) {
+      const fallback = 'Failed to save verification details'
+      const raw = await res.text().catch(() => '')
+      let message = fallback
+      verificationErrors.value = {}
+      if (raw) {
+        try {
+          const data = JSON.parse(raw)
+          if (data?.errors) {
+            Object.keys(data.errors).forEach((key) => {
+              // normalize dotted array keys (diploma_files.0 -> diploma_files)
+              let baseKey = String(key).replace(/\.\d+/g, '')
+              if (baseKey.startsWith('diploma_files')) baseKey = 'diploma_files'
+              // map server file-url keys to our input keys
+              if (baseKey === 'rib_file_url') baseKey = 'rib_file'
+              if (baseKey === 'identity_file_url' || baseKey === 'identity_files_urls') baseKey = 'identity_file'
+              verificationErrors.value[baseKey] = data.errors[key][0]
+            })
+            return
+          }
+          message = data?.message || fallback
+        } catch {
+          message = raw
+        }
+      }
+      verificationError.value = message
+      return
+    }
+
+    let updated = null
+    try { updated = await res.json() } catch {}
+    emit('saved', { type: 'verification', verification: updated?.verification || null })
+  } catch (e) {
+    verificationError.value = e?.message || 'Error saving verification details'
+  } finally {
+    verificationSaving.value = false
+  }
 }
 </script>
 

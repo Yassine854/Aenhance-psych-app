@@ -187,6 +187,11 @@ Route::middleware(['auth'])->group(function () {
     Route::match(['put','patch'], '/psychologist-profiles/{psychologist_profile}', [PsychologistProfileController::class, 'update'])->name('psychologist-profiles.update');
     Route::delete('/psychologist-profiles/{psychologist_profile}', [PsychologistProfileController::class, 'destroy'])->name('psychologist-profiles.destroy');
 
+    // Psychologist verification admin update
+    Route::match(['put','patch'], '/psychologist-profiles/{psychologist_profile}/verification', [PsychologistProfileController::class, 'updateVerification'])->name('psychologist.verification.admin.update');
+    // Psychologist verification admin show (JSON) - used by admin Edit modal to fetch existing verification details
+    Route::get('/psychologist-profiles/{psychologist_profile}/verification', [PsychologistProfileController::class, 'showVerification'])->name('psychologist.verification.admin.show');
+
     // Patient profile CRUD (explicit routes)
     Route::get('/patient-profiles', [PatientProfileController::class, 'index'])->name('patient-profiles.index');
     Route::get('/patient-profiles/create', [PatientProfileController::class, 'create'])->name('patient-profiles.create');

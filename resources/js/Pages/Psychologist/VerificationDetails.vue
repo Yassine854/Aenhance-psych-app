@@ -28,13 +28,16 @@ const form = useForm({
   identity_number: props.verification_details?.identity_number || '',
   identity_file: null,
   diploma_files: [],
+  verification_status: props.verification_details?.verification_status || 'pending',
 })
 
 const ribFileInput = ref(null)
 const identityInput = ref(null)
 const diplomaInput = ref(null)
 
-const isSubmitted = computed(() => !!props.verification_details)
+// Consider a verification "submitted" (read-only) only when it exists and is NOT rejected.
+// If it's rejected, allow the psychologist to edit and resubmit.
+const isSubmitted = computed(() => !!props.verification_details && props.verification_details.verification_status !== 'rejected')
 
 function onRibFileChange(e) {
   const file = e?.target?.files?.[0] || null
@@ -120,6 +123,8 @@ function submit() {
     reverseButtons: true
   }).then((result) => {
     if (result.isConfirmed) {
+        // ensure the submission marks verification as pending
+        form.verification_status = 'pending'
       // Proceed with form submission
       form.post(route('psychologist.verification.store'), {
         forceFormData: true,
@@ -464,11 +469,10 @@ watch(() => Object.keys(form.errors).length, (errorCount, oldErrorCount) => {
                     <InputLabel for="identity_type" class="text-sm font-medium text-gray-700">
                       Identity Type <span class="text-red-500">*</span>
                     </InputLabel>
-                    <div class="relative">
+                    <div v-if="!isSubmitted" class="relative">
                       <select
                         v-model="form.identity_type"
                         class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-[#5997ac] focus:ring-[#5997ac] sm:text-sm pl-10"
-                        :disabled="isSubmitted"
                       >
                         <option value="">Select identity type</option>
                         <option value="National ID">National ID</option>
@@ -479,6 +483,9 @@ watch(() => Object.keys(form.errors).length, (errorCount, oldErrorCount) => {
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                         </svg>
                       </div>
+                    </div>
+                    <div v-else class="p-3 bg-gray-50 rounded-lg">
+                      <div class="text-sm font-medium text-gray-900">{{ props.verification_details?.identity_type || '—' }}</div>
                     </div>
                     <InputError :message="form.errors.identity_type" class="mt-2" />
                   </div>

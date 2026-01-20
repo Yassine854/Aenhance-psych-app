@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\PsychologistProfileRequest;
 use App\Models\PsychologistProfile;
 use App\Models\PsychologistDiploma;
+use App\Models\PsychologistVerificationDetails;
 use App\Models\Specialisation;
 use App\Models\Expertise;
 use Illuminate\Http\RedirectResponse;
@@ -135,6 +136,8 @@ class PsychologistProfileController extends Controller
         return Inertia::render('Admin/Psychologist/Index', [
             'profiles' => $profiles,
             'filters' => $request->only(['q']),
+            'specialisations' => Specialisation::query()->orderBy('name')->get(['id', 'name']),
+            'expertises' => Expertise::query()->orderBy('name')->get(['id', 'name']),
         ]);
     }
 
@@ -623,23 +626,64 @@ class PsychologistProfileController extends Controller
 
     public function show(PsychologistProfile $psychologistProfile): Response
     {
-        $loaded = $psychologistProfile->load(['user', 'availabilities', 'specialisations', 'expertises', 'diplomas']);
+        $loaded = $psychologistProfile->load(['user', 'availabilities', 'specialisations', 'expertises', 'diplomas', 'verificationDetails.diplomas']);
+
+        // Prepare verification details for frontend similar to other endpoints
+        $verification = null;
+        if ($loaded->verificationDetails) {
+            $verification = $loaded->verificationDetails->load('diplomas')->toArray();
+            if (isset($verification['identity_file_url']) && $verification['identity_file_url']) {
+                $verification['identity_files_urls'] = [$verification['identity_file_url']];
+            } else {
+                $verification['identity_files_urls'] = [];
+            }
+            if (isset($verification['diplomas']) && is_array($verification['diplomas'])) {
+                $verification['diploma_files_urls'] = array_map(function ($d) { return $d['file_url']; }, $verification['diplomas']);
+            } else {
+                $verification['diploma_files_urls'] = [];
+            }
+        }
+
+        $psychologistArray = $loaded->toArray();
+        $psychologistArray['verification_details'] = $verification;
 
         return Inertia::render('Admin/Psychologist/Show', [
             // keep existing 'profile' key for backwards compatibility
             'profile' => $loaded,
             // also provide 'psychologist' so the Vue modal component receives the prop it expects
-            'psychologist' => $loaded,
+            'psychologist' => $psychologistArray,
         ]);
     }
 
     public function edit(PsychologistProfile $psychologistProfile): Response
     {
-        $loaded = $psychologistProfile->load(['user', 'availabilities', 'specialisations', 'expertises', 'diplomas']);
-        
+        $loaded = $psychologistProfile->load(['user', 'availabilities', 'specialisations', 'expertises', 'diplomas', 'verificationDetails.diplomas']);
+
+        // Prepare transformed verification details for the Vue component (snake_case keys expected)
+        $verification = null;
+        if ($loaded->verificationDetails) {
+            $verification = $loaded->verificationDetails->load('diplomas')->toArray();
+            // normalize identity file to an array for frontend
+            if (isset($verification['identity_file_url']) && $verification['identity_file_url']) {
+                $verification['identity_files_urls'] = [$verification['identity_file_url']];
+            } else {
+                $verification['identity_files_urls'] = [];
+            }
+            // collect diploma file urls
+            if (isset($verification['diplomas']) && is_array($verification['diplomas'])) {
+                $verification['diploma_files_urls'] = array_map(function ($d) { return $d['file_url']; }, $verification['diplomas']);
+            } else {
+                $verification['diploma_files_urls'] = [];
+            }
+        }
+
+        // Convert loaded model to array and attach snake_case `verification_details` key
+        $psychologistArray = $loaded->toArray();
+        $psychologistArray['verification_details'] = $verification;
+
         return Inertia::render('Admin/Psychologist/Edit', [
             'profile' => $loaded,
-            'psychologist' => $loaded,
+            'psychologist' => $psychologistArray,
             'specialisations' => Specialisation::query()->orderBy('name')->get(['id', 'name']),
             'expertises' => Expertise::query()->orderBy('name')->get(['id', 'name']),
         ]);
@@ -735,5 +779,180 @@ class PsychologistProfileController extends Controller
         }
 
         return array_values(array_unique(array_map('intval', $ids)));
+    }
+
+    public function updateVerification(Request $request, PsychologistProfile $psychologistProfile)
+    {
+        // If no verification details exist yet for this profile, require key fields
+        $existingVerification = $psychologistProfile->verificationDetails;
+
+        $rules = [
+            'rib' => 'nullable|string|max:255',
+            'bank_name' => 'nullable|string|max:255',
+            'bank_account_number' => 'nullable|string|max:255',
+            'bank_account_name' => 'nullable|string|max:255',
+            'rib_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120', // 5MB
+            'identity_type' => 'nullable|string|max:255',
+            'identity_number' => 'nullable|string|max:255',
+            'identity_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120', // 5MB
+            'diploma_files' => 'nullable|array',
+            'diploma_files.*' => 'file|mimes:pdf,jpg,jpeg,png|max:5120', // 5MB
+            'verification_status' => 'nullable|in:pending,approved,rejected',
+            'rejection_reason' => 'nullable|string',
+        ];
+
+        if (! $existingVerification) {
+            // Creating new verification record: require the main fields and files
+            $rules['rib'] = 'required|string|max:255';
+            $rules['bank_name'] = 'required|string|max:255';
+            $rules['bank_account_number'] = 'required|string|max:255';
+            $rules['bank_account_name'] = 'required|string|max:255';
+            // Require at least a RIB file (file upload) when creating
+            $rules['rib_file'] = 'required|file|mimes:pdf,jpg,jpeg,png|max:5120';
+            $rules['identity_type'] = 'required|string|max:255';
+            $rules['identity_number'] = 'required|string|max:255';
+            $rules['identity_file'] = 'required|file|mimes:pdf,jpg,jpeg,png|max:5120';
+            // Require at least one diploma when creating verification
+            $rules['diploma_files'] = 'required|array|min:1';
+        }
+
+        $request->validate($rules);
+
+        $verificationDetails = $psychologistProfile->verificationDetails;
+
+        if (!$verificationDetails) {
+            // Create new verification details if they don't exist
+            $verificationDetails = new PsychologistVerificationDetails([
+                'psychologist_profile_id' => $psychologistProfile->id,
+                'verification_status' => 'pending',
+            ]);
+        }
+
+        // Update basic fields
+        $verificationDetails->fill([
+            'rib' => $request->rib,
+            'bank_name' => $request->bank_name,
+            'bank_account_number' => $request->bank_account_number,
+            'bank_account_name' => $request->bank_account_name,
+            'identity_type' => $request->identity_type,
+            'identity_number' => $request->identity_number,
+        ]);
+
+        // Apply verification status and optional rejection reason if provided
+        if ($request->filled('verification_status')) {
+            $verificationDetails->verification_status = $request->input('verification_status');
+            if ($request->input('verification_status') === 'rejected') {
+                $verificationDetails->rejection_reason = $request->input('rejection_reason');
+            } else {
+                // clear rejection reason when approving or setting back to pending
+                $verificationDetails->rejection_reason = null;
+            }
+        }
+
+        // Upload RIB file if provided
+        if ($request->hasFile('rib_file')) {
+            try {
+                // Delete old file if exists
+                if ($verificationDetails->rib_file_url) {
+                    $publicId = self::getCloudinaryPublicId($verificationDetails->rib_file_url);
+                    if ($publicId) {
+                        Cloudinary::destroy($publicId);
+                    }
+                }
+
+                $uploadedFile = Cloudinary::upload($request->file('rib_file')->getRealPath(), [
+                    'folder' => 'psychologist_verifications/rib',
+                    'public_id' => 'rib_' . $psychologistProfile->id . '_' . time(),
+                ]);
+                $verificationDetails->rib_file_url = $uploadedFile->getSecurePath();
+            } catch (\Throwable $e) {
+                Log::warning('Cloudinary RIB upload failed: ' . $e->getMessage());
+                return back()->withErrors(['rib_file' => 'Failed to upload RIB file. Please try again.']);
+            }
+        }
+
+        // Upload identity file if provided
+        if ($request->hasFile('identity_file')) {
+            try {
+                // Delete old file if exists
+                if ($verificationDetails->identity_file_url) {
+                    $publicId = self::getCloudinaryPublicId($verificationDetails->identity_file_url);
+                    if ($publicId) {
+                        Cloudinary::destroy($publicId);
+                    }
+                }
+
+                $uploadedFile = Cloudinary::upload($request->file('identity_file')->getRealPath(), [
+                    'folder' => 'psychologist_verifications/identity',
+                    'public_id' => 'identity_' . $psychologistProfile->id . '_' . time(),
+                ]);
+                $verificationDetails->identity_file_url = $uploadedFile->getSecurePath();
+            } catch (\Throwable $e) {
+                Log::warning('Cloudinary identity upload failed: ' . $e->getMessage());
+                return back()->withErrors(['identity_file' => 'Failed to upload identity file. Please try again.']);
+            }
+        }
+
+        $verificationDetails->save();
+
+        // Handle diploma files
+        if ($request->hasFile('diploma_files')) {
+            // Delete existing diplomas
+            foreach ($verificationDetails->diplomas as $diploma) {
+                if ($diploma->file_url) {
+                    $publicId = self::getCloudinaryPublicId($diploma->file_url);
+                    if ($publicId) {
+                        Cloudinary::destroy($publicId);
+                    }
+                }
+                $diploma->delete();
+            }
+
+            // Upload new diploma files
+            foreach ($request->file('diploma_files') as $file) {
+                try {
+                    $uploadedFile = Cloudinary::upload($file->getRealPath(), [
+                        'folder' => 'psychologist_verifications/diplomas',
+                        'public_id' => 'diploma_' . $verificationDetails->id . '_' . time() . '_' . uniqid(),
+                    ]);
+                    $url = $uploadedFile->getSecurePath();
+                    if ($url) {
+                        $verificationDetails->diplomas()->create(['file_url' => $url]);
+                    }
+                } catch (\Throwable $e) {
+                    Log::warning('Cloudinary diploma upload failed: ' . $e->getMessage());
+                }
+            }
+        }
+
+        return response()->json([
+            'message' => 'Verification details updated successfully.',
+            'verification' => $verificationDetails->load('diplomas')
+        ]);
+    }
+
+    /**
+     * Return verification details as JSON for admin UI.
+     */
+    public function showVerification(PsychologistProfile $psychologistProfile)
+    {
+        $verification = $psychologistProfile->verificationDetails;
+        if (! $verification) {
+            return response()->json(['verification' => null]);
+        }
+
+        $v = $verification->load('diplomas')->toArray();
+        if (isset($v['identity_file_url']) && $v['identity_file_url']) {
+            $v['identity_files_urls'] = [$v['identity_file_url']];
+        } else {
+            $v['identity_files_urls'] = [];
+        }
+        if (isset($v['diplomas']) && is_array($v['diplomas'])) {
+            $v['diploma_files_urls'] = array_map(function ($d) { return $d['file_url']; }, $v['diplomas']);
+        } else {
+            $v['diploma_files_urls'] = [];
+        }
+
+        return response()->json(['verification' => $v]);
     }
 }

@@ -38,6 +38,13 @@ class PsychologistProfileRequest extends FormRequest
             }
         }
 
+        // Normalize languages to lowercase for consistency
+        $langs = $this->input('languages');
+        if (is_array($langs)) {
+            $normalized = array_map('strtolower', array_filter($langs, 'is_string'));
+            $this->merge(['languages' => array_values($normalized)]);
+        }
+
         // Some clients may send expertise_ids as a JSON string when using FormData.
         $rawExp = $this->input('expertise_ids');
         if (is_string($rawExp) && $rawExp !== '') {
@@ -62,27 +69,27 @@ class PsychologistProfileRequest extends FormRequest
 
         return [
             'user_id' => ['nullable', 'exists:users,id'],
-            'first_name' => [$isCreate ? 'required' : 'nullable', 'string', 'max:255'],
-            'last_name' => [$isCreate ? 'required' : 'nullable', 'string', 'max:255'],
+            'first_name' => ['required', 'string', 'max:255'],
+            'last_name' => ['required', 'string', 'max:255'],
             'languages' => ['required', 'array', 'min:1'],
             'languages.*' => ['required', 'string', 'distinct', 'in:english,french,arabic'],
-            'specialisation_ids' => [$isCreate ? 'required' : 'nullable', 'array', 'min:1'],
+            'specialisation_ids' => ['required', 'array', 'min:1'],
             'specialisation_ids.*' => ['integer', 'distinct', 'exists:specialisations,id'],
             'expertise_ids' => ['nullable', 'array'],
             // Each item may be an existing id (integer) or a new tag/name (string/object).
             // Validation is lenient here; controller will normalize/create names as needed.
             'expertise_ids.*' => ['nullable', 'distinct'],
-            'phone' => [$isCreate ? 'required' : 'nullable', 'string', 'max:50'],
+            'phone' => ['required', 'string', 'max:50'],
             'country_code' => ['nullable', 'string', 'max:10'],
             // diplomas are stored in the separate `psychologist_diplomas` table
             'cv' => ['nullable', 'string', 'max:1024'],
             'gender' => ['nullable', 'string', 'max:50'],
-            'country' => ['nullable', 'string', 'max:100'],
-            'city' => ['nullable', 'string', 'max:100'],
+            'country' => ['required', 'string', 'max:100'],
+            'city' => ['required', 'string', 'max:100'],
             'address' => ['nullable', 'string', 'max:255'],
-            'date_of_birth' => ['nullable', 'date'],
+            'date_of_birth' => ['required', 'date'],
             'bio' => ['nullable', 'string'],
-            'price_per_session' => [$isCreate ? 'required' : 'nullable', 'numeric', 'min:0'],
+            'price_per_session' => ['required', 'numeric', 'min:0'],
             'is_approved' => ['nullable', 'boolean'],
             'profile_image_url' => ['nullable', 'string', 'max:1024'],
 
