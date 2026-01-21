@@ -1,225 +1,240 @@
 <template>
-  <div class="p-6 space-y-6">
-    <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-      <div>
-        <div v-if="flashMessage" class="mb-3 rounded-lg border border-green-200 bg-green-50 px-4 py-3">
-          <div class="flex items-start justify-between gap-3">
-            <div class="flex items-start gap-3">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-5 w-5 text-green-700 mt-0.5">
-                <path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12Zm13.61-1.814a.75.75 0 0 0-1.22-.872l-3.236 4.53-1.784-1.784a.75.75 0 1 0-1.06 1.06l2.4 2.4a.75.75 0 0 0 1.14-.094l3.76-5.24Z" clip-rule="evenodd" />
-              </svg>
-              <div>
-                <div class="text-sm font-medium text-green-800">Success</div>
-                <div class="text-sm text-green-800">{{ flashMessage }}</div>
-              </div>
-            </div>
-            <button type="button" @click="clearFlash" class="text-green-700/70 hover:text-green-800" aria-label="Dismiss">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-5 w-5">
-                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-              </svg>
-            </button>
-          </div>
-        </div>
+  <Head title="Appointments" />
 
-        <div v-if="flashError" class="mb-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3">
-          <div class="flex items-start justify-between gap-3">
-            <div class="flex items-start gap-3">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-5 w-5 text-red-700 mt-0.5">
-                <path fill-rule="evenodd" d="M12 2.25c5.385 0 9.75 4.365 9.75 9.75S17.385 21.75 12 21.75 2.25 17.385 2.25 12 6.615 2.25 12 2.25Zm.75 6a.75.75 0 0 0-1.5 0V12a.75.75 0 0 0 1.5 0V8.25ZM12 15.75a.75.75 0 1 0 0 1.5.75.75 0 0 0 0-1.5Z" clip-rule="evenodd" />
-              </svg>
-              <div>
-                <div class="text-sm font-medium text-red-800">Not allowed</div>
-                <div class="text-sm text-red-800">{{ flashError }}</div>
-              </div>
-            </div>
-            <button type="button" @click="clearError" class="text-red-700/70 hover:text-red-800" aria-label="Dismiss">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-5 w-5">
-                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-              </svg>
-            </button>
-          </div>
-        </div>
+  <Navbar :canLogin="canLogin" :canRegister="canRegister" :authUser="authUser || page.props?.auth?.user" />
 
-        <h1 class="text-2xl font-semibold text-gray-900">Appointments</h1>
-        <p class="text-sm text-gray-600">Manage your appointments. You can only cancel 24h+ before start time.</p>
+  <div class="min-h-[calc(100vh-112px)] bg-gray-50">
+    <div class="bg-gradient-to-r from-[#af5166] to-[#5997ac]">
+      <div class="mx-auto max-w-6xl px-4 py-8">
+        <h1 class="text-2xl sm:text-3xl font-semibold text-white">Appointments</h1>
+        <p class="mt-1 text-sm text-white/90">Manage your appointments. You can only cancel 24h+ before start time.</p>
       </div>
+    </div>
 
-      <div class="flex items-center gap-3 w-full md:w-auto">
-        <div class="flex items-center gap-2 flex-1">
+    <div class="mx-auto max-w-6xl px-4 py-8">
+      <div class="p-6 space-y-6">
+        <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+          <div>
+            <div v-if="flashMessage" class="mb-3 rounded-lg border border-green-200 bg-green-50 px-4 py-3">
+              <div class="flex items-start justify-between gap-3">
+                <div class="flex items-start gap-3">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-5 w-5 text-green-700 mt-0.5">
+                    <path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12Zm13.61-1.814a.75.75 0 0 0-1.22-.872l-3.236 4.53-1.784-1.784a.75.75 0 1 0-1.06 1.06l2.4 2.4a.75.75 0 0 0 1.14-.094l3.76-5.24Z" clip-rule="evenodd" />
+                  </svg>
+                  <div>
+                    <div class="text-sm font-medium text-green-800">Success</div>
+                    <div class="text-sm text-green-800">{{ flashMessage }}</div>
+                  </div>
+                </div>
+                <button type="button" @click="clearFlash" class="text-green-700/70 hover:text-green-800" aria-label="Dismiss">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-5 w-5">
+                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <div v-if="flashError" class="mb-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3">
+              <div class="flex items-start justify-between gap-3">
+                <div class="flex items-start gap-3">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-5 w-5 text-red-700 mt-0.5">
+                    <path fill-rule="evenodd" d="M12 2.25c5.385 0 9.75 4.365 9.75 9.75S17.385 21.75 12 21.75 2.25 17.385 2.25 12 6.615 2.25 12 2.25Zm.75 6a.75.75 0 0 0-1.5 0V12a.75.75 0 0 0 1.5 0V8.25ZM12 15.75a.75.75 0 1 0 0 1.5.75.75 0 0 0 0-1.5Z" clip-rule="evenodd" />
+                  </svg>
+                  <div>
+                    <div class="text-sm font-medium text-red-800">Not allowed</div>
+                    <div class="text-sm text-red-800">{{ flashError }}</div>
+                  </div>
+                </div>
+                <button type="button" @click="clearError" class="text-red-700/70 hover:text-red-800" aria-label="Dismiss">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-5 w-5">
+                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <div class="flex items-center gap-3 w-full md:w-auto">
+          <div class="flex items-center gap-2 flex-1">
           <select
             v-model="searchField"
             class="h-10 w-40 md:w-48 shrink-0 rounded-lg border-gray-300 bg-white px-3 text-sm text-gray-700"
             aria-label="Search filter"
           >
-            <option value="id">ID</option>
             <option value="patient">Patient</option>
             <option value="date">Date</option>
           </select>
 
-          <div class="relative flex-1 md:w-80">
-            <input
-              v-if="searchField !== 'date'"
-              v-model="searchQuery"
-              type="text"
-              :placeholder="searchPlaceholder"
-              class="w-full rounded-lg border-gray-300 pl-10 pr-3 py-2"
-            />
-
-            <input
-              v-else
-              v-model="searchDate"
-              type="date"
-              class="w-full rounded-lg border-gray-300 pl-10 pr-10 py-2"
-              aria-label="Search date"
-            />
-
-            <button
-              v-if="searchField === 'date' && searchDate"
-              type="button"
-              @click="searchDate = ''"
-              class="absolute right-2 top-1/2 -translate-y-1/2 inline-flex items-center justify-center h-7 w-7 rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-700"
-              aria-label="Clear date"
-              title="Clear"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-4 w-4">
-                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-              </svg>
-            </button>
-
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
-              <path
-                fill-rule="evenodd"
-                d="M12.9 14.32a8 8 0 111.414-1.414l4.387 4.387a1 1 0 01-1.414 1.414l-4.387-4.387zM14 8a6 6 0 11-12 0 6 6 0 0112 0z"
-                clip-rule="evenodd"
+            <div class="relative flex-1 md:w-80">
+              <input
+                v-if="searchField !== 'date'"
+                v-model="searchQuery"
+                type="text"
+                :placeholder="searchPlaceholder"
+                class="w-full rounded-lg border-gray-300 pl-10 pr-3 py-2"
               />
-            </svg>
+
+              <input
+                v-else
+                v-model="searchDate"
+                type="date"
+                class="w-full rounded-lg border-gray-300 pl-10 pr-10 py-2"
+                aria-label="Search date"
+              />
+
+              <button
+                v-if="searchField === 'date' && searchDate"
+                type="button"
+                @click="searchDate = ''"
+                class="absolute right-2 top-1/2 -translate-y-1/2 inline-flex items-center justify-center h-7 w-7 rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+                aria-label="Clear date"
+                title="Clear"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-4 w-4">
+                  <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                </svg>
+              </button>
+
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                <path
+                  fill-rule="evenodd"
+                  d="M12.9 14.32a8 8 0 111.414-1.414l4.387 4.387a1 1 0 01-1.414 1.414l-4.387-4.387zM14 8a6 6 0 11-12 0 6 6 0 0112 0z"
+                  clip-rule="evenodd"
+                />
+              </svg>
+            </div>
           </div>
         </div>
-      </div>
-    </header>
-
-    <div class="bg-white rounded-lg shadow overflow-hidden">
-      <div class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-200">
-          <thead class="bg-gray-50">
-            <tr>
-              <th class="px-4 py-3 text-left">
-                <button type="button" @click="toggleSort('id')" class="group inline-flex items-center gap-1 text-xs font-medium text-gray-500 uppercase tracking-wider hover:text-gray-700">
-                  ID
-                  <SortIcon :active="sortKey === 'id'" :dir="sortDir" />
-                </button>
-              </th>
-              <th class="px-4 py-3 text-left">
-                <button type="button" @click="toggleSort('patient')" class="group inline-flex items-center gap-1 text-xs font-medium text-gray-500 uppercase tracking-wider hover:text-gray-700">
-                  Patient
-                  <SortIcon :active="sortKey === 'patient'" :dir="sortDir" />
-                </button>
-              </th>
-              <th class="px-4 py-3 text-left">
-                <button type="button" @click="toggleSort('scheduled_start')" class="group inline-flex items-center gap-1 text-xs font-medium text-gray-500 uppercase tracking-wider hover:text-gray-700">
-                  Date
-                  <SortIcon :active="sortKey === 'scheduled_start'" :dir="sortDir" />
-                </button>
-              </th>
-              <th class="px-4 py-3 text-left">
-                <button type="button" @click="toggleSort('status')" class="group inline-flex items-center gap-1 text-xs font-medium text-gray-500 uppercase tracking-wider hover:text-gray-700">
-                  Status
-                  <SortIcon :active="sortKey === 'status'" :dir="sortDir" />
-                </button>
-              </th>
-              <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-            </tr>
-          </thead>
-
-          <tbody class="bg-white divide-y divide-gray-200">
-            <tr
-              v-for="a in sorted"
-              :key="a.id"
-              class="hover:bg-gray-50"
-              :class="normalizeStatus(a.status) === 'cancelled' ? 'bg-red-50/30' : ''"
-            >
-              <td class="px-4 py-3 text-sm text-gray-700">#{{ a.id }}</td>
-              <td class="px-4 py-3">
-                <div class="text-sm font-medium text-gray-900">{{ a.patient?.name || '—' }}</div>
-              </td>
-              <td class="px-4 py-3">
-                <div class="text-sm font-medium text-gray-900">{{ formatDate(a.scheduled_start) }}</div>
-                <div class="text-xs text-gray-500">{{ formatTime(a.scheduled_start) }} – {{ formatTime(a.scheduled_end) }}</div>
-              </td>
-              <td class="px-4 py-3">
-                <div class="flex items-center gap-2 flex-wrap">
-                  <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium" :class="appointmentBadge(a.status)">
-                    {{ appointmentLabel(a.status) }}
-                  </span>
-                </div>
-                <div v-if="normalizeStatus(a.status) === 'cancelled'" class="mt-1 text-xs text-gray-500">
-                  Cancelled by: {{ a.canceled_by || '—' }}<span v-if="a.canceled_by_user_id"> (user #{{ a.canceled_by_user_id }})</span>
-                </div>
-                <div v-if="normalizeStatus(a.status) === 'cancelled' && a.cancellation_reason" class="mt-1 text-xs text-gray-500">
-                  Reason: {{ a.cancellation_reason }}
-                </div>
-              </td>
-              <td class="px-4 py-3 text-right">
-                <div class="flex flex-col items-end gap-2">
-                  <div class="inline-flex flex-wrap items-center justify-end gap-2">
-                    <Link
-                      v-if="canJoinRoom(a)"
-                      :href="route('appointments.video_call.show', a.id)"
-                      class="inline-flex items-center justify-center h-8 px-2.5 rounded-lg border text-xs font-medium border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
-                      title="Join video call"
-                    >
-                      Join room
-                    </Link>
-
-                    <button
-                      v-else-if="canStartCall(a)"
-                      type="button"
-                      @click="startCall(a)"
-                      :disabled="startingCallId === a.id"
-                      class="inline-flex items-center justify-center h-8 px-2.5 rounded-lg border text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100"
-                      title="Start video call"
-                    >
-                      {{ startingCallId === a.id ? 'Starting…' : 'Start call' }}
+        <div class="bg-white rounded-lg shadow overflow-hidden">
+          <div class="overflow-x-auto">
+            <template v-if="data.length">
+              <table class="min-w-full divide-y divide-gray-200">
+              <thead class="bg-gray-50">
+                <tr>
+                  <!-- ID column removed intentionally -->
+                  <th class="px-4 py-3 text-left">
+                    <button type="button" @click="toggleSort('patient')" class="group inline-flex items-center gap-1 text-xs font-medium text-gray-500 uppercase tracking-wider hover:text-gray-700">
+                      Patient
+                      <SortIcon :active="sortKey === 'patient'" :dir="sortDir" />
                     </button>
-
-                    <button
-                      v-if="canCancelAppointment(a)"
-                      type="button"
-                      @click="cancelWithReason(a)"
-                      :disabled="savingId === a.id"
-                      class="inline-flex items-center justify-center h-8 px-2.5 rounded-lg border text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed border-red-200 bg-red-50 text-red-700 hover:bg-red-100"
-                      title="Cancel appointment"
-                    >
-                      Cancel
+                  </th>
+                  <th class="px-4 py-3 text-left">
+                    <button type="button" @click="toggleSort('scheduled_start')" class="group inline-flex items-center gap-1 text-xs font-medium text-gray-500 uppercase tracking-wider hover:text-gray-700">
+                      Date
+                      <SortIcon :active="sortKey === 'scheduled_start'" :dir="sortDir" />
                     </button>
-
-                    <button
-                      v-else-if="showCancelDisabled(a)"
-                      type="button"
-                      disabled
-                      class="inline-flex items-center justify-center h-8 px-2.5 rounded-lg border text-xs font-medium opacity-60 cursor-not-allowed border-gray-200 bg-gray-50 text-gray-600"
-                      title="You can only cancel at least 24 hours before start"
-                    >
-                      Cancel
+                  </th>
+                  <th class="px-4 py-3 text-left">
+                    <button type="button" @click="toggleSort('status')" class="group inline-flex items-center gap-1 text-xs font-medium text-gray-500 uppercase tracking-wider hover:text-gray-700">
+                      Status
+                      <SortIcon :active="sortKey === 'status'" :dir="sortDir" />
                     </button>
-                  </div>
+                  </th>
+                  <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                </tr>
+              </thead>
 
-                  <div class="text-xs text-gray-400">
-                    {{ guidanceText(a) }}
-                  </div>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+              <tbody class="bg-white divide-y divide-gray-200">
+                <tr
+                  v-for="a in sorted"
+                  :key="a.id"
+                  class="hover:bg-gray-50"
+                  :class="normalizeStatus(a.status) === 'cancelled' ? 'bg-red-50/30' : ''"
+                >
+                  <!-- ID cell removed -->
+                  <td class="px-4 py-3">
+                    <div class="text-sm font-medium text-gray-900">{{ a.patient?.name || '—' }}</div>
+                  </td>
+                  <td class="px-4 py-3">
+                    <div class="text-sm font-medium text-gray-900">{{ formatDate(a.scheduled_start) }}</div>
+                    <div class="text-xs text-gray-500">{{ formatTime(a.scheduled_start) }} – {{ formatTime(a.scheduled_end) }}</div>
+                  </td>
+                  <td class="px-4 py-3">
+                    <div class="flex items-center gap-2 flex-wrap">
+                      <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium" :class="appointmentBadge(a.status)">
+                        {{ appointmentLabel(a.status) }}
+                      </span>
+                    </div>
+                    <div v-if="normalizeStatus(a.status) === 'cancelled'" class="mt-1 text-xs text-gray-500">
+                      Cancelled by: {{ a.canceled_by || '—' }}<span v-if="a.canceled_by_user_id"> (user #{{ a.canceled_by_user_id }})</span>
+                    </div>
+                    <div v-if="normalizeStatus(a.status) === 'cancelled' && a.cancellation_reason" class="mt-1 text-xs text-gray-500">
+                      Reason: {{ a.cancellation_reason }}
+                    </div>
+                  </td>
+                  <td class="px-4 py-3 text-right">
+                    <div class="flex flex-col items-end gap-2">
+                      <div class="inline-flex flex-wrap items-center justify-end gap-2">
+                        <Link
+                          v-if="canJoinRoom(a)"
+                          :href="route('appointments.video_call.show', a.id)"
+                          class="inline-flex items-center justify-center h-8 px-2.5 rounded-lg border text-xs font-medium border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
+                          title="Join video call"
+                        >
+                          Join room
+                        </Link>
 
-      <div class="flex items-center justify-between px-4 py-3 border-t border-gray-200">
-        <div class="text-sm text-gray-600">Showing {{ appointments.from }}-{{ appointments.to }} of {{ appointments.total }}</div>
-        <div class="flex items-center gap-2">
-          <Link v-for="(link, i) in appointments.links" :key="i" :href="link.url || '#'" :class="linkClasses(link)" preserve-scroll>
-            <span v-html="link.label"></span>
-          </Link>
+                        <button
+                          v-else-if="canStartCall(a)"
+                          type="button"
+                          @click="startCall(a)"
+                          :disabled="startingCallId === a.id"
+                          class="inline-flex items-center justify-center h-8 px-2.5 rounded-lg border text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100"
+                          title="Start video call"
+                        >
+                          {{ startingCallId === a.id ? 'Starting…' : 'Start call' }}
+                        </button>
+
+                        <button
+                          v-if="canCancelAppointment(a)"
+                          type="button"
+                          @click="cancelWithReason(a)"
+                          :disabled="savingId === a.id"
+                          class="inline-flex items-center justify-center h-8 px-2.5 rounded-lg border text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed border-red-200 bg-red-50 text-red-700 hover:bg-red-100"
+                          title="Cancel appointment"
+                        >
+                          Cancel
+                        </button>
+
+                        <button
+                          v-else-if="showCancelDisabled(a)"
+                          type="button"
+                          disabled
+                          class="inline-flex items-center justify-center h-8 px-2.5 rounded-lg border text-xs font-medium opacity-60 cursor-not-allowed border-gray-200 bg-gray-50 text-gray-600"
+                          title="You can only cancel at least 24 hours before start"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+
+                      <div class="text-xs text-gray-400">
+                        {{ guidanceText(a) }}
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+                </table>
+              </template>
+
+              <div v-else class="p-8 text-center text-gray-500">
+                <svg class="mx-auto h-10 w-10 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3M3 11h18M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <div class="mt-4 text-lg font-medium">No appointments yet</div>
+                <div class="mt-1 text-sm">You don't have any appointments scheduled at the moment.</div>
+              </div>
+          </div>
+
+          <div class="flex items-center justify-between px-4 py-3 border-t border-gray-200">
+            <div class="text-sm text-gray-600">Showing {{ appointments.from }}-{{ appointments.to }} of {{ appointments.total }}</div>
+            <div class="flex items-center gap-2">
+              <Link v-for="(link, i) in appointments.links" :key="i" :href="link.url || '#'" :class="linkClasses(link)" preserve-scroll>
+                <span v-html="link.label"></span>
+              </Link>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -227,17 +242,18 @@
 </template>
 
 <script setup>
-import { Link, router, usePage } from '@inertiajs/vue3'
+import { Head, Link, router, usePage } from '@inertiajs/vue3'
 import { computed, ref, watch } from 'vue'
-import UserLayout from '@/Layouts/UserLayout.vue'
+import Navbar from '@/Components/Navbar.vue'
 import SortIcon from '@/Pages/Admin/Psychologist/SortIcon.vue'
 import Swal from 'sweetalert2'
-
-defineOptions({ layout: UserLayout })
 
 const props = defineProps({
   appointments: Object,
   status: { type: String, default: '' },
+  canLogin: Boolean,
+  canRegister: Boolean,
+  authUser: Object,
 })
 
 const page = usePage()
@@ -309,7 +325,7 @@ function clearError() {
 
 const data = computed(() => props.appointments?.data || [])
 
-const searchField = ref('id')
+const searchField = ref('patient')
 const searchQuery = ref('')
 const searchDate = ref('')
 

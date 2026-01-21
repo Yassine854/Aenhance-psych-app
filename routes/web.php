@@ -255,6 +255,10 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/psychologist/profile/edit', [PsychologistSelfProfileController::class, 'edit'])->name('psychologist.profile.self');
     Route::post('/psychologist/profile/edit', [PsychologistSelfProfileController::class, 'update'])->name('psychologist.profile.self.update');
 
+    // Psychologist availabilities (view and edit separately from profile)
+    Route::get('/psychologist/availabilities', [PsychologistSelfProfileController::class, 'availabilities'])->name('psychologist.availabilities');
+    Route::patch('/psychologist/availabilities', [PsychologistSelfProfileController::class, 'updateAvailabilities'])->name('psychologist.availabilities.update');
+
     // Psychologist verification
     Route::get('/psychologist/verification/create', [PsychologistSelfProfileController::class, 'createVerification'])->name('psychologist.verification.create');
     Route::post('/psychologist/verification/store', [PsychologistSelfProfileController::class, 'storeVerification'])->name('psychologist.verification.store');

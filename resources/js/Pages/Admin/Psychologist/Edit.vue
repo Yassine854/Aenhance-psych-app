@@ -312,7 +312,14 @@
           </div>
 
           <div class="flex items-center gap-3">
-            <button :disabled="saving" class="px-4 py-2 bg-[rgb(141,61,79)] text-white rounded-lg shadow hover:opacity-90">Save Profile</button>
+            <button type="submit" :disabled="saving" class="px-4 py-2 bg-[rgb(141,61,79)] text-white rounded-lg shadow hover:opacity-90 inline-flex items-center justify-center">
+              <svg v-if="saving" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+              </svg>
+              <span v-if="saving">Saving...</span>
+              <span v-else>Save Profile</span>
+            </button>
             <button type="button" @click="$emit('close')" class="text-sm text-gray-600">Cancel</button>
           </div>
         </form>
@@ -355,7 +362,14 @@
           <p v-if="!psychologist.user" class="text-sm text-yellow-700 bg-yellow-50 border border-yellow-200 rounded px-3 py-2">Link a user to enable account editing.</p>
 
           <div class="flex items-center gap-3">
-            <button type="submit" :disabled="accountSaving || !psychologist.user" class="px-4 py-2 bg-[rgb(89,151,172)] text-white rounded-lg shadow hover:opacity-90">Save Account</button>
+            <button type="submit" :disabled="accountSaving || !psychologist.user" class="px-4 py-2 bg-[rgb(89,151,172)] text-white rounded-lg shadow hover:opacity-90 inline-flex items-center justify-center">
+              <svg v-if="accountSaving" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+              </svg>
+              <span v-if="accountSaving">Saving...</span>
+              <span v-else>Save Account</span>
+            </button>
             <button v-if="psychologist.user" type="button" @click="toggleActivation" class="px-4 py-2 rounded-lg" :class="psychologist.user.is_active ? 'bg-yellow-600 text-white hover:bg-yellow-700' : 'bg-green-600 text-white hover:bg-green-700'">
               {{ psychologist.user.is_active ? 'Deactivate' : 'Activate' }}
             </button>
@@ -564,7 +578,14 @@
           </div>
 
           <div class="flex items-center gap-3">
-            <button :disabled="verificationSaving" class="px-4 py-2 bg-[#5997ac] text-white rounded-lg shadow hover:opacity-90">Save Verification</button>
+            <button type="submit" :disabled="verificationSaving" class="px-4 py-2 bg-[#5997ac] text-white rounded-lg shadow hover:opacity-90 inline-flex items-center justify-center">
+              <svg v-if="verificationSaving" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+              </svg>
+              <span v-if="verificationSaving">Saving...</span>
+              <span v-else>Save Verification</span>
+            </button>
             <button type="button" @click="$emit('close')" class="text-sm text-gray-600">Cancel</button>
           </div>
         </form>

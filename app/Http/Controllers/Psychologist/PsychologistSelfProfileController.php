@@ -114,6 +114,31 @@ class PsychologistSelfProfileController extends Controller
         ]);
     }
 
+    /**
+     * Show a dedicated availabilities page for the authenticated psychologist.
+     */
+    public function availabilities(Request $request): Response
+    {
+        $user = $request->user();
+        if (! $user || ! method_exists($user, 'isPsychologist') || ! $user->isPsychologist()) {
+            return Inertia::render('Welcome', [
+                'canLogin' => Route::has('login'),
+                'canRegister' => Route::has('register'),
+                'authUser' => $user,
+            ]);
+        }
+
+        $profile = $user->psychologistProfile;
+
+        return Inertia::render('Psychologist/Availabilities', [
+            'canLogin' => Route::has('login'),
+            'canRegister' => Route::has('register'),
+            'authUser' => $user,
+            'profile' => $profile ? $profile->load(['availabilities']) : null,
+            'status' => session('status'),
+        ]);
+    }
+
     public function update(Request $request)
     {
         $user = $request->user();
@@ -267,6 +292,73 @@ class PsychologistSelfProfileController extends Controller
         }
 
         return redirect()->route('psychologist.profile.self')->with('status', 'Profile updated successfully.');
+    }
+
+    /**
+     * Update only availabilities for the authenticated psychologist.
+     */
+    public function updateAvailabilities(Request $request)
+    {
+        $user = $request->user();
+        if (! $user || ! method_exists($user, 'isPsychologist') || ! $user->isPsychologist()) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $profile = $user->psychologistProfile;
+        if (! $profile) return response()->json(['message' => 'Profile not found'], 404);
+
+        $validated = $request->validate([
+            'availabilities' => ['required', 'string'],
+        ]);
+
+        $raw = $validated['availabilities'];
+        $decoded = json_decode($raw, true);
+        if (json_last_error() !== JSON_ERROR_NONE || !is_array($decoded)) {
+            return response()->json(['message' => 'Invalid availabilities payload'], 422);
+        }
+
+        // Basic server-side validation (same logic used elsewhere)
+        $byDay = [];
+        foreach ($decoded as $slot) {
+            if (!is_array($slot)) return response()->json(['message' => 'Invalid slot format'], 422);
+            $day = (int) ($slot['day_of_week'] ?? -1);
+            $start = $slot['start_time'] ?? null;
+            $end = $slot['end_time'] ?? null;
+            if ($day < 0 || $day > 6) return response()->json(['message' => 'day_of_week must be between 0 and 6'], 422);
+            if (!is_string($start) || !preg_match('/^\d{2}:\d{2}$/', $start)) return response()->json(['message' => 'Invalid start_time'], 422);
+            if (!is_string($end) || !preg_match('/^\d{2}:\d{2}$/', $end)) return response()->json(['message' => 'Invalid end_time'], 422);
+
+            $startParts = explode(':', $start);
+            $endParts = explode(':', $end);
+            $startMin = intval($startParts[0]) * 60 + intval($startParts[1]);
+            $endMin = intval($endParts[0]) * 60 + intval($endParts[1]);
+            if ($endMin <= $startMin) return response()->json(['message' => 'End time must be after start time'], 422);
+
+            $byDay[$day][] = ['start' => $startMin, 'end' => $endMin, 'slot' => ['day_of_week' => $day, 'start_time' => $start, 'end_time' => $end]];
+        }
+
+        foreach ($byDay as $day => $slots) {
+            usort($slots, fn($a, $b) => $a['start'] <=> $b['start']);
+            for ($i = 1; $i < count($slots); $i++) {
+                if ($slots[$i]['start'] < $slots[$i-1]['end']) {
+                    return response()->json(['message' => 'Availability slots overlap. Please adjust times.'], 422);
+                }
+            }
+        }
+
+        // Replace existing availabilities
+        $profile->availabilities()->delete();
+        $toCreate = array_map(fn($s) => [
+            'day_of_week' => (int) $s['day_of_week'],
+            'start_time' => $s['start_time'],
+            'end_time' => $s['end_time'],
+        ], $decoded);
+
+        foreach ($toCreate as $row) {
+            $profile->availabilities()->create($row);
+        }
+
+        return response()->json(['success' => true, 'availabilities' => $profile->availabilities()->get()]);
     }
 
     public function createVerification(Request $request): Response
