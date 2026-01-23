@@ -97,15 +97,13 @@
             History
           </Link>
           <div class="border-t border-gray-200"></div>
-          <Link
-            :href="route('logout')"
-            method="post"
-            as="button"
+          <button
+            type="button"
             class="block w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition text-[13px]"
-            @click="showPatientMenu = false"
+            @click.prevent="handlePatientLogout"
           >
             Log out
-          </Link>
+          </button>
         </div>
       </div>
       <!-- Psychologist menu (shown when a psychologist is logged in) -->
@@ -189,15 +187,13 @@
             Appointments
           </Link>
           <div class="border-t border-gray-200"></div>
-          <Link
-            :href="route('logout')"
-            method="post"
-            as="button"
+          <button
+            type="button"
             class="block w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition text-[13px]"
-            @click="showPsychologistMenu = false"
+            @click.prevent="handlePsychologistLogout"
           >
             Log out
-          </Link>
+          </button>
         </div>
       </div>
 
@@ -368,6 +364,7 @@
 
 <script setup>
 import { Link, usePage } from "@inertiajs/vue3";
+import { Inertia } from '@inertiajs/inertia'
 import { useI18n } from "vue-i18n";
 import { ref, onMounted, computed } from "vue";
 
@@ -496,6 +493,23 @@ const supportItems = computed(() => [
   { label: t("nav.supportItems.0"), href: route('faq') },
   { label: t("nav.supportItems.1"), href: route('how-it-works') }
 ]);
+
+async function handlePatientLogout(e) {
+  try {
+    await Inertia.post(route('logout'))
+  } finally {
+    // hide menu after request starts/completes
+    showPatientMenu.value = false
+  }
+}
+
+async function handlePsychologistLogout(e) {
+  try {
+    await Inertia.post(route('logout'))
+  } finally {
+    showPsychologistMenu.value = false
+  }
+}
 </script>
 
 <style scoped>

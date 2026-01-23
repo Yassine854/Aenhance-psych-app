@@ -223,7 +223,7 @@ class PsychologistSelfProfileController extends Controller
             try {
                 $uploaded = Cloudinary::uploadFile($request->file('cv')->getRealPath(), [
                     'folder' => 'psychologist_profiles/cvs',
-                    'resource_type' => 'raw',
+                    'resource_type' => 'image',
                 ]);
 
                 $url = method_exists($uploaded, 'getSecurePath')
@@ -275,7 +275,7 @@ class PsychologistSelfProfileController extends Controller
                 try {
                     $uploaded = Cloudinary::uploadFile($file->getRealPath(), [
                         'folder' => 'psychologist_profiles/diplomas',
-                        'resource_type' => 'raw',
+                        'resource_type' => 'image',
                     ]);
 
                     $url = method_exists($uploaded, 'getSecurePath')

@@ -274,13 +274,14 @@ class RegisteredUserController extends Controller
                     try {
                         $uploaded = Cloudinary::uploadFile($file->getRealPath(), [
                             'folder' => 'psychologist_profiles/diplomas',
-                            'resource_type' => 'raw',
+                            'resource_type' => 'image',
                         ]);
-                        $url = $uploaded->getSecurePath();
-                        $url = str_replace('/image/upload/', '/raw/upload/', $url);
-                        $diplomaUploads[] = [
-                            'file_url' => $url,
-                        ];
+                        $url = method_exists($uploaded, 'getSecurePath') ? $uploaded->getSecurePath() : (method_exists($uploaded, 'getPath') ? $uploaded->getPath() : null);
+                        if ($url) {
+                            $diplomaUploads[] = [
+                                'file_url' => $url,
+                            ];
+                        }
                     } catch (\Throwable $e) {
                         $path = $file->store('psychologist_profiles/diplomas', 'public');
                         $url = Storage::url($path);
@@ -298,10 +299,9 @@ class RegisteredUserController extends Controller
                 try {
                     $uploaded = Cloudinary::uploadFile($request->file('cv_file')->getRealPath(), [
                         'folder' => 'psychologist_profiles/cvs',
-                        'resource_type' => 'raw',
+                        'resource_type' => 'image',
                     ]);
-                    $cvUrl = $uploaded->getSecurePath();
-                    $cvUrl = str_replace('/image/upload/', '/raw/upload/', $cvUrl);
+                    $cvUrl = method_exists($uploaded, 'getSecurePath') ? $uploaded->getSecurePath() : (method_exists($uploaded, 'getPath') ? $uploaded->getPath() : null);
                 } catch (\Throwable $e) {
                     $path = $request->file('cv_file')->store('psychologist_profiles/cvs', 'public');
                     $cvUrl = Storage::url($path);

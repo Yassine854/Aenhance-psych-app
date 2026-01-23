@@ -38,7 +38,7 @@
                   <div v-for="(slot, idx) in availabilityByDay[d.value]" :key="idx" class="flex items-center justify-between gap-3 bg-gray-50 rounded-lg px-3 py-2">
                     <div class="flex items-center gap-3">
                       <div class="text-sm font-medium text-gray-800">{{ slot.start_time }} — {{ slot.end_time }}</div>
-                      <div class="hidden sm:inline-flex items-center text-xs text-gray-500 bg-white/50 px-2 py-1 rounded">Day {{ d.value }}</div>
+                      
                     </div>
                     <div class="flex items-center gap-2">
                       <input type="time" v-model="slot.start_time" @change="onSlotChanged(d.value)" class="text-xs px-2 py-1 rounded-md border border-gray-200 bg-white" />

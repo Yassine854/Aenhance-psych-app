@@ -713,6 +713,22 @@ const submit = () => {
                                     <InputError class="mt-2" :message="form.errors.specialisation_ids" />
                                 </div>
 
+                                    <div class="md:col-span-2">
+                                        <InputLabel for="expertise_ids" value="Expertises (optional)" />
+                                        <div class="mt-1">
+                                            <Multiselect
+                                                id="expertise_ids"
+                                                v-model="form.expertise_ids"
+                                                :options="expertiseOptions"
+                                                mode="tags"
+                                                :close-on-select="false"
+                                                :searchable="true"
+                                                placeholder="Search and select (optional)"
+                                            />
+                                        </div>
+                                        <InputError class="mt-2" :message="form.errors.expertise_ids" />
+                                    </div>
+
                                 <div class="md:col-span-2">
                                     <InputLabel for="languages" value="Languages" />
                                     <div class="mt-1">

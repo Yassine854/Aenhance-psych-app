@@ -245,6 +245,21 @@ const headerImage = computed(() => {
   return imagePreview.value || props.patient?.profile_image_url || ''
 })
 
+function formatForDateInput(value) {
+  if (!value) return ''
+  const s = String(value).trim()
+  // already in YYYY-MM-DD
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s
+  // try parse with Date
+  try {
+    const d = new Date(s)
+    if (Number.isNaN(d.getTime())) return ''
+    return d.toISOString().slice(0, 10)
+  } catch {
+    return ''
+  }
+}
+
 function syncPhoneToForm() {
   form.country_code = dialCode.value || ''
   form.phone = nationalNumber.value || ''
@@ -253,7 +268,15 @@ function syncPhoneToForm() {
 watch(countryCode, (code) => {
   const c = countriesList.value.find(x => x.isoCode === code)
   form.country = c?.name || ''
-  form.city = ''
+  // Only clear the city if it's not available for the newly selected country.
+  try {
+    const available = getCitiesByCountryName(form.country || '').map(x => x.name)
+    if (!available.includes(form.city)) {
+      form.city = ''
+    }
+  } catch {
+    // ignore errors from geoData lookup and preserve existing city when in doubt
+  }
   dialCode.value = c?.dialCode || ''
   syncPhoneToForm()
 })
@@ -268,7 +291,7 @@ watch(
     section.value = 'profile'
     form.first_name = p.first_name || ''
     form.last_name = p.last_name || ''
-    form.date_of_birth = p.date_of_birth || ''
+    form.date_of_birth = formatForDateInput(p.date_of_birth) || ''
     form.gender = p.gender || ''
     form.country = p.country || ''
     form.city = p.city || ''
@@ -277,9 +300,41 @@ watch(
 
     dialCode.value = form.country_code || ''
     nationalNumber.value = form.phone || ''
+    // Try to robustly match the patient's country to one from the list.
+    const incomingCountry = String(p.country || '').trim()
+    let matchedCountry = null
+    if (incomingCountry) {
+      const lc = incomingCountry.toLowerCase()
+      matchedCountry = countriesList.value.find((x) => String(x.isoCode || '').toLowerCase() === lc)
+        || countriesList.value.find((x) => String(x.name || '') === incomingCountry)
+        || countriesList.value.find((x) => String(x.name || '').toLowerCase() === lc)
+        || countriesList.value.find((x) => String(x.name || '').toLowerCase().includes(lc))
+    }
 
-    const c = countriesList.value.find(x => x.name === form.country)
-    countryCode.value = c?.isoCode || ''
+    if (matchedCountry) {
+      countryCode.value = matchedCountry.isoCode || ''
+      form.country = matchedCountry.name || form.country
+    } else {
+      const c = countriesList.value.find(x => x.name === form.country)
+      countryCode.value = c?.isoCode || ''
+    }
+
+    // Ensure the city value matches one of the available cities for this country.
+    try {
+      const countryForCities = matchedCountry?.name || form.country || ''
+      const available = getCitiesByCountryName(countryForCities).map(x => x.name)
+      if (form.city) {
+        const target = String(form.city || '').trim()
+        const exact = available.find((ct) => ct === target)
+        const ci = available.find((ct) => ct.toLowerCase() === target.toLowerCase())
+        const contains = available.find((ct) => ct.toLowerCase().includes(target.toLowerCase()))
+        if (exact) form.city = exact
+        else if (ci) form.city = ci
+        else if (contains) form.city = contains
+      }
+    } catch {
+      // ignore
+    }
   },
   { immediate: true }
 )
