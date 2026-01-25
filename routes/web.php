@@ -14,6 +14,8 @@ use App\Http\Controllers\ServicesController;
 use App\Http\Controllers\SpecialisationController;
 use App\Http\Controllers\ExpertiseController;
 use App\Http\Controllers\AppointmentSessionController;
+use App\Http\Controllers\SessionRatingController;
+use App\Http\Controllers\AppointmentSessionNoteController;
 use Illuminate\Foundation\Application;
 use Illuminate\Http\Request;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
@@ -210,6 +212,17 @@ Route::middleware(['auth'])->group(function () {
     // Patient appointments UI
     Route::get('/patient/appointments', [AppointmentController::class, 'patientIndex'])
         ->name('patient.appointments');
+
+    // Session ratings (patient submits rating after completed session)
+    Route::post('/session-ratings', [SessionRatingController::class, 'store'])->name('session-ratings.store');
+
+    // Appointment session notes (psychologist creates notes after session)
+    Route::post('/appointment-session-notes', [AppointmentSessionNoteController::class, 'store'])
+    ->name('appointment-session-notes.store');
+    Route::get('/appointments/{appointment}/session-note', [AppointmentSessionNoteController::class, 'showByAppointment'])
+    ->name('appointment-session-note.show');
+    Route::patch('/appointment-session-notes/{note}', [AppointmentSessionNoteController::class, 'update'])
+    ->name('appointment-session-notes.update');
 
     // Patient booking flow
     Route::get('/appointments/book/{psychologist_profile}', [AppointmentController::class, 'book'])

@@ -19,12 +19,19 @@ return new class extends Migration {
             $table->unique('appointment_id');
 
             $table->string('room_id')->unique();
-
-
+            
             $table->dateTime('started_at')->nullable();
             $table->dateTime('ended_at')->nullable();
 
             $table->unsignedSmallInteger('duration_minutes')->nullable();
+
+            $table->dateTime('patient_joined_at')->nullable();
+            $table->dateTime('psychologist_joined_at')->nullable();
+            $table->dateTime('patient_left_at')->nullable();
+            $table->dateTime('psychologist_left_at')->nullable();
+
+            $table->boolean('patient_in_room')->default(false);
+            $table->boolean('psychologist_in_room')->default(false);
 
             $table->enum('status', [
                 'active',

@@ -15,5 +15,7 @@ class VerifyCsrfToken extends Middleware
         'appointments/*/session/join',
         'appointments/*/session/leave',
         'appointments/*/session/end',
+            'session-ratings',
+            'appointment-session-notes',
     ];
 }

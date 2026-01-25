@@ -206,6 +206,19 @@
                         >
                           Cancel
                         </button>
+                        <button
+                          v-if="normalizeStatus(a.status) === 'completed'"
+                          type="button"
+                          @click="onNotesClick(a, $event)"
+                          class="notes-btn inline-flex items-center gap-2 h-9 px-3 rounded-lg text-xs font-medium border shadow-sm transition duration-150 hover:shadow-md"
+                          style="border-color: rgb(89 151 172 / var(--tw-bg-opacity, 1)); color: rgb(89 151 172 / var(--tw-bg-opacity, 1));"
+                          title="Edit session notes"
+                          >
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" :style="{ color: 'inherit' }">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5M18.5 2.5l3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                          </svg>
+                          Notes
+                        </button>
                       </div>
 
                       <div class="text-xs text-gray-400">
@@ -239,6 +252,7 @@
       </div>
     </div>
   </div>
+  <VideoCallSessionNotes ref="notesRef" />
 </template>
 
 <script setup>
@@ -247,6 +261,7 @@ import { computed, ref, watch } from 'vue'
 import Navbar from '@/Components/Navbar.vue'
 import SortIcon from '@/Pages/Admin/Psychologist/SortIcon.vue'
 import Swal from 'sweetalert2'
+import VideoCallSessionNotes from '@/Components/VideoCall/VideoCallSessionNotes.vue'
 
 const props = defineProps({
   appointments: Object,
@@ -436,6 +451,7 @@ const sorted = computed(() => {
 
 const savingId = ref(null)
 const startingCallId = ref(null)
+const notesRef = ref(null)
 
 function formatDate(value) {
   if (!value) return '—'
@@ -508,6 +524,116 @@ function startCall(a) {
       },
     }
   )
+}
+
+// Minimal fetch helper for JSON API calls (includes cookies)
+async function fetchJson(url, options = {}) {
+  const getMetaCsrfToken = () => {
+    try { return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '' } catch { return '' }
+  }
+  const getXsrfCookieToken = () => {
+    try { const m = document.cookie.match(/(?:^|; )XSRF-TOKEN=([^;]+)/); return m && m[1] ? decodeURIComponent(m[1]) : '' } catch { return '' }
+  }
+
+  const doFetch = async () => {
+    const isWrite = Boolean(options.method && options.method !== 'GET')
+    const headers = {
+      'X-Requested-With': 'XMLHttpRequest',
+      Accept: 'application/json',
+      ...(options.headers || {}),
+    }
+    const meta = getMetaCsrfToken()
+    const cookieToken = getXsrfCookieToken()
+    if (isWrite && meta) headers['X-CSRF-TOKEN'] = meta
+    if (isWrite && cookieToken) headers['X-XSRF-TOKEN'] = cookieToken
+    // Ensure JSON bodies are correctly parsed by Laravel
+    if (isWrite && options.body && !headers['Content-Type']) headers['Content-Type'] = 'application/json'
+
+    return fetch(url, { credentials: 'include', headers, ...options })
+  }
+
+  const parse = async (res) => {
+    const text = await res.text()
+    let data = null
+    try { data = text ? JSON.parse(text) : null } catch { data = null }
+    return { res, data }
+  }
+
+  let first = await doFetch()
+  let { res, data } = await parse(first)
+
+  if (res.status === 419) {
+    try { await fetch('/sanctum/csrf-cookie', { method: 'GET', credentials: 'include' }) } catch {}
+    try { await new Promise((r) => setTimeout(r, 60)) } catch {}
+    const second = await doFetch()
+    ;({ res, data } = await parse(second))
+  }
+
+  if (!res.ok) {
+    const msg = data?.message || `Request failed (${res.status})`
+    throw new Error(msg)
+  }
+
+  return data
+}
+
+// Open and edit (or create) session notes for an appointment
+async function openEditNotes(a) {
+  if (!a?.id) return
+  try {
+    // Always fetch the latest session for the appointment
+    const sessionResp = await fetchJson(`/appointments/${a.id}/session`, { method: 'GET' })
+    const session = sessionResp?.session || null
+    if (!session) {
+      Swal.fire({ toast: true, position: 'top-end', icon: 'error', title: 'No session found for this appointment.', showConfirmButton: false, timer: 3000 })
+      return
+    }
+
+    // Try to fetch an existing note; if not found proceed to create
+    let note = null
+    try {
+      const data = await fetchJson(`/appointments/${a.id}/session-note`, { method: 'GET' })
+      note = data?.note || null
+    } catch (err) {
+      note = null
+    }
+
+    const payload = await notesRef.value
+      ? await notesRef.value.open({
+          appointment_session_id: session.id,
+          session_date: (note && note.session_date) || session.started_at,
+          session_duration: (note && note.session_duration) || session.duration_minutes || 0,
+          session_mode: (note && note.session_mode) || 'video_audio',
+          risk_level: (note && note.risk_level) || 'none',
+          subjective: (note && note.subjective) || '',
+          objective: (note && note.objective) || '',
+          assessment: (note && note.assessment) || '',
+          intervention: (note && note.intervention) || '',
+          plan: (note && note.plan) || '',
+        })
+      : null
+
+    if (!payload) return
+
+    // If a note exists, PATCH; otherwise create with POST
+    if (note && note.id) {
+      await fetchJson(`/appointment-session-notes/${note.id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(payload),
+      })
+      Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Session notes updated', showConfirmButton: false, timer: 3000 })
+    } else {
+      await fetchJson(`/appointment-session-notes`, {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      })
+      Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Session notes created', showConfirmButton: false, timer: 3000 })
+    }
+  } catch (e) {
+    console.error('Failed opening/updating notes', e)
+    const msg = e?.message || 'Failed to load or save session note'
+    Swal.fire({ toast: true, position: 'top-end', icon: 'error', title: msg, showConfirmButton: false, timer: 4000 })
+  }
 }
 
 function showCancelDisabled(a) {
@@ -624,4 +750,40 @@ function linkClasses(link) {
   if (!link.url) return base + 'bg-gray-50 text-gray-400 border-gray-200 cursor-not-allowed'
   return base + 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
 }
+
+// Notes button click animation: briefly add a class then open modal
+function onNotesClick(a, ev) {
+  try {
+    const btn = ev?.currentTarget || ev?.target
+    if (btn && btn.classList) {
+      btn.classList.remove('btn-click-anim')
+      // force reflow to restart animation
+      // eslint-disable-next-line no-unused-expressions
+      void btn.offsetWidth
+      btn.classList.add('btn-click-anim')
+      const cleanup = () => {
+        btn.classList.remove('btn-click-anim')
+        btn.removeEventListener('animationend', cleanup)
+      }
+      btn.addEventListener('animationend', cleanup)
+    }
+  } catch (err) {
+    // ignore animation errors
+  }
+
+  // still perform the original action
+  openEditNotes(a)
+}
 </script>
+
+<style scoped>
+.notes-btn { will-change: background-color, color, border-color; }
+.notes-btn:hover { background-color: rgb(89 151 172 / var(--tw-bg-opacity, 1)); border-color: rgb(89 151 172 / var(--tw-bg-opacity, 1)); color: white !important; }
+.notes-btn:hover svg { color: white !important; }
+.btn-click-anim { animation: btnClick 240ms cubic-bezier(.2,.9,.2,1); }
+@keyframes btnClick {
+  0% { transform: scale(1); box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
+  30% { transform: scale(0.97); box-shadow: 0 6px 18px rgba(0,0,0,0.08); }
+  100% { transform: scale(1); box-shadow: 0 4px 10px rgba(0,0,0,0.06); }
+}
+</style>

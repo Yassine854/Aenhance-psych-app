@@ -323,12 +323,16 @@
         />
       </div>
     </transition>
+    <VideoCallRating ref="ratingRef" />
+    <VideoCallSessionNotes ref="notesRef" />
   </div>
 </template>
 
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import VideoCallChat from './VideoCallChat.vue'
+import VideoCallRating from './VideoCallRating.vue'
+import VideoCallSessionNotes from './VideoCallSessionNotes.vue'
 // Chat state
 const chatRef = ref(null)
 const showChat = ref(false)
@@ -393,6 +397,8 @@ let callTimer = null
 
 const sessionStatus = ref('')
 const isEndingSession = ref(false)
+const sessionId = ref(null)
+const sessionPsychologistId = ref(null)
 let hasJoinedSession = false
 
 let ws = null
@@ -418,6 +424,9 @@ let remoteSpeakOff = 0
 
 const page = usePage()
 const authUser = computed(() => page.props?.value?.auth?.user ?? page.props?.auth?.user ?? null)
+
+  const ratingRef = ref(null)
+  const notesRef = ref(null)
 
 const localBaseName = computed(() => {
   const fromProp = String(props.displayName || '').trim()
@@ -857,6 +866,18 @@ function applySession(session) {
   if (!session || typeof session !== 'object') return
   sessionStatus.value = String(session.status || '')
 
+  // record session id and psychologist id if available (best-effort)
+  try {
+    sessionId.value = session.id || null
+  } catch {
+    sessionId.value = null
+  }
+  try {
+    sessionPsychologistId.value = session.psychologist_id || (session.appointment && session.appointment.psychologist_id) || null
+  } catch {
+    sessionPsychologistId.value = null
+  }
+
   const startedAt = session.started_at ? Date.parse(String(session.started_at)) : NaN
   const endedAt = session.ended_at ? Date.parse(String(session.ended_at)) : NaN
 
@@ -1245,7 +1266,7 @@ async function endSession() {
 
   if (!res.isConfirmed) return
 
-  isEndingSession.value = true
+    isEndingSession.value = true
   try {
     const data = await fetchJson(`/appointments/${props.appointmentId}/session/end`, {
       method: 'POST',
@@ -1261,7 +1282,34 @@ async function endSession() {
       // ignore
     }
 
-    hangUpAndLeave()
+      // If we're the psychologist, open the session notes modal and submit notes.
+      if (props.role === 'psychologist') {
+        try {
+          const noteValues = notesRef.value ? await notesRef.value.open({
+            appointment_session_id: sessionId.value,
+            session_date: data?.session?.started_at || new Date().toISOString(),
+            session_duration: data?.session?.duration_minutes || 0,
+          }) : null
+
+          if (noteValues) {
+            try {
+              await fetchJson('/appointment-session-notes', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(noteValues),
+              })
+              Swal.fire({ icon: 'success', title: 'Notes saved', text: 'Session notes saved to the patient file.', confirmButtonColor: 'rgb(175 81 102 / var(--tw-bg-opacity, 1))' })
+            } catch (e) {
+              console.error('Failed to save session notes', e)
+              Swal.fire({ icon: 'error', title: 'Could not save notes', confirmButtonColor: 'rgb(175 81 102 / var(--tw-bg-opacity, 1))' })
+            }
+          }
+        } catch (e) {
+          // ignore modal errors
+        }
+      }
+
+      hangUpAndLeave()
   } catch (e) {
     error.value = e?.message ? String(e.message) : 'Failed to end session.'
   } finally {
@@ -1396,13 +1444,53 @@ onMounted(async () => {
         // Psychologist ended the session.
         await syncSessionBackend()
         error.value = 'Session ended by the psychologist.'
-        setTimeout(() => {
+
+        // If we're the patient, prompt the rating component; parent will submit.
+        if (props.role === 'patient') {
           try {
-            hangUpAndLeave()
+            const formValues = ratingRef.value ? await ratingRef.value.open() : null
+
+            if (formValues && formValues.rating) {
+              try {
+                try {
+                  await fetchJson('/sanctum/csrf-cookie', { method: 'GET' })
+                } catch {
+                  // ignore
+                }
+
+                await fetchJson('/session-ratings', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    session_id: sessionId.value,
+                    appointment_id: props.appointmentId,
+                    patient_id: authUser.value?.id || null,
+                    psychologist_id: sessionPsychologistId.value || null,
+                    rating: formValues.rating,
+                    comment: formValues.comment || '',
+                  }),
+                })
+                Swal.fire({
+                  icon: 'success',
+                  title: 'Thank you!',
+                  text: 'Thanks for sharing your feedback — we really appreciate it 😊',
+                  confirmButtonColor: 'rgb(175 81 102 / var(--tw-bg-opacity, 1))',
+                })
+              } catch (e) {
+                console.error('Failed to submit session rating', e)
+                Swal.fire({ icon: 'error', title: 'Could not submit rating', confirmButtonColor: 'rgb(175 81 102 / var(--tw-bg-opacity, 1))' })
+              }
+            }
           } catch {
             // ignore
+          } finally {
+            setTimeout(() => {
+              try { hangUpAndLeave() } catch {}
+            }, 600)
           }
-        }, 1200)
+        } else {
+          setTimeout(() => { try { hangUpAndLeave() } catch {} }, 1200)
+        }
       }
 
       if (msg.type === 'error') {

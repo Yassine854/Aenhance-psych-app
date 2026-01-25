@@ -13,14 +13,14 @@ return new class extends Migration
     {
         Schema::create('session_ratings', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('appointment_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('session_id')->constrained('appointment_sessions')->cascadeOnDelete();
             $table->foreignId('patient_id')->constrained('users')->cascadeOnDelete();
             $table->foreignId('psychologist_id')->constrained('users')->cascadeOnDelete();
             $table->tinyInteger('rating'); // 1–5
             $table->text('comment')->nullable();
             $table->timestamps();
 
-            $table->unique('appointment_id'); // one rating per session
+            $table->unique('session_id'); // one rating per session
 });
     }
 
