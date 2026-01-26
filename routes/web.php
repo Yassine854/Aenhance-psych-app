@@ -16,6 +16,7 @@ use App\Http\Controllers\ExpertiseController;
 use App\Http\Controllers\AppointmentSessionController;
 use App\Http\Controllers\SessionRatingController;
 use App\Http\Controllers\AppointmentSessionNoteController;
+use App\Http\Controllers\Psychologist\PsychologistPatientController;
 use Illuminate\Foundation\Application;
 use Illuminate\Http\Request;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
@@ -176,7 +177,15 @@ Route::middleware(['auth'])->group(function () {
         ->name('appointments.session.leave');
     Route::post('/appointments/{appointment}/session/end', [AppointmentSessionController::class, 'end'])
         ->name('appointments.session.end');
-    Route::get('/psychologist/patients', [PsychologistController::class, 'patients']);
+    // Psychologist patients UI (Inertia page)
+    Route::get('/psychologist/patients', [PsychologistPatientController::class, 'index'])
+        ->name('psychologist.patients.index');
+
+    Route::get('/psychologist/patients/{patient}/notes', [PsychologistPatientController::class, 'notes'])
+        ->name('psychologist.patients.notes');
+
+    // Legacy/api endpoint returning a simple patient list (kept for compatibility)
+    Route::get('/psychologist/patients/api', [PsychologistController::class, 'patients']);
 
     // Psychologist profile CRUD (explicit routes)
     Route::get('/psychologist-profiles', [PsychologistProfileController::class, 'index'])->name('psychologist-profiles.index');

@@ -186,6 +186,13 @@
           >
             Appointments
           </Link>
+          <Link
+            :href="route('psychologist.patients.index')"
+            class="block w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition text-[13px]"
+            @click="showPsychologistMenu = false"
+          >
+            My Patients
+          </Link>
           <div class="border-t border-gray-200"></div>
           <button
             type="button"
