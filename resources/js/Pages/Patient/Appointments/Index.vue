@@ -4,6 +4,7 @@ import { computed, ref, watch, nextTick } from 'vue'
 import Swal from 'sweetalert2'
 import Navbar from '@/Components/Navbar.vue'
 import Footer from '@/Components/Footer.vue'
+import ReportModal from '@/Components/ReportModal.vue'
 
 const props = defineProps({
   canLogin: { type: Boolean },
@@ -27,6 +28,32 @@ const appointmentsTop = ref(null)
 const appointmentsList = computed(() => props.appointments || [])
 
 const totalPages = computed(() => Math.max(1, Math.ceil(appointmentsList.value.length / pageSize.value)))
+
+// Report modal state
+const showReportModal = ref(false)
+const reportProfile = ref(null)
+
+function openReportFromAppointment(a) {
+  // Build a minimal profile object expected by ReportModal
+  if (!a) return
+  // Prefer any nested profile object
+  const candidate = a.psychologist_profile || a.psychologist || null
+  if (candidate && candidate.id) {
+    reportProfile.value = candidate
+  } else {
+    // Fallback: construct minimal profile with id and user.name
+    reportProfile.value = {
+      id: a.psychologist_id || a.psychologist_profile_id || a.psychologistProfileId || null,
+      user: { name: a.psychologist_name || a.psychologist || 'Psychologist' },
+      first_name: a.psychologist_name || null,
+      last_name: '',
+      price_per_session: a.price ?? undefined,
+      specialisations: a.specialisations || [],
+      is_approved: a.is_approved ?? undefined,
+    }
+  }
+  showReportModal.value = true
+}
 
 const paginatedAppointments = computed(() => {
   const start = (currentPage.value - 1) * pageSize.value
@@ -346,7 +373,9 @@ async function cancelAppointment(a) {
                 <div class="min-w-0">
                   <div class="flex items-center gap-2 flex-wrap">
                     <div class="text-lg font-semibold text-gray-900 truncate">
-                      {{ a.psychologist_name || 'Psychologist' }}
+                        <div class="flex items-center gap-2">
+                          <span class="flex items-center gap-2">{{ a.psychologist_name || 'Psychologist' }}</span>
+                        </div>
                       
                     </div>
                     <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold" :class="statusBadgeClass(a.status)">
@@ -380,6 +409,21 @@ async function cancelAppointment(a) {
                     <svg v-if="canJoinCall(a)" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M15 10l4.553-2.276A1 1 0 0 1 21 8.618v6.764a1 1 0 0 1-1.447.894L15 14M4 6h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2z"/></svg>
                     Join call
                   </Link>
+
+                  <!-- Report icon moved to action area for clearer placement -->
+                  <button
+                    v-if="authUser && String(authUser.role || '').toUpperCase() === 'PATIENT'"
+                    @click.prevent="openReportFromAppointment(a)"
+                    class="inline-flex items-center justify-center w-9 h-9 rounded-full bg-white text-red-600 shadow border border-gray-100 hover:scale-105 transition ml-2"
+                    title="Report psychologist"
+                    aria-label="Report psychologist"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" aria-hidden="true">
+                      <path class="fill-current" d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                      <rect x="10.5" y="7" width="3" height="7" rx="0.6" class="fill-white stroke-red-600" stroke-width="0.9" />
+                      <circle class="fill-white stroke-red-600" cx="12" cy="16.5" r="1.4" stroke-width="0.9" />
+                    </svg>
+                  </button>
 
                   <button
                     v-if="canPay(a)"
@@ -494,6 +538,7 @@ async function cancelAppointment(a) {
   </div>
 
   <Footer />
+  <ReportModal :show="showReportModal" :profile="reportProfile" :authUser="authUser" @close="showReportModal=false" @sent="() => { showReportModal=false }" />
 </template>
 
 <style scoped>

@@ -1,9 +1,10 @@
 <script setup>
 import { Head, Link } from "@inertiajs/vue3";
 import { useI18n } from "vue-i18n";
-import { computed, onMounted } from "vue";
+import { computed, onMounted, ref } from "vue";
 import Navbar from "@/Components/Navbar.vue";
 import Footer from "@/Components/Footer.vue";
+import ReportModal from '@/Components/ReportModal.vue'
 
 const props = defineProps({
   canLogin: { type: Boolean },
@@ -133,6 +134,20 @@ function selectHref(profile) {
   params.set('redirect', bookUrl);
   return `${target}?${params.toString()}`;
 }
+
+// Report modal state
+const showReportModal = ref(false)
+const reportProfile = ref(null)
+const pressed = ref(false)
+
+function openReport(profile) {
+  reportProfile.value = profile
+  showReportModal.value = true
+}
+
+function onReportSent(data) {
+  // optionally handle after-send actions
+}
 </script>
 
 <template>
@@ -203,6 +218,34 @@ function selectHref(profile) {
           class="group bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col h-full"
         >
           <div class="relative h-60 bg-gray-100 overflow-hidden">
+            <!-- Animated red warning report icon (visible to patients) -->
+            <button
+              v-if="props.authUser && String(props.authUser.role || '').toUpperCase() === 'PATIENT'"
+              @click.prevent="openReport(profile)"
+              @mousedown.prevent="pressed = true"
+              @mouseup="pressed = false"
+              @mouseleave="pressed = false"
+              @touchstart.prevent="pressed = true"
+              @touchend="pressed = false"
+              :class="[
+                'absolute top-1 right-1 w-6 h-6 flex items-center justify-center bg-white/95 rounded-full shadow text-red-600 z-20 transition-transform duration-150 ease-out focus:outline-none group',
+                'hover:scale-110 hover:-translate-y-0.5 active:scale-95 hover:bg-red-600 hover:text-white',
+                pressed ? 'scale-95 -rotate-6' : ''
+              ]"
+              title="Report psychologist"
+            >
+              <div class="relative flex items-center justify-center w-4 h-4">
+                <!-- warning triangle with exclamation (uses currentColor so it flips with hover) -->
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 group" viewBox="0 0 24 24" aria-hidden="true">
+                  <!-- triangle: uses current color (red by default, white on hover) -->
+                  <path class="fill-current" d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+
+                  <!-- exclamation mark: bolder and larger; white fill with red stroke normally, inverts on hover -->
+                  <rect x="10.5" y="7" width="3" height="7" rx="0.6" class="fill-white stroke-red-600 group-hover:fill-red-600 group-hover:stroke-white" stroke-width="0.9" />
+                  <circle class="fill-white stroke-red-600 group-hover:fill-red-600 group-hover:stroke-white" cx="12" cy="16.5" r="1.4" stroke-width="0.9" />
+                </svg>
+              </div>
+            </button>
             <img
               v-if="avatarUrl(profile)"
               :src="avatarUrl(profile)"
@@ -290,4 +333,5 @@ function selectHref(profile) {
   </div>
 
   <Footer />
+  <ReportModal :show="showReportModal" :profile="reportProfile" :authUser="authUser" @close="showReportModal=false" @sent="onReportSent" />
 </template>

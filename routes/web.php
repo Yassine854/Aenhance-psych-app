@@ -23,6 +23,7 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use App\Http\Controllers\AppFeeController;
 
 /*
 |--------------------------------------------------------------------------
@@ -130,6 +131,9 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
+
+// Reports (patients can report psychologists)
+Route::post('/reports', [App\Http\Controllers\ReportController::class, 'store'])->name('reports.store')->middleware('auth');
 
 
 Route::middleware(['auth'])->group(function () {
@@ -320,3 +324,6 @@ Route::get('/test-cloudinary', function () {
 });
 
 require __DIR__.'/auth.php';
+
+// App fees management (web resource, auth protected)
+Route::resource('app-fees', AppFeeController::class)->middleware('auth');

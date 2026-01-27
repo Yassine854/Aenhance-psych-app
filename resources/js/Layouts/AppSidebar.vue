@@ -219,6 +219,7 @@ const menuGroups = [
         subItems: [
           { name: "Ressources", path: "/form-elements", pro: false },
           { name: "Blogs", path: "/form-elements", pro: false },
+          { name: "App Fee", path: "/app-fees", pro: false },
         ],
       },
       // ... Add other menu items here

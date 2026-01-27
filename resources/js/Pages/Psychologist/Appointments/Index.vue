@@ -219,6 +219,20 @@
                           </svg>
                           Notes
                         </button>
+                        <!-- Psychologist report patient button -->
+                        <button
+                          v-if="currentUser && String(currentUser.role || '').toUpperCase() === 'PSYCHOLOGIST'"
+                          @click.prevent="openReportForPatient(a)"
+                          class="inline-flex items-center justify-center h-9 w-9 rounded-full bg-white text-red-600 shadow border border-gray-100 hover:scale-105 transition ml-2"
+                          title="Report patient"
+                          aria-label="Report patient"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" aria-hidden="true">
+                            <path class="fill-current" d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                            <rect x="10.5" y="7" width="3" height="7" rx="0.6" class="fill-white stroke-red-600" stroke-width="0.9" />
+                            <circle class="fill-white stroke-red-600" cx="12" cy="16.5" r="1.4" stroke-width="0.9" />
+                          </svg>
+                        </button>
                       </div>
 
                       <div class="text-xs text-gray-400">
@@ -253,6 +267,7 @@
     </div>
   </div>
   <VideoCallSessionNotes ref="notesRef" />
+  <ReportModal :show="showReportModal" :profile="reportProfile" :authUser="currentUser" reported-role="patient" @close="showReportModal=false" @sent="() => { showReportModal=false }" />
 </template>
 
 <script setup>
@@ -262,6 +277,7 @@ import Navbar from '@/Components/Navbar.vue'
 import SortIcon from '@/Pages/Admin/Psychologist/SortIcon.vue'
 import Swal from 'sweetalert2'
 import VideoCallSessionNotes from '@/Components/VideoCall/VideoCallSessionNotes.vue'
+import ReportModal from '@/Components/ReportModal.vue'
 
 const props = defineProps({
   appointments: Object,
@@ -452,6 +468,27 @@ const sorted = computed(() => {
 const savingId = ref(null)
 const startingCallId = ref(null)
 const notesRef = ref(null)
+
+// Report modal for reporting patients
+const showReportModal = ref(false)
+const reportProfile = ref(null)
+const currentUser = computed(() => props.authUser || page.props?.auth?.user)
+
+function openReportForPatient(a) {
+  if (!a) return
+  const candidate = a.patient_profile || a.patient || null
+  if (candidate && candidate.id) {
+    reportProfile.value = candidate
+  } else {
+    reportProfile.value = {
+      id: a.patient_id || a.patient_profile_id || null,
+      user: { name: a.patient?.name || a.patient_name || 'Patient' },
+      first_name: a.patient?.first_name || (a.patient_name ? a.patient_name.split(' ')[0] : null) || null,
+      last_name: a.patient?.last_name || '',
+    }
+  }
+  showReportModal.value = true
+}
 
 function formatDate(value) {
   if (!value) return '—'
