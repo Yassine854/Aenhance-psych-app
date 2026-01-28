@@ -17,6 +17,7 @@ use App\Http\Controllers\AppointmentSessionController;
 use App\Http\Controllers\SessionRatingController;
 use App\Http\Controllers\AppointmentSessionNoteController;
 use App\Http\Controllers\Psychologist\PsychologistPatientController;
+use App\Http\Controllers\Psychologist\PsychologistPayoutController;
 use Illuminate\Foundation\Application;
 use Illuminate\Http\Request;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
@@ -184,6 +185,9 @@ Route::middleware(['auth'])->group(function () {
     // Psychologist patients UI (Inertia page)
     Route::get('/psychologist/patients', [PsychologistPatientController::class, 'index'])
         ->name('psychologist.patients.index');
+
+    Route::get('/psychologist/payouts', [PsychologistPayoutController::class, 'index'])
+        ->name('psychologist.payouts.index');
 
     Route::get('/psychologist/patients/{patient}/notes', [PsychologistPatientController::class, 'notes'])
         ->name('psychologist.patients.notes');

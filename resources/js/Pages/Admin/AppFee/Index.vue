@@ -33,7 +33,7 @@
             <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" opacity="0.25"/>
             <path d="M4 12a8 8 0 0 0 8 8" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
           </svg>
-          <span>{{ saving ? 'Saving...' : 'Save' }}</span>
+          <span>{{ saving ? 'Saving...' : 'Save7' }}</span>
         </button>
       </div>
       <p class="mt-3 text-sm text-gray-500">Enter a percentage. You can update this value later.</p>

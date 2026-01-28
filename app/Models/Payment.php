@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Log;
 
 class Payment extends Model
 {
@@ -30,4 +31,6 @@ class Payment extends Model
     {
         return $this->belongsTo(Appointment::class);
     }
+
+    // payout creation moved to `Appointment` saved hook; keep Payment model thin
 }
