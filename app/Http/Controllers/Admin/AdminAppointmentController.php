@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
+use App\Services\ActivityLogger;
 
 class AdminAppointmentController extends Controller
 {
@@ -190,7 +191,7 @@ class AdminAppointmentController extends Controller
                 // Smart behavior: confirming/completing/no_show without a payment creates a paid payment (manual admin).
                 if (in_array($effectiveAppointmentStatus, ['confirmed', 'completed', 'no_show'], true) && ! $targetPaymentStatus) {
                     if (! $latestPayment) {
-                        Payment::create([
+                        $created = Payment::create([
                             'appointment_id' => $appointment->id,
                             'amount' => $appointment->price,
                             'currency' => (string) ($appointment->currency ?: 'TND'),
@@ -198,6 +199,9 @@ class AdminAppointmentController extends Controller
                             'status' => 'paid',
                             'paid_at' => now(),
                         ]);
+                        if ($created) {
+                            ActivityLogger::log($user->id, $user->role ?? null, 'created_payment', 'Payment', $created->id, 'Admin created manual payment for appointment '.$appointment->id);
+                        }
                     }
                 }
 
@@ -214,11 +218,16 @@ class AdminAppointmentController extends Controller
                             'status' => $targetPaymentStatus,
                             'paid_at' => $targetPaymentStatus === 'paid' ? now() : null,
                         ]);
+                        if ($payment) {
+                            ActivityLogger::log($user->id, $user->role ?? null, 'created_payment', 'Payment', $payment->id, 'Admin created payment with status '.$targetPaymentStatus.' for appointment '.$appointment->id);
+                        }
                     } else {
+                        $oldStatus = $payment->status;
                         $payment->update([
                             'status' => $targetPaymentStatus,
                             'paid_at' => $targetPaymentStatus === 'paid' ? now() : ($targetPaymentStatus === 'refunded' ? $payment->paid_at : null),
                         ]);
+                        ActivityLogger::log($user->id, $user->role ?? null, 'updated_payment', 'Payment', $payment->id, 'Payment status changed from '.$oldStatus.' to '.$targetPaymentStatus.' for appointment '.$appointment->id);
                     }
                 }
             });

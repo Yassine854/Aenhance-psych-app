@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Database\QueryException;
 use Symfony\Component\HttpFoundation\Response as HttpResponse;
+use App\Services\ActivityLogger;
 
 class PsychologistProfileController extends Controller
 {
@@ -341,6 +342,7 @@ class PsychologistProfileController extends Controller
         }
         
         Log::info('Profile created successfully', ['profile_id' => $profile->id]);
+        ActivityLogger::log($request->user()->id ?? null, 'ADMIN', 'created_psychologist_profile', 'PsychologistProfile', $profile->id, 'Psychologist profile created');
         
         // Commit the transaction - both user and profile created successfully
         \DB::commit();
@@ -621,6 +623,7 @@ class PsychologistProfileController extends Controller
         }
 
         // Fallback: return to index when not an Inertia request
+        ActivityLogger::log($request->user()->id ?? null, 'ADMIN', 'updated_psychologist_profile', 'PsychologistProfile', $psychologistProfile->id, 'Psychologist profile updated');
         return redirect()->route('psychologist-profiles.index');
     }
 
@@ -692,6 +695,8 @@ class PsychologistProfileController extends Controller
     public function destroy(PsychologistProfile $psychologistProfile): RedirectResponse
     {
         $psychologistProfile->delete();
+
+        ActivityLogger::log(request()->user()->id ?? null, 'ADMIN', 'deleted_psychologist_profile', 'PsychologistProfile', $psychologistProfile->id, 'Psychologist profile deleted');
 
         if (request()->expectsJson()) {
             return response()->noContent();

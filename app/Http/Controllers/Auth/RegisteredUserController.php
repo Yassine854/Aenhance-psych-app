@@ -21,6 +21,7 @@ use Illuminate\Validation\Rules;
 use Carbon\Carbon;
 use Inertia\Inertia;
 use Inertia\Response;
+use App\Services\ActivityLogger;
 
 class RegisteredUserController extends Controller
 {
@@ -217,6 +218,8 @@ class RegisteredUserController extends Controller
             'role' => $validated['role'],
         ]);
 
+        ActivityLogger::log($user->id, $user->role ?? null, 'registered', 'User', $user->id, 'New user registered');
+
         if ($role === 'PATIENT') {
             $profileImageUrl = null;
             if ($request->hasFile('patient_profile_image')) {
@@ -246,6 +249,7 @@ class RegisteredUserController extends Controller
                 'country_code' => $validated['patient_country_code'] ?? null,
                 'profile_image_url' => $profileImageUrl,
             ]);
+            ActivityLogger::log($user->id, $user->role ?? null, 'created_profile', 'PatientProfile', $user->id, 'Patient profile created on registration');
         }
 
         if ($role === 'PSYCHOLOGIST') {
@@ -345,6 +349,7 @@ class RegisteredUserController extends Controller
             if (!empty($availabilities)) {
                 $profile->availabilities()->createMany($availabilities);
             }
+            ActivityLogger::log($user->id, $user->role ?? null, 'created_profile', 'PsychologistProfile', $profile->id ?? null, 'Psychologist profile created on registration');
         }
 
         event(new Registered($user));

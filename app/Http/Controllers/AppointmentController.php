@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
+use App\Services\ActivityLogger;
 
 class AppointmentController extends Controller
 {
@@ -270,7 +271,7 @@ class AppointmentController extends Controller
             ]);
         }
 
-        Appointment::create([
+        $appointment = Appointment::create([
             'patient_id' => $user->id,
             'psychologist_id' => (int) $validated['psychologist_id'],
             'scheduled_start' => $start,
@@ -279,6 +280,8 @@ class AppointmentController extends Controller
             'price' => $price,
             'currency' => 'TND',
         ]);
+
+        ActivityLogger::log($user->id, $user->role ?? null, 'created_appointment', 'Appointment', $appointment->id, 'Appointment requested');
 
         return redirect()->back()->with('status', 'Appointment requested successfully.');
     }
@@ -311,6 +314,7 @@ class AppointmentController extends Controller
                     'status' => 'Only pending appointments can be confirmed.',
                 ]);
             }
+            $prevStatus = (string) $appointment->status;
 
             DB::transaction(function () use ($appointment) {
                 $appointment->update(['status' => 'confirmed']);
@@ -342,10 +346,14 @@ class AppointmentController extends Controller
 
                 if ($payment) {
                     $payment->update($payload);
+                    ActivityLogger::log($appointment->patient_id, null, 'updated_payment', 'Payment', $payment->id, 'Payment updated on appointment confirmation');
                 } else {
-                    Payment::create($payload);
+                    $created = Payment::create($payload);
+                    ActivityLogger::log($appointment->patient_id, null, 'created_payment', 'Payment', $created->id, 'Payment created on appointment confirmation');
                 }
             });
+
+            ActivityLogger::log($user->id, $user->role ?? null, 'confirmed_appointment', 'Appointment', $appointment->id, 'Appointment status changed from '.$prevStatus.' to confirmed (patient confirmed and paid)');
 
             return redirect()->back()->with('status', 'Payment successful. Appointment confirmed.');
         }
@@ -359,6 +367,8 @@ class AppointmentController extends Controller
                 $canceledBy = 'psychologist';
             }
 
+            $prevStatus = (string) $appointment->status;
+
             $appointment->update([
                 'status' => 'cancelled',
                 'canceled_by' => $canceledBy,
@@ -366,8 +376,11 @@ class AppointmentController extends Controller
                 'cancellation_reason' => $validated['cancellation_reason'] ?? null,
                 'canceled_at' => now(),
             ]);
+            ActivityLogger::log($user->id, $user->role ?? null, 'cancelled_appointment', 'Appointment', $appointment->id, 'Appointment status changed from '.$prevStatus.' to cancelled by '.$canceledBy);
         } else {
+            $prevStatus = (string) $appointment->status;
             $appointment->update(['status' => $requestedStatus]);
+            ActivityLogger::log($user->id, $user->role ?? null, 'updated_appointment_status', 'Appointment', $appointment->id, 'Appointment status changed from '.$prevStatus.' to '.$requestedStatus);
         }
 
         if ($request->wantsJson()) {
@@ -428,6 +441,8 @@ class AppointmentController extends Controller
             'canceled_at' => now(),
         ]);
 
+        ActivityLogger::log($user->id, $user->role ?? null, 'cancelled_appointment', 'Appointment', $appointment->id, 'Appointment cancelled: '.$reason);
+
         if ($request->wantsJson()) {
             return response()->json(['message' => 'Appointment cancelled']);
         }
@@ -455,7 +470,8 @@ class AppointmentController extends Controller
             return redirect()->back()->with('error', 'Video call can only be started for confirmed appointments.');
         }
 
-        DB::transaction(function () use ($appointment) {
+        $session = null;
+        DB::transaction(function () use ($appointment, &$session) {
             $session = AppointmentSession::query()->firstOrCreate(
                 ['appointment_id' => $appointment->id],
                 [
@@ -464,6 +480,10 @@ class AppointmentController extends Controller
                 ]
             );
         });
+
+        if ($session) {
+            ActivityLogger::log($user->id, $user->role ?? null, 'started_video_call', 'AppointmentSession', $session->id ?? null, 'Psychologist started video call for appointment '.$appointment->id);
+        }
 
         return redirect()->route('appointments.video_call.show', $appointment);
     }
@@ -501,6 +521,10 @@ class AppointmentController extends Controller
                 'status' => 'active',
             ]
         );
+
+        if ($session) {
+            ActivityLogger::log($user->id, $user->role ?? null, 'joined_video_call', 'AppointmentSession', $session->id, 'User joined video call for appointment '.$appointment->id);
+        }
 
         $signalingUrl = (string) (config('app.signaling_url') ?: env('VITE_SIGNALING_URL', 'ws://localhost:3001'));
 

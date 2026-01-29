@@ -6,6 +6,7 @@ use App\Models\Appointment;
 use App\Models\AppointmentSession;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Services\ActivityLogger;
 
 class AppointmentSessionController extends Controller
 {
@@ -53,6 +54,8 @@ class AppointmentSessionController extends Controller
             abort(403);
         }
 
+        $prevStatus = AppointmentSession::query()->where('appointment_id', $appointment->id)->value('status');
+
         $session = DB::transaction(function () use ($appointment, $validated, $role) {
             /** @var AppointmentSession $session */
             $session = AppointmentSession::query()->lockForUpdate()->firstOrCreate(
@@ -91,6 +94,11 @@ class AppointmentSessionController extends Controller
 
             return $session->fresh();
         });
+
+        $newStatus = $session->status ?? null;
+        if ((string) $prevStatus !== (string) $newStatus) {
+            ActivityLogger::log($user->id ?? null, $user?->role ?? null, 'updated_session_status', 'AppointmentSession', $session->id ?? null, 'Session status changed from '.($prevStatus ?? 'null').' to '.($newStatus ?? 'null'));
+        }
 
         return response()->json([
             'appointmentId' => $appointment->id,
@@ -161,6 +169,8 @@ class AppointmentSessionController extends Controller
             abort(403);
         }
 
+        $prevStatus = AppointmentSession::query()->where('appointment_id', $appointment->id)->value('status');
+
         $session = DB::transaction(function () use ($appointment) {
             /** @var AppointmentSession $session */
             $session = AppointmentSession::query()->lockForUpdate()->firstOrCreate(
@@ -192,6 +202,11 @@ class AppointmentSessionController extends Controller
 
             return $session->fresh();
         });
+
+        $newStatus = $session->status ?? null;
+        if ((string) $prevStatus !== (string) $newStatus) {
+            ActivityLogger::log($user->id ?? null, $user?->role ?? null, 'updated_session_status', 'AppointmentSession', $session->id ?? null, 'Session status changed from '.($prevStatus ?? 'null').' to '.($newStatus ?? 'null'));
+        }
 
         return response()->json([
             'appointmentId' => $appointment->id,

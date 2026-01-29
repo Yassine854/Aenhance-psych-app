@@ -10,6 +10,7 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
+use App\Services\ActivityLogger;
 
 class PsychologistAppointmentController extends Controller
 {
@@ -109,6 +110,8 @@ class PsychologistAppointmentController extends Controller
             'cancellation_reason' => $validated['cancellation_reason'],
             'canceled_at' => now(),
         ]);
+
+        ActivityLogger::log($user->id, $user->role ?? null, 'cancelled_appointment', 'Appointment', $appointment->id, 'Psychologist cancelled appointment: '.$validated['cancellation_reason']);
 
         return redirect()->back()->with('status', 'Appointment cancelled.');
     }

@@ -8,6 +8,7 @@ use App\Models\PsychologistPayout;
 use App\Models\Payment;
 use App\Models\AppFee;
 use Illuminate\Support\Facades\Log;
+use App\Services\ActivityLogger;
 use Carbon\Carbon;
 
 class Appointment extends Model
@@ -89,7 +90,7 @@ class Appointment extends Model
 
                     $net = round($gross - $platformFee, 2);
 
-                    PsychologistPayout::create([
+                    $payout = PsychologistPayout::create([
                         'payment_id' => $payment->id,
                         'psychologist_id' => $appointment->psychologist_id,
                         'appointment_id' => $appointment->id,
@@ -101,6 +102,12 @@ class Appointment extends Model
                         'estimated_availability' => Carbon::now()->addDays(14),
                         'paid_at' => null,
                     ]);
+
+                    try {
+                        ActivityLogger::log(null, 'SYSTEM', 'created_payout', 'PsychologistPayout', $payout->id, 'Payout created with status pending for payment '.$payment->id.' appointment '.$appointment->id);
+                    } catch (\Throwable $e) {
+                        Log::warning('Failed to log payout creation: '.$e->getMessage());
+                    }
                 }
             } catch (\Throwable $e) {
                 Log::error('Failed creating PsychologistPayout in Appointment hook: ' . $e->getMessage());

@@ -6,6 +6,7 @@ use App\Http\Requests\StoreSessionRatingRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Carbon;
+use App\Services\ActivityLogger;
 
 class SessionRatingController extends Controller
 {
@@ -53,6 +54,7 @@ class SessionRatingController extends Controller
             ]);
 
             $record = DB::table('session_ratings')->where('id', $id)->first();
+            ActivityLogger::log($user->id, $user->role ?? null, 'created_session_rating', 'SessionRating', $id, 'Rated session '.$session->id);
             return response()->json($record, 201);
         } catch (\Exception $e) {
             logger()->error('Failed storing session rating: '.$e->getMessage());

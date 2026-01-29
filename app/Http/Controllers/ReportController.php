@@ -6,6 +6,7 @@ use App\Http\Requests\StoreReportRequest;
 use App\Models\Report;
 use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 use Illuminate\Http\JsonResponse;
+use App\Services\ActivityLogger;
 
 class ReportController extends Controller
 {
@@ -41,6 +42,8 @@ class ReportController extends Controller
         }
 
         $report = Report::create($data);
+
+        ActivityLogger::log(auth()->id() ?? $data['reporter_id'] ?? null, auth()->user()?->role ?? $data['reporter_type'] ?? null, 'created_report', 'Report', $report->id, $data['reason'] ?? null);
 
         return response()->json(['data' => $report], 201);
     }

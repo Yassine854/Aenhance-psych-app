@@ -8,6 +8,7 @@ use Illuminate\Support\Carbon;
 use App\Http\Requests\StoreAppointmentSessionNoteRequest;
 use App\Http\Requests\UpdateAppointmentSessionNoteRequest;
 use Illuminate\Http\JsonResponse;
+use App\Services\ActivityLogger;
 
 class AppointmentSessionNoteController extends Controller
 {
@@ -81,6 +82,7 @@ class AppointmentSessionNoteController extends Controller
             ]);
 
             $record = DB::table('appointment_session_notes')->where('id', $id)->first();
+            ActivityLogger::log($user->id ?? null, $user?->role ?? null, 'created_session_note', 'AppointmentSessionNote', $id, 'Created session note for session '.$session->id.' appointment '.$appointment->id);
             return response()->json($record, 201);
         } catch (\Exception $e) {
             logger()->error('Failed storing session note: '.$e->getMessage());
@@ -158,6 +160,7 @@ class AppointmentSessionNoteController extends Controller
             ]);
 
             $updated = DB::table('appointment_session_notes')->where('id', $noteId)->first();
+            ActivityLogger::log($user->id ?? null, $user?->role ?? null, 'updated_session_note', 'AppointmentSessionNote', $noteId, 'Updated session note '.$noteId.' for appointment '.$appointment->id);
             return response()->json($updated);
         } catch (\Exception $e) {
             logger()->error('Failed updating session note: '.$e->getMessage());

@@ -13,6 +13,7 @@ use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\Response as HttpResponse;
+use App\Services\ActivityLogger;
 
 class PatientProfileController extends Controller
 {
@@ -100,6 +101,7 @@ class PatientProfileController extends Controller
             unset($data['profile_image']);
 
             $profile = PatientProfile::create($data);
+            ActivityLogger::log($request->user()->id ?? $data['user_id'] ?? null, 'ADMIN', 'created_patient_profile', 'PatientProfile', $profile->id, 'Created patient profile');
 
             \DB::commit();
 
@@ -203,6 +205,7 @@ class PatientProfileController extends Controller
         unset($data['profile_image']);
 
         $patientProfile->update($data);
+        ActivityLogger::log($request->user()->id ?? null, 'ADMIN', 'updated_patient_profile', 'PatientProfile', $patientProfile->id, 'Updated patient profile');
 
         if ($request->expectsJson()) {
             return response()->json([
@@ -220,6 +223,7 @@ class PatientProfileController extends Controller
     public function destroy(PatientProfile $patientProfile)
     {
         $patientProfile->delete();
+        ActivityLogger::log(request()->user()->id ?? null, 'ADMIN', 'deleted_patient_profile', 'PatientProfile', $patientProfile->id, 'Deleted patient profile');
 
         if (request()->expectsJson()) {
             return response()->noContent();

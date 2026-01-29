@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
+use App\Services\ActivityLogger;
 
 class PsychologistSelfProfileController extends Controller
 {
@@ -291,6 +292,8 @@ class PsychologistSelfProfileController extends Controller
             }
         }
 
+        ActivityLogger::log($user->id ?? null, $user?->role ?? null, 'updated_profile', 'PsychologistProfile', $profile->id ?? null, 'Updated own profile');
+
         return redirect()->route('psychologist.profile.self')->with('status', 'Profile updated successfully.');
     }
 
@@ -357,6 +360,8 @@ class PsychologistSelfProfileController extends Controller
         foreach ($toCreate as $row) {
             $profile->availabilities()->create($row);
         }
+
+        ActivityLogger::log($user->id ?? null, $user?->role ?? null, 'updated_availabilities', 'PsychologistProfile', $profile->id ?? null, 'Updated availabilities');
 
         return response()->json(['success' => true, 'availabilities' => $profile->availabilities()->get()]);
     }
@@ -544,6 +549,8 @@ class PsychologistSelfProfileController extends Controller
                 }
             }
         }
+
+        ActivityLogger::log($user->id ?? null, $user?->role ?? null, 'submitted_verification', 'PsychologistVerificationDetails', $verificationDetails->id ?? null, 'Submitted verification details');
 
         return redirect()->route('psychologist.verification.create')->with('status', 'Verification details submitted successfully. Your documents will be reviewed shortly.');
     }

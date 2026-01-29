@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
+use App\Services\ActivityLogger;
 
 class PatientSelfProfileController extends Controller
 {
@@ -88,6 +89,8 @@ class PatientSelfProfileController extends Controller
             ['user_id' => $user->id],
             array_merge($data, ['user_id' => $user->id])
         );
+
+        ActivityLogger::log($user->id, $user->role ?? null, 'updated_profile', 'PatientProfile', $user->patientProfile?->id ?? null, 'Patient updated own profile');
 
         return redirect()->route('patient.profile')->with('status', 'Profile updated successfully.');
     }
