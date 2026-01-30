@@ -10,6 +10,7 @@ use App\Http\Controllers\PsychologistProfileController;
 use App\Http\Controllers\PatientProfileController;
 use App\Http\Controllers\Patient\PatientSelfProfileController;
 use App\Http\Controllers\Psychologist\PsychologistSelfProfileController;
+use App\Http\Controllers\Admin\LogsController;
 use App\Http\Controllers\ServicesController;
 use App\Http\Controllers\SpecialisationController;
 use App\Http\Controllers\ExpertiseController;
@@ -210,6 +211,14 @@ Route::middleware(['auth'])->group(function () {
     Route::match(['put','patch'], '/psychologist-profiles/{psychologist_profile}/verification', [PsychologistProfileController::class, 'updateVerification'])->name('psychologist.verification.admin.update');
     // Psychologist verification admin show (JSON) - used by admin Edit modal to fetch existing verification details
     Route::get('/psychologist-profiles/{psychologist_profile}/verification', [PsychologistProfileController::class, 'showVerification'])->name('psychologist.verification.admin.show');
+
+    // Logs (admin)
+    Route::get('/admin/logs/appointments', [LogsController::class, 'appointmentsIndex'])->name('admin.logs.appointments.index');
+    Route::get('/admin/logs/appointments/{log}', [LogsController::class, 'appointmentsShow'])->name('admin.logs.appointments.show');
+    Route::get('/admin/logs/appointments/{log}/related', [LogsController::class, 'appointmentsRelated'])->name('admin.logs.appointments.related');
+    // placeholder psychologists logs (can be implemented similarly)
+    Route::get('/admin/logs/psychologists', [LogsController::class, 'psychologistsIndex'])->name('admin.logs.psychologists.index');
+    Route::get('/admin/logs/psychologists/{log}', [LogsController::class, 'psychologistsShow'])->name('admin.logs.psychologists.show');
 
     // Patient profile CRUD (explicit routes)
     Route::get('/patient-profiles', [PatientProfileController::class, 'index'])->name('patient-profiles.index');

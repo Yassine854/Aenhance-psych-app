@@ -349,7 +349,7 @@ class AppointmentController extends Controller
                     ActivityLogger::log($appointment->patient_id, null, 'updated_payment', 'Payment', $payment->id, 'Payment updated on appointment confirmation');
                 } else {
                     $created = Payment::create($payload);
-                    ActivityLogger::log($appointment->patient_id, null, 'created_payment', 'Payment', $created->id, 'Payment created on appointment confirmation');
+                    ActivityLogger::log($appointment->patient_id, 'SYSTEM', 'created_payment', 'Payment', $created->id, 'Payment created on appointment confirmation');
                 }
             });
 

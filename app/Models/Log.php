@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Appointment;
 
 class Log extends Model
 {
@@ -31,5 +32,10 @@ class Log extends Model
     public static function record(array $data)
     {
         return static::create($data);
+    }
+
+    public function appointment()
+    {
+        return $this->belongsTo(Appointment::class, 'target_id');
     }
 }

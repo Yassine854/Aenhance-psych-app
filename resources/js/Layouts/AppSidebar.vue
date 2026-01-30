@@ -48,7 +48,7 @@
                 <!-- Professional Dropdown Implementation -->
                 <div v-if="item.subItems">
                   <button
-                    @click="openSubmenu = openSubmenu === item.name ? null : item.name"
+                    @click="handleParentClick(item)"
                     :aria-expanded="openSubmenu === item.name"
                     :aria-controls="`dropdown-${item.name}`"
                     class="menu-item group w-full flex items-center px-3 py-2 rounded transition text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-500"
@@ -134,6 +134,7 @@ const isMobileOpen = sidebarState.isMobileOpen ?? vueRef(false);
 const isHovered = sidebarState.isHovered ?? vueRef(false);
 const openSubmenu = sidebarState.openSubmenu ?? vueRef(null);
 import { usePage } from '@inertiajs/vue3'
+import { Inertia } from '@inertiajs/inertia'
 
 const page = usePage()
 // pressedItem highlights clicked subitem until navigation updates the page URL
@@ -149,6 +150,28 @@ const pressItem = (parentName, path) => {
     // ignore if openSubmenu is not writable
   }
 };
+
+const handleParentClick = (item) => {
+  try {
+    // if the parent item defines a path, navigate to it and keep submenu open
+    if (item && item.path) {
+      if (openSubmenu && typeof openSubmenu === 'object' && 'value' in openSubmenu) {
+        openSubmenu.value = item.name;
+      }
+      Inertia.get(item.path)
+      return
+    }
+  } catch (e) {
+    // fallback to toggle
+  }
+
+  // otherwise toggle submenu open/close
+  try {
+    openSubmenu.value = openSubmenu.value === item.name ? null : item.name
+  } catch (e) {
+    // noop
+  }
+}
 
 watch(() => page.url, () => {
   pressedItem.value = null;
@@ -220,6 +243,15 @@ const menuGroups = [
           { name: "Ressources", path: "/form-elements", pro: false },
           { name: "Blogs", path: "/form-elements", pro: false },
           { name: "App Fee", path: "/app-fees", pro: false },
+        ],
+      },
+      {
+        name: "Logs",
+        icon: DocsIcon,
+        roles: ['ADMIN'],
+        subItems: [
+          { name: "Appointments", path: "/admin/logs/appointments", pro: false },
+          { name: "Psychologists", path: "/admin/logs/psychologists", pro: false },
         ],
       },
       // ... Add other menu items here

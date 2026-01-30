@@ -611,6 +611,16 @@ class PsychologistProfileController extends Controller
             throw $e;
         }
 
+        // Log the update for audit (run for all request types)
+        ActivityLogger::log(
+            $request->user()->id ?? null,
+            $request->user()?->role ?? 'ADMIN',
+            'updated_psychologist_profile',
+            'PsychologistProfile',
+            $psychologistProfile->id,
+            'Psychologist profile updated'
+        );
+
         if ($request->expectsJson()) {
             return response()->json([
                 'profile' => $psychologistProfile->fresh()->load(['user', 'availabilities', 'specialisations', 'expertises']),
@@ -623,7 +633,6 @@ class PsychologistProfileController extends Controller
         }
 
         // Fallback: return to index when not an Inertia request
-        ActivityLogger::log($request->user()->id ?? null, 'ADMIN', 'updated_psychologist_profile', 'PsychologistProfile', $psychologistProfile->id, 'Psychologist profile updated');
         return redirect()->route('psychologist-profiles.index');
     }
 
