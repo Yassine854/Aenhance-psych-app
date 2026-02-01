@@ -219,6 +219,8 @@ Route::middleware(['auth'])->group(function () {
     // placeholder psychologists logs (can be implemented similarly)
     Route::get('/admin/logs/psychologists', [LogsController::class, 'psychologistsIndex'])->name('admin.logs.psychologists.index');
     Route::get('/admin/logs/psychologists/{log}', [LogsController::class, 'psychologistsShow'])->name('admin.logs.psychologists.show');
+    Route::get('/admin/logs/patients', [LogsController::class, 'patientsIndex'])->name('admin.logs.patients.index');
+    Route::get('/admin/logs/patients/{log}', [LogsController::class, 'patientsShow'])->name('admin.logs.patients.show');
 
     // Patient profile CRUD (explicit routes)
     Route::get('/patient-profiles', [PatientProfileController::class, 'index'])->name('patient-profiles.index');

@@ -17,6 +17,33 @@
     </div>
 
     <div class="flex gap-2.5 items-center">
+      <!-- Appointments icon (shows pending appointments count for patient) -->
+      <div v-if="isPatient" class="relative">
+        <Link
+          :href="route('patient.appointments')"
+          class="inline-flex items-center justify-center p-2 bg-white/10 text-white rounded-full border border-white/20 hover:bg-white/20 transition mr-2"
+          aria-label="Appointments"
+          title="Appointments"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" stroke-width="1.5" />
+            <path d="M16 2v4M8 2v4" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="M3 10h18" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="M9 14l2 2 4-4" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </Link>
+        <span
+          v-if="patientCartLocal > 0"
+          class="absolute -top-1 -right-1 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-semibold leading-none text-white bg-red-500 rounded-full shadow-md transform transition-all duration-150"
+          :class="{ 'scale-110 ring-4 ring-red-300/40': _pulse }"
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+        >
+          {{ patientCartLocal }}
+        </span>
+      </div>
+
       <!-- Patient menu (shown when a patient is logged in) -->
       <div v-if="isPatient" class="relative">
         <button
@@ -158,27 +185,29 @@
           </div>
 
           <Link
-            :href="route('psychologist.availabilities')"
-            class="block w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition text-[13px]"
-            @click="showPsychologistMenu = false"
-          >
-            My Availabilities
-          </Link>
-
-          <Link
             :href="route('psychologist.profile.self')"
             class="block w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition text-[13px]"
             @click="showPsychologistMenu = false"
           >
-            Edit profile
+            Edit Profile
           </Link>
+
           <Link
             :href="route('psychologist.account')"
             class="block w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition text-[13px]"
             @click="showPsychologistMenu = false"
           >
-            Account settings
+            Account Settings
           </Link>
+
+          <Link
+            :href="route('psychologist.availabilities')"
+            class="block w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition text-[13px]"
+            @click="showPsychologistMenu = false"
+          >
+            Manage Availability
+          </Link>
+
           <Link
             :href="route('psychologist.appointments.index')"
             class="block w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition text-[13px]"
@@ -188,18 +217,19 @@
           </Link>
 
           <Link
-            :href="route('psychologist.payouts.index')"
-            class="block w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition text-[13px]"
-            @click="showPsychologistMenu = false"
-          >
-            My Payouts
-          </Link>
-          <Link
             :href="route('psychologist.patients.index')"
             class="block w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition text-[13px]"
             @click="showPsychologistMenu = false"
           >
-            My Patients
+            Patients
+          </Link>
+
+          <Link
+            :href="route('psychologist.payouts.index')"
+            class="block w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition text-[13px]"
+            @click="showPsychologistMenu = false"
+          >
+            Payouts
           </Link>
           <div class="border-t border-gray-200"></div>
           <button
@@ -381,7 +411,7 @@
 import { Link, usePage } from "@inertiajs/vue3";
 import { Inertia } from '@inertiajs/inertia'
 import { useI18n } from "vue-i18n";
-import { ref, onMounted, computed } from "vue";
+import { ref, onMounted, computed, watch, onBeforeUnmount } from "vue";
 
 const props = defineProps({
   canLogin: { type: Boolean },
@@ -440,6 +470,80 @@ const patientInitials = computed(() => {
 const isPsychologist = computed(() => {
   const role = (resolvedAuthUser.value?.role ?? '').toString().trim().toUpperCase()
   return !!resolvedAuthUser.value && role === 'PSYCHOLOGIST'
+})
+
+// Pending appointments count (cart) - read from common props with fallbacks
+const patientCartCount = computed(() => {
+  const p = page.props || {}
+  // possible server-side keys: pendingAppointmentsCount, cart.appointments, auth.user.pending_appointments_count
+  const fromPending = Number(p.pendingAppointmentsCount || p.pending_appointments_count || 0)
+  if (fromPending && !Number.isNaN(fromPending)) return fromPending
+  const fromCart = (p.cart && Array.isArray(p.cart.appointments)) ? p.cart.appointments.length : 0
+  if (fromCart) return fromCart
+  const fromUser = Number(p?.auth?.user?.pending_appointments_count || 0)
+  if (fromUser && !Number.isNaN(fromUser)) return fromUser
+  // Fallback: scan props for any arrays of appointment-like objects and count those with pending status
+  function countPendingInArray(arr) {
+    if (!Array.isArray(arr)) return 0
+    return arr.reduce((acc, item) => {
+      if (!item || typeof item !== 'object') return acc
+      const status = (item.status || item.state || item.status_name || '').toString().toLowerCase()
+      if (status === 'pending' || status === 'awaiting' || status === 'scheduled') return acc + 1
+      return acc
+    }, 0)
+  }
+
+  let scanned = 0
+  for (const key in p) {
+    if (!Object.prototype.hasOwnProperty.call(p, key)) continue
+    const val = p[key]
+    if (Array.isArray(val)) {
+      scanned += countPendingInArray(val)
+    } else if (val && typeof val === 'object') {
+      // look for nested arrays inside objects
+      for (const k2 in val) {
+        if (Array.isArray(val[k2])) scanned += countPendingInArray(val[k2])
+      }
+    }
+  }
+
+  if (scanned > 0) return scanned
+  return 0
+})
+
+// Local badge that can be updated instantly when appointments are added/removed.
+// Initialized from the computed `patientCartCount` and kept in sync.
+const patientCartLocal = ref(Number(patientCartCount.value || 0))
+const _pulse = ref(false)
+
+// When server-provided prop changes (e.g., on full page visit), sync local value.
+watch(patientCartCount, (v) => {
+  const newVal = Number(v || 0)
+  patientCartLocal.value = newVal
+})
+
+function handleAppointmentAdded(evt) {
+  // optional: payload may include count
+  const increment = Number(evt?.detail?.count ?? 1)
+  patientCartLocal.value = Number(patientCartLocal.value || 0) + increment
+  // trigger a quick pulse animation
+  _pulse.value = true
+  setTimeout(() => (_pulse.value = false), 700)
+}
+
+function handleAppointmentRemoved(evt) {
+  const decrement = Number(evt?.detail?.count ?? 1)
+  patientCartLocal.value = Math.max(0, Number(patientCartLocal.value || 0) - decrement)
+}
+
+onMounted(() => {
+  window.addEventListener('appointment:added', handleAppointmentAdded)
+  window.addEventListener('appointment:removed', handleAppointmentRemoved)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('appointment:added', handleAppointmentAdded)
+  window.removeEventListener('appointment:removed', handleAppointmentRemoved)
 })
 
 const psychologistDisplayName = computed(() => {

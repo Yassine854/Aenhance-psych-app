@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Models\Log;
 use App\Models\PsychologistProfile;
+use App\Models\PatientProfile;
 use App\Models\User;
 
 class LogsController extends Controller
@@ -212,5 +213,66 @@ class LogsController extends Controller
             abort(404);
         }
         return Inertia::render('Admin/Logs/Psychologists/Show', [ 'log' => $log ]);
+    }
+
+    // Patients logs (mirror of psychologists)
+    public function patientsIndex(Request $request)
+    {
+        $query = Log::query()->where('target_type', 'PatientProfile')->orderBy('id', 'desc');
+        $logs = $query->paginate(15)->appends($request->query());
+
+        // Attach brief patient + user info to each paginated log item when possible
+        $logs->getCollection()->transform(function ($log) {
+            if ($log->target_type === 'PatientProfile') {
+                try {
+                    $profile = PatientProfile::with('user')->find($log->target_id);
+                    if ($profile) {
+                        $log->patient = [
+                            'id' => $profile->id,
+                            'user' => $profile->user ? [
+                                'id' => $profile->user->id,
+                                'name' => $profile->user->name ?? null,
+                                'username' => $profile->user->username ?? null,
+                            ] : null,
+                            'name' => $profile->name ?? null,
+                        ];
+                    } else {
+                        $log->patient = null;
+                    }
+                } catch (\Throwable $e) {
+                    $log->patient = null;
+                }
+            }
+
+            // Attach actor user info (admin or other user actors)
+            if ($log->actor_id) {
+                try {
+                    $u = User::select('id', 'name', 'username', 'email')->find($log->actor_id);
+                    if ($u) {
+                        $log->actor_user = [
+                            'id' => $u->id,
+                            'name' => $u->name ?? null,
+                            'username' => $u->username ?? null,
+                            'email' => $u->email ?? null,
+                        ];
+                    } else {
+                        $log->actor_user = null;
+                    }
+                } catch (\Throwable $e) {
+                    $log->actor_user = null;
+                }
+            }
+            return $log;
+        });
+
+        return Inertia::render('Admin/Logs/Patients/Index', [ 'logs' => $logs, 'filters' => $request->only(['q']) ]);
+    }
+
+    public function patientsShow(Log $log)
+    {
+        if ($log->target_type !== 'PatientProfile') {
+            abort(404);
+        }
+        return Inertia::render('Admin/Logs/Patients/Show', [ 'log' => $log ]);
     }
 }
