@@ -100,14 +100,14 @@
             class="block w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition text-[13px]"
             @click="showPatientMenu = false"
           >
-            Profile info
+            Edit Profile
           </Link>
           <Link
             :href="route('patient.account')"
             class="block w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition text-[13px]"
             @click="showPatientMenu = false"
           >
-            Account info
+            Account details
           </Link>
           <Link
             :href="route('patient.appointments')"

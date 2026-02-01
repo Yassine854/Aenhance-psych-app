@@ -154,8 +154,8 @@ function submit() {
             <span v-else class="text-white font-semibold">{{ (authUser?.name || authUser?.email || 'A').slice(0, 1).toUpperCase() }}</span>
           </div>
           <div>
-            <h1 class="text-2xl sm:text-3xl font-semibold text-white">Profile info</h1>
-            <p class="mt-1 text-sm text-white/90">Update what psychologists see about you.</p>
+            <h1 class="text-2xl sm:text-3xl font-semibold text-white">Profile Details</h1>
+            <p class="mt-1 text-sm text-white/90">Update your profile information.</p>
           </div>
         </div>
 
@@ -328,7 +328,7 @@ function submit() {
                 </div>
                 <div>
                   <h2 class="text-lg font-semibold text-white">Profile Image</h2>
-                  <p class="text-sm text-white/80">Your photo and basic information</p>
+                  <p class="text-sm text-white/80">Your photo</p>
                 </div>
               </div>
             </div>

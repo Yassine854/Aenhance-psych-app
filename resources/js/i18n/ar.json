@@ -57,7 +57,15 @@
       "na": "غير متاح",
       "unknownName": "أخصائي نفسي",
       "learnMore": "الخدمات",
-      "select": "اختر"
+      "select": "اختر",
+      "filter": "تصفية",
+      "filtersTitle": "المرشحات",
+      "specialisations": "التخصصات",
+      "expertises": "الخبرات",
+      "languages": "اللغات",
+      "days": "الأيام",
+      "apply": "تطبيق",
+      "clear": "مسح"
     },
     "workshop": {
       "title": "ورشة عمل",

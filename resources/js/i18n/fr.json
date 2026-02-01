@@ -58,7 +58,15 @@
       "na": "N/A",
       "unknownName": "Psychologue",
       "learnMore": "Services",
-      "select": "Choisir"
+      "select": "Choisir",
+      "filter": "Filtrer",
+      "filtersTitle": "Filtres",
+      "specialisations": "Spécialisations",
+      "expertises": "Expertises",
+      "languages": "Langues",
+      "days": "Jours",
+      "apply": "Appliquer",
+      "clear": "Effacer"
     },
     "workshop": {
       "title": "Atelier",
