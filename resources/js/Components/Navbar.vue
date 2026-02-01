@@ -512,14 +512,28 @@ const patientCartCount = computed(() => {
 })
 
 // Local badge that can be updated instantly when appointments are added/removed.
-// Initialized from the computed `patientCartCount` and kept in sync.
-const patientCartLocal = ref(Number(patientCartCount.value || 0))
+// Initialize from server-provided prop when available, otherwise from localStorage.
+const stored = (() => {
+  try { return Number(localStorage.getItem('pendingAppointmentsCount') || 0) } catch (e) { return 0 }
+})()
+const patientCartLocal = ref(Number(patientCartCount.value || stored || 0))
 const _pulse = ref(false)
 
-// When server-provided prop changes (e.g., on full page visit), sync local value.
+// If server provided a count on initial render, persist it to localStorage so
+// it remains available on subsequent pages and logins.
+try {
+  const initialServer = Number(patientCartCount.value || 0)
+  if (initialServer > 0) {
+    try { localStorage.setItem('pendingAppointmentsCount', String(initialServer)) } catch (e) {}
+  }
+} catch (e) {}
+
+// When server-provided prop changes (e.g., on full page visit), sync local value
+// and persist to localStorage so it survives full page navigations.
 watch(patientCartCount, (v) => {
   const newVal = Number(v || 0)
   patientCartLocal.value = newVal
+  try { localStorage.setItem('pendingAppointmentsCount', String(newVal)) } catch (e) {}
 })
 
 function handleAppointmentAdded(evt) {
@@ -529,21 +543,33 @@ function handleAppointmentAdded(evt) {
   // trigger a quick pulse animation
   _pulse.value = true
   setTimeout(() => (_pulse.value = false), 700)
+  try { localStorage.setItem('pendingAppointmentsCount', String(Number(patientCartLocal.value || 0))) } catch (e) {}
 }
 
 function handleAppointmentRemoved(evt) {
   const decrement = Number(evt?.detail?.count ?? 1)
   patientCartLocal.value = Math.max(0, Number(patientCartLocal.value || 0) - decrement)
+  try { localStorage.setItem('pendingAppointmentsCount', String(Number(patientCartLocal.value || 0))) } catch (e) {}
+}
+
+function handleAppointmentCountUpdated(evt) {
+  const cnt = Number(evt?.detail?.count ?? NaN)
+  if (!Number.isNaN(cnt)) {
+    patientCartLocal.value = Math.max(0, Number(cnt || 0))
+    try { localStorage.setItem('pendingAppointmentsCount', String(Number(patientCartLocal.value || 0))) } catch (e) {}
+  }
 }
 
 onMounted(() => {
   window.addEventListener('appointment:added', handleAppointmentAdded)
   window.addEventListener('appointment:removed', handleAppointmentRemoved)
+  window.addEventListener('appointment:count-updated', handleAppointmentCountUpdated)
 })
 
 onBeforeUnmount(() => {
   window.removeEventListener('appointment:added', handleAppointmentAdded)
   window.removeEventListener('appointment:removed', handleAppointmentRemoved)
+  window.removeEventListener('appointment:count-updated', handleAppointmentCountUpdated)
 })
 
 const psychologistDisplayName = computed(() => {
@@ -615,6 +641,7 @@ const supportItems = computed(() => [
 
 async function handlePatientLogout(e) {
   try {
+    try { localStorage.removeItem('pendingAppointmentsCount') } catch (e) {}
     await Inertia.post(route('logout'))
   } finally {
     // hide menu after request starts/completes
@@ -624,6 +651,7 @@ async function handlePatientLogout(e) {
 
 async function handlePsychologistLogout(e) {
   try {
+    try { localStorage.removeItem('pendingAppointmentsCount') } catch (e) {}
     await Inertia.post(route('logout'))
   } finally {
     showPsychologistMenu.value = false

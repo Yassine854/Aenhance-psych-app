@@ -451,6 +451,24 @@ class AppointmentController extends Controller
     }
 
     /**
+     * Return pending appointments count for the authenticated patient (JSON).
+     */
+    public function pendingCount(Request $request)
+    {
+        $user = $request->user();
+        if (! $user || ! method_exists($user, 'isPatient') || ! $user->isPatient()) {
+            return response()->json(['count' => 0]);
+        }
+
+        $count = Appointment::query()
+            ->where('patient_id', $user->id)
+            ->where('status', 'pending')
+            ->count();
+
+        return response()->json(['count' => (int) $count]);
+    }
+
+    /**
      * Psychologist starts the video call.
      * This ensures the session exists and redirects to the call page.
      * Session "started_at" is now set when BOTH participants actually join the room.

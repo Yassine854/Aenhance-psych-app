@@ -217,6 +217,18 @@ function submit() {
   if (!canSubmit.value) return
   form.post(route('appointments.store'), {
     preserveScroll: true,
+    onSuccess: () => {
+      // Refresh authoritative pending count from server and broadcast update
+      try {
+        fetch(route('appointments.pendingCount'))
+          .then((r) => r.json())
+          .then((json) => {
+            try { localStorage.setItem('pendingAppointmentsCount', String(Number(json.count || 0))) } catch (e) {}
+            try { window.dispatchEvent(new CustomEvent('appointment:count-updated', { detail: { count: Number(json.count || 0) } })) } catch (e) {}
+          })
+          .catch(() => {})
+      } catch (e) {}
+    }
   })
 }
 </script>

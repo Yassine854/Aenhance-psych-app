@@ -8,6 +8,10 @@ import ResponsiveNavLink from '@/Components/ResponsiveNavLink.vue';
 import { Link } from '@inertiajs/vue3';
 
 const showingNavigationDropdown = ref(false);
+
+function removePendingStorage() {
+    try { localStorage.removeItem('pendingAppointmentsCount') } catch (e) {}
+}
 </script>
 
 <template>
@@ -65,7 +69,7 @@ const showingNavigationDropdown = ref(false);
 
                                     <template #content>
                                         <DropdownLink :href="route('profile.edit')"> Profile </DropdownLink>
-                                        <DropdownLink :href="route('logout')" method="post" as="button">
+                                        <DropdownLink :href="route('logout')" method="post" as="button" @click="removePendingStorage">
                                             Log Out
                                         </DropdownLink>
                                     </template>
@@ -128,7 +132,7 @@ const showingNavigationDropdown = ref(false);
 
                         <div class="mt-3 space-y-1">
                             <ResponsiveNavLink :href="route('profile.edit')"> Profile </ResponsiveNavLink>
-                            <ResponsiveNavLink :href="route('logout')" method="post" as="button">
+                            <ResponsiveNavLink :href="route('logout')" method="post" as="button" @click="removePendingStorage">
                                 Log Out
                             </ResponsiveNavLink>
                         </div>

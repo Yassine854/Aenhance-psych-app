@@ -231,6 +231,18 @@ function payAndConfirm(a) {
     { status: 'confirmed' },
     {
       preserveScroll: true,
+      onSuccess: () => {
+          // Refresh authoritative pending count from server and broadcast update
+          try {
+            fetch(route('appointments.pendingCount'))
+              .then((r) => r.json())
+              .then((json) => {
+                try { localStorage.setItem('pendingAppointmentsCount', String(Number(json.count || 0))) } catch (e) {}
+                try { window.dispatchEvent(new CustomEvent('appointment:count-updated', { detail: { count: Number(json.count || 0) } })) } catch (e) {}
+              })
+              .catch(() => {})
+          } catch (e) {}
+      },
       onFinish: () => {
         confirmingId.value = null
       },
@@ -278,6 +290,16 @@ async function cancelAppointment(a) {
     preserveScroll: true,
     onSuccess: () => {
       toast.fire({ icon: 'success', title: 'Appointment cancelled' })
+        // Refresh authoritative pending count from server and broadcast update
+        try {
+          fetch(route('appointments.pendingCount'))
+            .then((r) => r.json())
+            .then((json) => {
+              try { localStorage.setItem('pendingAppointmentsCount', String(Number(json.count || 0))) } catch (e) {}
+              try { window.dispatchEvent(new CustomEvent('appointment:count-updated', { detail: { count: Number(json.count || 0) } })) } catch (e) {}
+            })
+            .catch(() => {})
+        } catch (e) {}
     },
     onError: () => {
       toast.fire({ icon: 'error', title: 'Could not cancel appointment' })

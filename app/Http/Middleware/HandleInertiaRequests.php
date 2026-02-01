@@ -46,6 +46,16 @@ class HandleInertiaRequests extends Middleware
             }
         }
 
+        // compute pending appointments for patient users so client can persist it
+        $pendingCount = 0;
+        if ($user && method_exists($user, 'isPatient') && $user->isPatient()) {
+            try {
+                $pendingCount = $user->patientAppointments()->where('status', 'pending')->count();
+            } catch (\Throwable $e) {
+                $pendingCount = 0;
+            }
+        }
+
         return [
             ...parent::share($request),
             'auth' => [
@@ -57,6 +67,7 @@ class HandleInertiaRequests extends Middleware
                     'profile_image_url' => $profileImageUrl,
                     'psychologistProfile' => $user->psychologistProfile,
                     'patientProfile' => $user->patientProfile,
+                    'pending_appointments_count' => $pendingCount,
                 ] : null,
             ],
             // Also expose a simple profile object for flexible front-end usage
