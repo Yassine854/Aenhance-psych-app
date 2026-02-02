@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\PsychologistProfile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -40,6 +41,12 @@ class ServicesController extends Controller
                     $languages = [];
                 }
 
+                // compute rating average and count from session_ratings (tied to user id)
+                $rating = DB::table('session_ratings')
+                    ->where('psychologist_id', $profile->user_id)
+                    ->selectRaw('AVG(rating) as avg, COUNT(*) as count')
+                    ->first();
+
                 return [
                     'id' => $profile->id,
                     'first_name' => $profile->first_name,
@@ -71,6 +78,9 @@ class ServicesController extends Controller
                                 'end_time' => (string) $availability->end_time,
                             ];
                         }),
+                    // rating fields: average (decimal) and count (int)
+                    'rating_average' => $rating->avg !== null ? round((float)$rating->avg, 2) : null,
+                    'ratings_count' => $rating->count ?? 0,
                 ];
             })
             ->values();

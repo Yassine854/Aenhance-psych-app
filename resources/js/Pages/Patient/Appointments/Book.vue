@@ -1,6 +1,8 @@
 <script setup>
-import { Head, Link, useForm } from '@inertiajs/vue3'
+import { Head, Link, useForm, usePage } from '@inertiajs/vue3'
 import { computed, ref, watch } from 'vue'
+import Swal from 'sweetalert2'
+import { useI18n } from 'vue-i18n'
 import Navbar from '@/Components/Navbar.vue'
 import Footer from '@/Components/Footer.vue'
 
@@ -13,6 +15,53 @@ const props = defineProps({
   days: { type: Array, default: () => [] },
   sessionMinutes: { type: Number, default: 60 },
 })
+
+const { t, locale } = useI18n()
+const page = usePage()
+
+const flashStatus = computed(() => {
+  return page.props?.flash?.status || props.status || page.props?.status || null
+})
+
+const _shownStatus = ref(null)
+watch(flashStatus, (val) => {
+  if (val && val !== _shownStatus.value) {
+    _shownStatus.value = val
+    Swal.fire({
+      position: 'top-end',
+      icon: 'success',
+      title: val,
+      showConfirmButton: false,
+      timer: 3000,
+      toast: true,
+      timerProgressBar: true,
+      showCloseButton: true,
+    })
+  }
+}, { immediate: true })
+
+function languageLabel(lang) {
+  const v = String(lang || '').toLowerCase();
+  if (locale.value === 'fr') {
+    if (v === 'english') return 'Anglais';
+    if (v === 'french') return 'Français';
+    if (v === 'arabic') return 'Arabe';
+  }
+  if (locale.value === 'ar') {
+    if (v === 'english') return 'الإنجليزية';
+    if (v === 'french') return 'الفرنسية';
+    if (v === 'arabic') return 'العربية';
+  }
+  if (v === 'english') return 'English';
+  if (v === 'french') return 'French';
+  if (v === 'arabic') return 'Arabic';
+  return String(lang || '').trim();
+}
+
+function languagesFor(profile) {
+  const langs = Array.isArray(profile?.languages) ? profile.languages : [];
+  return langs.map(languageLabel).filter(Boolean);
+}
 
 function fullName(p) {
   const first = (p?.first_name || '').trim()
@@ -256,45 +305,78 @@ function submit() {
         </Link>
       </div>
 
-      <div v-if="status" class="mb-6 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
-        {{ status }}
-      </div>
+      
 
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <!-- Psychologist card -->
+        <!-- Psychologist card (styled like Consultation) -->
         <div class="lg:col-span-1">
-          <div class="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
-            <div class="relative h-44 bg-gray-100">
+          <div class="group bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col h-full">
+            <div class="relative h-64 bg-gray-100 overflow-hidden">
+              <!-- verified badge -->
+              <div class="absolute top-3 left-3 flex items-center gap-2">
+                <span v-if="psychologistProfile.is_approved" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-white/95 text-[#5997ac] ring-1 ring-[#5997ac]/25 backdrop-blur">Verified</span>
+              </div>
+
               <img
                 v-if="avatarUrl(psychologistProfile)"
                 :src="avatarUrl(psychologistProfile)"
                 alt="Profile"
-                class="h-full w-full object-contain bg-gray-100"
+                class="h-full w-full object-cover bg-gray-100"
               />
               <div v-else class="h-full w-full flex items-center justify-center bg-gradient-to-br from-[#5997ac]/15 to-[#e8b4b8]/15">
                 <span class="text-3xl font-semibold text-gray-700">{{ initials(psychologistProfile) }}</span>
               </div>
+
+              <div class="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/60 to-transparent"></div>
+
+              <div class="absolute bottom-3 left-4 right-4">
+                <h3 class="text-lg font-semibold text-white leading-snug line-clamp-2">{{ fullName(psychologistProfile) }}</h3>
+              </div>
+              <!-- price badge at bottom-right of image -->
+              <div class="absolute bottom-3 right-2 translate-x-1">
+                <div class="inline-flex items-baseline gap-2 px-3 py-1 rounded-full bg-white/95 text-right shadow-lg">
+                  <span class="text-sm font-semibold text-[#5997ac]">{{ formatPrice(psychologistProfile.price_per_session).replace(' TND','') }}</span>
+                  <span class="text-xs text-gray-500">TND</span>
+                </div>
+              </div>
             </div>
 
-            <div class="p-5">
-              <div class="text-lg font-semibold text-gray-900">
-                {{ fullName(psychologistProfile) }}
-              </div>
-
-              <div class="mt-2 text-sm text-gray-700">
-                <span class="font-medium">Specializations:</span>
-                <span>
-                  {{ (psychologistProfile.specialisations || []).map((s) => s.name).join(', ') || '—' }}
+            <div class="p-5 flex-1 flex flex-col">
+              <div v-if="(psychologistProfile.specialisations || []).length" class="flex flex-wrap gap-2">
+                <span
+                  v-for="s in (psychologistProfile.specialisations || [])"
+                  :key="s.name"
+                  class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-[#af5166]/10 text-[#af5166]"
+                >
+                  {{ s.name }}
                 </span>
               </div>
 
-              <div class="mt-4 flex items-center justify-between">
-                <div class="text-sm">
-                  <div class="text-gray-500">Price</div>
-                  <div class="font-semibold text-gray-900">{{ formatPrice(psychologistProfile.price_per_session) }}</div>
-                </div>
-                <div class="text-right text-xs text-gray-500">Secure booking request</div>
+              <div v-if="(psychologistProfile.expertises || []).length" class="mt-2 flex flex-wrap gap-2">
+                <span
+                  v-for="e in (psychologistProfile.expertises || [])"
+                  :key="e.name"
+                  class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-[rgba(175,81,102,0.06)] text-[#af5166]"
+                >
+                  {{ e.name }}
+                </span>
               </div>
+
+              <div v-if="languagesFor(psychologistProfile).length" class="mt-2 flex flex-wrap gap-2">
+                <span
+                  v-for="label in languagesFor(psychologistProfile)"
+                  :key="label"
+                  class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-[#5997ac]/10 text-[#5997ac]"
+                >
+                  {{ label }}
+                </span>
+              </div>
+
+              <p class="mt-3 text-sm text-gray-700 leading-relaxed line-clamp-3">
+                {{ psychologistProfile.bio || 'No bio provided.' }}
+              </p>
+
+             
             </div>
           </div>
         </div>
@@ -421,7 +503,7 @@ function submit() {
                   class="inline-flex items-center justify-center px-5 py-2.5 rounded-md text-sm font-semibold transition"
                   :class="canSubmit ? 'bg-[#5997ac] text-white hover:opacity-90' : 'bg-gray-200 text-gray-500 cursor-not-allowed'"
                 >
-                  {{ form.processing ? 'Booking…' : 'Confirm appointment' }}
+                  {{ form.processing ? 'Booking…' : 'Book appointment' }}
                 </button>
               </div>
 

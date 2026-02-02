@@ -147,6 +147,8 @@ class AppointmentController extends Controller
                 'first_name' => $profile->first_name,
                 'last_name' => $profile->last_name,
                 'profile_image_url' => $profile->profile_image_url,
+                'languages' => $profile->languages ?? [],
+                'bio' => $profile->bio ?? '',
                 'price_per_session' => $profile->price_per_session,
                 'specialisations' => $profile->specialisations
                     ->sortBy('name')

@@ -141,6 +141,40 @@ function expertisesFor(profile) {
     .filter(Boolean);
 }
 
+function ratingStats(profile) {
+  // Try common shapes: session_ratings array of { rating }, or numeric avg/count fields
+  const arr = Array.isArray(profile?.session_ratings) ? profile.session_ratings : (Array.isArray(profile?.ratings) ? profile.ratings : []);
+  if (arr.length) {
+    const sum = arr.reduce((s, r) => s + (Number(r?.rating) || 0), 0);
+    const avg = sum / arr.length;
+    return { avg, count: arr.length };
+  }
+
+  const avgField = profile?.rating_average ?? profile?.rating_avg ?? profile?.avg_rating ?? null;
+  const countField = profile?.ratings_count ?? profile?.session_ratings_count ?? profile?.rating_count ?? null;
+  if (avgField != null || countField != null) {
+    return { avg: avgField != null ? Number(avgField) || 0 : null, count: Number(countField) || 0 };
+  }
+
+  return { avg: null, count: 0 };
+}
+
+function formatRating(profile) {
+  const s = ratingStats(profile);
+  return s.avg != null ? Number(s.avg).toFixed(1) : '';
+}
+
+function ratingCount(profile) {
+  return ratingStats(profile).count || 0;
+}
+
+function starType(profile, i) {
+  const avg = Number(ratingStats(profile).avg || 0);
+  if (avg >= i) return 'full';
+  if (avg >= i - 0.5) return 'half';
+  return 'empty';
+}
+
 function selectHref(profile) {
   const bookUrl = route('appointments.book', profile?.id);
 
@@ -174,6 +208,7 @@ const filters = reactive({
   days: new Set(),
   priceMin: null,
   priceMax: null,
+  ratingMin: null,
 })
 
 function toggleFilter() {
@@ -187,6 +222,7 @@ function resetFilters() {
   filters.days = new Set()
   filters.priceMin = null
   filters.priceMax = null
+  filters.ratingMin = null
 }
 
 function toggleSet(setRef, value) {
@@ -282,6 +318,12 @@ const filteredProfiles = computed(() => {
       if (filters.priceMin != null && price < Number(filters.priceMin)) return false
       if (filters.priceMax != null && price > Number(filters.priceMax)) return false
     }
+
+      // rating filter (minimum average rating)
+      if (filters.ratingMin != null) {
+        const avg = Number(ratingStats(p).avg ?? p?.rating_average ?? 0) || 0
+        if (avg < Number(filters.ratingMin)) return false
+      }
     return true
   })
 })
@@ -634,7 +676,31 @@ onBeforeUnmount(() => {
                 <h3 class="text-lg font-semibold text-white leading-snug line-clamp-2">
                   {{ fullName(profile) }}
                 </h3>
-              </div>
+                  <div v-if="ratingCount(profile) > 0" class="mt-1 flex items-center gap-2">
+                    <div class="inline-flex items-center gap-2 bg-black/30 text-white text-sm px-2 py-1 rounded-full">
+                      <div class="flex items-center gap-1">
+                        <svg v-for="i in 5" :key="i" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" role="img" aria-hidden="false">
+                          <defs v-if="starType(profile, i) === 'half'">
+                            <linearGradient :id="'grad-'+profile.id+'-'+i" x1="0" x2="1">
+                              <stop offset="0%" stop-color="#F59E0B" />
+                              <stop offset="50%" stop-color="#F59E0B" />
+                              <stop offset="50%" stop-color="#FFFFFF" stop-opacity="0.35" />
+                              <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0.35" />
+                            </linearGradient>
+                          </defs>
+
+                          <path v-if="starType(profile, i) === 'full'" fill="#F59E0B" d="M12 .587l3.668 7.431L23.4 9.753l-5.7 5.557L18.836 24 12 20.201 5.164 24l1.135-8.69L.6 9.753l7.732-1.735L12 .587z"/>
+
+                          <path v-else-if="starType(profile, i) === 'half'" :fill="'url(#grad-'+profile.id+'-'+i+' )'" d="M12 .587l3.668 7.431L23.4 9.753l-5.7 5.557L18.836 24 12 20.201 5.164 24l1.135-8.69L.6 9.753l7.732-1.735L12 .587z"/>
+
+                          <path v-else fill="none" stroke="currentColor" stroke-width="1.2" d="M12 .587l3.668 7.431L23.4 9.753l-5.7 5.557L18.836 24 12 20.201 5.164 24l1.135-8.69L.6 9.753l7.732-1.735L12 .587z"/>
+                        </svg>
+                      </div>
+                      <span class="font-semibold">{{ formatRating(profile) }}</span>
+                      <span class="text-xs text-white/80">({{ ratingCount(profile) }})</span>
+                    </div>
+                  </div>
+                </div>
 
               <!-- price badge at bottom-right of image -->
               <div class="absolute bottom-3 right-2 translate-x-1">
@@ -721,8 +787,8 @@ onBeforeUnmount(() => {
   <div v-if="filterOpen" class="fixed inset-0 z-30">
     <div @click="filterOpen=false" class="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity"></div>
 
-    <aside :class="['fixed top-0 h-full w-80 bg-white shadow-xl z-40 transform transition-transform p-0 overflow-hidden', locale.value === 'ar' ? 'left-0' : 'right-0', drawerRounded]">
-      <div class="p-4 flex items-center justify-between border-b bg-white">
+    <aside :class="['fixed top-0 h-full w-80 bg-white shadow-xl z-40 transform transition-transform p-0 flex flex-col', locale.value === 'ar' ? 'left-0' : 'right-0', drawerRounded]">
+      <div class="p-4 flex items-center justify-between border-b bg-white shrink-0">
         <div class="flex items-center gap-3">
           <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-[#5997ac]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
             <path d="M22 3H2l8 9v5l4 4v-9z" />
@@ -732,7 +798,8 @@ onBeforeUnmount(() => {
         <button @click="filterOpen=false" class="text-gray-500 hover:text-gray-700">✕</button>
       </div>
 
-      <div class="p-4 overflow-y-auto h-full bg-white">
+      <!-- Scrollable filter content (min-h-0 is critical for flex overflow on some browsers) -->
+      <div class="p-4 overflow-y-auto flex-1 min-h-0 bg-white overscroll-contain aenhance-scrollbar">
         <!-- Specialisations -->
         <div class="mb-4">
           <div class="flex items-center gap-2 mb-2">
@@ -793,6 +860,37 @@ onBeforeUnmount(() => {
           </div>
         </div>
 
+        <!-- Ratings -->
+        <div class="mb-4">
+          <div class="flex items-center gap-2 mb-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-yellow-500" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 .587l3.668 7.431L23.4 9.753l-5.7 5.557L18.836 24 12 20.201 5.164 24l1.135-8.69L.6 9.753l7.732-1.735L12 .587z"/>
+            </svg>
+            <div class="text-xs font-medium">{{ t('services.consultation.ratings') || 'Ratings' }}</div>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <button
+              @click.prevent="filters.ratingMin = null"
+              :class="[filters.ratingMin == null ? 'bg-white border border-gray-200 text-gray-700 ring-1 ring-gray-200' : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50', 'px-3 py-1 rounded-full text-xs transition transform hover:scale-105']"
+            >
+              Any
+            </button>
+            <button
+              v-for="r in [5,4,3,2,1]"
+              :key="r"
+              @click.prevent="filters.ratingMin = r"
+              :class="[filters.ratingMin === r ? 'bg-yellow-100 text-yellow-600 ring-1 ring-yellow-200' : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50', 'px-3 py-1 rounded-full text-xs transition transform hover:scale-105']"
+            >
+              <span class="inline-flex items-center gap-1">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 text-yellow-400" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 .587l3.668 7.431L23.4 9.753l-5.7 5.557L18.836 24 12 20.201 5.164 24l1.135-8.69L.6 9.753l7.732-1.735L12 .587z"/>
+                </svg>
+                {{ r }}+
+              </span>
+            </button>
+          </div>
+        </div>
+
         <!-- Days -->
         <div class="mb-4">
           <div class="flex items-center gap-2 mb-2">
@@ -831,8 +929,11 @@ onBeforeUnmount(() => {
             <input type="range" :min="priceBounds.min" :max="priceBounds.max" v-model.number="filters.priceMax" class="w-full" />
           </div>
         </div>
+      </div>
 
-        <div class="flex items-center gap-2 mt-4">
+      <!-- Fixed footer actions (always reachable) -->
+      <div class="p-4 border-t bg-white shrink-0">
+        <div class="flex items-center gap-2">
           <button @click.prevent="filterOpen=false" class="flex-1 px-4 py-2 bg-[#5997ac] text-white rounded-lg font-semibold">{{ t('services.consultation.apply') || 'Apply' }}</button>
           <button @click.prevent="resetFilters" class="px-4 py-2 bg-white border border-gray-200 rounded-lg">{{ t('services.consultation.clear') || 'Clear' }}</button>
         </div>
@@ -840,3 +941,32 @@ onBeforeUnmount(() => {
     </aside>
   </div>
 </template>
+
+<style scoped>
+/* Custom scrollbar for the filter drawer */
+.aenhance-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(89 151 172 / 1) rgba(0, 0, 0, 0.08);
+}
+
+.aenhance-scrollbar::-webkit-scrollbar {
+  width: 10px;
+}
+
+.aenhance-scrollbar::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.06);
+  border-radius: 9999px;
+}
+
+.aenhance-scrollbar::-webkit-scrollbar-thumb {
+  --tw-bg-opacity: 1;
+  background-color: rgb(89 151 172 / var(--tw-bg-opacity, 1));
+  border-radius: 9999px;
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+
+.aenhance-scrollbar::-webkit-scrollbar-thumb:hover {
+  --tw-bg-opacity: 0.9;
+}
+</style>
