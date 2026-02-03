@@ -44,4 +44,12 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    'clictopay' => [
+        // Test base: https://test.clictopay.com/payment/rest
+        'base_url' => env('CLICTOPAY_BASE_URL', 'https://test.clictopay.com/payment/rest'),
+        'username' => env('CLICTOPAY_USERNAME'),
+        'password' => env('CLICTOPAY_PASSWORD'),
+        'language' => env('CLICTOPAY_LANGUAGE', 'en'),
+    ],
+
 ];

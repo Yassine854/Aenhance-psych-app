@@ -1,0 +1,1307 @@
+ClicToPay (2016)
+Plateforme de paiement électronique
+
+
+       Manuel d’intégration
+
+
+
+
+                           1
+Table des matières
+I.         Aperçu général : .............................................................................................................................. 3
+II.        Procédure d’inscription au système : .............................................................................................. 3
+III.            Spécifications fonctionnelles : ..................................................................................................... 4
+      1.        Schéma fonctionnel global : ........................................................................................................ 4
+      2.        Les étapes d’une transaction :..................................................................................................... 5
+IV.             Spécifications techniques : .......................................................................................................... 7
+      1.        Spécifications des demandes de paiement : ............................................................................... 7
+      2.        Spécifications des demandes de pré-autorisation : .................................................................. 10
+      3.        Spécifications des demandes d’annulation de paiement :........................................................ 14
+      4.        Spécifications des demandes de remboursement de paiement : ............................................. 15
+      5.        Spécifications des demandes d’état d’un paiement : ............................................................... 16
+V.         Personnalisation de la page de paiement : ................................................................................... 21
+      1.        Pré requis et spécifications techniques : ................................................................................... 21
+           a.      Exigences du code de l’interface de la page de paiement : .................................................. 21
+           b.      Pages nécessaires pour l’interface de paiement : ................................................................. 22
+           c.      Exigence page de paiement :................................................................................................. 22
+           d.      Exigence de la page d’erreur : ............................................................................................... 27
+           e.      Chargement de la page de paiement : .................................................................................. 28
+
+
+
+
+                                                                              2
+  I. Aperçu général :
+ClicToPay, est un système qui permet l’acceptation des cartes de paiement électronique, par les sites
+marchands, et qui utilise des technologies et normes modernes pour les paiements sur Internet.
+
+Le système est destiné aux commerçants qui commercialisent leurs produits et services sur Internet.
+Le système ClicToPay est certifié par Visa et MasterCard pour l'acquisition des transactions de
+paiement électronique via Internet.
+
+Du coté des porteurs des cartes bancaires, ClicToPay prend en charge les protocoles de sécurisation
+des paiements les plus courants à savoir « Verified by Visa » de Visa et « SecureCode » de
+MasterCard, qui sont des protocoles de paiement avec authentification supplémentaire du porteur
+de la carte, dans ce cas ce dernier doit être inscrit dans un système sécurisé.
+
+Clictopay est doté d’un système sophistiqué de gestion des règles anti-fraude basé sur le filtrage de
+transaction, flexible en fonction des paramètres du paiement de commandes du marchand. Les
+opérateurs marchands et les utilisateurs autorisés peuvent définir des critères de détection de la
+fraude avec estimation du facteur de probabilité de fraude pour une transaction donnée. Le strict
+respect des exigences du réseau des paiements internationaux comme le programme de sécurité de
+l'information du titulaire de Visa (CISP), qui garantit également une sécurité supplémentaire de la
+solution.
+
+
+ II. Procédure d’inscription au système :
+1. Lancement du projet d’intégration et Réception des documents et des paramètres nécessaires
+   pour se connecter sur le serveur de test.
+
+2. Analyse des besoins et préparation par le marchand des pages de paiement personnalisées.
+
+3. Configurations des paramètres du marchand selon les options qu’il a choisies.
+
+4. Validations et chargement des pages de paiement sur le serveur de tests.
+
+5. Validation par l’équipe support des tests réalisés par le marchand selon un cahier de recettes.
+
+6. Formation sur l’utilisation des interfaces du portail marchand.
+
+7. Reconfigurer le système du marchand pour utiliser le serveur de production comme Gateway de
+   paiement. Dans cette phase :
+
+        - Essayez de payer par une carte réelle
+
+        - Annuler et Rembourser ces paiements via la console.
+
+Informer la Banque sur le début de l'utilisation commerciale de la GW.
+
+
+
+
+                                                   3
+III. Spécifications fonctionnelles :
+
+1. Schéma fonctionnel global :
+
+
+
+
+                                 4
+2. Les étapes d’une transaction :
+
+
+
+
+                                    5
+1. Le client crée une commande sur la boutique en ligne du marchand.
+
+2. Lorsque la commande est confirmée par le client, le système marchand envoi une
+   demande d’enregistrement de paiement sur ClicToPay. Les paramètres suivants sont
+   envoyés :
+
+   1- montant à percevoir
+   2- monnaie du paiement attendu,
+   3- numéro de commande interne
+   4- URL marchand pour rediriger le client après le paiement.
+
+3. ClicToPay valide les données reçues et renvoi un identifiant unique de la transaction
+   enregistrée et une URL du formulaire de paiement que le client doit être redirigé vers.
+
+4. Le site marchand reçoit le résultat de la demande et récupère l’URL générée dans l'étape
+   précédente.
+
+5. Le client est redirigé vers la page de paiement.
+
+6. Le formulaire de paiement est affiché.
+
+7. Le client remplit le formulaire et envoie les données à ClicToPay.
+
+8. ClicToPay vérifie au prêt du service d’annuaire (DS) si la carte spécifiée est enrôlée au
+   programme d’authentification 3D Secure.
+
+9. ClicToPay reçoit le résultat de la vérification d’enrôlement. Si la carte est enrôlée,
+   ClicToPay récupère l’URL du serveur de contrôle d’accès de la banque du porteur.
+
+10. ClicToPay redirige le client vers la page d’authentification.
+
+11. ACS vérifie la demande d’authentification et affiche le formulaire au client.
+
+12. Le client est demandé de fournir un code d’authentification fourni par sa banque, ou
+    généré et envoyé par SMS.
+
+13. L’ACS traite les données et renvoi le résultat (PaRes) à clictopay via le navigateur du
+    client.
+
+14. ClicToPay décrypte et analyse les données reçues.
+
+15. Le portail de paiement effectue la demande d’autorisation.
+
+16. Lorsque la transaction est traitée, le client est redirigé la page de résultat spécifiée par le
+    marchand lors de l'enregistrement de la transaction.
+
+
+
+                                                 6
+17. Le site marchand demande à ClicToPay les résultats de paiement relatif à la transaction
+    en cours.
+
+18. ClicToPay prépare l’état demandé.
+
+19. ClicToPay renvoie l'état de paiement au site marchand.
+
+20. Le site marchand affiche la page de résultat de paiement sur le navigateur du client.
+
+Les étapes 18 et 19 ne sont pas obligatoires, les commerçants peuvent les ignorer dans leur
+mise en œuvre du processus.
+
+
+IV. Spécifications techniques :
+
+    1. Spécifications des demandes de paiement :
+
+
+Autorisation
+Paramètres requête :
+ Nom                  Type       Obligatoire   Description
+ userName             AN..30     oui           Login marchand reçu lors de l’intégration.
+ password             AN..30     oui           Mot de passe marchand reçu lors de l’intégration.
+ orderNumber          AN..32     oui           Nombre (identifiant) de la commande dans le
+                                               système du marchand.
+ amount               N..20      oui           Montant de la commande au minimum unités
+                                               monétaires (par exemple cents).
+ currency             N..3       oui           Code de la monnaie de paiement, selon la norme
+                                               ISO 4217.
+ returnUrl            AN..512    oui           Adresse Web où le client doit être redirigé après
+                                               succès paiement.
+ failUrl              AN..512    non           Adresse Web où le client doit être redirigé après
+                                               échec paiement.
+ description          AN..512    non           Description de la commande.
+ language             A..2       non           Langue selon la norme ISO 639-1. Si non spécifié,
+                                               le système utilise la langue par défaut à partir des
+                                               paramètres du marchand.
+ pageView             A..7       non           Ce paramètre indique le type de dispositif utilisé -
+                                               appareil mobile (pageView = MOBILE) ou bureau
+                                               (pageView = DESKTOP). Selon la valeur du
+                                               paramètre, la réponse contiendra un lien vers une
+                                               page de paiement mobile ou une page de
+                                               paiement ordinaire.
+                                               La valeur par défaut est "DESKTOP".
+ clientId             AN..255    non           Numéro client (ID) dans le système du marchand.
+                                               Il est utilisé pour la mise en œuvre de la
+
+
+                                               7
+                                           fonctionnalité de fidélisation. Présent uniquement
+                                           si le marchand est autorisé à créer des liaisons.
+jsonParams          AN..1024 non           Le stockage d’informations supplémentaires, le
+                                           type est {"param » : "valeur", "param2 » :
+                                           "valeur2"}. Ces champs peuvent être transférés
+                                           pour traitement au niveau de la banque. * Cette
+                                           fonctionnalité peut être activée au cours de la
+                                           période d'intégration à l'accord avec la banque. Si
+                                           la notification du client est activée pour le
+                                           commerçant, ce bloc doit contenir le paramètre
+                                           "email" dont la valeur est l'e-mail du client.
+sessionTimeoutSecs N...9      non          Durée de la session en quelques secondes. Si le
+                                           paramètre n’est pas spécifié, la valeur de
+                                           paramètres marchands est utilisée, sinon - la
+                                           valeur par défaut (1200 secondes - 20 minutes). Si
+                                           la demande contient le paramètre
+                                           "expirationDate", le paramètre
+                                           "sessionTimeoutSecs" est ignoré.
+expirationDate      ANS       non          Date d'expiration de la commande. Format :
+                                           YYYYMMDD’T’HH:mm:ss. Si ce paramètre n’est
+                                           pas spécifié, le paramètre « session Timeout Secs"
+                                           est utilisée pour déterminer une durée de vie de la
+                                           commande.
+bindingId           AN..255   non          Identificateur de la liaison, qui a été créé plus tôt.
+                                           Peut être utilisé que si le commerçant est autorisé
+                                           à le faire. Si ce paramètre est envoyé dans la
+                                           l’enregistrement de la commande, cela signifie :
+                                             1.      Cette commande peut être payé que par la
+                                             liaison ;
+                                             2.      Le client sera redirigé vers une page de
+                                             paiement, où l’entrée de CVC est nécessaire.
+
+
+Exemple requête GET :
+https://test.clictopay.com/payment/rest/register.do?amount=100&currency=788&language=en&
+orderNumber=87654321&password=password&returnUrl=finish.html&userName=userName&jso
+nParams={"orderNumber":1234567890}&pageView=MOBILE&expirationDate=2014-09-
+08T14:14:14
+
+
+
+
+Exemple requête POST :
+amount=100&currency=788&language=en&orderNumber=87654321&returnUrl=finish.html&json
+Params={"orderNumber":1234567890}&pageView=MOBILE&expirationDate=2014-09-
+08T14:14:14
+
+
+
+
+                                           8
+Paramètres réponse :
+
+ Nom              Type       Obligatoire Description
+ orderId          ANS36      non         Numéro de commande de la passerelle de paiement.
+                                         Unique au niveau du système.
+ formUrl          AN..512    non         URL du formulaire de paiement que le client doit être
+                                         redirigé vers. Absent si l'enregistrement de la
+                                         commande a échoué (erreur est décrit dans ErrorCode).
+ errorCode        N..3       non         Code de l'erreur survenue lors de l'inscription.
+ errorMessage     AN..512    non         Description de l'erreur dans la langue envoyée dans le
+                                         paramètre de langue de la commande.
+
+
+Exemple réponse :
+ {"orderId":"70906e55-7114-41d6-8332-
+ 4609dc6590f4","formUrl":"https://test.clictopay.com/payment/merchants/test/mobile_payment_
+ en.html?mdOrder=70906e55-7114-41d6-8332-4609dc6590f4"}
+
+
+Code erreur (valeur du champ errorCode)
+ Valeur    Description
+ 0         Pas d'erreur système.
+ 1         Numéro de commande dupliqué, commande avec le numéro de commande donner est
+           déjà traitée
+ 3         Monnaie inconnue
+ 4         Paramètre obligatoire n'a pas été spécifié
+ 5         Valeur erronée d'un paramètre de la requête
+ 7         Erreur système.
+
+
+Message erreur possible :
+ Valeur    Message erreur
+ 0         Pas d'erreur système.
+ 1         Commander avec ce numéro a déjà été traité.
+ 1         Commander avec ce numéro a été enregistré, mais n'a pas été payé.
+ 1         Numéro de commande invalide
+ 3         Monnaie inconnue
+ 4         Numéro de commande vide
+ 4         Non utilisateur marchand vide
+ 4         Montant vide
+ 4         URL de retour ne peut pas être vide
+ 4         Mot de passe ne peut pas être vide
+ 4         Montant erroné
+ 5         Mauvaise valeur du paramètre langue.
+ 5         Accès refusé
+ 5         L'utilisateur doit changer son mot de passe
+ 5         [jsonParams] Invalide
+ 7         Erreur système
+
+
+
+                                                9
+2. Spécifications des demandes de pré-autorisation :
+
+
+Pré-autorisation
+Paramètres requête :
+ Nom                Type      Obligatoire   Description
+ userName           AN..30    oui           Login Merchant reçu lors de l'inscription.
+ password           AN..30    oui           Mot de passe Merchant reçu lors de l’intégration.
+ orderNumber        AN..32    oui           Numéro (identifiant) de l'ordre dans le système du
+                                            marchand.
+ amount             N..20     oui           Montant de la commande en unités monétaires
+                                            minimales (exp. Cents).
+ currency           N..3      oui           Code de la monnaie de paiement, selon la norme
+                                            ISO 4217.
+ returnUrl          AN..512   oui           Adresse Web à laquelle le client doit être redirigé
+                                            après le paiement autorisé.
+ failUrl            AN..512   non           Adresse Web à laquelle le client doit être redirigé
+                                            si le paiement échoue.
+ description        AN..512   non           Description libre de la commande.
+ language           A..2      non           Langue selon ISO 639-1. Si elle n'est pas spécifiée,
+                                            le système utilise la langue par défaut des
+                                            paramètres du marchand.
+ pageView           A..7      non           Ce paramètre indique le type d'appareil utilisé -
+                                            appareil mobile (pageView = MOBILE) ou bureau
+                                            (pageView = DESKTOP). Selon la valeur de ce
+                                            paramètre, la réponse contiendra un lien vers une
+                                            page de paiement mobile ou une page de
+                                            paiement ordinaire.
+                                            Par défaut pageView = DESKTOP.
+ clientId           AN..255   non           Numéro de client (ID) dans le système. Il est utilisé
+                                            pour la mise en œuvre des fonctionnalités de
+                                            fidélisation. Présente uniquement si le marchand
+                                            est autorisé à créer des liaisons.
+ sessionTimeoutSecs N...9     non           Durée de la session en secondes.
+                                            Si le paramètre n'est pas spécifié, alors la valeur
+                                            des paramètres marchands est utilisée, sinon - la
+                                            valeur par défaut (1200 secondes - 20 minutes).
+                                            Si la requête contient le paramètre
+                                            expirationDate, le paramètre sessionTimeoutSecs
+                                            est ignoré.
+ jsonParams         AN..1024 non            Le stockage d’informations supplémentaires, le
+                                            type est {"param": "value", "param2": "value2"}.
+                                            Ces champs peuvent être transférés pour
+                                            traitement au niveau de la banque. * Cette
+                                            fonctionnalité peut être activée pendant la
+                                            période d'intégration à l'accord avec la banque.
+
+
+
+                                            10
+                                                   Si la notification du client est activée pour le
+                                                   commerçant, ce bloc doit contenir le paramètre
+                                                   "email" qui est la valeur du courriel du client.
+ expirationDate          ANS         non           Date d'expiration de l'ordre. Format :
+                                                   aaaaMMdd'T'HH: mm: ss. Si ce paramètre n'est
+                                                   pas spécifié, le paramètre sessionTimeoutSecs est
+                                                   utilisé pour déterminer la durée de vie d'un ordre.
+ bindingId               AN..255     non           Identificateur de la liaison, qui a été créé plus tôt.
+                                                   Peut être utilisé seulement si le commerçant a la
+                                                   permission de travailler avec les liaisons. Si ce
+                                                   paramètre est envoyé dans la demande
+                                                   registerOrder, cela signifie :
+                                                   1. Cet ordre peut être payé uniquement par liaison
+                                                   2. Le payeur sera redirigé vers une page de
+                                                   paiement, où l'entrée de CVC est seulement
+                                                   requise.
+
+
+* Les champs "orderNumber" et sa "description" sont envoyés au traitement bancaire par défaut
+(pas plus de 99 simbols, les symboles suivants sont interdits d'utilisation -%, +, \ r, \ n).
+
+
+
+Paramètres réponse :
+ Nom               Type        Obligatoire   Description
+ orderId           ANS36       non           Numéro de commande dans le système de paiement.
+                                             Unique au niveau du système.
+ formUrl           AN..512     non           URL du formulaire de paiement auquel le client doit être
+                                             redirigé. Absent si l'enregistrement de la commande a
+                                             échoué (l'erreur est décrite dans errorCode).
+ errorCode    N..3             non           Code de l'erreur qui se produit lors de l'enregistrement.
+ errorMessage AN..512          non           Description de l'erreur dans la langue envoyée dans le
+                                             paramètre langue de la requête.
+
+
+
+
+Code erreur (valeur du champ errorCode) :
+Classification des erreurs :
+
+ Valeur      Description
+ 0           Aucune erreur système.
+ 1           Le numéro de commande est dupliqué, l'ordre avec le numéro de commande spécifier
+             est déjà traité
+ 3           Monnaie inconnue
+ 4           Le paramètre de la requête obligatoire n'a pas été spécifié.
+ 5           Valeur erronée d'un paramètre de demande.
+ 7           Erreur système.
+
+
+                                                    11
+Messages d’erreurs possibles :
+
+ Valeur   Description
+ 0        Aucune erreur système
+ 1        L'ordre avec ce numéro a déjà été traité.
+ 1        L'ordre avec ce numéro a été enregistré, mais n'a pas été payé
+ 1        Numéro de commande non valide
+ 3        Monnaie inconnue.
+ 4        Numéro de commande vide
+ 4        Nom d'utilisateur marchand vide
+ 4        Montant vide
+ 4        L'URL de retour ne peut pas être vide
+ 4        Le mot de passe ne peut pas être vide
+ 5        Mauvais montant.
+ 5        Valeur incorrecte du paramètre Langage.
+ 5        Accès refusé
+ 5        L'utilisateur doit changer son mot de passe
+ 5        Invalide [jsonParams]
+ 5        Le paiement préalable à l'autorisation est limité
+ 7        Erreur système
+
+
+Exemple requête GET :
+ https://test.clictopay.com/payment/rest/registerPreAuth.do?amount=100&currency=788&langua
+ ge=en&orderNumber=87654321&password=password&returnUrl=finish.html&userName=userNa
+ me&pageView=MOBILE&expirationDate=2014-0908T14:14:14
+
+
+Exemple requête POST :
+ amount=100&currency=788&language=en&orderNumber=87654321&returnUrl=finish.html&page
+ View=MOBILE&expirationDate=2014-09-08T14:14:14
+
+
+
+
+Exemple réponse :
+ {"orderId":"61351fbd-ac25-484f-b930-4d0ce4101ab7","formUrl":"
+ https://test.clictopay.com/payment/merchants/merchant-
+ name/mobile_payment_en.html?mdOrder=61351fbd-ac25-484f-b930-4d0ce4101ab7"}
+
+
+Confirmation
+Paramètres requête :
+ Nom      Type         Obligatoire Description
+ userName AN..30       oui         Login Merchant reçu lors de l’intégration.
+
+                                                12
+ password     AN..30     oui           Mot de passe Merchant reçu lors de l’intégration.
+ orderId      ANS36      oui           Numéro de commande dans le système de paiement. Unique
+                                       dans le système.
+ amount       N..20      oui           Montant de la commande en unités monétaires minimales
+                                       (cent par exemple).
+
+
+Attention !!! Si vous ne spécifiez pas de zéro dans le paramètre "DepositAmount", la confirmation se
+produit pour l'ensemble du montant préautorisé.
+
+Paramètres réponse :
+ Nom          Type             Obligatoire   Description
+ errorCode    N..3             non           Code d'erreur.
+ errorMessage AN..512          non           Description de l'erreur.
+
+
+Code erreur (valeur du champ errorCode) :
+Classification des erreurs :
+
+ Valeur    Description
+ 0         Aucune erreur système.
+ 5         Valeur erronée d'un paramètre de demande.
+ 6         Identifiant commande non enregistrée
+ 7         Erreur système.
+
+
+Messages d’erreurs possibles :
+
+ Valeur    Description
+ 0         Aucune erreur système
+ 5         Accès refusé
+ 5         L'utilisateur doit changer son mot de passe
+ 5         Montant non valide
+ 5         Le montant du dépôt doit être égal à zéro ou à plus d'une unité monétaire (par exemple,
+           1 euro).
+ 6         Numéro de commande erroné.
+ 7         Le paiement doit être valide.
+ 7         Erreur système.
+
+
+Exemple requête GET :
+ https://test.clictopay.com/payment/rest/deposit.do?amount=100&currency=788&language=en&
+ orde rId=e5b59d3d-746b-4828-9da4-06f126e01b68&password=password&userName=userName
+
+
+Exemple requête POST :
+ amount=100&currency=788&language=en&orderId=e5b59d3d-746b-4828-9da406f126e01b68
+
+
+Exemple réponse :
+                                                    13
+{"errorCode":0}
+
+
+3. Spécifications des demandes d’annulation de paiement :
+Annulation
+Paramètres requête :
+Nom           Type     Obligatoire   Description
+userName      AN..30   oui           Login marchand reçu lors de l’intégration.
+password      AN..30   oui           Mot de passe marchand reçu lors de l’intégration.
+orderId       ANS36    oui           Numéro de commande dans le système de paiement. Unique
+                                     au niveau du système.
+language      A..2     non             Langue selon la norme ISO 639-1. Si non spécifié, le système
+                                       utilise la langue par défaut à partir des paramètres du
+                                       marchand.
+                                     Les messages d'erreur renvoyés seront écrits dans cette même
+                                     langue.
+
+
+Exemple requête GET :
+https://test.clictopay.com/payment/rest/reverse.do?language=en&orderId=80c45 f2e-8db4-4d20-
+9324-5b784a1fd8c3&password=password&userName=username
+
+
+Exemple requête POST :
+language=en&orderId=80c45f2e-8db4-4d20-9324-5b784a1fd8c3
+
+
+Paramètres réponse :
+Nom          Type            Obligatoire   Description
+errorCode    N..3            non           Code d'erreur.
+errorMessage AN..512         non           Description de l'erreur.
+
+
+Exemple réponse :
+{"errorCode":"0","errorMessage":"Success"}
+
+
+Code erreur (valeur du champ errorCode) :
+Valeur     Description
+0          Pas d'erreur système.
+5          Valeur erronée d'un paramètre de la requête.
+6          OrderId non enregistré.
+7          Erreur système.
+
+
+
+
+                                                  14
+Messages erreurs possibles :
+Valeur   Description
+0        Pas d'erreur système.
+5        Accès refusé
+5        L'utilisateur doit changer son mot de passe
+5        [orderId] est vide
+6        Numéro de commande incorrect.
+7        Le paiement doit être valide.
+7        Annulation impossible. Motif : valeurs internes erronée, vérifier le montant bloqué et le
+         montant de dépôt.
+7        Erreur système.
+
+
+4. Spécifications des demandes de remboursement de paiement :
+Remboursement
+Paramètres requête :
+Nom         Type     Obligatoire    Description
+userName    AN..30   oui            Login marchand reçu lors de l’intégration.
+password    AN..30   oui            Mot de passe marchand reçu lors de l’intégration.
+orderId     ANS36    oui            Numéro de commande dans le système de paiement. Unique
+                                    au niveau du système.
+amount      N..20    oui            Montant de la commande au minimum unités monétaires (par
+                                    exemple cent).
+
+
+
+
+Exemple requête GET :
+https://test.clictopay.com/payment/rest/refund.do?amount=500&currency=788&language=en&o
+rderId=5e97e3fd-1d20-4b4b-a542-f5995f5e8208&password=password&userName=userName
+
+
+Exemple requête POST :
+amount=500&currency=788&language=en&orderId=5e97e3fd-1d20-4b4b-a542-f5995f5e8208
+
+
+Paramètres réponse :
+Nom          Type          Obligatoire   Description
+errorCode    N..3          non           Code d'erreur.
+errorMessage AN..512       non           Description de l'erreur.
+
+                                                15
+Exemple réponse :
+{"errorCode":0}
+
+
+Code erreur possible :
+Valeur     Description
+0          Pas d'erreur système.
+5          Valeur erronée d'un paramètre de la requête.
+6          OrderId non enregistré.
+7          Erreur système.
+
+
+Messages erreurs possibles :
+Valeur     Description
+0          Pas d'erreur système.
+5          Accès refusé
+5          L'utilisateur doit changer son mot de passe
+5          [orderId] est vide
+6          Numéro de commande incorrect.
+7          Le paiement doit être valide.
+7          Montant du dépôt incorrect (moins de 1 unité monétaire, par exemple 1 dinars).
+7          Erreur système.
+
+
+
+
+5. Spécifications des demandes d’état d’un paiement :
+Etat de la demande
+Paramètres requête :
+Nom           Type     Obligatoire   Description
+userName      AN..30   oui           Login marchand reçu lors de l’intégration.
+password      AN..30   oui           Mot de passe marchand reçu lors de l’intégration.
+orderId       ANS36    oui           Numéro de commande dans le système de paiement. Unique
+                                     au niveau du système.
+language      A..2     non             Langue selon la norme ISO 639-1. Si non spécifié, le système
+                                       utilise la langue par défaut à partir des paramètres du
+                                       marchand.
+                                     Les messages d'erreur renvoyés seront écrits dans cette même
+                                     langue.
+
+                                                 16
+Exemple requête GET :
+https://test.clictopay.com/payment/rest/getOrderStatus.do?orderId=b8d70aa7-bfb3-4f94-
+b7bbaec7273e1fce&language=en&password=password&userName=userName
+
+
+Exemple requête POST :
+orderId=b8d70aa7-bfb3-4f94-b7bb-aec7273e1fce&language=en
+
+
+Paramètres réponse :
+Nom                       Type    Obligatoire Description
+OrderStatus               N..2    non         Ce paramètre indique l'état de la commande
+                                              dans le système de paiement. Les valeurs
+                                              possibles sont listées dans le tableau ci-dessous.
+                                              Paramètre absent si aucune commande avec l'ID
+                                              spécifié n’a été trouvé.
+ErrorCode                 N..3    non         Code d'erreur.
+ErrorMessage              AN..512 non         Description de l'erreur dans la langue envoyée
+                                              dans le paramètre de langue de la requête.
+OrderNumber               AN..32 oui          Nombre (identifiant) de l'ordre dans le système
+                                              du marchand.
+Pan                       N..19   non         Numéro masqué de la carte qui a été utilisé dans
+                                              le paiement. Exigé seulement pour les
+                                              commandes payées.
+expiration                N..6    non         Date d'expiration carte dans le format YYYYMM.
+                                              Exigé seulement pour les commandes payées.
+cardholderName            A..64   non         Nom du titulaire. Exigé seulement pour les
+                                              commandes payées.
+amount                    N..20   oui         Montant de la commande au minimum unités
+                                              monétaires (par exemple cent).
+currency                  N..3    non         Code de la monnaie de paiement, selon la norme
+                                              ISO 4217.
+approvalCode              AN6     non         IPS code d'autorisation. Le champ a une longueur
+                                              fixe de six caractères, il peut contenir des chiffres
+                                              et des lettres.
+authCode                  N..3    non         Ce paramètre est obsolète. Sa valeur est toujours
+                                              "2", quel que soit le statut de la commande et le
+                                              code de traitement du système d’autorisation.
+ip                        AN..20 non          Adresse IP de l'utilisateur qui a payé pour la
+                                              commande.
+bindingInfo (element
+consits of clientId and
+bindingId):
+clientId                  AN..255 non             Numéro du client (identifiant) dans le système
+                                                  du marchand. Utilisé pour mettre en œuvre une
+                                                  fonction de fidélisation. Peut être présent, si le
+                                                  commerçant est autorisé à créer des liaisons.
+
+
+                                                17
+bindingId                 AN..255 non            Identification de la liaison créée en payant la
+                                                 commande ou utilisé pour payer. Présent
+                                                 uniquement si la création des liaisons est
+                                                 autorisée pour les marchands.
+
+
+Exemple réponse :
+{"expiration":"201512","cardholderName":"trtr","depositAmount":789789,"currency":"788","appr
+ovalCode":"123456","authCode":2,"clientId":"666","bindingId":"07a90a5d-cc60-4d1b-a9e6-
+ffd15974a74f","ErrorCode":"0","ErrorMessage":"Success","OrderStatus":2,"OrderNumber":"23asd
+afaf","Pan":"411111**1111","Amount":789789}
+
+
+Code erreur (valeur du champ errorCode) :
+Valeur Description
+0      Aucune erreur système
+2      L'ordre est refusé en raison d'une erreur dans les informations d'identification de
+       paiement.
+5      Accès refusé
+5      L'utilisateur doit changer son mot de passe
+5      [orderId] est vide
+6      OrderId non enregistré
+7      Erreur système
+
+
+Le champ « OrderStatus » peut avoir les valeurs suivantes :
+Valeur     Description
+0          Commande enregistrée, mais pas payé.
+1          Montant pré-autorisation bloqué (pour le paiement en deux phases)
+2          Le montant a été déposé avec succès
+3          Annulation d'autorisation
+4          Transaction remboursée.
+5          Autorisation par le biais du ACS de l'émetteur initié
+6          Autorisation refusée
+
+
+Etat étendu de la demande
+Paramètres requête :
+Nom              Type     Obligatoire   Description
+userName         AN..30   oui           Login marchand reçu lors de l’intégration.
+password         AN..30   oui           Mot de passe marchand reçu lors de l’intégration.
+orderId          ANS36    oui *         Numéro de commande dans le système de paiement.
+                                        Unique au niveau du système.
+orderNumber AN..32 oui *                Numéro (identifiant) de la commande dans le système du
+                                        marchand.
+language         A..2     oui           Langue selon la norme ISO 639-1. Si non spécifié, le
+                                        système utilise la langue par défaut à partir des
+                                        paramètres du marchand.
+
+                                                18
+                                   Les messages d'erreur renvoyés seront écrits dans cette
+                                   même langue.
+
+
+Exemple requête GET :
+https://test.clictopay.com/payment/rest/getOrderStatusExtended.do?userName=userName&pass
+word=password&orderId=285b2973-4d02-4980-a54e-57c4d0d2xxx9&language=en
+
+
+Exemple requête POST :
+orderId=285b2973-4d02-4980-a54e-57c4d0d2xxx9&language=en
+
+
+Paramètres réponse :
+Nom                    Type      Obligatoire    Description
+orderNumber            AN..32    oui            Numéro (identifiant) de la commande dans le
+                                                système du marchand.
+orderStatus            N..2      non            Statut de la commande dans le système de
+                                                paiement. La valeur est choisie parmi les
+                                                variantes ci-dessous. Absent, si aucune
+                                                correspondance n'a été trouvé.
+actionCode            N..3       oui            Code de traitement du système d'autorisation.
+actionCodeDescription AN..512    oui            Description du code d’action sur la langue
+                                                passée dans le paramètre "Langue".
+errorCode              N..3      non            Code d'erreur.
+errorMessage           AN..512   non            Description de l'erreur dans la langue envoyée
+                                                dans le paramètre de langue de la requête.
+amount                 N..20     oui            Montant de la commande au minimum unités
+                                                monétaires (par exemple cent).
+currency               N..3      non            Code de la monnaie de paiement, selon la
+                                                norme ISO 4217. Si non spécifié, la valeur par
+                                                défaut est utilisée.
+date                   ANS       oui            Date d'enregistrement de la commande.
+orderDescription       AN..512   non            Description de la commande.
+ip                     N..       oui            Adresse IP de l'utilisateur qui a payé la
+                                                commande.
+cardAuthInfo
+(element has
+structure which
+includes the list of
+elements
+secureAuthInfo type
+and maskedPan,
+expiration,
+cardholderName and
+approvalCode
+attributes):
+
+
+
+
+                                               19
+pan                       N..19     non        Numéro masqué de la carte qui a été utilisé
+                                               dans le paiement. Exigé seulement pour les
+                                               commandes payées.
+expiration                N..6      non        Date d'expiration carte dans le format YYYYMM.
+                                               Exigé seulement pour les commandes payées.
+cardholderName            A..64     non        Nom du titulaire.
+approvalCode              AN6       non        IPS code d'autorisation. Le champ a une
+                                               longueur fixe de six caractères, il peut contenir
+                                               des chiffres et des lettres.
+secureAuthInfo
+(element includes eci
+element and elements
+of threeDSInfo type,
+which is a list of cavv
+and xid):
+eci                       N..4      non        Indicateur commerce électronique. Présent
+                                               juste après le paiement de la commande dans le
+                                               cas d'une authentification.
+cavv                      ANS..200 non         Valeur de vérification d'authentification du
+                                               titulaire. Présent juste après le paiement de la
+                                               commande dans le cas d'une authentification.
+xid                       ANS..80   non        Indicateur commerce électronique. Identifiant
+                                               présent juste après le paiement de la
+                                               commande dans le cas d'une authentification.
+BindingInfo (element
+consits of clientId and
+bindingId):
+clientId                  AN..255   non        Numéro client (ID) dans le système du magasin,
+                                               transféré lors de l'enregistrement de la
+                                               commande. Présente uniquement si un
+                                               marchand est autorisé à créer des liaisons.
+bindingId                 AN..255   non        L'identifiant d'un lien créé lors du paiement de
+                                               la commande ou utilisée pour le paiement.
+                                               Présent uniquement si un marchand est
+                                               autorisé à créer des liaisons.
+
+
+
+
+Exemple réponse :
+{"attributes":[],"date":1342007119386,"currency":"788","amount":100,
+"actionCode":0,"orderNumber":"1212x31334z15","orderDescription":"tes
+t","orderStatus":2,"ip":"217.12.97.50","actionCodeDescription":"The payment
+processedsuccessfully","merchantOrderParams":[],"cardAuthInfo":{"expiration":"201512","pan":"
+411111**1111","approvalCode":"123456","cardholderName":"dsdqdqd","secureAuthInfo":{"eci":
+5,"threeDSInfo":{"cavv
+":"AAABCpEAUBNCAHEgBQAAAAAAAAA=","xid":"MDAwMDAwMDEzNDIwMDcxMTk3Njc= "}}}}
+
+
+
+
+                                             20
+Le champ « orderStatus » peut avoir les valeurs suivantes :
+ Valeur     Description
+ 0          Commande enregistrée, mais pas payé
+ 1          Montant pré-autorisation bloqué (pour le paiement en deux phases)
+ 2          Le montant a été déposé avec succès
+ 3          Annulation d'autorisation
+ 4          La transaction a été remboursé
+ 5          Autorisation par ACS de l'émetteur initié.
+ 6          Autorisation refusé
+
+
+Code erreur (valeur du champ errorCode) :
+ Valeur     Description
+ 0          Aucune erreur système
+ 1          [orderId] ou [orderNumber] attendu
+ 2          La commande est refusée en raison d'une erreur dans les informations d'identification de
+            paiement
+ 5          Accès refusé
+ 5          L'utilisateur doit changer son mot de passe
+ 6          OrderId non enregistré
+ 7          Erreur système
+
+
+
+V. Personnalisation de la page de paiement :
+
+     1. Pré requis et spécifications techniques :
+Le Fichier des pages de paiement doit être une archive ZIP qui contient les pages au niveau de la
+racine. Vous pouvez contacter l’équipe support pour avoir un exemple de pages de paiement.
+
+Il est conseillé d'utiliser l'outil d'archivage 7-zip.
+
+     a. Exigences du code de l’interface de la page de paiement :
+La page doit être conforme aux normes XHTML, avec une déclaration de DTD obligatoire.
+
+
+
+
+ <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0
+ Transitional//EN""http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+
+! Toute utilisation des URL absolues pour lier des ressources supplémentaires (images, scripts, CSS)
+est interdite. Toutes ressources nécessaires doivent être liées relativement.
+
+Exemple :
+
+
+                                                         21
+        « http://host/images/test.jpg » pas autorisés
+        « images/test.jpg » - correct.
+
+*Noter bien :
+
+La déclaration XHTML – est obligatoire, sinon la page de paiement peut ne pas fonctionner
+correctement dans certains navigateurs.
+
+ <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0
+ Transitional//EN""http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+    b. Pages nécessaires pour l’interface de paiement :
+     1. payment_<locale>.html – payment page;
+     2. errors_<locale>.html – errors page, où, “locale” est le language de la page en 2-alpha code
+        en se référèant à ISO 639-1, e.g. "fr" pour Français et "en" pour Anglais.
+
+    Si vous avez l'intention d'utiliser des pages mobiles, les pages suivantes sont requises :
+     1. mobile_payment_<locale>.html – page de paiement;
+     2. mobile_errors_<locale>.html –page d’affichage             des     erreurs.
+
+Le paramètre « pageView » devrait être chargé lors de la demande d’enregistrement indiquant le
+type de pages, desktop ou mobiles.
+Dans la conception des pages (page de paiement, la page d'erreur), vous devez utiliser Unicode (UTF-
+8).
+
+    c. Exigence page de paiement :
+
+
+La page doit contenir un certain nombre d'objets obligatoires, ainsi qu'un ensemble de champs avec
+des noms prédéfini pour la saisie des informations de paiement.
+
+Nom de la page
+Nom du fichier de la page ordinaire : payment_ <ln> .html,
+Nom du fichier de la page mobile : mobile_payment_ <ln> .html,
+Où <ln> est le code alpha-2 de la page locale (code de langue selon la norme ISO 639-1 exemple "fr"
+pour le Français et "en" pour l'anglais.)
+
+Entête de la page
+L’entête de page doit contenir les scripts suivants :
+
+Version standard :
+
+ <script type="text/javascript" src="../../js/jquery-1.4.2.min.js"></script>
+ <script type="text/javascript" src="../../js/jquery.timers-1.2.js"></script>
+ <script type="text/javascript" src="../../js/jquery.url.js"></script>
+ <script type="text/javascript" src="../../js/jquery.payment.js"></script> <script>
+ $(document).payment({
+ });
+ </script>
+
+
+                                                   22
+Version étendue :
+
+ <script type="text/javascript" src="../../js/jquery-1.4.2.min.js"></script>
+ <script type="text/javascript" src="../../js/jquery.timers-1.2.js"></script>
+ <script type="text/javascript" src="../../js/jquery.url.js"></script>
+ <script type="text/javascript" src="../../js/jquery.payment.js"></script> <script>
+ $(document).payment({ language:
+ "en",
+ messageAjaxError: " Le service est temporairement indisponible. Essayez plus tard.",
+ messageTimeRemaining: " Fin de session dans : #MIN#:#SEC#",
+ });
+ </script>
+
+
+Les champs des scripts doivent être remplis en conséquence :
+
+    •   language - le code de la langue, la même que dans le nom du fichier de la page;
+    •   messageAjaxError- message sur erreur de AJAX interne (apparaît, par exemple, lorsque le
+        système est inaccessible).
+    •   messageTimeRemaining- durée expiration session. Il doit contenir des mots clés "# MIN #" et
+        "#SEC# " que dans un navigateur sera échangé pour les minutes et secondes du temps
+        restant jusqu'à la fin de la session.
+
+Corps de la page
+
+Les éléments obligatoires dans la page de paiement
+
+Tous les blocs et les commandes décrites dans cette section doivent être présents dans le corps de la
+page de paiement.
+
+
+Bloc avec le numéro de commande unique
+ <div id="orderNumber"></div>
+
+Bloc avec le Montant de la commande
+ <div id="amount"></div>
+
+
+Bloc avec la description de la commande
+ <div id="description"></div>
+
+
+La page doit contenir le formulaire de paiement :
+
+ <form name="PaymentForm" action="#" method="post" id="formPayment">
+ <input type="hidden" id="expiry" >
+ <input type="hidden" id="mdOrder" >
+ <input type="hidden" id="location" value="/../" >
+
+                                                    23
+ <input type="hidden" id="language" value="<ln>" >
+ </form>
+
+
+Tous les champs cachés énumérés ci-dessus sont obligatoires. Valeur du champ "langage" doit
+contenir 2-alpha, Code de la langue de la page (ISO 639-1).
+
+Le formulaire doit également contenir des champs de saisie des données pour le paiement :
+
+Un champ de saisie du numéro de carte ;
+
+ <input name="$PAN" id="iPAN" maxlength="19" type="text" autocomplete="off" />
+
+
+2 listes déroulantes pour le mois et l'année de la date d'expiration de la carte. Ces champs sont
+remplis automatiquement lorsque la page est chargée
+
+ <select name="MM" id="month">
+ <option value="01" selected> 1 - Javier</option>
+ <option value="02"> 2 – février </option>
+ <option value="03"> 3 - Mars</option>
+ <option value="04"> 4 - avril</option>
+ <option value="05"> 5 - mai</option>
+ <option value="06"> 6 - juin</option>
+ <option value="07"> 7 - juillet</option>
+ <option value="08"> 8 - aout</option>
+ <option value="09"> 9 - septembre</option> <option value="10">10 - octobre</option>
+ <option value="11">11 - novembre</option>
+ <option value="12">12 - décembre</option>
+ </select> /
+ <select name="YYYY" id="year">
+ <option value='2016' selected>2016</option>
+ <option value='2017'>2017</option>
+ <option value='2018'>2018</option>
+ <option value='2019'>2019</option>
+ <option value='2020'>2020</option>
+ <option value='2021'>2021</option>
+ <option value='2022'>2022</option>
+ </select>
+
+
+Un champ pour le nom du titulaire de la carte
+
+ <input name="TEXT" id="iTEXT" maxlength="90" type="text" autocomplete="off" />
+
+
+Un champ pour le CVC/CVV
+
+ <input name="$CVC" id="iCVC" maxlength="3" type="password" autocomplete="off" />
+
+
+Un bouton pour la confirmation de paiement
+
+ <input value=" payer " type="button" id="buttonPayment">
+
+                                                  24
+La page de paiement doit également contenir les objets suivants :
+
+ <form id="acs" method="post" action="">
+ <input type="hidden" id="MD" name="MD"/>
+ <input type="hidden" id="PaReq" name="PaReq"/>
+ <input type="hidden" id="TermUrl" name="TermUrl"/> </form>
+
+
+Bloc pour afficher des messages d'erreur
+
+ <div id="errorBlock" style="color:red;"></div>
+
+
+Bloc avec le message sur le temps restant avant la fin de la session de paiement
+
+ <div id="numberCountdown"></div>
+
+
+Bloc pour afficher un message d'information lorsque l'utilisateur arrive à la page de résultats de
+paiement ;
+
+ <div id="infoBlock"></div>
+
+
+Bloc avec indicateur de progrès pour la demande de serveur (lors de l'autorisation de paiement et
+demandes ultérieures).
+
+ <div id="indicator" style="display:none;"><img src="../../img/ajax-loader.gif" height="19"
+ width="220" alt="indicator"></div>
+
+
+Si vous avez l'intention d'utiliser IFrame, ajouter le bloc suivant pour le corps de la page :
+
+ <iframe name="iframe_name" id="iframe_id" src="formUrl" style="width: 100%; height:700px;
+ border: 0 none;" scrolling="no" frameborder="0"></iframe>
+
+
+
+Lorsque toutes les conditions sont remplies pour le paiement de la commande, dans la page de
+paiement il sera affiché :
+    • Montant de la commande
+    • Numéro (identifiant) de l'ordre dans le système du marchand.
+    • La description de la commande (affiché seulement lorsqu'on complétant la description du
+       champ)
+
+
+Éléments supplémentaires sur la page de paiement
+Si la fonctionnalité de notification du payeur sur le dépôt / annulation / remboursement / refus est
+activé, vous devez ajouter le bloc suivant :
+
+ <input type="text" id="email"/>
+
+                                                    25
+Un champ email pour les payeurs.
+
+Pour afficher d'autres éléments supplémentaires sur la page de paiement, utiliser les blocs suivants :
+
+ <tr valign="top" id="nom paramètre ">
+ <td valign="top">
+
+
+Où nom paramètre est l'une des valeurs suivantes :
+
+     amount- montant de la commande dans les unités minimum;
+     amountFormatted- montant de la commande formaté (avec un séparateur de milliers et la
+      virgule);
+     approvedAmount- montant retenu;
+     approvedAmountFormatted - montant détenu en forme (avec un séparateur de milliers et de
+      décimales point);
+     currency - code à trois chiffres de la monnaie;
+     currencyName - code à trois lettres de la monnaie;
+     date - date de paiement terminé, dd.MM.yyyy HH: mm: ss;
+     depositedAmount - montant déposé;
+     depositedAmountFormatted - montant déposé formatée (avec un séparateur de milliers et
+      virgule);
+     depositFlag - flag de la transaction en deux phases ;
+     ipCountryCode - code pays du payeur ;
+     mdOrder - numéro de commande dans le système de paiement ;
+     merchantFullName - nom complet du commerçant ;
+     merchantLogin - Login commerçant ;
+     orderDescription - Description de la commande ;
+     orderNumber - numéro de la commande dans le système marchand ;
+     panCountryCode- le code pays de la carte du payeur;
+     paymentState - l'état de paiement (démarré / paiement approuvé / paiement refusé
+      /payment_void / payment_deposited / remboursé) ;
+     paymentWay - mode de paiement ;
+     processingId - identifiant marchand dans le traitement ;
+     terminalId - ID du terminal.
+
+
+
+
+Validations des détails de la carte
+Pour afficher le processus de validation des détails de carte, la page de paiement doit contenir les
+codes ci-dessous :
+
+1. .valid
+{ border: 1px solid #088A08; background-color: #CEF6CE; }
+.invalid
+{ border: 1px solid #8A0808; background-color: #F6CECE; }
+
+                                                  26
+2. visualValidationEnabled:true,
+3. id="iPAN", id="iCVC", id="iTEXT", id="month", id="year
+
+    d. Exigence de la page d’erreur :
+
+
+La page doit contenir un certain nombre d'objets obligatoires
+
+Non de la Page
+Nom du fichier ordinaire de la page : erreurs <in> .html,
+
+Nom du fichier mobile page : mobile_errors_ <ln> .html,
+
+Où <ln> est le code alpha-2 de la page locale (ISO 639-1).
+
+Entête Page
+L’entête de page doit relier les scripts suivants :
+ <script type="text/javascript" src="../../js/jquery-1.4.2.min.js"></script>
+ <script type="text/javascript" src="../../js/jquery.timers-1.2.js"></script>
+ <script type="text/javascript" src="../../js/jquery.url.js"></script>
+ <script type="text/javascript" src="../../js/error_page.js"></script>
+ <script type="text/javascript">
+   var lang = "<ln>";
+ </script>
+
+
+, où <ln> est le code alpha-2 de la page locale (ISO 639-1).
+
+Corps de la Page
+        Tous les blocs et les commandes décrites ci-dessous doivent être placés dans le corps de la
+page. Form :
+
+ <form name="errorForm" action="#" method="post" id="errorForm">
+
+ <input type="hidden" id="language" value="<ln>" type="hidden">
+
+ </form>
+
+
+, Où <ln> est le code alpha-2 de la page locale (ISO 639-1).
+Le formulaire doit également contenir un bloc où les messages d'erreur sont affichés (par exemple, à
+propos la Session expirée ou la confirmation de paiement).
+
+ <div id="errorBlock" style="color:red;"></div>
+
+
+
+
+                                                      27
+   e. Chargement de la page de paiement :
+Chargement et téléchargement de la page de paiement :
+
+Accéder à l’interface marchand en s’identifiant avec le login et mot de passe de l’opérateur
+comme l’indique la figure ci-dessous :
+
+Url: https://test.clictopay.com/mportal/#login
+
+
+
+
+Vous serez redirigé vers la portail marchand où vous pouvez visionner la section « Static »
+au niveau de la barre de navigation comme l’indique la figure ci-dessous :
+
+
+
+
+Le menu « Static » vous permet de charger :
+
+   -   Page de paiement – Sélectionner le menu « static upload and download ».
+   -   Logo et bas de page – Sélectionner le menu « Payment page customization »
+
+Appuyer sur la partie « static upload and download ».
+
+
+
+
+Le fichier avec les pages de paiement doit être sous la forme d'une archive zip, ayant des
+pages et des dossiers avec des javascripts, des feuilles de styles css et images dans la racine
+du dossier.
+
+Un exemple d’archive peut être télécharger depuis la section « Download template static ».
+
+
+
+
+                                               28
+Les pages nécessaires pour l’interface de paiement sont :
+
+    -   payment_<locale>.html – la page de paiement. - errors_<locale>.html – la page
+        d’erreurs.
+Vous pouvez maintenant charger votre page de paiement :
+
+    -   Cliquez sur « Choose file » et spécifier le chemin vers l'archive avec la page de
+        paiement sur votre machine locale.
+    -   Le nom du fichier sera affiché dans le champ Zip-archive.
+    -   Cliquez sur le bouton « Upload ».
+    -   Si le fichier est chargé avec succès, la notification "L'archive est chargé avec succès"
+        sera affiché. Cliquez sur OK.
+
+
+ Remarque :
+ Une erreur peut se produire pour une des raisons suivantes :
+        -      Le fichier chargé n’est pas une archive ZIP ou l'archive est vide.
+        -      L'archive ne peut pas être lu.
+        -      L'archive ne contient pas les éléments requis : page de paiement et page
+    d'erreur. Les éléments nécessaires ne sont pas dans le répertoire racine de l'archive,
+    mais plutôt dans le dossier de l'archive. Il est nécessaire d'archiver les éléments, mais
+    pas le dossier qui contient ces éléments.
+
+
+Après le chargement de l’archive sur le serveur, l'utilisateur exécute les tests sur la page de
+paiement en indiquant le nom du marchant dans l’URL comme suit :
+
+URL: https://test.clictopay.com/payment/merchants/Login_marchand/test.html
+
+
+
+
+                                               29
+Personnalisation de la page de paiement :
+Vous pouvez aussi charger le logo et le bas de page de votre page de paiement dans la
+section « Payment page customization » comme l’indique les figures ci-dessous :
+
+
+
+
+Chargement Logo :
+
+
+
+
+Chargement du bas de page :
+
+
+
+
+                                            30
+Contact
+Pour plus de renseignements veuillez nous contacter, un conseiller technique est à
+votre disposition.
+
+Mohamed Amine BENNIA:
+
+ Tel : 71 155 853
+
+ E-mail : mohamedamine.bennia@monetiquetunisie.com
+
+Wissem BAGHDADI:
+
+ Tel : 71 155 836
+
+ E-mail : Wissem.baghdadi@monetiquetunisie.com
+
+Ahmed AMRI:
+
+ Tel : 71 155 851
+
+ E-mail : ahmed.amri@monetiquetunisie.com
+
+
+
+
+                                         31
+

@@ -17,8 +17,12 @@ const props = defineProps({
 const page = usePage()
 
 const flashStatus = computed(() => props.status || page.props?.flash?.status || '')
+const paymentError = computed(() => page.props?.errors?.payment || '')
 const confirmingId = ref(null)
 const cancelingId = ref(null)
+
+const isDev = Boolean(import.meta?.env?.DEV)
+const clickToPayTestNo = ref('')
 
 // Pagination: server already returns recent-first; paginate when more than 5
 const pageSize = ref(5)
@@ -104,6 +108,25 @@ const toast = Swal.mixin({
   timer: 2200,
   timerProgressBar: true,
 })
+
+// Show payment result as a toast (instead of a persistent banner)
+const paymentToastShown = ref(false)
+watch(
+  [flashStatus, paymentError],
+  ([status, error]) => {
+    if (paymentToastShown.value) return
+    if (error) {
+      paymentToastShown.value = true
+      toast.fire({ icon: 'error', title: String(error) })
+      return
+    }
+    if (status) {
+      paymentToastShown.value = true
+      toast.fire({ icon: 'success', title: String(status) })
+    }
+  },
+  { immediate: true }
+)
 
 function formatDateTime(value) {
   if (!value) return ''
@@ -226,24 +249,22 @@ function payAndConfirm(a) {
   if (!a?.id || !canPay(a)) return
   confirmingId.value = a.id
 
-  router.patch(
-    route('appointments.update', a.id),
-    { status: 'confirmed' },
+  const payload = {}
+  if (isDev && clickToPayTestNo.value) {
+    payload.test_no = String(clickToPayTestNo.value)
+  }
+
+  router.post(
+    route('appointments.pay', a.id),
+    payload,
     {
       preserveScroll: true,
-      onSuccess: () => {
-          // Refresh authoritative pending count from server and broadcast update
-          try {
-            fetch(route('appointments.pendingCount'))
-              .then((r) => r.json())
-              .then((json) => {
-                try { localStorage.setItem('pendingAppointmentsCount', String(Number(json.count || 0))) } catch (e) {}
-                try { window.dispatchEvent(new CustomEvent('appointment:count-updated', { detail: { count: Number(json.count || 0) } })) } catch (e) {}
-              })
-              .catch(() => {})
-          } catch (e) {}
+      onError: () => {
+        confirmingId.value = null
       },
       onFinish: () => {
+        // In the success case, the server responds with an Inertia location redirect
+        // to the ClickToPay gateway, so this page will unload.
         confirmingId.value = null
       },
     }
@@ -359,10 +380,28 @@ async function cancelAppointment(a) {
             </div>
           </div>
         </div>
-      </div>
 
-      <div v-if="flashStatus" class="mb-6 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
-        {{ flashStatus }}
+        <div v-if="isDev" class="mt-5 rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3">
+          <div class="text-xs font-semibold text-indigo-700">Dev: ClickToPay test case</div>
+          <div class="mt-2 flex flex-col sm:flex-row sm:items-center gap-3">
+            <select
+              v-model="clickToPayTestNo"
+              class="w-full sm:w-72 rounded-lg border border-indigo-200 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-300"
+            >
+              <option value="">(none)</option>
+              <option value="0001">0001 - Transaction autorisée</option>
+              <option value="0002">0002 - Transaction autorisée (MasterCard)</option>
+              <option value="0004">0004 - Plafond atteint</option>
+              <option value="0005">0005 - Solde insuffisant</option>
+              <option value="0007">0007 - Carte non valide</option>
+              <option value="0008">0008 - Validité incorrecte</option>
+              <option value="0009">0009 - CVV2 incorrecte</option>
+            </select>
+            <div class="text-xs text-indigo-800">
+              This only tags logs/orderNumber; it does not force a decline.
+            </div>
+          </div>
+        </div>
       </div>
 
       <div v-if="!appointments.length" class="bg-white border border-gray-200 rounded-2xl shadow-sm p-8 text-gray-700">
@@ -416,21 +455,25 @@ async function cancelAppointment(a) {
 
                 <div class="flex items-center gap-2 md:justify-end">
                   <Link
-                    v-if="String(a.status).toLowerCase() === 'confirmed' && String(a.session_status).toLowerCase() === 'active'"
-                    :href="canJoinCall(a) ? route('appointments.video_call.show', a.id) : undefined"
-                    class="inline-flex items-center gap-2 justify-center px-5 py-2.5 rounded-xl border-0 text-base font-bold shadow-md transition focus:outline-none focus:ring-2 focus:ring-offset-2"
-                    :class="[
-                      canJoinCall(a)
-                        ? 'bg-gradient-to-r from-[#af5166] to-[#5997ac] text-white hover:from-[#af5166]/90 hover:to-[#5997ac]/90 focus:ring-[#af5166] scale-105 hover:scale-110 active:scale-100 cursor-pointer'
-                        : 'bg-gray-200 text-gray-400 cursor-not-allowed pointer-events-none'
-                    ]"
+                    v-if="String(a.status).toLowerCase() === 'confirmed' && String(a.session_status).toLowerCase() === 'active' && canJoinCall(a)"
+                    :href="route('appointments.video_call.show', a.id)"
+                    class="inline-flex items-center gap-2 justify-center px-5 py-2.5 rounded-xl border-0 text-base font-bold shadow-md transition focus:outline-none focus:ring-2 focus:ring-offset-2 bg-gradient-to-r from-[#af5166] to-[#5997ac] text-white hover:from-[#af5166]/90 hover:to-[#5997ac]/90 focus:ring-[#af5166] scale-105 hover:scale-110 active:scale-100 cursor-pointer"
                     style="box-shadow: 0 4px 18px rgba(89,151,172,0.13);"
-                    :aria-disabled="!canJoinCall(a)"
-                    tabindex="0"
                   >
-                    <svg v-if="canJoinCall(a)" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M15 10l4.553-2.276A1 1 0 0 1 21 8.618v6.764a1 1 0 0 1-1.447.894L15 14M4 6h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2z"/></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M15 10l4.553-2.276A1 1 0 0 1 21 8.618v6.764a1 1 0 0 1-1.447.894L15 14M4 6h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2z"/></svg>
                     Join call
                   </Link>
+
+                  <button
+                    v-else-if="String(a.status).toLowerCase() === 'confirmed' && String(a.session_status).toLowerCase() === 'active'"
+                    type="button"
+                    class="inline-flex items-center gap-2 justify-center px-5 py-2.5 rounded-xl border-0 text-base font-bold shadow-md transition focus:outline-none focus:ring-2 focus:ring-offset-2 bg-gray-200 text-gray-400 cursor-not-allowed pointer-events-none"
+                    style="box-shadow: 0 4px 18px rgba(89,151,172,0.13);"
+                    aria-disabled="true"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M15 10l4.553-2.276A1 1 0 0 1 21 8.618v6.764a1 1 0 0 1-1.447.894L15 14M4 6h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2z"/></svg>
+                    Join call
+                  </button>
 
                   <!-- Report icon moved to action area for clearer placement -->
                   <button

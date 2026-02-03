@@ -235,6 +235,14 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/appointments', [AppointmentController::class, 'index'])->name('appointments.index');
     Route::get('/appointments/pending-count', [AppointmentController::class, 'pendingCount'])->name('appointments.pendingCount');
     Route::post('/appointments', [AppointmentController::class, 'store'])->name('appointments.store');
+    // ClickToPay payment start (redirects to gateway)
+    Route::post('/appointments/{appointment}/pay', [AppointmentController::class, 'startClickToPay'])
+        ->name('appointments.pay');
+    // ClickToPay return/fail callbacks (user is redirected back here by the gateway)
+    Route::get('/payments/clictopay/return/{appointment}', [AppointmentController::class, 'clicToPayReturn'])
+        ->name('payments.clictopay.return');
+    Route::get('/payments/clictopay/fail/{appointment}', [AppointmentController::class, 'clicToPayFail'])
+        ->name('payments.clictopay.fail');
     Route::patch('/appointments/{appointment}', [AppointmentController::class, 'update'])->name('appointments.update');
     Route::delete('/appointments/{appointment}', [AppointmentController::class, 'destroy'])->name('appointments.destroy');
 
