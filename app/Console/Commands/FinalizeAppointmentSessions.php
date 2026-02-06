@@ -7,6 +7,7 @@ use App\Models\AppointmentSession;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use App\Services\ActivityLogger;
 
 class FinalizeAppointmentSessions extends Command
 {
@@ -92,6 +93,32 @@ class FinalizeAppointmentSessions extends Command
                 $appointment->no_show_user_id = $noShowUserId;
                 $appointment->save();
 
+                // Create an activity log for the no-show event, mentioning who missed.
+                try {
+                    $who = 'Both participants';
+                    if ($noShowBy === 'patient') {
+                        $who = 'Patient did not show';
+                    } elseif ($noShowBy === 'psychologist') {
+                        $who = 'Psychologist did not show';
+                    } elseif ($noShowBy === null) {
+                        // explicit clarity
+                        $who = 'No one joined (both did not show)';
+                    }
+
+                    $desc = 'Appointment marked no-show: '.$who;
+
+                    ActivityLogger::log(
+                        $noShowUserId ?? null,
+                        $noShowBy ? strtoupper($noShowBy) : 'SYSTEM',
+                        'no_show_appointment',
+                        'Appointment',
+                        $appointment->id,
+                        $desc
+                    );
+                } catch (\Throwable $e) {
+                    // Don't fail the job if logging fails; just continue.
+                }
+
                 $session->status = 'completed';
                 $session->ended_at = $now;
                 $session->duration_minutes = 0;
@@ -143,6 +170,19 @@ class FinalizeAppointmentSessions extends Command
                 if ($appointment && strtolower((string) $appointment->status) === 'confirmed') {
                     $appointment->status = 'completed';
                     $appointment->save();
+                    // Log system-completed appointment
+                    try {
+                        ActivityLogger::log(
+                            null,
+                            'SYSTEM',
+                            'completed_appointment',
+                            'Appointment',
+                            $appointment->id,
+                            'Appointment auto-completed by system'
+                        );
+                    } catch (\Throwable $e) {
+                        // ignore logging errors
+                    }
                 }
             });
         }

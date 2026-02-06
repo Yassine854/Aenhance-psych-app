@@ -80,6 +80,7 @@
                           <tr>
                             <th class="px-3 py-2 text-left text-xs text-gray-500">When</th>
                             <th class="px-3 py-2 text-left text-xs text-gray-500">Action</th>
+                            <th class="px-3 py-2 text-left text-xs text-gray-500">Actor Role</th>
                             <th class="px-3 py-2 text-left text-xs text-gray-500">Status</th>
                             <th class="px-3 py-2 text-left text-xs text-gray-500">Description</th>
                           </tr>
@@ -88,6 +89,7 @@
                           <tr v-for="r in related" :key="r.id">
                             <td class="px-3 py-2 text-sm text-gray-700">{{ formatDate(r.created_at) }}</td>
                             <td class="px-3 py-2 text-sm text-gray-700">{{ r.action }}</td>
+                            <td class="px-3 py-2 text-sm text-gray-700">{{ r.actor_role || 'SYSTEM' }}</td>
                             <td class="px-3 py-2 text-sm text-gray-700">
                               <span v-if="r.status" :class="['inline-flex items-center px-2 py-0.5 rounded text-xs font-medium', statusBadgeClass(r.status)]">
                                 {{ r.status }}
@@ -133,11 +135,13 @@ watch([show, log], async ([showVal, logVal]) => {
   related.value = []
   try {
     const res = await fetch(`/admin/logs/appointments/${logVal.id}/related`, { headers: { 'Accept': 'application/json' } })
-    if (res.ok) {
+      if (res.ok) {
       const payload = await res.json()
       // if controller returned appointment, prefer it
       if (payload.appointment) appointment.value = payload.appointment
-      related.value = payload.logs || []
+      // filter out transient payment start logs
+      const all = payload.logs || []
+      related.value = all.filter(r => !/\bstarted[_\-\s]?payment\b/i.test(String(r.action || '')))
     } else {
       related.value = []
     }

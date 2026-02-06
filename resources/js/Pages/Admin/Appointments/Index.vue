@@ -177,6 +177,9 @@
                 <div v-if="String(a.status || '').toLowerCase() === 'cancelled'" class="mt-1 text-xs text-gray-500">
                   Cancelled by: {{ a.canceled_by || '—' }}<span v-if="a.canceled_by_user_id"> (user #{{ a.canceled_by_user_id }})</span>
                 </div>
+                <div v-if="String(a.status || '').toLowerCase() === 'no_show'" class="mt-1 text-xs text-gray-500">
+                  Missed by: {{ a.no_show_display || (a.no_show_by ? (a.no_show_by === 'patient' ? 'Patient' : (a.no_show_by === 'psychologist' ? 'Psychologist' : a.no_show_by)) : (a.no_show_user_id ? 'User #' + a.no_show_user_id : 'Both')) }}
+                </div>
               </td>
               <td class="px-4 py-3">
                 <div class="flex items-center gap-2 flex-wrap">
@@ -207,7 +210,7 @@
                       v-for="act in appointmentActions(a)"
                       :key="act.value"
                       type="button"
-                      @click="applyUpdate(a, { appointment_status: act.value })"
+                      @click="handleAppointmentAction(a, act)"
                       :disabled="savingId === a.id"
                       class="inline-flex items-center justify-center h-8 px-2.5 rounded-lg border text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                       :class="act.classes"
@@ -232,9 +235,7 @@
                     </button>
                   </div>
 
-                  <div class="text-xs text-gray-400">
-                    {{ guidanceText(a) }}
-                  </div>
+                  
                 </div>
               </td>
             </tr>
@@ -588,17 +589,7 @@ function paymentOptions(a) {
   return []
 }
 
-function guidanceText(a) {
-  const s = normalizeStatus(a?.status)
-  const pay = currentPaymentStatus(a)
-
-  if (s === 'pending') return 'Next: confirm or cancel. Payment can be paid/failed.'
-  if (s === 'confirmed') return 'Next: complete, missed, or cancel. Payment should be paid.'
-  if (s === 'completed') return 'Completed is final.'
-  if (s === 'no_show') return pay === 'paid' ? 'Missed is final. You may refund.' : 'Missed is final.'
-  if (s === 'cancelled') return pay === 'paid' ? 'Cancelled is final. You may refund.' : 'Cancelled is final.'
-  return '—'
-}
+// guidanceText removed — guidance messages are no longer shown in admin index
 
 function appointmentActions(a) {
   const s = normalizeStatus(a?.status)
@@ -621,42 +612,11 @@ function appointmentActions(a) {
 }
 
 function paymentActions(a) {
-  const appt = normalizeStatus(a?.status)
-  const pay = currentPaymentStatus(a)
-
-  if (appt === 'cancelled' || appt === 'no_show') {
-    if (pay === 'paid') {
-      return [
-        { value: 'refunded', label: 'Refund', title: 'Refund the last paid payment', classes: 'border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100' },
-      ]
-    }
-    return []
-  }
-
-  // For pending/confirmed/completed/no_show: only show meaningful actions.
-  const actions = []
-
-  if (pay !== 'paid') {
-    actions.push({
-      value: 'paid',
-      label: 'Mark paid',
-      title: appt === 'pending' ? 'Mark paid (will confirm if pending)' : 'Mark paid',
-      classes: 'border-green-200 bg-green-50 text-green-700 hover:bg-green-100',
-      appointment_status: appt === 'pending' ? 'confirmed' : null,
-    })
-  }
-
-  if (appt === 'pending' && pay !== 'failed') {
-    actions.push({
-      value: 'failed',
-      label: 'Mark failed',
-      title: 'Mark payment as failed',
-      classes: 'border-red-200 bg-red-50 text-red-700 hover:bg-red-100',
-      appointment_status: null,
-    })
-  }
-
-  return actions
+  // Payment actions are intentionally removed from the admin index UI.
+  // Confirming an appointment now implies a paid payment and the server
+  // creates a `Payment` record automatically when the appointment is
+  // moved to `confirmed`/`completed`/`no_show` (see AdminAppointmentController).
+  return []
 }
 
 function linkClasses(link) {
@@ -744,5 +704,42 @@ async function applyUpdate(a, payload) {
       savingId.value = null
     },
   })
+}
+
+async function handleAppointmentAction(a, act) {
+  if (!a || !act) return
+
+  // If admin marks appointment as missed, ask who missed (patient/psychologist/both)
+  if (String(act.value) === 'no_show') {
+    const inputOptions = {
+      patient: 'Patient',
+      psychologist: 'Psychologist',
+      both: 'Both',
+    }
+
+    const result = await Swal.fire({
+      title: 'Who missed the appointment?',
+      input: 'radio',
+      inputOptions,
+      inputValidator: (value) => {
+        if (!value) return 'Please select who missed.'
+        return null
+      },
+      showCancelButton: true,
+      confirmButtonText: 'Mark missed',
+      confirmButtonColor: 'rgb(175 81 102 / var(--tw-bg-opacity, 1))',
+      cancelButtonText: 'Cancel',
+      reverseButtons: true,
+    })
+
+    if (!result.isConfirmed) return
+
+    const noShowBy = result.value
+    await applyUpdate(a, { appointment_status: 'no_show', no_show_by: noShowBy })
+    return
+  }
+
+  // default behavior
+  await applyUpdate(a, { appointment_status: act.value })
 }
 </script>

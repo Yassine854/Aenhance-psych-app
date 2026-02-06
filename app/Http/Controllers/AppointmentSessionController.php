@@ -195,9 +195,15 @@ class AppointmentSessionController extends Controller
 
             // Completing the session completes the appointment.
             $appointment = Appointment::query()->lockForUpdate()->find($appointment->id);
-            if ($appointment && strtolower((string) $appointment->status) === 'confirmed') {
+                if ($appointment && strtolower((string) $appointment->status) === 'confirmed') {
                 $appointment->status = 'completed';
                 $appointment->save();
+                try {
+                    // When psychologist ends the session, record the appointment log with actor_id = patient id
+                    ActivityLogger::log($appointment->patient_id ?? null, 'PSYCHOLOGIST', 'completed_appointment', 'Appointment', $appointment->id, 'Appointment completed by psychologist');
+                } catch (\Throwable $e) {
+                    // don't fail on logging error
+                }
             }
 
             return $session->fresh();

@@ -65,6 +65,8 @@
             <option value="patient">Patient</option>
             <option value="psychologist">Psychologist</option>
             <option value="admin">Admin</option>
+            <option value="system">SYSTEM</option>
+
           </select>
         </div>
 
@@ -217,6 +219,9 @@ const filteredLogs = computed(() => {
   const q = String(searchQuery.value || '').trim().toLowerCase()
 
   const list = (logsData.value || []).filter(l => {
+    // Exclude transient payment-start logs from appointment audit view
+    const actionRaw = String(l?.action || '').toLowerCase()
+    if (/\bstarted[_\-\s]?payment\b/.test(actionRaw)) return false
     // primary search field filtering
     let matchesSearch = true
     if (q) {
@@ -343,15 +348,20 @@ function toggleSort(key) {
 
 function getActorName(log) {
   if (!log) return '-'
-  const appt = log.appointment || null
-  if (!appt) return '-'
-  // actor_role may be e.g. 'PATIENT' or 'PSYCHOLOGIST' or 'ADMIN'|'SYSTEM'
+  if (!log) return '-'
+
   const role = String(log.actor_role || '').toLowerCase()
+  // Explicit admin/system shortcuts per request
+  if (role.includes('admin')) return 'Admin'
+  if (role.includes('system')) return 'SYSTEM'
+
+  const appt = log.appointment || null
+  if (!appt) return log.actor_id ? String(log.actor_id) : '-'
+
+  // actor_role may be e.g. 'PATIENT' or 'PSYCHOLOGIST'
   if (role.includes('patient')) {
     const u = appt.patient || null
     if (!u) return '-'
-    // prefer patient profile name, then user.name, then email
-    // prefer username over profile full name per request
     if (u.name) return u.name
     const profile = u.patient_profile || u.patientProfile || null
     if (profile && (profile.first_name || profile.last_name)) return ((profile.first_name || '') + (profile.last_name ? ` ${profile.last_name}` : '')).trim()
@@ -360,13 +370,12 @@ function getActorName(log) {
   if (role.includes('psychologist')) {
     const u = appt.psychologist || null
     if (!u) return '-'
-    // prefer psychologist profile name, then user.name, then email
-    // prefer username over profile full name per request
     if (u.name) return u.name
     const profile = u.psychologist_profile || u.psychologistProfile || null
     if (profile && (profile.first_name || profile.last_name)) return ((profile.first_name || '') + (profile.last_name ? ` ${profile.last_name}` : '')).trim()
     return u.email || '-'
   }
+
   return log.actor_id ? String(log.actor_id) : '-'
 }
 

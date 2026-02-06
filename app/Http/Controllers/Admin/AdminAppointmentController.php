@@ -53,6 +53,20 @@ class AdminAppointmentController extends Controller
         $payload = $appointments->through(function (Appointment $a) {
             $latestPayment = $a->payments->first();
 
+            // compute a friendly no-show display string for the UI
+            $noShowDisplay = null;
+            if ((string) $a->status === 'no_show') {
+                if ($a->no_show_by === 'patient') {
+                    $noShowDisplay = 'Patient';
+                } elseif ($a->no_show_by === 'psychologist') {
+                    $noShowDisplay = 'Psychologist';
+                } elseif (is_null($a->no_show_by) && is_null($a->no_show_user_id)) {
+                    $noShowDisplay = 'Both';
+                } elseif ($a->no_show_user_id) {
+                    $noShowDisplay = 'User #'.$a->no_show_user_id;
+                }
+            }
+
             return [
                 'id' => $a->id,
                 'patient' => $a->patient ? [
@@ -73,6 +87,10 @@ class AdminAppointmentController extends Controller
                 'canceled_by_user_id' => $a->canceled_by_user_id,
                 'cancellation_reason' => $a->cancellation_reason,
                 'canceled_at' => optional($a->canceled_at)->toISOString() ?? ($a->canceled_at ? (string) $a->canceled_at : null),
+
+                'no_show_by' => $a->no_show_by,
+                'no_show_user_id' => $a->no_show_user_id,
+                'no_show_display' => $noShowDisplay,
 
                 'payment' => $latestPayment ? [
                     'id' => $latestPayment->id,
@@ -102,6 +120,7 @@ class AdminAppointmentController extends Controller
             'appointment_status' => ['nullable', 'in:pending,confirmed,completed,cancelled,no_show'],
             'payment_status' => ['nullable', 'in:pending,paid,failed,refunded'],
             'cancellation_reason' => ['nullable', 'string', 'max:255'],
+            'no_show_by' => ['nullable', 'in:patient,psychologist,both'],
         ]);
 
         $appointmentStatus = $validated['appointment_status'] ?? null;
@@ -185,6 +204,44 @@ class AdminAppointmentController extends Controller
                         $appointment->update([
                             'status' => $targetAppointmentStatus,
                         ]);
+                        // If admin explicitly marked a no-show, log who missed and persist no_show fields.
+                        if ($targetAppointmentStatus === 'no_show') {
+                            $who = $validated['no_show_by'] ?? null;
+                            $desc = 'Admin marked appointment as missed.';
+
+                            // Determine DB-safe values: store 'patient' or 'psychologist',
+                            // or NULL when both users missed (to avoid enum issues on older schemas).
+                            $noShowByToSave = null;
+                            $noShowUserIdToSave = null;
+
+                            if ($who === 'patient') {
+                                $desc = 'Patient did not show.';
+                                $noShowByToSave = 'patient';
+                                $noShowUserIdToSave = $appointment->patient_id;
+                            } elseif ($who === 'psychologist') {
+                                $desc = 'Psychologist did not show.';
+                                $noShowByToSave = 'psychologist';
+                                $noShowUserIdToSave = $appointment->psychologist_id;
+                            } elseif ($who === 'both') {
+                                // Both missed: keep DB fields null (no_show_by = NULL, no_show_user_id = NULL)
+                                $desc = 'Both patient and psychologist did not show.';
+                                $noShowByToSave = null;
+                                $noShowUserIdToSave = null;
+                            }
+
+                            // Persist the no-show metadata on the appointment record.
+                            try {
+                                $appointment->update([
+                                    'no_show_by' => $noShowByToSave,
+                                    'no_show_user_id' => $noShowUserIdToSave,
+                                ]);
+                            } catch (\Throwable $e) {
+                                // Prefer not to fail the whole transaction on enum mismatch; log and continue.
+                                \Illuminate\Support\Facades\Log::warning('Failed saving no-show fields for appointment '.$appointment->id.': '.$e->getMessage());
+                            }
+
+                            ActivityLogger::log($user->id, $user->role ?? null, 'no_show_appointment', 'Appointment', $appointment->id, $desc);
+                        }
                     }
                 }
 

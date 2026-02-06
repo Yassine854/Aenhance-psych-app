@@ -845,6 +845,18 @@ class AppointmentController extends Controller
             $prevStatus = (string) $appointment->status;
             $appointment->update(['status' => $requestedStatus]);
             ActivityLogger::log($user->id, $user->role ?? null, 'updated_appointment_status', 'Appointment', $appointment->id, 'Appointment status changed from '.$prevStatus.' to '.$requestedStatus);
+            if ($requestedStatus === 'completed') {
+                try {
+                    // If psychologist triggered the completed status, record actor_id as the patient id and actor_role as PSYCHOLOGIST
+                    if (method_exists($user, 'isPsychologist') && $user->isPsychologist()) {
+                        ActivityLogger::log($appointment->patient_id ?? null, 'PSYCHOLOGIST', 'completed_appointment', 'Appointment', $appointment->id, 'Appointment status changed from '.$prevStatus.' to completed by PSYCHOLOGIST');
+                    } else {
+                        ActivityLogger::log($user->id, $user->role ?? null, 'completed_appointment', 'Appointment', $appointment->id, 'Appointment status changed from '.$prevStatus.' to completed by '.($user->role ?? 'UNKNOWN'));
+                    }
+                } catch (\Throwable $e) {
+                    // ignore logging errors
+                }
+            }
         }
 
         if ($request->wantsJson()) {

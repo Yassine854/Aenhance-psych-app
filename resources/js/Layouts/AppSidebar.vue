@@ -44,7 +44,7 @@
               <HorizontalDots v-else />
             </h2>
             <ul class="flex flex-col gap-4">
-              <li v-for="(item, index) in menuGroup.items" :key="item.name">
+              <li v-for="(item, index) in menuGroup.items" :key="groupIndex + '-' + index">
                 <!-- Professional Dropdown Implementation -->
                 <div v-if="item.subItems">
                   <button
@@ -93,7 +93,24 @@
                   </transition>
                 </div>
                 <!-- End Professional Dropdown -->
-                <!-- ...existing code for non-dropdown items... -->
+                <!-- Render non-dropdown (direct) items -->
+                <div v-else>
+                  <Link
+                    :href="item.path"
+                    :class="[
+                        'relative flex items-center gap-3 px-3 py-2 transition-transform duration-150 ease-in-out text-gray-700 dark:text-gray-300',
+                        (isActive(item.path) || pressedItem === item.path)
+                          ? 'bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 font-semibold border-l-4 border-brand-500 pl-3'
+                          : 'hover:translate-x-1 hover:text-brand-600 dark:hover:text-brand-400',
+                      ]"
+                    @click="pressItem(item.name, item.path)"
+                  >
+                    <span class="w-9 h-9 flex items-center justify-center">
+                      <component :is="item.icon" />
+                    </span>
+                    <span v-if="isExpanded || isHovered || isMobileOpen" class="menu-item-text">{{ item.name }}</span>
+                  </Link>
+                </div>
               </li>
             </ul>
           </div>
@@ -263,9 +280,12 @@ const menuGroups = [
 
 const isItemVisible = (item) => {
   if (!item.roles || !Array.isArray(item.roles)) return true
-  const role = currentRole.value
+  let role = currentRole.value
   if (!role) return false
-  return item.roles.includes(role)
+  role = String(role).trim().toUpperCase()
+  // normalize allowed roles to uppercase for case-insensitive comparison
+  const allowed = item.roles.map(r => String(r).trim().toUpperCase())
+  return allowed.includes(role)
 }
 
 const filteredMenuGroups = computed(() => {

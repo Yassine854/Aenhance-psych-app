@@ -65,11 +65,10 @@
           </div>
 
           <div class="lg:col-span-2 space-y-6">
-            <div class="rounded-xl border border-gray-200 p-4">
+            <div v-if="!isCancelled" class="rounded-xl border border-gray-200 p-4">
               <div class="flex items-center justify-between gap-3 flex-wrap">
                 <div>
-                  <div class="text-sm font-semibold text-gray-900">Payment (latest)</div>
-                  <div class="text-xs text-gray-500">Only the latest payment is shown.</div>
+                  <div class="text-sm font-semibold text-gray-900">Payment</div>
                 </div>
                 <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium" :class="paymentBadge(appointment.payment?.status)">
                   {{ paymentLabel(appointment.payment?.status) }}
@@ -99,7 +98,7 @@
               </div>
             </div>
 
-            <div class="rounded-xl border border-gray-200 p-4">
+            <div v-if="isCancelled" class="rounded-xl border border-gray-200 p-4">
               <div class="text-sm font-semibold text-gray-900">Cancellation</div>
               <div class="mt-3 grid grid-cols-1 md:grid-cols-4 gap-3">
                 <div>
@@ -118,6 +117,22 @@
                   <div class="text-xs text-gray-500">Reason</div>
                   <div class="text-sm text-gray-900">{{ appointment.cancellation_reason || '—' }}</div>
                 </div>
+              </div>
+            </div>
+
+            <div v-if="normalizeStatus(appointment.status) === 'no_show'" class="rounded-xl border border-gray-200 p-4">
+              <div class="text-sm font-semibold text-gray-900">Missed</div>
+              <div class="mt-3 grid grid-cols-1 md:grid-cols-4 gap-3">
+                <div>
+                  <div class="text-xs text-gray-500">Missed by</div>
+                  <div class="text-sm text-gray-900">{{ appointment.no_show_display || (appointment.no_show_by ? (appointment.no_show_by === 'patient' ? 'Patient' : (appointment.no_show_by === 'psychologist' ? 'Psychologist' : appointment.no_show_by)) : (appointment.no_show_user_id ? 'User #' + appointment.no_show_user_id : 'Both')) }}</div>
+                </div>
+                <div>
+                  <div class="text-xs text-gray-500">Missed user id</div>
+                  <div class="text-sm text-gray-900">{{ appointment.no_show_user_id || '—' }}</div>
+                </div>
+                <div></div>
+                <div></div>
               </div>
             </div>
 
@@ -221,5 +236,7 @@ function formatDateTime(value) {
     return String(value)
   }
 }
+const isCancelled = computed(() => normalizeStatus(appointment.value?.status) === 'cancelled')
+
 </script>
 

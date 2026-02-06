@@ -76,6 +76,8 @@ class LogsController extends Controller
                 'description' => $l->description,
                 'created_at' => $l->created_at ? $l->created_at->toDateTimeString() : null,
                 'status' => $this->extractStatusFromLog($l),
+                'actor_role' => $l->actor_role ?? null,
+                'actor_id' => $l->actor_id ?? null,
             ];
         });
 
