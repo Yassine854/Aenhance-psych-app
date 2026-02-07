@@ -268,6 +268,7 @@ const menuGroups = [
         roles: ['ADMIN'],
         subItems: [
           { name: "Appointments", path: "/admin/logs/appointments", pro: false },
+          { name: "Sessions", path: "/admin/logs/sessions", pro: false },
           { name: "Psychologists", path: "/admin/logs/psychologists", pro: false },
           { name: "Patients", path: "/admin/logs/patients", pro: false },
        

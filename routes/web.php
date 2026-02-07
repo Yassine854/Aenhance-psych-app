@@ -216,6 +216,10 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/admin/logs/appointments', [LogsController::class, 'appointmentsIndex'])->name('admin.logs.appointments.index');
     Route::get('/admin/logs/appointments/{log}', [LogsController::class, 'appointmentsShow'])->name('admin.logs.appointments.show');
     Route::get('/admin/logs/appointments/{log}/related', [LogsController::class, 'appointmentsRelated'])->name('admin.logs.appointments.related');
+    // Session logs
+    Route::get('/admin/logs/sessions', [LogsController::class, 'sessionsIndex'])->name('admin.logs.sessions.index');
+    Route::get('/admin/logs/sessions/{log}', [LogsController::class, 'sessionsShow'])->name('admin.logs.sessions.show');
+    Route::get('/admin/logs/sessions/{log}/related', [LogsController::class, 'sessionsRelated'])->name('admin.logs.sessions.related');
     // placeholder psychologists logs (can be implemented similarly)
     Route::get('/admin/logs/psychologists', [LogsController::class, 'psychologistsIndex'])->name('admin.logs.psychologists.index');
     Route::get('/admin/logs/psychologists/{log}', [LogsController::class, 'psychologistsShow'])->name('admin.logs.psychologists.show');

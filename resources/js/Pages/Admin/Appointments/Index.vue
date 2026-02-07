@@ -41,7 +41,6 @@
         </div>
 
         <h1 class="text-2xl font-semibold text-gray-900">Appointments</h1>
-        <p class="text-sm text-gray-600">Review all appointments and manage status changes with guidance.</p>
       </div>
 
       <div class="flex items-center gap-3 w-full md:w-auto">
@@ -95,9 +94,43 @@
               />
             </svg>
           </div>
+        <div class="ml-2">
+          <button type="button" @click="filtersOpen = !filtersOpen" class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border bg-white text-sm text-gray-700 hover:bg-gray-50">
+            Filter
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 5a1 1 0 011-1h12a1 1 0 01.707 1.707L12 11.414V15a1 1 0 01-.553.894l-3 1.5A1 1 0 017 16.5V11.414L3.293 5.707A1 1 0 013 5z" clip-rule="evenodd"/></svg>
+          </button>
+        </div>
         </div>
       </div>
     </header>
+
+    <div v-if="filtersOpen" class="bg-white rounded-lg shadow p-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <div class="text-sm font-medium text-gray-700 mb-2">Statuses</div>
+          <div class="flex flex-col gap-2">
+            <label v-for="s in statusOptions" :key="s.value" class="inline-flex items-center gap-2">
+              <input type="checkbox" :value="s.value" v-model="activeStatuses" class="form-checkbox" />
+              <span class="text-sm text-gray-700">{{ s.label }}</span>
+            </label>
+          </div>
+        </div>
+
+        <div>
+          <div class="text-sm font-medium text-gray-700 mb-2">Created Between</div>
+          <div class="flex gap-2">
+            <input type="date" v-model="createdFrom" class="rounded-lg border-gray-300 px-3 py-2 text-sm w-1/2" />
+            <input type="date" v-model="createdTo" class="rounded-lg border-gray-300 px-3 py-2 text-sm w-1/2" />
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end gap-2 mt-4">
+        <button type="button" @click="clearFilters" class="px-3 py-2 rounded-lg border bg-white text-sm text-gray-700 hover:bg-gray-50">Clear</button>
+        <button type="button" @click="filtersOpen = false" class="px-3 py-2 rounded-lg border bg-white text-sm text-gray-700 hover:bg-gray-50">Close</button>
+        <button type="button" @click="applyFilters" class="px-3 py-2 rounded-lg text-white text-sm hover:opacity-90" style="background-color: rgb(89 151 172 / var(--tw-bg-opacity, 1))">Apply</button>
+      </div>
+    </div>
 
     <div class="bg-white rounded-lg shadow overflow-hidden">
       <div class="overflow-x-auto">
@@ -146,7 +179,7 @@
 
           <tbody class="bg-white divide-y divide-gray-200">
             <tr
-              v-for="a in sorted"
+              v-for="a in paginated"
               :key="a.id"
               class="hover:bg-gray-50"
               :class="String(a.status || '').toLowerCase() === 'cancelled' ? 'bg-red-50/30' : ''"
@@ -244,11 +277,63 @@
       </div>
 
       <div class="flex items-center justify-between px-4 py-3 border-t border-gray-200">
-        <div class="text-sm text-gray-600">Showing {{ appointments.from }}-{{ appointments.to }} of {{ appointments.total }}</div>
+        <div class="text-sm text-gray-600">
+          <template v-if="isSearching">
+            Showing
+            <span v-if="totalFiltered === 0">0</span>
+            <span v-else>{{ (clientPage - 1) * perPage + 1 }}-{{ Math.min(clientPage * perPage, totalFiltered) }}</span>
+            of {{ totalFiltered }}
+          </template>
+          <template v-else>
+            Showing {{ appointments.from }}-{{ appointments.to }} of {{ appointments.total }}
+          </template>
+        </div>
+
         <div class="flex items-center gap-2">
-          <Link v-for="(link, i) in appointments.links" :key="i" :href="link.url || '#'" :class="linkClasses(link)" preserve-scroll>
-            <span v-html="link.label"></span>
-          </Link>
+          <template v-if="isSearching">
+            <button
+              type="button"
+              class="inline-flex items-center justify-center px-3 py-1.5 rounded-lg text-sm border bg-white text-gray-700 border-gray-200 hover:bg-gray-50 disabled:opacity-50"
+              :disabled="clientPage <= 1"
+              @click="clientPage = Math.max(1, clientPage - 1)"
+            >
+              Prev
+            </button>
+
+            <button
+              v-for="p in totalPages"
+              :key="p"
+              type="button"
+              class="inline-flex items-center justify-center px-3 py-1.5 rounded-lg text-sm border"
+              :class="p === clientPage ? 'text-white border' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'"
+              :style="p === clientPage ? { backgroundColor: brandColor, borderColor: brandColor, color: '#fff' } : null"
+              @click="clientPage = p"
+            >
+              {{ p }}
+            </button>
+
+            <button
+              type="button"
+              class="inline-flex items-center justify-center px-3 py-1.5 rounded-lg text-sm border bg-white text-gray-700 border-gray-200 hover:bg-gray-50 disabled:opacity-50"
+              :disabled="clientPage >= totalPages"
+              @click="clientPage = Math.min(totalPages, clientPage + 1)"
+            >
+              Next
+            </button>
+          </template>
+
+          <template v-else>
+            <Link
+              v-for="(link, i) in appointments.links"
+              :key="i"
+              :href="link.url || '#'"
+              :class="linkClasses(link)"
+              :style="link.active ? { backgroundColor: brandColor, borderColor: brandColor, color: '#fff' } : null"
+              preserve-scroll
+            >
+              <span v-html="link.label"></span>
+            </Link>
+          </template>
         </div>
       </div>
     </div>
@@ -344,12 +429,54 @@ function clearError() {
 // after an update (redirect back) without needing any manual syncing.
 const data = computed(() => props.appointments?.data || [])
 
+
+
 const searchField = ref('id')
 const searchQuery = ref('')
 const searchDate = ref('')
 
+// client-side pagination when searching: use server per_page value for page size
+const perPage = ref((props.appointments && props.appointments.per_page) || 15)
+const clientPage = ref(1)
+const isSearching = computed(() => {
+  const q = String(searchQuery.value || '').trim()
+  const d = String(searchDate.value || '').trim()
+  const hasStatus = (activeStatuses.value || []).length > 0
+  const fromTo = String(createdFrom.value || '').trim() || String(createdTo.value || '').trim()
+  return Boolean(q || d || hasStatus || fromTo)
+})
+
+// reset client page when filters change so results start at first page
+watch([searchQuery, searchDate], () => {
+  clientPage.value = 1
+})
+
 const modal = ref('')
 const selected = ref(null)
+
+// Filters
+const filtersOpen = ref(false)
+const statusOptions = [
+  { value: 'pending', label: 'Pending' },
+  { value: 'confirmed', label: 'Confirmed' },
+  { value: 'completed', label: 'Completed' },
+  { value: 'cancelled', label: 'Cancelled' },
+  { value: 'no_show', label: 'No Show' },
+]
+const activeStatuses = ref([])
+const createdFrom = ref('')
+const createdTo = ref('')
+
+function applyFilters() {
+  // filters are reactive; just close panel for UX
+  filtersOpen.value = false
+}
+
+function clearFilters() {
+  activeStatuses.value = []
+  createdFrom.value = ''
+  createdTo.value = ''
+}
 
 function openShow(a) {
   selected.value = a
@@ -380,51 +507,77 @@ const searchPlaceholder = computed(() => {
 })
 
 const filtered = computed(() => {
-  const list = data.value || []
+  let list = Array.isArray(data.value) ? [...data.value] : []
 
+  // Date-specific quick search (when search field is date and a date is provided)
   if (searchField.value === 'date') {
     const d = String(searchDate.value || '').trim()
-    if (!d) return list
+    if (d) {
+      list = list.filter((a) => {
+        const start = a?.scheduled_start
+        if (!start) return false
+        try {
+          const iso = new Date(start).toISOString().slice(0, 10)
+          return iso === d
+        } catch {
+          return false
+        }
+      })
+    }
+  } else {
+    const q = String(searchQuery.value || '').trim().toLowerCase()
+    if (q) {
+      list = list.filter((a) => {
+        if (searchField.value === 'id') {
+          return String(a?.id ?? '').toLowerCase().includes(q)
+        }
 
-    return list.filter((a) => {
-      const start = a?.scheduled_start
-      if (!start) return false
-      try {
-        const iso = new Date(start).toISOString().slice(0, 10)
-        return iso === d
-      } catch {
-        return false
-      }
+        if (searchField.value === 'patient') {
+          const hay = String(a?.patient?.name ?? '').toLowerCase()
+          return hay.includes(q)
+        }
+
+        if (searchField.value === 'psychologist') {
+          const hay = String(a?.psychologist?.name ?? '').toLowerCase()
+          return hay.includes(q)
+        }
+
+        const hay = [String(a?.id ?? ''), String(a?.patient?.name ?? ''), String(a?.psychologist?.name ?? '')].join(' ').toLowerCase()
+        return hay.includes(q)
+      })
+    }
+  }
+
+  // apply status filter
+  if ((activeStatuses.value || []).length > 0) {
+    list = list.filter((a) => {
+      const s = String(a?.status || '').toLowerCase()
+      return activeStatuses.value.includes(s)
     })
   }
 
-  const q = searchQuery.value.trim().toLowerCase()
-  if (!q) return list
+  // apply created-between filtering on the client-side list
+  const fromVal = String(createdFrom.value || '').trim()
+  const toVal = String(createdTo.value || '').trim()
+  if (fromVal || toVal) {
+    list = list.filter((a) => {
+      const createdRaw = a?.created_at || a?.scheduled_start || null
+      if (!createdRaw) return false
+      const created = new Date(createdRaw)
+      if (fromVal) {
+        const from = new Date(fromVal)
+        if (!Number.isNaN(from.getTime()) && created < from) return false
+      }
+      if (toVal) {
+        const to = new Date(toVal)
+        to.setHours(23, 59, 59, 999)
+        if (!Number.isNaN(to.getTime()) && created > to) return false
+      }
+      return true
+    })
+  }
 
-  return list.filter((a) => {
-    if (searchField.value === 'id') {
-      return String(a?.id ?? '').toLowerCase().includes(q)
-    }
-
-    if (searchField.value === 'patient') {
-      const hay = String(a?.patient?.name ?? '').toLowerCase()
-      return hay.includes(q)
-    }
-
-    if (searchField.value === 'psychologist') {
-      const hay = String(a?.psychologist?.name ?? '').toLowerCase()
-      return hay.includes(q)
-    }
-
-    const hay = [
-      String(a?.id ?? ''),
-      String(a?.patient?.name ?? ''),
-      String(a?.psychologist?.name ?? ''),
-    ]
-      .join(' ')
-      .toLowerCase()
-    return hay.includes(q)
-  })
+  return list
 })
 
 // Sorting (client-side, applies after search)
@@ -485,6 +638,20 @@ const sorted = computed(() => {
     })
     .map((x) => x.item)
 })
+
+// Paginated rows for rendering: use server-side rows when not searching,
+// otherwise slice the client-side sorted list according to `perPage` and `clientPage`.
+const totalFiltered = computed(() => (filtered.value || []).length)
+const totalPages = computed(() => Math.max(1, Math.ceil(totalFiltered.value / perPage.value)))
+
+const paginated = computed(() => {
+  if (!isSearching.value) return sorted.value
+  const start = (clientPage.value - 1) * perPage.value
+  return sorted.value.slice(start, start + perPage.value)
+})
+
+// Brand color for pagination active background
+const brandColor = 'rgb(89 151 172 / var(--tw-bg-opacity, 1))'
 
 const savingId = ref(null)
 

@@ -672,13 +672,24 @@ class AppointmentController extends Controller
                 $appointment->update(['status' => 'confirmed']);
             }
 
-            AppointmentSession::query()->firstOrCreate(
+            $session = AppointmentSession::query()->firstOrCreate(
                 ['appointment_id' => $appointment->id],
                 [
                     'room_id' => (string) Str::uuid(),
                     'status' => 'active',
                 ]
             );
+
+            if ($session && $session->wasRecentlyCreated && strtolower((string) $session->status) === 'active') {
+                ActivityLogger::log(
+                    $user->id ?? null,
+                    $user->role ?? null,
+                    'created_session_status',
+                    'AppointmentSession',
+                    $session->id,
+                    'Session created with status active after appointment confirmation'
+                );
+            }
 
             $payment = Payment::query()
                 ->where('appointment_id', $appointment->id)
@@ -780,17 +791,28 @@ class AppointmentController extends Controller
             }
             $prevStatus = (string) $appointment->status;
 
-            DB::transaction(function () use ($appointment) {
+            DB::transaction(function () use ($appointment, $user) {
                 $appointment->update(['status' => 'confirmed']);
 
                 // Ensure the related session exists (1:1 per appointment).
-                AppointmentSession::query()->firstOrCreate(
+                $session = AppointmentSession::query()->firstOrCreate(
                     ['appointment_id' => $appointment->id],
                     [
                         'room_id' => (string) Str::uuid(),
                         'status' => 'active',
                     ]
                 );
+
+                if ($session && $session->wasRecentlyCreated && strtolower((string) $session->status) === 'active') {
+                    ActivityLogger::log(
+                        $user->id ?? null,
+                        $user->role ?? null,
+                        'updated_session_status',
+                        'AppointmentSession',
+                        $session->id,
+                        'Session created with status active after appointment confirmation'
+                    );
+                }
 
                 // Create (or update) a payment record.
                 // For now: skip payment gateway and mark as paid immediately.
@@ -1015,10 +1037,6 @@ class AppointmentController extends Controller
                 'status' => 'active',
             ]
         );
-
-        if ($session) {
-            ActivityLogger::log($user->id, $user->role ?? null, 'joined_video_call', 'AppointmentSession', $session->id, 'User joined video call for appointment '.$appointment->id);
-        }
 
         $signalingUrl = (string) (config('app.signaling_url') ?: env('VITE_SIGNALING_URL', 'ws://localhost:3001'));
 

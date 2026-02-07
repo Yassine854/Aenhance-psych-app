@@ -9,6 +9,7 @@ use App\Models\Log;
 use App\Models\PsychologistProfile;
 use App\Models\PatientProfile;
 use App\Models\User;
+use App\Models\AppointmentSession;
 
 class LogsController extends Controller
 {
@@ -49,6 +50,161 @@ class LogsController extends Controller
 
         return Inertia::render('Admin/Logs/Appointments/Show', [
             'log' => $log,
+        ]);
+    }
+
+    // Sessions logs
+    public function sessionsIndex(Request $request)
+    {
+        $query = Log::query()
+            ->with(['appointment', 'appointment.patient.patientProfile', 'appointment.psychologist.psychologistProfile'])
+            ->where('target_type', 'AppointmentSession')
+            ->orderBy('id', 'desc');
+
+        if ($request->filled('q')) {
+            $q = $request->input('q');
+            $query->where(function ($s) use ($q) {
+                $s->where('action', 'like', "%{$q}%")
+                  ->orWhere('description', 'like', "%{$q}%")
+                  ->orWhere('actor_role', 'like', "%{$q}%")
+                  ->orWhere('target_id', 'like', "%{$q}%");
+            });
+        }
+
+        $logs = $query->paginate(15)->appends($request->query());
+
+        return Inertia::render('Admin/Logs/Sessions/Index', [
+            'logs' => $logs,
+            'filters' => $request->only(['q']),
+        ]);
+    }
+
+    public function sessionsShow(Log $log)
+    {
+        if ($log->target_type !== 'AppointmentSession') {
+            abort(404);
+        }
+
+        $sessionPayload = null;
+        try {
+            $s = AppointmentSession::find($log->target_id);
+            if ($s) {
+                $patient = null;
+                $psychologist = null;
+                try {
+                    // Prefer appointment data attached to the Log if available (more reliable).
+                    $appt = $log->appointment ?? $s->appointment ?? null;
+                    if ($appt) {
+                        // Patient
+                        $p = $appt->patient ?? null;
+                        if ($p) {
+                            $patient = [
+                                'id' => $p->id,
+                                'name' => $p->name ?? null,
+                                'email' => $p->email ?? null,
+                                'profile' => $p->patientProfile ? [
+                                    'first_name' => $p->patientProfile->first_name ?? null,
+                                    'last_name' => $p->patientProfile->last_name ?? null,
+                                ] : null,
+                            ];
+                        }
+
+                        // Psychologist
+                        $ph = $appt->psychologist ?? null;
+                        if ($ph) {
+                            $psychologist = [
+                                'id' => $ph->id,
+                                'name' => $ph->name ?? null,
+                                'email' => $ph->email ?? null,
+                                'profile' => $ph->psychologistProfile ? [
+                                    'first_name' => $ph->psychologistProfile->first_name ?? null,
+                                    'last_name' => $ph->psychologistProfile->last_name ?? null,
+                                ] : null,
+                            ];
+                        }
+                    }
+                } catch (\Throwable $e) {
+                    // ignore relation issues
+                }
+
+                $sessionPayload = [
+                    'id' => $s->id,
+                    'appointment_id' => $s->appointment_id,
+                    'room_id' => $s->room_id,
+                    'started_at' => $s->started_at ? $s->started_at->toDateTimeString() : null,
+                    'ended_at' => $s->ended_at ? $s->ended_at->toDateTimeString() : null,
+                    'patient_joined_at' => $s->patient_joined_at ? $s->patient_joined_at->toDateTimeString() : null,
+                    'psychologist_joined_at' => $s->psychologist_joined_at ? $s->psychologist_joined_at->toDateTimeString() : null,
+                    'patient_left_at' => $s->patient_left_at ? $s->patient_left_at->toDateTimeString() : null,
+                    'psychologist_left_at' => $s->psychologist_left_at ? $s->psychologist_left_at->toDateTimeString() : null,
+                    'duration_minutes' => $s->duration_minutes,
+                    'status' => $s->status,
+                    'patient' => $patient,
+                    'psychologist' => $psychologist,
+                ];
+            }
+        } catch (\Throwable $e) {
+            $sessionPayload = null;
+        }
+
+        return Inertia::render('Admin/Logs/Sessions/Show', [
+            'log' => $log,
+            'session' => $sessionPayload,
+        ]);
+    }
+
+    public function sessionsRelated(Request $request, Log $log)
+    {
+        if ($log->target_type !== 'AppointmentSession') {
+            return response()->json(['error' => 'Not a session log'], 400);
+        }
+
+        $related = Log::query()
+            ->where('target_type', 'AppointmentSession')
+            ->where('target_id', $log->target_id)
+            ->where('created_at', '<', $log->created_at)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        $mapped = $related->map(function ($l) {
+            return [
+                'id' => $l->id,
+                'action' => $l->action,
+                'description' => $l->description,
+                'created_at' => $l->created_at ? $l->created_at->toDateTimeString() : null,
+                'status' => $this->extractStatusFromLog($l),
+                'actor_role' => $l->actor_role ?? null,
+                'actor_id' => $l->actor_id ?? null,
+            ];
+        });
+
+        $session = null;
+        try {
+            $s = AppointmentSession::find($log->target_id);
+            if ($s) {
+                $session = [
+                    'id' => $s->id,
+                    'appointment_id' => $s->appointment_id,
+                    'room_id' => $s->room_id,
+                    'started_at' => $s->started_at ? $s->started_at->toDateTimeString() : null,
+                    'ended_at' => $s->ended_at ? $s->ended_at->toDateTimeString() : null,
+                    'patient_joined_at' => $s->patient_joined_at ? $s->patient_joined_at->toDateTimeString() : null,
+                    'psychologist_joined_at' => $s->psychologist_joined_at ? $s->psychologist_joined_at->toDateTimeString() : null,
+                    'patient_left_at' => $s->patient_left_at ? $s->patient_left_at->toDateTimeString() : null,
+                    'psychologist_left_at' => $s->psychologist_left_at ? $s->psychologist_left_at->toDateTimeString() : null,
+                    'duration_minutes' => $s->duration_minutes,
+                    'status' => $s->status,
+                    'patient_in_room' => $s->patient_in_room,
+                    'psychologist_in_room' => $s->psychologist_in_room,
+                ];
+            }
+        } catch (\Throwable $e) {
+            $session = null;
+        }
+
+        return response()->json([
+            'session' => $session,
+            'logs' => $mapped,
         ]);
     }
 

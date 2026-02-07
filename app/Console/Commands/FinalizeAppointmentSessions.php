@@ -125,6 +125,19 @@ class FinalizeAppointmentSessions extends Command
                 $session->patient_in_room = false;
                 $session->psychologist_in_room = false;
                 $session->save();
+                // Log that the session was completed by the system (no-show flow).
+                try {
+                    ActivityLogger::log(
+                        $noShowUserId ?? null,
+                        $noShowBy ? strtoupper($noShowBy) : 'SYSTEM',
+                        'updated_session_status',
+                        'AppointmentSession',
+                        $session->id,
+                        'Session marked completed by system due to no-show: '.$who
+                    );
+                } catch (\Throwable $e) {
+                    // ignore logging errors
+                }
             });
         }
     }
@@ -165,6 +178,20 @@ class FinalizeAppointmentSessions extends Command
                 $session->duration_minutes = max(0, (int) $session->started_at->diffInMinutes($now));
                 $session->status = 'completed';
                 $session->save();
+
+                // Log that the session was auto-completed by the system (timeout flow).
+                try {
+                    ActivityLogger::log(
+                        null,
+                        'SYSTEM',
+                        'updated_session_status',
+                        'AppointmentSession',
+                        $session->id,
+                        'Session auto-completed by system due to timeout'
+                    );
+                } catch (\Throwable $e) {
+                    // ignore logging errors
+                }
 
                 $appointment = Appointment::query()->lockForUpdate()->find($session->appointment_id);
                 if ($appointment && strtolower((string) $appointment->status) === 'confirmed') {
