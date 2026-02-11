@@ -218,6 +218,7 @@ const menuGroups = [
         roles: ['ADMIN'],
         subItems: [
           { name: "All Psychologists", path: "/psychologist-profiles", pro: false },
+              { name: "Payouts", path: "/admin/payouts", pro: false },
           { name: "Specialisations", path: "/specialisations", pro: false },
           { name: "Expertises", path: "/expertises", pro: false },
         ],
@@ -228,6 +229,12 @@ const menuGroups = [
         icon: CalenderIcon,
         roles: ['ADMIN'],
         path: "/admin/appointments",
+      },
+      {
+        name: "Payments",
+        icon: TableIcon,
+        roles: ['ADMIN'],
+        path: "/admin/payments",
       },
       // Psychologist: self profile entry
       {

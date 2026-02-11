@@ -26,6 +26,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Controllers\AppFeeController;
+use App\Http\Controllers\Admin\PaymentsController;
 
 /*
 |--------------------------------------------------------------------------
@@ -149,6 +150,17 @@ Route::middleware(['auth'])->group(function () {
     // Appointments (Admin)
     Route::get('/admin/appointments', [AdminAppointmentController::class, 'index'])->name('admin.appointments.index');
     Route::patch('/admin/appointments/{appointment}', [AdminAppointmentController::class, 'update'])->name('admin.appointments.update');
+
+    // Payments (Admin)
+    Route::get('/admin/payments', [PaymentsController::class, 'index'])->name('admin.payments.index');
+    Route::get('/admin/payments/{payment}', [PaymentsController::class, 'show'])->name('admin.payments.show');
+    Route::patch('/admin/payments/{payment}', [PaymentsController::class, 'updateStatus'])->name('admin.payments.update');
+
+    // Payouts (Admin)
+    Route::get('/admin/payouts', [App\Http\Controllers\Admin\PayoutsController::class, 'index'])->name('admin.payouts.index');
+    Route::get('/admin/payouts/{payout}', [App\Http\Controllers\Admin\PayoutsController::class, 'show'])->name('admin.payouts.show');
+    Route::patch('/admin/payouts/{payout}', [App\Http\Controllers\Admin\PayoutsController::class, 'updateStatus'])->name('admin.payouts.update');
+    Route::patch('/admin/payouts', [App\Http\Controllers\Admin\PayoutsController::class, 'bulkUpdate'])->name('admin.payouts.bulk_update');
 
     // Specialisations (Admin)
     Route::get('/specialisations', [SpecialisationController::class, 'index'])->name('specialisations.index');
