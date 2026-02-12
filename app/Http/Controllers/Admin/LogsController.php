@@ -259,6 +259,91 @@ class LogsController extends Controller
         ]);
     }
 
+    // Payouts logs
+    public function payoutsIndex(Request $request)
+    {
+        $query = Log::query()
+            ->orderBy('id', 'desc')
+            ->where('target_type', 'PsychologistPayout');
+
+        if ($request->filled('q')) {
+            $q = $request->input('q');
+            $query->where(function ($s) use ($q) {
+                $s->where('action', 'like', "%{$q}%")
+                  ->orWhere('description', 'like', "%{$q}%")
+                  ->orWhere('actor_role', 'like', "%{$q}%")
+                  ->orWhere('target_id', 'like', "%{$q}%");
+            });
+        }
+
+        $logs = $query->paginate(15)->appends($request->query());
+
+        return Inertia::render('Admin/Logs/Payouts/Index', [
+            'logs' => $logs,
+            'filters' => $request->only(['q']),
+        ]);
+    }
+
+    public function payoutsShow(Log $log)
+    {
+        if ($log->target_type !== 'PsychologistPayout') {
+            abort(404);
+        }
+
+        return Inertia::render('Admin/Logs/Payouts/Show', [
+            'log' => $log,
+        ]);
+    }
+
+    public function payoutsRelated(Request $request, Log $log)
+    {
+        if ($log->target_type !== 'PsychologistPayout') {
+            return response()->json(['error' => 'Not a payout log'], 400);
+        }
+
+        $related = Log::query()
+            ->where('target_type', 'PsychologistPayout')
+            ->where('target_id', $log->target_id)
+            ->where('created_at', '<', $log->created_at)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        $mapped = $related->map(function ($l) {
+            return [
+                'id' => $l->id,
+                'action' => $l->action,
+                'description' => $l->description,
+                'created_at' => $l->created_at ? $l->created_at->toDateTimeString() : null,
+                'status' => $this->extractStatusFromLog($l),
+                'actor_role' => $l->actor_role ?? null,
+                'actor_id' => $l->actor_id ?? null,
+            ];
+        });
+
+        // include brief payout info if available
+        $payout = null;
+        try {
+            $pp = \App\Models\PsychologistPayout::find($log->target_id);
+            if ($pp) {
+                $payout = [
+                    'id' => $pp->id,
+                    'appointment_id' => $pp->appointment_id,
+                    'psychologist_id' => $pp->psychologist_id,
+                    'gross_amount' => (string) $pp->gross_amount,
+                    'net_amount' => (string) $pp->net_amount,
+                    'status' => $pp->status,
+                ];
+            }
+        } catch (\Throwable $e) {
+            $payout = null;
+        }
+
+        return response()->json([
+            'payout' => $payout,
+            'logs' => $mapped,
+        ]);
+    }
+
     private function extractStatusFromLog(Log $l)
     {
         // Normalize to one of: pending, confirmed, completed, cancelled, no_show
@@ -268,6 +353,9 @@ class LogsController extends Controller
         if (str_contains($action, 'complete') || str_contains($action, 'completed')) return 'completed';
         if (str_contains($action, 'cancel')) return 'cancelled';
         if (str_contains($action, 'no_show') || str_contains($action, 'no-show') || str_contains($action, 'no show')) return 'no_show';
+        if (str_contains($action, 'refund') || str_contains($action, 'refunded')) return 'refunded';
+        if (str_contains($action, 'paid') || str_contains($action, 'paid_at')) return 'paid';
+        if (str_contains($action, 'on_hold') || str_contains($action, 'on-hold') || str_contains($action, 'on hold')) return 'on_hold';
 
         // try to parse description for common status tokens
         $desc = strtolower((string) $l->description);
@@ -280,11 +368,11 @@ class LogsController extends Controller
         // try to parse "to <status>" or "status <status>"
         if (preg_match('/to\s+([a-z_\-]+)/', $desc, $m)) {
             $s = str_replace('-', '_', $m[1]);
-            return $this->normalizeStatusToken($s);
+            return $this->normalizeStatusToken($s) ?? $s;
         }
         if (preg_match('/status\s+([a-z_\-]+)/', $desc, $m)) {
             $s = str_replace('-', '_', $m[1]);
-            return $this->normalizeStatusToken($s);
+            return $this->normalizeStatusToken($s) ?? $s;
         }
 
         return null;
@@ -307,6 +395,14 @@ class LogsController extends Controller
             'no-show' => 'no_show',
             'no show' => 'no_show',
             'noshow' => 'no_show',
+            'refund' => 'refunded',
+            'refunded' => 'refunded',
+            'refunds' => 'refunded',
+            'paid' => 'paid',
+            'paid_at' => 'paid',
+            'on_hold' => 'on_hold',
+            'on-hold' => 'on_hold',
+            'on hold' => 'on_hold',
         ];
 
         return $map[$t] ?? ($map[str_replace('-', '_', $t)] ?? null);

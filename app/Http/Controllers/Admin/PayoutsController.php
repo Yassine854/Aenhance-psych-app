@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\PsychologistPayout;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use App\Models\Log;
 
 class PayoutsController extends Controller
 {
@@ -101,20 +102,29 @@ class PayoutsController extends Controller
 
         $newStatus = $data['status'];
 
+        $oldStatus = (string) $payout->status;
+        $update = ['status' => $newStatus];
         if ($newStatus === 'paid') {
-            $payout->update([
-                'status' => 'paid',
-                'paid_at' => now(),
-            ]);
-        } elseif ($newStatus === 'refund') {
-            $payout->update([
-                'status' => 'refund',
-                'refund_at' => now(),
-            ]);
-        } else {
-            $payout->update([
+            $update['paid_at'] = now();
+        }
+        if ($newStatus === 'refund') {
+            $update['refund_at'] = now();
+        }
+        $payout->update($update);
+
+        // Record activity log for this payout status change
+        try {
+            Log::record([
+                'actor_id' => $user ? $user->id : null,
+                'actor_role' => $user && method_exists($user, 'isAdmin') && $user->isAdmin() ? 'admin' : null,
+                'action' => 'status_changed',
+                'target_type' => 'PsychologistPayout',
+                'target_id' => $payout->id,
                 'status' => $newStatus,
+                'description' => sprintf('Status changed from %s to %s', $oldStatus ?: 'unknown', $newStatus),
             ]);
+        } catch (\Throwable $e) {
+            // intentionally ignore logging failures
         }
 
         if ($request->wantsJson() || $request->expectsJson()) {
@@ -149,6 +159,23 @@ class PayoutsController extends Controller
         }
 
         PsychologistPayout::whereIn('id', $ids)->update($update);
+
+        // Record activity logs for each payout changed
+        try {
+            foreach ($ids as $id) {
+                Log::record([
+                    'actor_id' => $user ? $user->id : null,
+                    'actor_role' => $user && method_exists($user, 'isAdmin') && $user->isAdmin() ? 'admin' : null,
+                    'action' => 'status_changed',
+                    'target_type' => 'PsychologistPayout',
+                    'target_id' => $id,
+                    'status' => $status,
+                    'description' => sprintf('Status changed to %s', $status),
+                ]);
+            }
+        } catch (\Throwable $e) {
+            // ignore logging errors
+        }
 
         if ($request->wantsJson() || $request->expectsJson()) {
             return response()->json(['updated' => count($ids)]);

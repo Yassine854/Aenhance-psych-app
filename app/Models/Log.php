@@ -19,11 +19,13 @@ class Log extends Model
         'target_type',
         'target_id',
         'description',
+        'status',
     ];
 
     protected $casts = [
         'actor_id' => 'integer',
         'target_id' => 'integer',
+        'status' => 'string',
     ];
 
     /**
