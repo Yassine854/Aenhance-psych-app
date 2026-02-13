@@ -156,6 +156,11 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/admin/payments/{payment}', [PaymentsController::class, 'show'])->name('admin.payments.show');
     Route::patch('/admin/payments/{payment}', [PaymentsController::class, 'updateStatus'])->name('admin.payments.update');
 
+    // Reports (Admin)
+    Route::get('/admin/reports', [App\Http\Controllers\Admin\ReportsController::class, 'index'])->name('admin.reports.index');
+    Route::get('/admin/reports/{report}', [App\Http\Controllers\Admin\ReportsController::class, 'show'])->name('admin.reports.show');
+    Route::patch('/admin/reports/{report}', [App\Http\Controllers\Admin\ReportsController::class, 'update'])->name('admin.reports.update');
+
     // Payouts (Admin)
     Route::get('/admin/payouts', [App\Http\Controllers\Admin\PayoutsController::class, 'index'])->name('admin.payouts.index');
     Route::get('/admin/payouts/{payout}', [App\Http\Controllers\Admin\PayoutsController::class, 'show'])->name('admin.payouts.show');
