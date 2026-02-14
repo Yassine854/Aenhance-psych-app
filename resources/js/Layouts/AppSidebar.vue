@@ -237,6 +237,12 @@ const menuGroups = [
         path: "/admin/payments",
       },
       {
+        name: "Rates",
+        icon: DocsIcon,
+        roles: ['ADMIN'],
+        path: "/admin/rates",
+      },
+      {
         name: "Reports",
         icon: DocsIcon,
         roles: ['ADMIN'],

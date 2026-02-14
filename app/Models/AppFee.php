@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class AppFee extends Model
 {
     use HasFactory;
-
+    
     protected $fillable = [
         'percentage',
     ];

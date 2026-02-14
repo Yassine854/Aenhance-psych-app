@@ -146,7 +146,6 @@ Route::middleware(['auth'])->group(function () {
     Route::patch('/users/{user}', [UserController::class, 'update']);
     Route::patch('/users/{user}/deactivate', [UserController::class, 'deactivate']);
     Route::patch('/users/{user}/activate', [UserController::class, 'activate']);
-
     // Appointments (Admin)
     Route::get('/admin/appointments', [AdminAppointmentController::class, 'index'])->name('admin.appointments.index');
     Route::patch('/admin/appointments/{appointment}', [AdminAppointmentController::class, 'update'])->name('admin.appointments.update');
@@ -155,6 +154,10 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/admin/payments', [PaymentsController::class, 'index'])->name('admin.payments.index');
     Route::get('/admin/payments/{payment}', [PaymentsController::class, 'show'])->name('admin.payments.show');
     Route::patch('/admin/payments/{payment}', [PaymentsController::class, 'updateStatus'])->name('admin.payments.update');
+
+    // Rates (Admin)
+    Route::get('/admin/rates', [App\Http\Controllers\Admin\RatesController::class, 'index'])->name('admin.rates.index');
+    Route::get('/admin/rates/{rating}', [App\Http\Controllers\Admin\RatesController::class, 'show'])->name('admin.rates.show');
 
     // Reports (Admin)
     Route::get('/admin/reports', [App\Http\Controllers\Admin\ReportsController::class, 'index'])->name('admin.reports.index');
