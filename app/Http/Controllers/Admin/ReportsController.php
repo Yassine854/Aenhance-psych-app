@@ -9,6 +9,7 @@ use App\Models\PatientProfile;
 use App\Models\PsychologistProfile;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class ReportsController extends Controller
 {
@@ -23,60 +24,113 @@ class ReportsController extends Controller
 
     public function index(Request $request)
     {
-        $reports = Report::query()
-            ->orderByDesc('id')
-            ->paginate(15);
+        // Collect filter inputs
+        $filters = [
+            'search_field' => (string) $request->input('search_field', 'id'),
+            'search_query' => (string) $request->input('search_query', ''),
+            'created_from' => (string) $request->input('created_from', ''),
+            'created_to' => (string) $request->input('created_to', ''),
+        ];
 
-        $reports->setCollection(
-            $reports->getCollection()->map(function (Report $r) {
-                // resolve display name for reporter and reported without using morph relation
-                $resolve = function ($type, $id) {
-                    if (! $type || ! $id) return null;
+        $perPage = 15;
+        $page = (int) $request->input('page', 1);
 
-                    // try common model lookups in order that match how the frontend submits IDs
-                    // reporter_id is usually a User id (auth user), reported_id is often a PsychologistProfile id
-                    $name = null;
+        // Base query (we'll map results to resolved display payloads and then apply name/status filters in-memory)
+        $base = Report::query()->orderByDesc('id');
+        $reports = $base->paginate($perPage);
 
-                    // try User first
-                    $user = User::find($id);
-                    if ($user) {
-                        $name = $user->name ?? ($user->full_name ?? null);
-                        return ['id' => $user->id, 'type' => (string) $type, 'name' => $name];
-                    }
+        // Map items to payloads with resolved reporter/reported display info
+        $mapped = collect($reports->items())->map(function (Report $r) {
+            $resolve = function ($type, $id) {
+                if (! $type || ! $id) return null;
 
-                    // try PatientProfile
-                    $p = PatientProfile::find($id);
-                    if ($p) {
-                        $name = $p->user?->name ?? ($p->first_name ? trim(($p->first_name . ' ' . ($p->last_name ?? ''))) : null);
-                        return ['id' => $p->id, 'type' => (string) $type, 'name' => $name];
-                    }
+                $name = null;
 
-                    // try PsychologistProfile
-                    $pp = PsychologistProfile::find($id);
-                    if ($pp) {
-                        $name = $pp->user?->name ?? ($pp->first_name ? trim(($pp->first_name . ' ' . ($pp->last_name ?? ''))) : null);
-                        return ['id' => $pp->id, 'type' => (string) $type, 'name' => $name];
-                    }
+                $user = User::find($id);
+                if ($user) {
+                    $name = $user->name ?? ($user->full_name ?? null);
+                    return ['id' => $user->id, 'type' => (string) $type, 'name' => $name];
+                }
 
-                    return ['id' => $id, 'type' => (string) $type, 'name' => null];
-                };
+                $p = PatientProfile::find($id);
+                if ($p) {
+                    $name = $p->user?->name ?? ($p->first_name ? trim(($p->first_name . ' ' . ($p->last_name ?? ''))) : null);
+                    return ['id' => $p->id, 'type' => (string) $type, 'name' => $name];
+                }
 
-                return [
-                    'id' => $r->id,
-                    'reporter' => $resolve($r->reporter_type, $r->reporter_id),
-                    'reported' => $resolve($r->reported_type, $r->reported_id),
-                    'reason' => $r->reason,
-                    'proof_image' => $r->proof_image,
-                    'is_resolved' => (bool) $r->is_resolved,
-                    'created_at' => optional($r->created_at)->toISOString() ?? (string) $r->created_at,
-                    'resolved_at' => optional($r->resolved_at)->toISOString() ?? (string) $r->resolved_at,
-                ];
-            })
-        );
+                $pp = PsychologistProfile::find($id);
+                if ($pp) {
+                    $name = $pp->user?->name ?? ($pp->first_name ? trim(($pp->first_name . ' ' . ($pp->last_name ?? ''))) : null);
+                    return ['id' => $pp->id, 'type' => (string) $type, 'name' => $name];
+                }
+
+                return ['id' => $id, 'type' => (string) $type, 'name' => null];
+            };
+
+            return [
+                'id' => $r->id,
+                'reporter' => $resolve($r->reporter_type, $r->reporter_id),
+                'reported' => $resolve($r->reported_type, $r->reported_id),
+                'reason' => $r->reason,
+                'proof_image' => $r->proof_image,
+                'is_resolved' => (bool) $r->is_resolved,
+                'created_at' => optional($r->created_at)->toISOString() ?? (string) $r->created_at,
+                'resolved_at' => optional($r->resolved_at)->toISOString() ?? (string) $r->resolved_at,
+            ];
+        })->all();
+
+        // Apply simple filters in-memory on the resolved payloads (useful for reporter/reported name searches)
+        $filtered = collect($mapped)->filter(function ($item) use ($filters) {
+            $q = trim(strtolower((string) ($filters['search_query'] ?? '')));
+            $field = strtolower((string) ($filters['search_field'] ?? ''));
+
+            // Created between filter
+            if (!empty($filters['created_from']) || !empty($filters['created_to'])) {
+                $createdTs = strtotime($item['created_at']) ?: null;
+                if ($createdTs) {
+                    if (!empty($filters['created_from']) && $createdTs < strtotime($filters['created_from'])) return false;
+                    if (!empty($filters['created_to']) && $createdTs > strtotime($filters['created_to'] . ' 23:59:59')) return false;
+                }
+            }
+
+            if ($q === '') return true;
+
+            switch ($field) {
+                case 'id':
+                    return strpos((string) $item['id'], $q) !== false;
+                case 'reporter':
+                    $hay = strtolower(trim((string) ($item['reporter']['name'] ?? '')));
+                    $type = strtolower(trim((string) ($item['reporter']['type'] ?? '')));
+                    return (strpos($hay, $q) !== false) || (strpos($type, $q) !== false);
+                case 'reported':
+                    $hay = strtolower(trim((string) ($item['reported']['name'] ?? '')));
+                    $type = strtolower(trim((string) ($item['reported']['type'] ?? '')));
+                    return (strpos($hay, $q) !== false) || (strpos($type, $q) !== false);
+                case 'status':
+                    $statusText = $item['is_resolved'] ? 'resolved' : 'open';
+                    return (strpos($statusText, $q) !== false) || (strpos((string) ($item['is_resolved'] ? '1' : '0'), $q) !== false);
+                default:
+                    // fallback to searching reason + reporter + reported
+                    $hay = strtolower(trim((string) ($item['reason'] ?? '')));
+                    $hay .= ' ' . strtolower(trim((string) ($item['reporter']['name'] ?? '')));
+                    $hay .= ' ' . strtolower(trim((string) ($item['reported']['name'] ?? '')));
+                    return strpos($hay, $q) !== false;
+            }
+        })->values()->all();
+
+        // Rebuild paginator from filtered results
+        $total = count($filtered);
+        $itemsForPage = array_slice($filtered, ($page - 1) * $perPage, $perPage);
+
+        $paginator = new LengthAwarePaginator($itemsForPage, $total, $perPage, $page, [
+            'path' => $request->url(),
+            'query' => $request->query(),
+        ]);
 
         return Inertia::render('Admin/Reports/Index', [
-            'reports' => $reports,
+            'reports' => $paginator,
             'status' => session('status'),
+            'filters' => $filters,
         ]);
     }
 

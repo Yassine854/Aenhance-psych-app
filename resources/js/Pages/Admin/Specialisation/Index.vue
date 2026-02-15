@@ -44,6 +44,18 @@
               clip-rule="evenodd"
             />
           </svg>
+            <button
+              v-if="searchQuery"
+              type="button"
+              @click="clearSearch"
+              class="absolute right-2 top-1/2 -translate-y-1/2 inline-flex items-center justify-center h-7 w-7 rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+              aria-label="Clear text"
+              title="Clear"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-4 w-4">
+                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+              </svg>
+            </button>
         </div>
 
         <button
@@ -64,14 +76,24 @@
         <table class="min-w-full divide-y divide-gray-200">
           <thead class="bg-gray-50">
             <tr>
-              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+              <th class="px-4 py-3 text-left">
+                <button type="button" @click="toggleSort('id')" class="group inline-flex items-center gap-1 text-xs font-medium text-gray-500 uppercase tracking-wider hover:text-gray-700">
+                  ID
+                  <SortIcon :active="sortKey === 'id'" :dir="sortDir" />
+                </button>
+              </th>
+              <th class="px-4 py-3 text-left">
+                <button type="button" @click="toggleSort('name')" class="group inline-flex items-center gap-1 text-xs font-medium text-gray-500 uppercase tracking-wider hover:text-gray-700">
+                  Name
+                  <SortIcon :active="sortKey === 'name'" :dir="sortDir" />
+                </button>
+              </th>
               <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
 
           <tbody class="bg-white divide-y divide-gray-200">
-            <tr v-for="s in filtered" :key="s.id" class="hover:bg-gray-50">
+            <tr v-for="s in sorted" :key="s.id" class="hover:bg-gray-50">
               <td class="px-4 py-3 text-sm text-gray-700">#{{ s.id }}</td>
               <td class="px-4 py-3">
                 <div class="text-sm font-medium text-gray-900">{{ s.name }}</div>
@@ -125,9 +147,10 @@
           <Link
             v-for="(link, i) in specialisations.links"
             :key="i"
-            :href="link.url || '#'"
+              :href="link.url || '#'"
             :class="linkClasses(link)"
             preserve-scroll
+              :style="link.active ? { backgroundColor: brandColor, borderColor: brandColor, color: '#fff' } : null"
           >
             <span v-html="link.label"></span>
           </Link>
@@ -142,7 +165,7 @@
 </template>
 
 <script setup>
-import { Link } from '@inertiajs/vue3'
+import { Link, router } from '@inertiajs/vue3'
 import { ref, computed, watch } from 'vue'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import Swal from 'sweetalert2'
@@ -150,10 +173,11 @@ import Swal from 'sweetalert2'
 import Create from './Create.vue'
 import Edit from './Edit.vue'
 import Show from './Show.vue'
+import SortIcon from '@/Components/SortIcon.vue'
 
 defineOptions({ layout: AdminLayout })
 
-const props = defineProps({ specialisations: Object })
+const props = defineProps({ specialisations: Object, filters: { type: Object, default: () => ({}) } })
 
 const data = ref(props.specialisations?.data ? [...props.specialisations.data] : [])
 watch(
@@ -181,11 +205,123 @@ function clearFlash() {
   flashTimer = null
 }
 
+const searchField = ref('name')
+const isHydratingFilters = ref(false)
+let searchDebounce = null
+
+function normalizeFilters(filters = {}) {
+  const validField = ['id', 'name'].includes(String(filters?.search_field || '').toLowerCase())
+    ? String(filters.search_field).toLowerCase()
+    : 'name'
+
+  return {
+    search_field: validField,
+    search_query: String(filters?.search_query || ''),
+  }
+}
+
+function hydrateFiltersFromProps() {
+  const f = normalizeFilters(props.filters || {})
+  isHydratingFilters.value = true
+  searchField.value = f.search_field
+  searchQuery.value = f.search_query
+  isHydratingFilters.value = false
+}
+
+function currentQueryParams() {
+  const params = {
+    search_field: searchField.value,
+    search_query: String(searchQuery.value || '').trim(),
+  }
+
+  return Object.fromEntries(Object.entries(params).filter(([_, value]) => value !== '' && value != null))
+}
+
+function applyServerFilters({ resetPage = true } = {}) {
+  if (isHydratingFilters.value) return
+  const params = currentQueryParams()
+  if (resetPage) params.page = 1
+  router.get(route('specialisations.index'), params, {
+    preserveScroll: true,
+    preserveState: true,
+    replace: true,
+    only: ['specialisations', 'filters'],
+  })
+}
+
+function clearSearch() {
+  if (searchDebounce) { clearTimeout(searchDebounce); searchDebounce = null }
+  searchQuery.value = ''
+  applyServerFilters({ resetPage: true })
+}
+
 const searchQuery = ref('')
 const filtered = computed(() => {
   const q = searchQuery.value.trim().toLowerCase()
   if (!q) return data.value || []
   return (data.value || []).filter((s) => String(s?.name ?? '').toLowerCase().includes(q))
+})
+
+hydrateFiltersFromProps()
+
+watch(() => props.specialisations, () => { hydrateFiltersFromProps() })
+
+watch(searchField, (next) => {
+  if (isHydratingFilters.value) return
+  searchQuery.value = ''
+  applyServerFilters({ resetPage: true })
+})
+
+watch(searchQuery, () => {
+  if (isHydratingFilters.value) return
+  if (searchDebounce) clearTimeout(searchDebounce)
+  searchDebounce = setTimeout(() => { applyServerFilters({ resetPage: true }); searchDebounce = null }, 300)
+})
+
+const sortKey = ref('id')
+const sortDir = ref('asc')
+
+function toggleSort(key) {
+  if (sortKey.value === key) {
+    sortDir.value = sortDir.value === 'asc' ? 'desc' : 'asc'
+    return
+  }
+  sortKey.value = key
+  sortDir.value = 'asc'
+}
+
+function getSortValue(item, key) {
+  switch (key) {
+    case 'id':
+      return Number(item?.id || 0)
+    case 'name':
+      return String(item?.name || '').toLowerCase()
+    default:
+      return ''
+  }
+}
+
+const sorted = computed(() => {
+  const list = filtered.value || []
+  const key = sortKey.value
+  const dir = sortDir.value
+  const multiplier = dir === 'asc' ? 1 : -1
+
+  return list
+    .map((item, idx) => ({ item, idx }))
+    .sort((a, b) => {
+      const av = getSortValue(a.item, key)
+      const bv = getSortValue(b.item, key)
+
+      if (typeof av === 'number' && typeof bv === 'number') {
+        const diff = av - bv
+        return diff !== 0 ? diff * multiplier : a.idx - b.idx
+      }
+
+      const diff = String(av).localeCompare(String(bv))
+      return diff !== 0 ? diff * multiplier : a.idx - b.idx
+    })
+    .map((x) => x.item)
 })
 
 const modal = ref(null) // 'create' | 'edit' | 'show' | null
@@ -227,6 +363,8 @@ function linkClasses(link) {
   if (!link.url) return base + 'bg-gray-50 text-gray-400 border-gray-200 cursor-not-allowed'
   return base + 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
 }
+
+const brandColor = 'rgb(89 151 172 / var(--tw-bg-opacity, 1))'
 
 async function ensureCsrfToken() {
   const tokenEl = document.querySelector('meta[name="csrf-token"]')

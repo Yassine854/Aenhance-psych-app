@@ -57,34 +57,49 @@
           </select>
 
           <div class="relative flex-1 md:w-80">
-            <input
-              v-if="searchField !== 'date'"
-              v-model="searchQuery"
-              type="text"
-              :placeholder="searchPlaceholder"
-              class="w-full rounded-lg border-gray-300 pl-10 pr-3 py-2"
-            />
+            <template v-if="searchField !== 'date'">
+              <input
+                v-model="searchQuery"
+                type="text"
+                :placeholder="searchPlaceholder"
+                class="w-full rounded-lg border-gray-300 pl-10 pr-3 py-2"
+              />
 
-            <input
-              v-else
-              v-model="searchDate"
-              type="date"
-              class="w-full rounded-lg border-gray-300 pl-10 pr-10 py-2"
-              aria-label="Search date"
-            />
+              <button
+                v-if="searchQuery"
+                type="button"
+                @click="clearSearch"
+                class="absolute right-2 top-1/2 -translate-y-1/2 inline-flex items-center justify-center h-7 w-7 rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+                aria-label="Clear text"
+                title="Clear"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-4 w-4">
+                  <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                </svg>
+              </button>
+            </template>
 
-            <button
-              v-if="searchField === 'date' && searchDate"
-              type="button"
-              @click="searchDate = ''"
-              class="absolute right-2 top-1/2 -translate-y-1/2 inline-flex items-center justify-center h-7 w-7 rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-700"
-              aria-label="Clear date"
-              title="Clear"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-4 w-4">
-                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-              </svg>
-            </button>
+            <template v-else>
+              <input
+                v-model="searchDate"
+                type="date"
+                class="w-full rounded-lg border-gray-300 pl-10 pr-10 py-2"
+                aria-label="Search date"
+              />
+
+              <button
+                v-if="searchDate"
+                type="button"
+                @click="searchDate = ''"
+                class="absolute right-2 top-1/2 -translate-y-1/2 inline-flex items-center justify-center h-7 w-7 rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+                aria-label="Clear date"
+                title="Clear"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-4 w-4">
+                  <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                </svg>
+              </button>
+            </template>
 
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
               <path
@@ -179,7 +194,7 @@
 
           <tbody class="bg-white divide-y divide-gray-200">
             <tr
-              v-for="p in paginated"
+              v-for="p in sorted"
               :key="p.id"
               class="hover:bg-gray-50"
             >
@@ -240,62 +255,20 @@
 
       <div class="flex items-center justify-between px-4 py-3 border-t border-gray-200">
         <div class="text-sm text-gray-600">
-          <template v-if="isSearching">
-            Showing
-            <span v-if="totalFiltered === 0">0</span>
-            <span v-else>{{ (clientPage - 1) * perPage + 1 }}-{{ Math.min(clientPage * perPage, totalFiltered) }}</span>
-            of {{ totalFiltered }}
-          </template>
-          <template v-else>
-            Showing {{ payments.from }}-{{ payments.to }} of {{ payments.total }}
-          </template>
+          Showing {{ payments.from || 0 }}-{{ payments.to || 0 }} of {{ payments.total || 0 }}
         </div>
 
         <div class="flex items-center gap-2">
-          <template v-if="isSearching">
-            <button
-              type="button"
-              class="inline-flex items-center justify-center px-3 py-1.5 rounded-lg text-sm border bg-white text-gray-700 border-gray-200 hover:bg-gray-50 disabled:opacity-50"
-              :disabled="clientPage <= 1"
-              @click="clientPage = Math.max(1, clientPage - 1)"
-            >
-              Prev
-            </button>
-
-            <button
-              v-for="p in totalPages"
-              :key="p"
-              type="button"
-              class="inline-flex items-center justify-center px-3 py-1.5 rounded-lg text-sm border"
-              :class="p === clientPage ? 'text-white border' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'"
-              :style="p === clientPage ? { backgroundColor: brandColor, borderColor: brandColor, color: '#fff' } : null"
-              @click="clientPage = p"
-            >
-              {{ p }}
-            </button>
-
-            <button
-              type="button"
-              class="inline-flex items-center justify-center px-3 py-1.5 rounded-lg text-sm border bg-white text-gray-700 border-gray-200 hover:bg-gray-50 disabled:opacity-50"
-              :disabled="clientPage >= totalPages"
-              @click="clientPage = Math.min(totalPages, clientPage + 1)"
-            >
-              Next
-            </button>
-          </template>
-
-          <template v-else>
-            <Link
-              v-for="(link, i) in payments.links"
-              :key="i"
-              :href="link.url || '#'"
-              :class="linkClasses(link)"
-              :style="link.active ? { backgroundColor: brandColor, borderColor: brandColor, color: '#fff' } : null"
-              preserve-scroll
-            >
-              <span v-html="link.label"></span>
-            </Link>
-          </template>
+          <Link
+            v-for="(link, i) in payments.links"
+            :key="i"
+            :href="link.url || '#'"
+            :class="linkClasses(link)"
+            :style="link.active ? { backgroundColor: brandColor, borderColor: brandColor, color: '#fff' } : null"
+            preserve-scroll
+          >
+            <span v-html="link.label"></span>
+          </Link>
         </div>
       </div>
     </div>
@@ -314,7 +287,11 @@ import Show from './Show.vue'
 
 defineOptions({ layout: AdminLayout })
 
-const props = defineProps({ payments: Object, status: { type: String, default: '' } })
+const props = defineProps({
+  payments: Object,
+  status: { type: String, default: '' },
+  filters: { type: Object, default: () => ({}) },
+})
 
 const page = usePage()
 const flashMessage = ref('')
@@ -390,20 +367,6 @@ const searchField = ref('id')
 const searchQuery = ref('')
 const searchDate = ref('')
 
-const perPage = ref((props.payments && props.payments.per_page) || 15)
-const clientPage = ref(1)
-const isSearching = computed(() => {
-  const q = String(searchQuery.value || '').trim()
-  const d = String(searchDate.value || '').trim()
-  const hasStatus = (activeStatuses.value || []).length > 0
-  const fromTo = String(createdFrom.value || '').trim() || String(createdTo.value || '').trim()
-  return Boolean(q || d || hasStatus || fromTo)
-})
-
-watch([searchQuery, searchDate], () => {
-  clientPage.value = 1
-})
-
 const modal = ref('')
 const selected = ref(null)
 
@@ -418,7 +381,111 @@ const activeStatuses = ref([])
 const createdFrom = ref('')
 const createdTo = ref('')
 
+const isHydratingFilters = ref(false)
+let searchDebounce = null
+
+function normalizeFilters(filters = {}) {
+  const validField = ['id', 'patient', 'psychologist', 'date'].includes(String(filters?.search_field || '').toLowerCase())
+    ? String(filters.search_field).toLowerCase()
+    : 'id'
+
+  return {
+    search_field: validField,
+    search_query: String(filters?.search_query || ''),
+    search_date: String(filters?.search_date || ''),
+    statuses: Array.isArray(filters?.statuses) ? filters.statuses : [],
+    created_from: String(filters?.created_from || ''),
+    created_to: String(filters?.created_to || ''),
+  }
+}
+
+function hydrateFiltersFromProps() {
+  const f = normalizeFilters(props.filters || {})
+  isHydratingFilters.value = true
+  searchField.value = f.search_field
+  searchQuery.value = f.search_query
+  searchDate.value = f.search_date
+  activeStatuses.value = f.statuses
+  createdFrom.value = f.created_from
+  createdTo.value = f.created_to
+  isHydratingFilters.value = false
+}
+
+function currentQueryParams() {
+  const params = {
+    search_field: searchField.value,
+    search_query: searchField.value === 'date' ? '' : String(searchQuery.value || '').trim(),
+    search_date: searchField.value === 'date' ? String(searchDate.value || '').trim() : '',
+    statuses: [...activeStatuses.value],
+    created_from: String(createdFrom.value || '').trim(),
+    created_to: String(createdTo.value || '').trim(),
+  }
+
+  return Object.fromEntries(
+    Object.entries(params).filter(([_, value]) => {
+      if (Array.isArray(value)) return value.length > 0
+      return value !== '' && value != null
+    })
+  )
+}
+
+function applyServerFilters({ resetPage = true } = {}) {
+  if (isHydratingFilters.value) return
+
+  const params = currentQueryParams()
+  if (resetPage) params.page = 1
+
+  router.get(route('admin.payments.index'), params, {
+    preserveScroll: true,
+    preserveState: true,
+    replace: true,
+    only: ['payments', 'filters', 'status'],
+  })
+}
+
+function clearSearch() {
+  if (searchDebounce) {
+    clearTimeout(searchDebounce)
+    searchDebounce = null
+  }
+  searchQuery.value = ''
+  applyServerFilters({ resetPage: true })
+}
+
+hydrateFiltersFromProps()
+
+watch(searchField, (next) => {
+  if (isHydratingFilters.value) return
+
+  if (next === 'date') {
+    searchQuery.value = ''
+  } else {
+    searchDate.value = ''
+  }
+  applyServerFilters({ resetPage: true })
+})
+
+watch(searchQuery, () => {
+  if (isHydratingFilters.value || searchField.value === 'date') return
+  if (searchDebounce) clearTimeout(searchDebounce)
+  searchDebounce = setTimeout(() => {
+    applyServerFilters({ resetPage: true })
+    searchDebounce = null
+  }, 300)
+})
+
+watch(searchDate, () => {
+  if (isHydratingFilters.value || searchField.value !== 'date') return
+  applyServerFilters({ resetPage: true })
+})
+
+watch([activeStatuses, createdFrom, createdTo], () => {
+  if (isHydratingFilters.value) return
+  applyServerFilters({ resetPage: true })
+}, { deep: true })
+
 function applyFilters() {
+  applyServerFilters({ resetPage: true })
   filtersOpen.value = false
 }
 
@@ -426,6 +493,7 @@ function clearFilters() {
   activeStatuses.value = []
   createdFrom.value = ''
   createdTo.value = ''
+  applyServerFilters({ resetPage: true })
 }
 
 function openShow(p) {
@@ -437,11 +505,6 @@ function closeModal() {
   modal.value = ''
   selected.value = null
 }
-
-watch(searchField, () => {
-  searchQuery.value = ''
-  searchDate.value = ''
-})
 
 const searchPlaceholder = computed(() => {
   switch (searchField.value) {
@@ -456,76 +519,7 @@ const searchPlaceholder = computed(() => {
   }
 })
 
-const filtered = computed(() => {
-  let list = Array.isArray(data.value) ? [...data.value] : []
-
-  if (searchField.value === 'date') {
-    const d = String(searchDate.value || '').trim()
-    if (d) {
-      list = list.filter((a) => {
-        const created = a?.created_at
-        if (!created) return false
-        try {
-          const iso = new Date(created).toISOString().slice(0, 10)
-          return iso === d
-        } catch {
-          return false
-        }
-      })
-    }
-  } else {
-    const q = String(searchQuery.value || '').trim().toLowerCase()
-    if (q) {
-      list = list.filter((a) => {
-        if (searchField.value === 'id') {
-          return String(a?.id ?? '').toLowerCase().includes(q)
-        }
-
-        if (searchField.value === 'patient') {
-          const hay = String(a?.patient?.name ?? '').toLowerCase()
-          return hay.includes(q)
-        }
-
-        if (searchField.value === 'psychologist') {
-          const hay = String(a?.psychologist?.name ?? '').toLowerCase()
-          return hay.includes(q)
-        }
-
-        const hay = [String(a?.id ?? ''), String(a?.patient?.name ?? ''), String(a?.psychologist?.name ?? '')].join(' ').toLowerCase()
-        return hay.includes(q)
-      })
-    }
-  }
-
-  if ((activeStatuses.value || []).length > 0) {
-    list = list.filter((a) => {
-      const s = String(a?.status || '').toLowerCase()
-      return activeStatuses.value.includes(s)
-    })
-  }
-
-  const fromVal = String(createdFrom.value || '').trim()
-  const toVal = String(createdTo.value || '').trim()
-  if (fromVal || toVal) {
-    list = list.filter((a) => {
-      const createdRaw = a?.created_at || null
-      if (!createdRaw) return false
-      const created = new Date(createdRaw)
-      if (fromVal) {
-        const from = new Date(fromVal)
-        if (!Number.isNaN(from.getTime()) && created < from) return false
-      }
-      if (toVal) {
-        const to = new Date(toVal)
-        to.setHours(23, 59, 59, 999)
-        if (!Number.isNaN(to.getTime()) && created > to) return false
-      }
-      return true
-    })
-  }
-
-  return list
-})
+const filtered = computed(() => (Array.isArray(data.value) ? [...data.value] : []))
 
 const sortKey = ref('created_at')
 const sortDir = ref('desc')
@@ -581,15 +575,6 @@ const sorted = computed(() => {
       return diff !== 0 ? diff * multiplier : a.idx - b.idx
     })
     .map((x) => x.item)
-})
-
-const totalFiltered = computed(() => (filtered.value || []).length)
-const totalPages = computed(() => Math.max(1, Math.ceil(totalFiltered.value / perPage.value)))
-
-const paginated = computed(() => {
-  if (!isSearching.value) return sorted.value
-  const start = (clientPage.value - 1) * perPage.value
-  return sorted.value.slice(start, start + perPage.value)
 })
 
 const brandColor = 'rgb(89 151 172 / var(--tw-bg-opacity, 1))'

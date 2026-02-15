@@ -31,6 +31,7 @@ class AdminAppointmentController extends Controller
         };
     }
 
+
     public function index(Request $request): Response|RedirectResponse
     {
         $user = $request->user();
@@ -38,22 +39,70 @@ class AdminAppointmentController extends Controller
             return redirect()->route('dashboard');
         }
 
-        $appointments = Appointment::query()
+        $searchField = strtolower(trim((string) $request->input('search_field', 'id')));
+        $searchQuery = trim((string) $request->input('search_query', ''));
+        $searchDate = trim((string) $request->input('search_date', ''));
+        $createdFrom = trim((string) $request->input('created_from', ''));
+        $createdTo = trim((string) $request->input('created_to', ''));
+
+        $rawStatuses = $request->input('statuses', []);
+        if (is_string($rawStatuses)) {
+            $rawStatuses = array_filter(array_map('trim', explode(',', $rawStatuses)));
+        }
+        $allowedStatuses = ['pending', 'confirmed', 'completed', 'cancelled', 'no_show'];
+        $statuses = collect(is_array($rawStatuses) ? $rawStatuses : [])
+            ->map(fn ($value) => strtolower(trim((string) $value)))
+            ->filter(fn ($value) => in_array($value, $allowedStatuses, true))
+            ->values()
+            ->all();
+
+        $appointmentsQuery = Appointment::query()
             ->with([
                 'patient:id,name,email,role',
                 'psychologist:id,name,email,role',
                 'payments' => function ($q) {
                     $q->latest('id');
                 },
-            ])
+            ]);
+
+        if (! empty($statuses)) {
+            $appointmentsQuery->whereIn('status', $statuses);
+        }
+
+        if ($createdFrom !== '') {
+            $appointmentsQuery->whereDate('created_at', '>=', $createdFrom);
+        }
+
+        if ($createdTo !== '') {
+            $appointmentsQuery->whereDate('created_at', '<=', $createdTo);
+        }
+
+        if ($searchField === 'date') {
+            if ($searchDate !== '') {
+                $appointmentsQuery->whereDate('scheduled_start', $searchDate);
+            }
+        } elseif ($searchQuery !== '') {
+            if ($searchField === 'patient') {
+                $appointmentsQuery->whereHas('patient', function ($q) use ($searchQuery) {
+                    $q->where('name', 'like', '%'.$searchQuery.'%');
+                });
+            } elseif ($searchField === 'psychologist') {
+                $appointmentsQuery->whereHas('psychologist', function ($q) use ($searchQuery) {
+                    $q->where('name', 'like', '%'.$searchQuery.'%');
+                });
+            } else {
+                $appointmentsQuery->where('id', 'like', '%'.$searchQuery.'%');
+            }
+        }
+
+        $appointments = $appointmentsQuery
             ->orderByDesc('scheduled_start')
             ->paginate(15)
-            ->withQueryString();
+            ->appends($request->query());
 
-        $payload = $appointments->through(function (Appointment $a) {
+        $mappedItems = collect($appointments->items())->map(function (Appointment $a) {
             $latestPayment = $a->payments->first();
 
-            // compute a friendly no-show display string for the UI
             $noShowDisplay = null;
             if ((string) $a->status === 'no_show') {
                 if ($a->no_show_by === 'patient') {
@@ -82,16 +131,13 @@ class AdminAppointmentController extends Controller
                 'status' => (string) $a->status,
                 'price' => $a->price,
                 'currency' => (string) ($a->currency ?: 'TND'),
-
                 'canceled_by' => $a->canceled_by,
                 'canceled_by_user_id' => $a->canceled_by_user_id,
                 'cancellation_reason' => $a->cancellation_reason,
                 'canceled_at' => optional($a->canceled_at)->toISOString() ?? ($a->canceled_at ? (string) $a->canceled_at : null),
-
                 'no_show_by' => $a->no_show_by,
                 'no_show_user_id' => $a->no_show_user_id,
                 'no_show_display' => $noShowDisplay,
-
                 'payment' => $latestPayment ? [
                     'id' => $latestPayment->id,
                     'status' => (string) $latestPayment->status,
@@ -101,11 +147,30 @@ class AdminAppointmentController extends Controller
                     'paid_at' => optional($latestPayment->paid_at)->toISOString() ?? ($latestPayment->paid_at ? (string) $latestPayment->paid_at : null),
                 ] : null,
             ];
-        });
+        })->values()->all();
+
+        $appointments = new \Illuminate\Pagination\LengthAwarePaginator(
+            $mappedItems,
+            $appointments->total(),
+            $appointments->perPage(),
+            $appointments->currentPage(),
+            [
+                'path' => $request->url(),
+                'query' => $request->query(),
+            ]
+        );
 
         return Inertia::render('Admin/Appointments/Index', [
-            'appointments' => $payload,
+            'appointments' => $appointments,
             'status' => session('status'),
+            'filters' => [
+                'search_field' => in_array($searchField, ['id', 'patient', 'psychologist', 'date'], true) ? $searchField : 'id',
+                'search_query' => $searchQuery,
+                'search_date' => $searchDate,
+                'statuses' => $statuses,
+                'created_from' => $createdFrom,
+                'created_to' => $createdTo,
+            ],
         ]);
     }
 

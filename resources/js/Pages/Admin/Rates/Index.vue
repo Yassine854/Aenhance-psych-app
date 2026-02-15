@@ -43,6 +43,19 @@
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
               <path fill-rule="evenodd" d="M9 3a6 6 0 104.472 10.03l2.249 2.249a1 1 0 001.415-1.415l-2.249-2.249A6 6 0 009 3zm-4 6a4 4 0 118 0 4 4 0 01-8 0z" clip-rule="evenodd" />
             </svg>
+
+            <button
+              v-if="searchQuery"
+              @click="clearSearch"
+              type="button"
+              class="absolute right-2 top-1/2 -translate-y-1/2 inline-flex items-center justify-center h-7 w-7 rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+              aria-label="Clear text"
+              title="Clear"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-4 w-4">
+                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+              </svg>
+            </button>
           </div>
         </div>
       </div>
@@ -113,62 +126,17 @@
       </div>
 
       <div class="flex items-center justify-between px-4 py-3 border-t border-gray-200">
-        <div class="text-sm text-gray-600">
-          <template v-if="isSearching">
-            Showing
-            <span v-if="totalFiltered === 0">0</span>
-            <span v-else>{{ (clientPage - 1) * perPage + 1 }}-{{ Math.min(clientPage * perPage, totalFiltered) }}</span>
-            of {{ totalFiltered }}
-          </template>
-          <template v-else>
-            Showing {{ ratings.from }}-{{ ratings.to }} of {{ ratings.total }}
-          </template>
-        </div>
-
+        <div class="text-sm text-gray-600">Showing {{ ratings.from || 0 }}-{{ ratings.to || 0 }} of {{ ratings.total || 0 }}</div>
         <div class="flex items-center gap-2">
-          <template v-if="isSearching">
-            <button
-              type="button"
-              class="inline-flex items-center justify-center px-3 py-1.5 rounded-lg text-sm border bg-white text-gray-700 border-gray-200 hover:bg-gray-50 disabled:opacity-50"
-              :disabled="clientPage <= 1"
-              @click="clientPage = Math.max(1, clientPage - 1)"
-            >
-              Prev
-            </button>
-
-            <button
-              v-for="p in totalPages"
-              :key="p"
-              type="button"
-              class="inline-flex items-center justify-center px-3 py-1.5 rounded-lg text-sm border"
-              :class="p === clientPage ? 'text-white border' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'"
-              :style="p === clientPage ? { backgroundColor: brandColor, borderColor: brandColor, color: '#fff' } : null"
-              @click="clientPage = p"
-            >
-              {{ p }}
-            </button>
-
-            <button
-              type="button"
-              class="inline-flex items-center justify-center px-3 py-1.5 rounded-lg text-sm border bg-white text-gray-700 border-gray-200 hover:bg-gray-50 disabled:opacity-50"
-              :disabled="clientPage >= totalPages"
-              @click="clientPage = Math.min(totalPages, clientPage + 1)"
-            >
-              Next
-            </button>
-          </template>
-
-          <template v-else>
-            <Link
-              v-for="link in ratings.links || []"
-              :key="String(link.label)"
-              :href="link.url || '#'"
-              :class="linkClasses(link)"
-              preserve-scroll
-              v-html="link.label"
-              :style="link.active ? { backgroundColor: brandColor, borderColor: brandColor, color: '#fff' } : null"
-            />
-          </template>
+          <Link
+            v-for="link in ratings.links || []"
+            :key="String(link.label)"
+            :href="link.url || '#'"
+            :class="linkClasses(link)"
+            preserve-scroll
+            v-html="link.label"
+            :style="link.active ? { backgroundColor: brandColor, borderColor: brandColor, color: '#fff' } : null"
+          />
         </div>
       </div>
     </div>
@@ -187,7 +155,7 @@ import Show from './Show.vue'
 
 defineOptions({ layout: AdminLayout })
 
-const props = defineProps({ ratings: Object, status: { type: String, default: '' } })
+const props = defineProps({ ratings: Object, status: { type: String, default: '' }, filters: { type: Object, default: () => ({}) } })
 const page = usePage()
 
 const flashMessage = ref('')
@@ -225,15 +193,84 @@ const data = computed(() => props.ratings?.data || [])
 const searchField = ref('id')
 const searchQuery = ref('')
 const perPage = ref((props.ratings && props.ratings.per_page) || 15)
-const clientPage = ref(1)
 
-const isSearching = computed(() => {
-  const q = String(searchQuery.value || '').trim()
-  return Boolean(q)
+const isHydratingFilters = ref(false)
+let searchDebounce = null
+
+function normalizeFilters(filters = {}) {
+  const validField = ['id', 'patient', 'psychologist', 'rating'].includes(String(filters?.search_field || '').toLowerCase())
+    ? String(filters.search_field).toLowerCase()
+    : 'id'
+
+  return {
+    search_field: validField,
+    search_query: String(filters?.search_query || ''),
+    created_from: String(filters?.created_from || ''),
+    created_to: String(filters?.created_to || ''),
+  }
+}
+
+function hydrateFiltersFromProps() {
+  const f = normalizeFilters(props.filters || {})
+  isHydratingFilters.value = true
+  searchField.value = f.search_field
+  searchQuery.value = f.search_query
+  createdFrom.value = f.created_from
+  createdTo.value = f.created_to
+  isHydratingFilters.value = false
+}
+
+function currentQueryParams() {
+  const params = {
+    search_field: searchField.value,
+    search_query: String(searchQuery.value || '').trim(),
+    created_from: String(createdFrom.value || '').trim(),
+    created_to: String(createdTo.value || '').trim(),
+  }
+
+  return Object.fromEntries(
+    Object.entries(params).filter(([_, value]) => value !== '' && value != null)
+  )
+}
+
+function applyServerFilters({ resetPage = true } = {}) {
+  if (isHydratingFilters.value) return
+  const params = currentQueryParams()
+  if (resetPage) params.page = 1
+  router.get(route('admin.rates.index'), params, {
+    preserveScroll: true,
+    preserveState: true,
+    replace: true,
+    only: ['ratings', 'filters', 'status'],
+  })
+}
+
+function clearSearch() {
+  if (searchDebounce) { clearTimeout(searchDebounce); searchDebounce = null }
+  searchQuery.value = ''
+  applyServerFilters({ resetPage: true })
+}
+
+const createdFrom = ref('')
+const createdTo = ref('')
+
+hydrateFiltersFromProps()
+
+watch(searchField, (next) => {
+  if (isHydratingFilters.value) return
+  searchQuery.value = ''
+  applyServerFilters({ resetPage: true })
 })
 
-watch([searchQuery, searchField], () => {
-  clientPage.value = 1
+watch(searchQuery, () => {
+  if (isHydratingFilters.value) return
+  if (searchDebounce) clearTimeout(searchDebounce)
+  searchDebounce = setTimeout(() => { applyServerFilters({ resetPage: true }); searchDebounce = null }, 300)
+})
+
+watch([createdFrom, createdTo], () => {
+  if (isHydratingFilters.value) return
+  applyServerFilters({ resetPage: true })
 })
 
 const modal = ref('')
@@ -322,11 +359,7 @@ const sorted = computed(() => {
 const totalFiltered = computed(() => (sorted.value || []).length)
 const totalPages = computed(() => Math.max(1, Math.ceil(totalFiltered.value / perPage.value)))
 
-const paginated = computed(() => {
-  if (!isSearching.value) return sorted.value
-  const start = (clientPage.value - 1) * perPage.value
-  return sorted.value.slice(start, start + perPage.value)
-})
+const paginated = computed(() => sorted.value)
 
 const brandColor = 'rgb(89 151 172 / var(--tw-bg-opacity, 1))'
 
@@ -357,7 +390,7 @@ function linkClasses(link) {
   return base + 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
 }
 
-watch(() => props.ratings, () => { clientPage.value = 1 })
+watch(() => props.ratings, () => { /* reset any client-side paging state if needed */ })
 </script>
 
 <style scoped></style>

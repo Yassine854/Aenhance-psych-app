@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('psychologist_profiles', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')
+            $table->foreignId(column: 'user_id')
                   ->constrained()
                   ->cascadeOnDelete();
             $table->string('first_name');

@@ -19,10 +19,20 @@ class ExpertiseController extends Controller
 
     public function index(Request $request)
     {
-        $expertises = Expertise::query()
-            ->orderBy('name')
-            ->paginate(20)
-            ->withQueryString();
+        $query = Expertise::query()->orderBy('name');
+
+        $searchField = strval($request->input('search_field', ''));
+        $searchQuery = trim(strval($request->input('search_query', '')));
+
+        if ($searchQuery !== '') {
+            if (strtolower($searchField) === 'id') {
+                $query->where('id', 'like', "%{$searchQuery}%");
+            } else {
+                $query->where('name', 'like', "%{$searchQuery}%");
+            }
+        }
+
+        $expertises = $query->paginate(15)->withQueryString();
 
         if ($request->wantsJson()) {
             return response()->json($expertises);
@@ -30,6 +40,10 @@ class ExpertiseController extends Controller
 
         return Inertia::render('Admin/Expertise/Index', [
             'expertises' => $expertises,
+            'filters' => [
+                'search_field' => $searchField ?: 'name',
+                'search_query' => $searchQuery,
+            ],
         ]);
     }
 

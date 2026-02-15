@@ -19,10 +19,20 @@ class SpecialisationController extends Controller
 
     public function index(Request $request)
     {
-        $specialisations = Specialisation::query()
-            ->orderBy('name')
-            ->paginate(20)
-            ->withQueryString();
+        $query = Specialisation::query()->orderBy('name');
+
+        $searchField = strval($request->input('search_field', ''));
+        $searchQuery = trim(strval($request->input('search_query', '')));
+
+        if ($searchQuery !== '') {
+            if (strtolower($searchField) === 'id') {
+                $query->where('id', 'like', "%{$searchQuery}%");
+            } else {
+                $query->where('name', 'like', "%{$searchQuery}%");
+            }
+        }
+
+        $specialisations = $query->paginate(15)->withQueryString();
 
         if ($request->wantsJson()) {
             return response()->json($specialisations);
@@ -30,6 +40,10 @@ class SpecialisationController extends Controller
 
         return Inertia::render('Admin/Specialisation/Index', [
             'specialisations' => $specialisations,
+            'filters' => [
+                'search_field' => $searchField ?: 'name',
+                'search_query' => $searchQuery,
+            ],
         ]);
     }
 

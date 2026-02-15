@@ -21,40 +21,104 @@ class PayoutsController extends Controller
 
     public function index(Request $request)
     {
-        $payouts = PsychologistPayout::query()
-            ->with(['psychologist:id,name', 'appointment.patient:id,name'])
-            ->orderByDesc('id')
-            ->paginate(15);
+        $searchField = strtolower(trim((string) $request->input('search_field', 'id')));
+        $searchQuery = trim((string) $request->input('search_query', ''));
+        $searchDate = trim((string) $request->input('search_date', ''));
+        $createdFrom = trim((string) $request->input('created_from', ''));
+        $createdTo = trim((string) $request->input('created_to', ''));
 
-        $payouts->setCollection(
-            $payouts->getCollection()->map(function (PsychologistPayout $p) {
-                return [
-                    'id' => $p->id,
-                    'appointment_id' => $p->appointment_id,
-                    'psychologist' => $p->psychologist ? [
-                        'id' => $p->psychologist->id,
-                        'name' => $p->psychologist->name,
-                    ] : null,
-                    'patient' => $p->appointment && $p->appointment->patient ? [
-                        'id' => $p->appointment->patient->id,
-                        'name' => $p->appointment->patient->name,
-                    ] : null,
-                    'gross_amount' => (string) $p->gross_amount,
-                    'platform_fee' => (string) $p->platform_fee,
-                    'net_amount' => (string) $p->net_amount,
-                    'currency' => $p->currency ?? 'TND',
-                    'status' => (string) $p->status,
-                    'estimated_availability' => optional($p->estimated_availability)->toISOString() ?? ($p->estimated_availability ? (string) $p->estimated_availability : null),
-                    'paid_at' => optional($p->paid_at)->toISOString() ?? ($p->paid_at ? (string) $p->paid_at : null),
-                    'created_at' => optional($p->created_at)->toISOString() ?? (string) $p->created_at,
-                    'updated_at' => optional($p->updated_at)->toISOString() ?? (string) $p->updated_at,
-                ];
-            })
+        $rawStatuses = $request->input('statuses', []);
+        if (is_string($rawStatuses)) {
+            $rawStatuses = array_filter(array_map('trim', explode(',', $rawStatuses)));
+        }
+
+        $allowedStatuses = ['pending', 'paid', 'on_hold', 'refund'];
+        $statuses = collect(is_array($rawStatuses) ? $rawStatuses : [])
+            ->map(fn ($value) => strtolower(trim((string) $value)))
+            ->filter(fn ($value) => in_array($value, $allowedStatuses, true))
+            ->values()
+            ->all();
+
+        $payoutsQuery = PsychologistPayout::query()
+            ->with(['psychologist:id,name', 'appointment.patient:id,name']);
+
+        if (! empty($statuses)) {
+            $payoutsQuery->whereIn('status', $statuses);
+        }
+
+        if ($createdFrom !== '') {
+            $payoutsQuery->whereDate('created_at', '>=', $createdFrom);
+        }
+
+        if ($createdTo !== '') {
+            $payoutsQuery->whereDate('created_at', '<=', $createdTo);
+        }
+
+        if ($searchField === 'date') {
+            if ($searchDate !== '') {
+                $payoutsQuery->whereDate('updated_at', $searchDate);
+            }
+        } elseif ($searchQuery !== '') {
+            if ($searchField === 'psychologist') {
+                $payoutsQuery->whereHas('psychologist', function ($q) use ($searchQuery) {
+                    $q->where('name', 'like', '%'.$searchQuery.'%');
+                });
+            } else {
+                $payoutsQuery->where('id', 'like', '%'.$searchQuery.'%');
+            }
+        }
+
+        $payouts = $payoutsQuery
+            ->orderByDesc('id')
+            ->paginate(15)
+            ->appends($request->query());
+
+        $mappedItems = collect($payouts->items())->map(function (PsychologistPayout $p) {
+            return [
+                'id' => $p->id,
+                'appointment_id' => $p->appointment_id,
+                'psychologist' => $p->psychologist ? [
+                    'id' => $p->psychologist->id,
+                    'name' => $p->psychologist->name,
+                ] : null,
+                'patient' => $p->appointment && $p->appointment->patient ? [
+                    'id' => $p->appointment->patient->id,
+                    'name' => $p->appointment->patient->name,
+                ] : null,
+                'gross_amount' => (string) $p->gross_amount,
+                'platform_fee' => (string) $p->platform_fee,
+                'net_amount' => (string) $p->net_amount,
+                'currency' => $p->currency ?? 'TND',
+                'status' => (string) $p->status,
+                'estimated_availability' => optional($p->estimated_availability)->toISOString() ?? ($p->estimated_availability ? (string) $p->estimated_availability : null),
+                'paid_at' => optional($p->paid_at)->toISOString() ?? ($p->paid_at ? (string) $p->paid_at : null),
+                'created_at' => optional($p->created_at)->toISOString() ?? (string) $p->created_at,
+                'updated_at' => optional($p->updated_at)->toISOString() ?? (string) $p->updated_at,
+            ];
+        })->values()->all();
+
+        $payouts = new \Illuminate\Pagination\LengthAwarePaginator(
+            $mappedItems,
+            $payouts->total(),
+            $payouts->perPage(),
+            $payouts->currentPage(),
+            [
+                'path' => $request->url(),
+                'query' => $request->query(),
+            ]
         );
 
         return Inertia::render('Admin/Payouts/Index', [
             'payouts' => $payouts,
             'status' => session('status'),
+            'filters' => [
+                'search_field' => in_array($searchField, ['id', 'psychologist', 'date'], true) ? $searchField : 'id',
+                'search_query' => $searchQuery,
+                'search_date' => $searchDate,
+                'statuses' => $statuses,
+                'created_from' => $createdFrom,
+                'created_to' => $createdTo,
+            ],
         ]);
     }
 
