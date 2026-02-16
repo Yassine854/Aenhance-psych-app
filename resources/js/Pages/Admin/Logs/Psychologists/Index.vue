@@ -106,7 +106,7 @@
           </thead>
 
           <tbody class="bg-white divide-y divide-gray-200">
-            <tr v-for="log in sortedLogs" :key="log.id" class="hover:bg-gray-50">
+            <tr v-for="log in (logs.data || [])" :key="log.id" class="hover:bg-gray-50">
               <td class="px-4 py-3 text-sm text-gray-700">#{{ log.id }}</td>
               <td class="px-4 py-3 text-sm text-gray-700">{{ log.action }}</td>
               <td class="px-4 py-3 text-sm text-gray-700">{{ log.actor_role || '-' }}</td>
@@ -140,20 +140,85 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue'
-import { Link } from '@inertiajs/vue3'
+import { Link, router } from '@inertiajs/vue3'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import ShowModal from './Show.vue'
 import SortIcon from '@/Components/SortIcon.vue'
 
 defineOptions({ layout: AdminLayout })
 
-const props = defineProps({ logs: Object })
+const props = defineProps({ logs: Object, filters: { type: Object, default: () => ({}) } })
 
 const logsData = ref(props.logs?.data ? [...props.logs.data] : [])
 watch(() => props.logs?.data, (next) => { logsData.value = next ? [...next] : [] })
 
 const searchQuery = ref('')
 const searchField = ref('id')
+
+const isHydratingFilters = ref(false)
+let searchDebounce = null
+
+function normalizeFilters(filters = {}) {
+  const validField = ['id', 'actor', 'action'].includes(String(filters?.search_field || '').toLowerCase())
+    ? String(filters.search_field).toLowerCase()
+    : 'id'
+
+  return {
+    search_field: validField,
+    search_query: String(filters?.search_query || ''),
+  }
+}
+
+function hydrateFiltersFromProps() {
+  const f = normalizeFilters(props.filters || {})
+  isHydratingFilters.value = true
+  searchField.value = f.search_field
+  searchQuery.value = f.search_query
+  isHydratingFilters.value = false
+}
+
+function currentQueryParams() {
+  const params = {
+    search_field: searchField.value,
+    search_query: String(searchQuery.value || '').trim(),
+  }
+
+  return Object.fromEntries(Object.entries(params).filter(([_, value]) => value !== '' && value != null))
+}
+
+function applyServerFilters({ resetPage = true } = {}) {
+  if (isHydratingFilters.value) return
+  const params = currentQueryParams()
+  if (resetPage) params.page = 1
+  router.get(route('admin.logs.psychologists.index'), params, {
+    preserveScroll: true,
+    preserveState: true,
+    replace: true,
+    only: ['logs', 'filters'],
+  })
+}
+
+function clearSearch() {
+  if (searchDebounce) { clearTimeout(searchDebounce); searchDebounce = null }
+  searchQuery.value = ''
+  applyServerFilters({ resetPage: true })
+}
+
+hydrateFiltersFromProps()
+
+watch(() => props.logs, () => { hydrateFiltersFromProps() })
+
+watch(searchField, (next) => {
+  if (isHydratingFilters.value) return
+  searchQuery.value = ''
+  applyServerFilters({ resetPage: true })
+})
+
+watch(searchQuery, () => {
+  if (isHydratingFilters.value) return
+  if (searchDebounce) clearTimeout(searchDebounce)
+  searchDebounce = setTimeout(() => { applyServerFilters({ resetPage: true }); searchDebounce = null }, 300)
+})
 const modal = ref(null)
 const selected = ref(null)
 

@@ -89,3 +89,75 @@
 .multiselect-option.is-selected.is-pointed {
   background: rgb(89 151 172 / var(--tw-bg-opacity, 1)) !important;
 }
+
+/* Form control brand overrides (kept outside @layer to avoid Tailwind purge issues) */
+:root {
+  --admin-brand: rgb(89 151 172 / var(--tw-bg-opacity, 1));
+}
+
+input[type="search"],
+input[type="text"],
+input[type="email"],
+input[type="tel"],
+input[type="date"],
+input[type="datetime-local"],
+input[type="time"],
+textarea,
+select,
+.multiselect,
+.vue-select {
+  border-color: var(--admin-brand);
+}
+
+/* Focus states */
+input[type="search"]:focus,
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="tel"]:focus,
+input[type="date"]:focus,
+input[type="datetime-local"]:focus,
+input[type="time"]:focus,
+textarea:focus,
+select:focus,
+.multiselect:focus,
+.vue-select:focus {
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(89,151,172,0.12);
+  border-color: var(--admin-brand);
+}
+
+/* Checkboxes and radios */
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: var(--admin-brand);
+}
+
+/* Utility for form-checkbox components used in templates */
+.form-checkbox {
+  accent-color: var(--admin-brand);
+}
+
+/* Selected option background for native selects (limited support across browsers) */
+select option:checked {
+  background-color: var(--admin-brand);
+  color: #fff;
+}
+
+/* Stronger checkbox rules to override browser or other stylesheet defaults */
+input[type="checkbox"],
+input[type="checkbox"].form-checkbox {
+  accent-color: var(--admin-brand) !important;
+  color: var(--admin-brand) !important;
+  border-color: var(--admin-brand) !important;
+}
+
+input[type="checkbox"]:checked,
+input[type="checkbox"].form-checkbox:checked {
+  background-color: var(--admin-brand) !important;
+  border-color: var(--admin-brand) !important;
+}
+
+/* Support for older Edge / IE checkbox pseudo-element (best-effort) */
+input[type="checkbox"]::-ms-check {
+  background: var(--admin-brand) !important;
+}

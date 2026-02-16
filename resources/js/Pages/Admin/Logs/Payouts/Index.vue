@@ -136,7 +136,7 @@
       <div class="flex items-center justify-end gap-2 mt-4">
         <button type="button" @click="clearFilters" class="px-3 py-2 rounded-lg border bg-white text-sm text-gray-700 hover:bg-gray-50">Clear</button>
         <button type="button" @click="filtersOpen = false" class="px-3 py-2 rounded-lg border bg-white text-sm text-gray-700 hover:bg-gray-50">Close</button>
-        <button type="button" @click="applyFilters" class="px-3 py-2 rounded-lg text-white text-sm hover:opacity-90" style="background-color: rgb(89 151 172 / var(--tw-bg-opacity, 1))">Apply</button>
+        <button type="button" @click="applyFilters" class="px-3 py-2 rounded-lg text-white text-sm hover:opacity-90" style="background-color: rgb(175 81 102 / var(--tw-bg-opacity, 1))">Apply</button>
       </div>
     </div>
 

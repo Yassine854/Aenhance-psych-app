@@ -144,7 +144,7 @@
           </thead>
 
           <tbody class="bg-white divide-y divide-gray-200">
-            <tr v-for="log in sortedLogs" :key="log.id" class="hover:bg-gray-50">
+            <tr v-for="log in (sortedLogs || [])" :key="log.id" class="hover:bg-gray-50">
               <td class="px-4 py-3 text-sm text-gray-700">#{{ log.id }}</td>
               <td class="px-4 py-3 text-sm text-gray-700">{{ log.action }}</td>
               <td class="px-4 py-3 text-sm text-gray-700">{{ log.actor_role || '-' }}</td>
@@ -187,14 +187,14 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue'
-import { Link, usePage } from '@inertiajs/vue3'
+import { Link, usePage, router } from '@inertiajs/vue3'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import ShowModal from './Show.vue'
 import SortIcon from '@/Components/SortIcon.vue'
 
 defineOptions({ layout: AdminLayout })
 
-const props = defineProps({ logs: Object })
+const props = defineProps({ logs: Object, filters: { type: Object, default: () => ({}) } })
 const page = usePage()
 
 const logsData = ref(props.logs?.data ? [...props.logs.data] : [])
@@ -207,6 +207,128 @@ watch(
 
 const searchQuery = ref('')
 const searchField = ref('id')
+const searchDate = ref('')
+
+const isHydratingFilters = ref(false)
+let searchDebounce = null
+
+// filter panel state + options (moved earlier to avoid TDZ when hydrating)
+const filtersOpen = ref(false)
+const statusOptions = [
+  { value: 'pending', label: 'Pending' },
+  { value: 'confirmed', label: 'Confirmed' },
+  { value: 'completed', label: 'Completed' },
+  { value: 'cancelled', label: 'Cancelled' },
+  { value: 'no_show', label: 'No Show' },
+]
+const activeStatuses = ref([])
+const actorRole = ref('')
+const createdFrom = ref('')
+const createdTo = ref('')
+
+function normalizeFilters(filters = {}) {
+  const validField = ['id', 'actor', 'status', 'action'].includes(String(filters?.search_field || '').toLowerCase())
+    ? String(filters.search_field).toLowerCase()
+    : 'id'
+
+  return {
+    search_field: validField,
+    search_query: String(filters?.search_query || ''),
+    // keep compatibility with other index components; unused keys will be ignored by server
+    search_date: String(filters?.search_date || ''),
+    statuses: Array.isArray(filters?.statuses) ? filters.statuses : [],
+    actor_role: String(filters?.actor_role || ''),
+    created_from: String(filters?.created_from || ''),
+    created_to: String(filters?.created_to || ''),
+  }
+}
+
+function hydrateFiltersFromProps() {
+  const f = normalizeFilters(props.filters || {})
+  isHydratingFilters.value = true
+  searchField.value = f.search_field
+  searchQuery.value = f.search_query
+  searchDate.value = f.search_date
+  actorRole.value = f.actor_role || ''
+  activeStatuses.value = f.statuses
+  createdFrom.value = f.created_from
+  createdTo.value = f.created_to
+  isHydratingFilters.value = false
+}
+
+function currentQueryParams() {
+  const params = {
+    search_field: searchField.value,
+    search_query: searchField.value === 'date' ? '' : String(searchQuery.value || '').trim(),
+    search_date: searchField.value === 'date' ? String(searchDate.value || '').trim() : '',
+    actor_role: String(actorRole.value || '').trim(),
+    statuses: [...activeStatuses.value],
+    created_from: String(createdFrom.value || '').trim(),
+    created_to: String(createdTo.value || '').trim(),
+  }
+
+  return Object.fromEntries(
+    Object.entries(params).filter(([_, value]) => {
+      return value !== '' && value != null
+    })
+  )
+}
+
+function applyServerFilters({ resetPage = true } = {}) {
+  if (isHydratingFilters.value) return
+
+  const params = currentQueryParams()
+  if (resetPage) params.page = 1
+
+  router.get(route('admin.logs.appointments.index'), params, {
+    preserveScroll: true,
+    preserveState: true,
+    replace: true,
+    only: ['logs', 'filters'],
+  })
+}
+
+function clearSearch() {
+  // cancel pending debounce and clear the query then fetch
+  if (searchDebounce) {
+    clearTimeout(searchDebounce)
+    searchDebounce = null
+  }
+  searchQuery.value = ''
+  applyServerFilters({ resetPage: true })
+}
+
+hydrateFiltersFromProps()
+
+watch(searchField, (next) => {
+  if (isHydratingFilters.value) return
+
+  if (next === 'date') {
+    searchQuery.value = ''
+  } else {
+    searchDate.value = ''
+  }
+  applyServerFilters({ resetPage: true })
+})
+
+watch(searchQuery, () => {
+  if (isHydratingFilters.value || searchField.value === 'date') return
+  if (searchDebounce) clearTimeout(searchDebounce)
+  searchDebounce = setTimeout(() => {
+    applyServerFilters({ resetPage: true })
+    searchDebounce = null
+  }, 300)
+})
+
+watch(searchDate, () => {
+  if (isHydratingFilters.value || searchField.value !== 'date') return
+  applyServerFilters({ resetPage: true })
+})
+
+watch([activeStatuses, createdFrom, createdTo, actorRole], () => {
+  if (isHydratingFilters.value) return
+  applyServerFilters({ resetPage: true })
+}, { deep: true })
 const modal = ref(null)
 const selected = ref(null)
 const flashMessage = ref('')
@@ -288,20 +410,6 @@ const searchPlaceholder = computed(() => {
 
 // no redirect: live client-side filtering handled by `filteredLogs`
 
-// filter panel state + options
-const filtersOpen = ref(false)
-const statusOptions = [
-  { value: 'pending', label: 'Pending' },
-  { value: 'confirmed', label: 'Confirmed' },
-  { value: 'completed', label: 'Completed' },
-  { value: 'cancelled', label: 'Cancelled' },
-  { value: 'no_show', label: 'No Show' },
-]
-const activeStatuses = ref([])
-const actorRole = ref('')
-const createdFrom = ref('')
-const createdTo = ref('')
-
 function applyFilters() {
   // filters are reactive; toggling panel closed is a UX aid
   filtersOpen.value = false
@@ -347,36 +455,43 @@ function toggleSort(key) {
 }
 
 function getActorName(log) {
-  if (!log) return '-'
-  if (!log) return '-'
+  if (!log) return null
 
   const role = String(log.actor_role || '').toLowerCase()
-  // Explicit admin/system shortcuts per request
+
+  // If we have an attached actor_user, show its username only (real username from users table)
+  if (log.actor_user) {
+    if (log.actor_user.username) return log.actor_user.username
+    if (log.actor_user.name) return log.actor_user.name
+    return log.actor_user.email || null
+  }
+
+  // Explicit admin/system behavior
   if (role.includes('admin')) return 'Admin'
   if (role.includes('system')) return 'SYSTEM'
 
   const appt = log.appointment || null
-  if (!appt) return log.actor_id ? String(log.actor_id) : '-'
+  if (!appt) return log.actor_id ? String(log.actor_id) : null
 
   // actor_role may be e.g. 'PATIENT' or 'PSYCHOLOGIST'
   if (role.includes('patient')) {
     const u = appt.patient || null
-    if (!u) return '-'
+    if (!u) return null
     if (u.name) return u.name
     const profile = u.patient_profile || u.patientProfile || null
     if (profile && (profile.first_name || profile.last_name)) return ((profile.first_name || '') + (profile.last_name ? ` ${profile.last_name}` : '')).trim()
-    return u.email || '-'
+    return u.email || null
   }
   if (role.includes('psychologist')) {
     const u = appt.psychologist || null
-    if (!u) return '-'
+    if (!u) return null
     if (u.name) return u.name
     const profile = u.psychologist_profile || u.psychologistProfile || null
     if (profile && (profile.first_name || profile.last_name)) return ((profile.first_name || '') + (profile.last_name ? ` ${profile.last_name}` : '')).trim()
-    return u.email || '-'
+    return u.email || null
   }
 
-  return log.actor_id ? String(log.actor_id) : '-'
+  return log.actor_id ? String(log.actor_id) : null
 }
 
 function getStatus(log) {

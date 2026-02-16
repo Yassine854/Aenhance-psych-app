@@ -394,8 +394,6 @@ class AppointmentController extends Controller
             Payment::create($payload);
         }
 
-        ActivityLogger::log($user->id, $user->role ?? null, 'started_payment', 'Appointment', $appointment->id, 'Started ClickToPay payment for appointment '.$appointment->id);
-
         if ($testNo !== '') {
             \Illuminate\Support\Facades\Log::info('ClickToPay test case selected', [
                 'appointment_id' => $appointment->id,
