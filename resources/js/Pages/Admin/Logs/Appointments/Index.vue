@@ -33,7 +33,19 @@
           </select>
 
           <div class="relative flex-1">
-            <input v-model="searchQuery" type="text" :placeholder="searchPlaceholder" class="w-full rounded-lg border-gray-300 pl-10 pr-3 py-2"/>
+            <input v-model="searchQuery" type="text" @keyup.enter="applyServerFilters({ resetPage: true })" :placeholder="searchPlaceholder" class="w-full rounded-lg border-gray-300 pl-10 pr-10 py-2"/>
+            <button
+              v-if="searchQuery"
+              type="button"
+              @click="clearSearch"
+              class="absolute right-2 top-1/2 -translate-y-1/2 inline-flex items-center justify-center h-7 w-7 rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+              aria-label="Clear search"
+              title="Clear"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-4 w-4">
+                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+              </svg>
+            </button>
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12.9 14.32a8 8 0 111.414-1.414l4.387 4.387a1 1 0 01-1.414 1.414l-4.387-4.387zM14 8a6 6 0 11-12 0 6 6 0 0112 0z" clip-rule="evenodd"/></svg>
           </div>
         </div>
@@ -144,7 +156,10 @@
           </thead>
 
           <tbody class="bg-white divide-y divide-gray-200">
-            <tr v-for="log in (sortedLogs || [])" :key="log.id" class="hover:bg-gray-50">
+            <tr v-if="(sortedLogs || []).length === 0">
+              <td colspan="7" class="px-4 py-6 text-sm text-gray-500 text-center">No appointment logs found.</td>
+            </tr>
+            <tr v-else v-for="log in (sortedLogs || [])" :key="log.id" class="hover:bg-gray-50">
               <td class="px-4 py-3 text-sm text-gray-700">#{{ log.id }}</td>
               <td class="px-4 py-3 text-sm text-gray-700">{{ log.action }}</td>
               <td class="px-4 py-3 text-sm text-gray-700">{{ log.actor_role || '-' }}</td>
@@ -325,10 +340,6 @@ watch(searchDate, () => {
   applyServerFilters({ resetPage: true })
 })
 
-watch([activeStatuses, createdFrom, createdTo, actorRole], () => {
-  if (isHydratingFilters.value) return
-  applyServerFilters({ resetPage: true })
-}, { deep: true })
 const modal = ref(null)
 const selected = ref(null)
 const flashMessage = ref('')
@@ -363,32 +374,6 @@ const filteredLogs = computed(() => {
     }
     if (!matchesSearch) return false
 
-    // status multi-select filter
-    if ((activeStatuses.value || []).length > 0) {
-      const s = String(getStatus(l) || '').toLowerCase()
-      if (!activeStatuses.value.includes(s)) return false
-    }
-
-    // actor role filter
-    if (actorRole.value) {
-      const role = String(l.actor_role || '').toLowerCase()
-      if (!role.includes(String(actorRole.value).toLowerCase())) return false
-    }
-
-    // created at interval filter
-    if (createdFrom.value) {
-      const from = new Date(createdFrom.value)
-      const created = new Date(l.created_at)
-      if (Number.isNaN(from.getTime()) === false && created < from) return false
-    }
-    if (createdTo.value) {
-      // include entire day for `createdTo`
-      const to = new Date(createdTo.value)
-      to.setHours(23,59,59,999)
-      const created = new Date(l.created_at)
-      if (Number.isNaN(to.getTime()) === false && created > to) return false
-    }
-
     return true
   })
 
@@ -411,7 +396,7 @@ const searchPlaceholder = computed(() => {
 // no redirect: live client-side filtering handled by `filteredLogs`
 
 function applyFilters() {
-  // filters are reactive; toggling panel closed is a UX aid
+  applyServerFilters({ resetPage: true })
   filtersOpen.value = false
 }
 

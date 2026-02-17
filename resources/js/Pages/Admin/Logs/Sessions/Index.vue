@@ -19,7 +19,19 @@
           </select>
 
           <div class="relative flex-1">
-            <input v-model="searchQuery" type="text" :placeholder="searchPlaceholder" class="w-full rounded-lg border-gray-300 pl-10 pr-3 py-2"/>
+            <input v-model="searchQuery" type="text" @keyup.enter="applyServerFilters({ resetPage: true })" :placeholder="searchPlaceholder" class="w-full rounded-lg border-gray-300 pl-10 pr-10 py-2"/>
+            <button
+              v-if="searchQuery"
+              type="button"
+              @click="clearSearch"
+              class="absolute right-2 top-1/2 -translate-y-1/2 inline-flex items-center justify-center h-7 w-7 rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+              aria-label="Clear search"
+              title="Clear"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-4 w-4">
+                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+              </svg>
+            </button>
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12.9 14.32a8 8 0 111.414-1.414l4.387 4.387a1 1 0 01-1.414 1.414l-4.387-4.387zM14 8a6 6 0 11-12 0 6 6 0 0112 0z" clip-rule="evenodd"/></svg>
           </div>
         </div>
@@ -130,7 +142,10 @@
           </thead>
 
           <tbody class="bg-white divide-y divide-gray-200">
-            <tr v-for="log in (logs.data || [])" :key="log.id" class="hover:bg-gray-50">
+            <tr v-if="(sortedLogs || []).length === 0">
+              <td colspan="7" class="px-4 py-6 text-sm text-gray-500 text-center">No session logs found.</td>
+            </tr>
+            <tr v-else v-for="log in sortedLogs" :key="log.id" class="hover:bg-gray-50">
               <td class="px-4 py-3 text-sm text-gray-700">#{{ log.id }}</td>
               <td class="px-4 py-3 text-sm text-gray-700">{{ log.action }}</td>
               <td class="px-4 py-3 text-sm text-gray-700">{{ log.actor_role || '-' }}</td>
@@ -193,6 +208,15 @@ watch(
 
 const searchQuery = ref('')
 const searchField = ref('id')
+const filtersOpen = ref(false)
+const statusOptions = [
+  { value: 'active', label: 'Active' },
+  { value: 'completed', label: 'Completed' },
+]
+const activeStatuses = ref([])
+const actorRole = ref('')
+const createdFrom = ref('')
+const createdTo = ref('')
 const isHydratingFilters = ref(false)
 let searchDebounce = null
 
@@ -204,6 +228,14 @@ function normalizeFilters(filters = {}) {
   return {
     search_field: validField,
     search_query: String(filters?.search_query || ''),
+    statuses: Array.isArray(filters?.statuses)
+      ? filters.statuses
+      : (typeof filters?.statuses === 'string' && filters.statuses.length
+        ? filters.statuses.split(',').map(s => s.trim()).filter(Boolean)
+        : []),
+    actor_role: String(filters?.actor_role || ''),
+    created_from: String(filters?.created_from || ''),
+    created_to: String(filters?.created_to || ''),
   }
 }
 
@@ -212,6 +244,10 @@ function hydrateFiltersFromProps() {
   isHydratingFilters.value = true
   searchField.value = f.search_field
   searchQuery.value = f.search_query
+  activeStatuses.value = f.statuses || []
+  actorRole.value = f.actor_role || ''
+  createdFrom.value = f.created_from || ''
+  createdTo.value = f.created_to || ''
   isHydratingFilters.value = false
 }
 
@@ -219,9 +255,15 @@ function currentQueryParams() {
   const params = {
     search_field: searchField.value,
     search_query: String(searchQuery.value || '').trim(),
+    statuses: [...(activeStatuses.value || [])],
+    actor_role: String(actorRole.value || '').trim(),
+    created_from: String(createdFrom.value || '').trim(),
+    created_to: String(createdTo.value || '').trim(),
   }
 
-  return Object.fromEntries(Object.entries(params).filter(([_, value]) => value !== '' && value != null))
+  return Object.fromEntries(
+    Object.entries(params).filter(([_, value]) => value !== '' && value != null && !(Array.isArray(value) && value.length === 0))
+  )
 }
 
 function applyServerFilters({ resetPage = true } = {}) {
@@ -268,10 +310,6 @@ const filteredLogs = computed(() => {
   const q = String(searchQuery.value || '').trim().toLowerCase()
 
   const list = (logsData.value || []).filter(l => {
-    // only show session status actions (created -> active, updated -> completed)
-    const actionRaw = String(l?.action || '').toLowerCase()
-    if (!(actionRaw === 'updated_session_status' || actionRaw === 'created_session_status')) return false
-
     // primary search field filtering
     let matchesSearch = true
     if (q) {
@@ -290,28 +328,6 @@ const filteredLogs = computed(() => {
       }
     }
     if (!matchesSearch) return false
-
-    if ((activeStatuses.value || []).length > 0) {
-      const s = String(getStatus(l) || '').toLowerCase()
-      if (!activeStatuses.value.includes(s)) return false
-    }
-
-    if (actorRole.value) {
-      const role = String(l.actor_role || '').toLowerCase()
-      if (!role.includes(String(actorRole.value).toLowerCase())) return false
-    }
-
-    if (createdFrom.value) {
-      const from = new Date(createdFrom.value)
-      const created = new Date(l.created_at)
-      if (Number.isNaN(from.getTime()) === false && created < from) return false
-    }
-    if (createdTo.value) {
-      const to = new Date(createdTo.value)
-      to.setHours(23,59,59,999)
-      const created = new Date(l.created_at)
-      if (Number.isNaN(to.getTime()) === false && created > to) return false
-    }
 
     return true
   })
@@ -332,18 +348,13 @@ const searchPlaceholder = computed(() => {
   }
 })
 
-const filtersOpen = ref(false)
-const statusOptions = [
-  { value: 'active', label: 'Active' },
-  { value: 'completed', label: 'Completed' },
-]
-const activeStatuses = ref([])
-const actorRole = ref('')
-const createdFrom = ref('')
-const createdTo = ref('')
-
-function applyFilters() { filtersOpen.value = false }
-function clearFilters() { activeStatuses.value = []; actorRole.value = ''; createdFrom.value = ''; createdTo.value = '' }
+function applyFilters() { applyServerFilters({ resetPage: true }); filtersOpen.value = false }
+function clearFilters() {
+  activeStatuses.value = []
+  actorRole.value = ''
+  createdFrom.value = ''
+  createdTo.value = ''
+}
 function openShow(log) {
   selected.value = log
   selectedSession.value = null

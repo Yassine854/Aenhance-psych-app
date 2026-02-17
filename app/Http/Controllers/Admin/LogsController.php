@@ -78,10 +78,24 @@ class LogsController extends Controller
                     $query->select('logs.*');
                     break;
                 case 'status':
-                    $query->where(function ($s) use ($q) {
-                        $s->where('action', 'like', "%{$q}%")
-                          ->orWhere('description', 'like', "%{$q}%");
-                    });
+                                        $statusToken = strtolower(trim((string) $q));
+                                        $query->where(function ($s) use ($q, $statusToken) {
+                                                if (in_array($statusToken, ['active', 'created', 'in_room', 'in-room', 'in room'], true)) {
+                                                        $s->orWhere('action', 'created_session_status')
+                                                            ->orWhere('description', 'like', '%active%')
+                                                            ->orWhere('description', 'like', '%in room%')
+                                                            ->orWhere('description', 'like', '%in-room%');
+                                                }
+
+                                                if (in_array($statusToken, ['completed', 'complete', 'updated'], true)) {
+                                                        $s->orWhere('action', 'updated_session_status')
+                                                            ->orWhere('description', 'like', '%completed%')
+                                                            ->orWhere('description', 'like', '%complete%');
+                                                }
+
+                                                $s->orWhere('action', 'like', "%{$q}%")
+                                                    ->orWhere('description', 'like', "%{$q}%");
+                                        });
                     break;
                 case 'action':
                     $query->where('action', 'like', "%{$q}%");
@@ -198,6 +212,7 @@ class LogsController extends Controller
         $query = Log::query()
             ->with(['appointment', 'appointment.patient.patientProfile', 'appointment.psychologist.psychologistProfile'])
             ->where('target_type', 'AppointmentSession')
+            ->whereIn('action', ['created_session_status', 'updated_session_status'])
             ->whereRaw("COALESCE(LOWER(actor_role), '') != ?", ['laravellogs'])
             ->orderBy('id', 'desc');
 
@@ -205,14 +220,30 @@ class LogsController extends Controller
         $searchField = strtolower(trim((string) $request->input('search_field', 'id')));
         $searchQuery = trim((string) $request->input('search_query', ''));
 
+        // additional server-side filters: statuses, created_from/to, actor_role
+        $rawStatuses = $request->input('statuses', []);
+        if (is_string($rawStatuses)) {
+            $rawStatuses = array_filter(array_map('trim', explode(',', $rawStatuses)));
+        }
+        $allowedStatuses = ['active', 'completed'];
+        $statuses = collect(is_array($rawStatuses) ? $rawStatuses : [])
+            ->map(fn($v) => strtolower(trim((string)$v)))
+            ->filter(fn($v) => in_array($v, $allowedStatuses, true))
+            ->values()
+            ->all();
+
+        $createdFrom = trim((string) $request->input('created_from', ''));
+        $createdTo = trim((string) $request->input('created_to', ''));
+        $actorRoleFilter = trim((string) $request->input('actor_role', ''));
+
         if ($searchQuery !== '') {
             $q = $searchQuery;
             switch ($searchField) {
                 case 'id':
-                    if (ctype_digit($q)) {
-                        $query->where('id', $q);
-                    } else {
-                        $query->where('id', 'like', "%{$q}%");
+                    // Match any log id containing the typed digits (autocomplete-style).
+                    $digits = preg_replace('/\D/', '', $q);
+                    if ($digits !== '') {
+                        $query->where('id', 'like', "%{$digits}%");
                     }
                     break;
                 case 'actor':
@@ -245,11 +276,44 @@ class LogsController extends Controller
             }
         }
 
+        // apply status filters (mapped to session status actions)
+        if (!empty($statuses)) {
+            $query->where(function ($q) use ($statuses) {
+                foreach ($statuses as $s) {
+                    if ($s === 'active') {
+                        $q->orWhere('action', 'created_session_status');
+                    } elseif ($s === 'completed') {
+                        $q->orWhere('action', 'updated_session_status');
+                    }
+                }
+            });
+        }
+
+        // actor role filter
+        if ($actorRoleFilter !== '') {
+            $query->where('actor_role', 'like', "%{$actorRoleFilter}%");
+        }
+
+        // created at interval filters
+        if ($createdFrom !== '') {
+            $query->whereDate('created_at', '>=', $createdFrom);
+        }
+        if ($createdTo !== '') {
+            $query->whereDate('created_at', '<=', $createdTo);
+        }
+
         $logs = $query->paginate(15)->appends($request->query());
 
         return Inertia::render('Admin/Logs/Sessions/Index', [
             'logs' => $logs,
-            'filters' => $request->only(['search_field', 'search_query']),
+            'filters' => [
+                'search_field' => $searchField,
+                'search_query' => $searchQuery,
+                'statuses' => $statuses,
+                'created_from' => $createdFrom,
+                'created_to' => $createdTo,
+                'actor_role' => $actorRoleFilter,
+            ],
         ]);
     }
 
@@ -441,30 +505,51 @@ class LogsController extends Controller
             ->where('target_type', 'PsychologistPayout')
             ->whereRaw("COALESCE(LOWER(actor_role), '') != ?", ['laravellogs']);
 
-        // server-driven search: support search_field + search_query
+        // server-driven search: support search_field + search_query + search_date
         $searchField = strtolower(trim((string) $request->input('search_field', 'id')));
         $searchQuery = trim((string) $request->input('search_query', ''));
+        $searchDate = trim((string) $request->input('search_date', ''));
 
-        if ($searchQuery !== '') {
+        // additional server-side filters: statuses, created_from/to, actor_role
+        $rawStatuses = $request->input('statuses', []);
+        if (is_string($rawStatuses)) {
+            $rawStatuses = array_filter(array_map('trim', explode(',', $rawStatuses)));
+        }
+        $allowedStatuses = ['paid', 'pending', 'on_hold', 'refunded'];
+        $statuses = collect(is_array($rawStatuses) ? $rawStatuses : [])
+            ->map(fn($v) => strtolower(trim((string)$v)))
+            ->filter(fn($v) => in_array($v, $allowedStatuses, true))
+            ->values()
+            ->all();
+
+        $createdFrom = trim((string) $request->input('created_from', ''));
+        $createdTo = trim((string) $request->input('created_to', ''));
+        $actorRoleFilter = trim((string) $request->input('actor_role', ''));
+
+        if ($searchQuery !== '' || $searchDate !== '') {
             $q = $searchQuery;
             switch ($searchField) {
                 case 'id':
-                    if (ctype_digit($q)) {
-                        $query->where('id', $q);
-                    } else {
-                        $query->where('id', 'like', "%{$q}%");
+                    // Match any log id containing the typed digits (autocomplete-style).
+                    $digits = preg_replace('/\D/', '', $q);
+                    if ($digits !== '') {
+                        $query->where('id', 'like', "%{$digits}%");
                     }
                     break;
                 case 'psychologist':
+                    // search actor user fields or meta/description for psychologist name
                     $query->leftJoin('users', 'logs.actor_id', '=', 'users.id');
                     if (ctype_digit($q)) {
                         $query->where('logs.actor_id', $q);
                     } else {
                         $query->where(function ($s) use ($q) {
                             $s->where('users.name', 'like', "%{$q}%")
-                              ->orWhere('users.email', 'like', "%{$q}%");
+                              ->orWhere('users.email', 'like', "%{$q}%")
+                              ->orWhere('logs.description', 'like', "%{$q}%")
+                              ->orWhere('logs.meta', 'like', "%{$q}%");
                         });
                     }
+                    // ensure we still select log columns for pagination/models
                     $query->select('logs.*');
                     break;
                 case 'status':
@@ -473,20 +558,66 @@ class LogsController extends Controller
                           ->orWhere('description', 'like', "%{$q}%");
                     });
                     break;
+                case 'date':
+                    if ($searchDate !== '') {
+                        $query->whereDate('created_at', $searchDate);
+                    }
+                    break;
                 default:
-                    $query->where(function ($s) use ($q) {
-                        $s->where('action', 'like', "%{$q}%")
-                          ->orWhere('users.email', 'like', "%{$q}%")
-                          ->orWhere('users.name', 'like', "%{$q}%");
+                    $query->where(function ($qq) use ($q) {
+                        $qq->where('id', 'like', "%{$q}%")
+                           ->orWhere('target_id', 'like', "%{$q}%")
+                           ->orWhere('description', 'like', "%{$q}%")
+                           ->orWhere('action', 'like', "%{$q}%");
                     });
             }
+        }
+
+        // apply status filters (map to action/description tokens)
+        if (!empty($statuses)) {
+            $query->where(function ($qq) use ($statuses) {
+                foreach ($statuses as $s) {
+                    if ($s === 'paid') {
+                        $qq->orWhere('action', 'like', '%paid%')->orWhere('description', 'like', '%paid%');
+                    } elseif ($s === 'on_hold') {
+                        $qq->orWhere('action', 'like', '%on_hold%')->orWhere('description', 'like', '%on hold%')->orWhere('description', 'like', '%on-hold%');
+                    } elseif ($s === 'refunded') {
+                        $qq->orWhere('action', 'like', '%refund%')->orWhere('description', 'like', '%refund%');
+                    } elseif ($s === 'pending') {
+                        $qq->orWhere('action', 'like', '%created%')->orWhere('description', 'like', '%created%')->orWhere('action', 'like', '%pending%');
+                    } else {
+                        $qq->orWhere('action', 'like', "%{$s}%")->orWhere('description', 'like', "%{$s}%");
+                    }
+                }
+            });
+        }
+
+        // actor role filter
+        if ($actorRoleFilter !== '') {
+            $query->where('actor_role', 'like', "%{$actorRoleFilter}%");
+        }
+
+        // created at interval filters
+        if ($createdFrom !== '') {
+            $query->whereDate('created_at', '>=', $createdFrom);
+        }
+        if ($createdTo !== '') {
+            $query->whereDate('created_at', '<=', $createdTo);
         }
 
         $logs = $query->paginate(15)->appends($request->query());
 
         return Inertia::render('Admin/Logs/Payouts/Index', [
             'logs' => $logs,
-            'filters' => $request->only(['search_field', 'search_query']),
+            'filters' => [
+                'search_field' => $searchField,
+                'search_query' => $searchQuery,
+                'search_date' => $searchDate,
+                'statuses' => $statuses,
+                'created_from' => $createdFrom,
+                'created_to' => $createdTo,
+                'actor_role' => $actorRoleFilter,
+            ],
         ]);
     }
 
@@ -622,6 +753,9 @@ class LogsController extends Controller
         // server-driven search
         $searchField = strtolower(trim((string) $request->input('search_field', 'id')));
         $searchQuery = trim((string) $request->input('search_query', ''));
+        $actorRoleFilter = trim((string) $request->input('actor_role', ''));
+        $createdFrom = trim((string) $request->input('created_from', ''));
+        $createdTo = trim((string) $request->input('created_to', ''));
         if ($searchQuery !== '') {
             $q = $searchQuery;
             switch ($searchField) {
@@ -651,6 +785,17 @@ class LogsController extends Controller
                           ->orWhere('users.name', 'like', "%{$q}%");
                     });
             }
+        }
+
+        if ($actorRoleFilter !== '') {
+            $query->where('actor_role', 'like', "%{$actorRoleFilter}%");
+        }
+
+        if ($createdFrom !== '') {
+            $query->whereDate('created_at', '>=', $createdFrom);
+        }
+        if ($createdTo !== '') {
+            $query->whereDate('created_at', '<=', $createdTo);
         }
 
         $logs = $query->paginate(15)->appends($request->query());
@@ -700,7 +845,16 @@ class LogsController extends Controller
             return $log;
         });
 
-        return Inertia::render('Admin/Logs/Psychologists/Index', [ 'logs' => $logs, 'filters' => $request->only(['search_field','search_query']) ]);
+        return Inertia::render('Admin/Logs/Psychologists/Index', [
+            'logs' => $logs,
+            'filters' => [
+                'search_field' => $searchField,
+                'search_query' => $searchQuery,
+                'actor_role' => $actorRoleFilter,
+                'created_from' => $createdFrom,
+                'created_to' => $createdTo,
+            ],
+        ]);
     }
 
     public function psychologistsShow(Log $log)
@@ -714,29 +868,63 @@ class LogsController extends Controller
     // Patients logs (mirror of psychologists)
     public function patientsIndex(Request $request)
     {
-        $query = Log::query()->where('target_type', 'PatientProfile')->whereRaw("COALESCE(LOWER(actor_role), '') != ?", ['laravellogs'])->orderBy('id', 'desc');
+        $query = Log::query()
+            ->where('target_type', 'PatientProfile')
+            ->whereRaw("COALESCE(LOWER(actor_role), '') != ?", ['laravellogs'])
+            ->orderBy('id', 'desc');
 
-        // server-driven search
+        // server-driven search: support search_field + search_query
         $searchField = strtolower(trim((string) $request->input('search_field', 'id')));
         $searchQuery = trim((string) $request->input('search_query', ''));
+
+        // additional server-side filters: statuses, created_from/to, actor_role
+        $rawStatuses = $request->input('statuses', []);
+        if (is_string($rawStatuses)) {
+            $rawStatuses = array_filter(array_map('trim', explode(',', $rawStatuses)));
+        }
+        $allowedStatuses = ['pending', 'confirmed', 'completed', 'cancelled', 'no_show'];
+        $statuses = collect(is_array($rawStatuses) ? $rawStatuses : [])
+            ->map(fn($v) => strtolower(trim((string)$v)))
+            ->filter(fn($v) => in_array($v, $allowedStatuses, true))
+            ->values()
+            ->all();
+
+        $createdFrom = trim((string) $request->input('created_from', ''));
+        $createdTo = trim((string) $request->input('created_to', ''));
+        $actorRoleFilter = trim((string) $request->input('actor_role', ''));
+
         if ($searchQuery !== '') {
             $q = $searchQuery;
             switch ($searchField) {
                 case 'id':
-                    if (ctype_digit($q)) {
-                        $query->where('id', $q);
+                    $digits = preg_replace('/\D/', '', $q);
+                    if ($digits !== '') {
+                        $query->where('id', 'like', "%{$digits}%");
                     } else {
                         $query->where('id', 'like', "%{$q}%");
                     }
                     break;
                 case 'actor':
                     $query->leftJoin('users', 'logs.actor_id', '=', 'users.id');
-                    $query->where(function ($s) use ($q) {
-                        $s->where('logs.actor_id', 'like', "%{$q}%")
-                          ->orWhere('users.name', 'like', "%{$q}%")
-                          ->orWhere('users.email', 'like', "%{$q}%");
-                    });
+                    if (ctype_digit($q)) {
+                        $query->where('logs.actor_id', $q);
+                    } else {
+                        $query->where(function ($s) use ($q) {
+                            $s->where('users.name', 'like', "%{$q}%")
+                              ->orWhere('users.email', 'like', "%{$q}%");
+                            if (Schema::hasColumn('users', 'username')) {
+                                $s->orWhere('users.username', 'like', "%{$q}%");
+                            }
+                        });
+                    }
+                    // ensure we still select log columns for pagination/models
                     $query->select('logs.*');
+                    break;
+                case 'status':
+                    $query->where(function ($s) use ($q) {
+                        $s->where('action', 'like', "%{$q}%")
+                          ->orWhere('description', 'like', "%{$q}%");
+                    });
                     break;
                 case 'action':
                     $query->where('action', 'like', "%{$q}%");
@@ -746,8 +934,56 @@ class LogsController extends Controller
                         $s->where('action', 'like', "%{$q}%")
                           ->orWhere('users.email', 'like', "%{$q}%")
                           ->orWhere('users.name', 'like', "%{$q}%");
+                        if (Schema::hasColumn('users', 'username')) {
+                            $s->orWhere('users.username', 'like', "%{$q}%");
+                        }
                     });
             }
+        }
+
+        // apply status filters (map to action/description tokens)
+        if (!empty($statuses)) {
+            $query->where(function ($q) use ($statuses) {
+                foreach ($statuses as $s) {
+                    switch ($s) {
+                        case 'pending':
+                            $q->orWhere('action', 'like', '%created%')
+                              ->orWhere('description', 'like', '%pending%');
+                            break;
+                        case 'confirmed':
+                            $q->orWhere('action', 'like', '%confirm%')
+                              ->orWhere('description', 'like', '%confirm%');
+                            break;
+                        case 'completed':
+                            $q->orWhere('action', 'like', '%complete%')
+                              ->orWhere('description', 'like', '%complete%');
+                            break;
+                        case 'cancelled':
+                            $q->orWhere('action', 'like', '%cancel%')
+                              ->orWhere('description', 'like', '%cancel%');
+                            break;
+                        case 'no_show':
+                            $q->orWhere('action', 'like', '%no_show%')
+                              ->orWhere('action', 'like', '%no-show%')
+                              ->orWhere('description', 'like', '%no show%')
+                              ->orWhere('description', 'like', '%no_show%');
+                            break;
+                    }
+                }
+            });
+        }
+
+        // actor role filter
+        if ($actorRoleFilter !== '') {
+            $query->where('actor_role', 'like', "%{$actorRoleFilter}%");
+        }
+
+        // created at interval filters
+        if ($createdFrom !== '') {
+            $query->whereDate('created_at', '>=', $createdFrom);
+        }
+        if ($createdTo !== '') {
+            $query->whereDate('created_at', '<=', $createdTo);
         }
 
         $logs = $query->paginate(15)->appends($request->query());
@@ -757,7 +993,7 @@ class LogsController extends Controller
             if ($log->target_type === 'PatientProfile') {
                 try {
                     $profile = PatientProfile::with('user')->find($log->target_id);
-                        if ($profile) {
+                    if ($profile) {
                         $log->patient = [
                             'id' => $profile->id,
                             'user' => $profile->user ? [
@@ -797,7 +1033,17 @@ class LogsController extends Controller
             return $log;
         });
 
-        return Inertia::render('Admin/Logs/Patients/Index', [ 'logs' => $logs, 'filters' => $request->only(['search_field','search_query']) ]);
+        return Inertia::render('Admin/Logs/Patients/Index', [
+            'logs' => $logs,
+            'filters' => [
+                'search_field' => $searchField,
+                'search_query' => $searchQuery,
+                'statuses' => $statuses,
+                'created_from' => $createdFrom,
+                'created_to' => $createdTo,
+                'actor_role' => $actorRoleFilter,
+            ],
+        ]);
     }
 
     public function patientsShow(Log $log)

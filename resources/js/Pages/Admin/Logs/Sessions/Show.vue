@@ -20,10 +20,7 @@
                 <div class="rounded-xl border border-gray-200 p-4">
                   <div class="text-sm font-semibold text-gray-900">Details</div>
                   <dl class="mt-3 space-y-3">
-                    <div class="flex items-start justify-between gap-4">
-                      <dt class="text-xs font-medium text-gray-500">Target</dt>
-                      <dd class="text-sm font-medium text-gray-900 text-right">{{ log.target_type }} #{{ log.target_id }}</dd>
-                    </div>
+                    
                     <div class="flex items-start justify-between gap-4">
                       <dt class="text-xs font-medium text-gray-500">Action</dt>
                       <dd class="text-sm font-medium text-gray-900 text-right">{{ log.action }}</dd>

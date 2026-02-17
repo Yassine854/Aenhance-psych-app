@@ -3,7 +3,6 @@
     <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
       <div>
         <h1 class="text-2xl font-semibold text-gray-900">Patient Logs</h1>
-        <p class="text-sm text-gray-600">Manage audit entries related to patient profiles.</p>
       </div>
       
       <div class="flex items-center gap-3 w-full md:w-auto">
@@ -15,7 +14,19 @@
           </select>
 
           <div class="relative flex-1">
-            <input v-model="searchQuery" type="text" :placeholder="searchPlaceholder" class="w-full rounded-lg border-gray-300 pl-10 pr-3 py-2"/>
+            <input v-model="searchQuery" type="text" @keyup.enter="applyServerFilters({ resetPage: true })" :placeholder="searchPlaceholder" class="w-full rounded-lg border-gray-300 pl-10 pr-10 py-2"/>
+            <button
+              v-if="searchQuery"
+              type="button"
+              @click="clearSearch"
+              class="absolute right-2 top-1/2 -translate-y-1/2 inline-flex items-center justify-center h-7 w-7 rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+              aria-label="Clear search"
+              title="Clear"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-4 w-4">
+                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+              </svg>
+            </button>
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12.9 14.32a8 8 0 111.414-1.414l4.387 4.387a1 1 0 01-1.414 1.414l-4.387-4.387zM14 8a6 6 0 11-12 0 6 6 0 0112 0z" clip-rule="evenodd"/></svg>
           </div>
         </div>
@@ -106,7 +117,10 @@
           </thead>
 
           <tbody class="bg-white divide-y divide-gray-200">
-            <tr v-for="log in (logs.data || [])" :key="log.id" class="hover:bg-gray-50">
+            <tr v-if="(sortedLogs || []).length === 0">
+              <td colspan="6" class="px-4 py-6 text-sm text-gray-500 text-center">No patient logs found.</td>
+            </tr>
+            <tr v-else v-for="log in (sortedLogs || [])" :key="log.id" class="hover:bg-gray-50">
               <td class="px-4 py-3 text-sm text-gray-700">#{{ log.id }}</td>
               <td class="px-4 py-3 text-sm text-gray-700">{{ log.action }}</td>
               <td class="px-4 py-3 text-sm text-gray-700">{{ log.actor_role || '-' }}</td>
@@ -137,7 +151,6 @@
     <ShowModal :show="modal === 'show'" :log="selected" @close="closeModal" />
   </div>
 </template>
-
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { Link, router } from '@inertiajs/vue3'
@@ -154,18 +167,38 @@ watch(() => props.logs?.data, (next) => { logsData.value = next ? [...next] : []
 
 const searchQuery = ref('')
 const searchField = ref('id')
+const searchDate = ref('')
 
 const isHydratingFilters = ref(false)
 let searchDebounce = null
 
+// filter panel state + options (matched to appointment logic)
+const filtersOpen = ref(false)
+const statusOptions = [
+  { value: 'pending', label: 'Pending' },
+  { value: 'confirmed', label: 'Confirmed' },
+  { value: 'completed', label: 'Completed' },
+  { value: 'cancelled', label: 'Cancelled' },
+  { value: 'no_show', label: 'No Show' },
+]
+const activeStatuses = ref([])
+const actorRole = ref('')
+const createdFrom = ref('')
+const createdTo = ref('')
+
 function normalizeFilters(filters = {}) {
-  const validField = ['id', 'actor', 'action'].includes(String(filters?.search_field || '').toLowerCase())
+  const validField = ['id', 'actor', 'status', 'action'].includes(String(filters?.search_field || '').toLowerCase())
     ? String(filters.search_field).toLowerCase()
     : 'id'
 
   return {
     search_field: validField,
     search_query: String(filters?.search_query || ''),
+    search_date: String(filters?.search_date || ''),
+    statuses: Array.isArray(filters?.statuses) ? filters.statuses : [],
+    actor_role: String(filters?.actor_role || ''),
+    created_from: String(filters?.created_from || ''),
+    created_to: String(filters?.created_to || ''),
   }
 }
 
@@ -174,22 +207,38 @@ function hydrateFiltersFromProps() {
   isHydratingFilters.value = true
   searchField.value = f.search_field
   searchQuery.value = f.search_query
+  searchDate.value = f.search_date
+  actorRole.value = f.actor_role || ''
+  activeStatuses.value = f.statuses
+  createdFrom.value = f.created_from
+  createdTo.value = f.created_to
   isHydratingFilters.value = false
 }
 
 function currentQueryParams() {
   const params = {
     search_field: searchField.value,
-    search_query: String(searchQuery.value || '').trim(),
+    search_query: searchField.value === 'date' ? '' : String(searchQuery.value || '').trim(),
+    search_date: searchField.value === 'date' ? String(searchDate.value || '').trim() : '',
+    actor_role: String(actorRole.value || '').trim(),
+    statuses: [...activeStatuses.value],
+    created_from: String(createdFrom.value || '').trim(),
+    created_to: String(createdTo.value || '').trim(),
   }
 
-  return Object.fromEntries(Object.entries(params).filter(([_, value]) => value !== '' && value != null))
+  return Object.fromEntries(
+    Object.entries(params).filter(([_, value]) => {
+      return value !== '' && value != null
+    })
+  )
 }
 
 function applyServerFilters({ resetPage = true } = {}) {
   if (isHydratingFilters.value) return
+
   const params = currentQueryParams()
   if (resetPage) params.page = 1
+
   router.get(route('admin.logs.patients.index'), params, {
     preserveScroll: true,
     preserveState: true,
@@ -210,108 +259,125 @@ watch(() => props.logs, () => { hydrateFiltersFromProps() })
 
 watch(searchField, (next) => {
   if (isHydratingFilters.value) return
-  searchQuery.value = ''
+
+  if (next === 'date') {
+    searchQuery.value = ''
+  } else {
+    searchDate.value = ''
+  }
   applyServerFilters({ resetPage: true })
 })
 
 watch(searchQuery, () => {
-  if (isHydratingFilters.value) return
+  if (isHydratingFilters.value || searchField.value === 'date') return
   if (searchDebounce) clearTimeout(searchDebounce)
-  searchDebounce = setTimeout(() => { applyServerFilters({ resetPage: true }); searchDebounce = null }, 300)
+  searchDebounce = setTimeout(() => {
+    applyServerFilters({ resetPage: true })
+    searchDebounce = null
+  }, 300)
 })
+
+watch(searchDate, () => {
+  if (isHydratingFilters.value || searchField.value !== 'date') return
+  applyServerFilters({ resetPage: true })
+})
+
 const modal = ref(null)
 const selected = ref(null)
+const flashMessage = ref('')
 
 const sortKey = ref('id')
 const sortDir = ref('desc')
 
+// client-side search using same logic as appointment logs
+const filteredLogs = computed(() => {
+  const q = String(searchQuery.value || '').trim().toLowerCase()
+
+  const list = (logsData.value || []).filter(l => {
+    // Exclude transient payment-start logs from appointment-style audit view
+    const actionRaw = String(l?.action || '').toLowerCase()
+    if (/\bstarted[_\-\s]?payment\b/.test(actionRaw)) return false
+    // primary search field filtering
+    let matchesSearch = true
+    if (q) {
+      switch (searchField.value) {
+        case 'id':
+          matchesSearch = String(l?.id ?? '').toLowerCase().includes(q)
+          break
+        case 'actor':
+          matchesSearch = String(getActorName(l) || '').toLowerCase().includes(q)
+          break
+        case 'status':
+          matchesSearch = String(getStatus(l) || '').toLowerCase().includes(q)
+          break
+        default:
+          matchesSearch = false
+      }
+    }
+    if (!matchesSearch) return false
+
+    return true
+  })
+
+  return list
+})
+
 const searchPlaceholder = computed(() => {
   switch (searchField.value) {
-    case 'id': return 'Search by ID...'
-    case 'actor': return 'Search by target...'
-    case 'action': return 'Search by action...'
-    default: return 'Search...'
+    case 'id':
+      return 'Search by ID...'
+    case 'actor':
+      return 'Search by actor...'
+    case 'status':
+      return 'Search by status...'
+    default:
+      return 'Search...'
   }
 })
 
-// filter panel state
-const filtersOpen = ref(false)
-const actorRole = ref('')
-const createdFrom = ref('')
-const createdTo = ref('')
-
 function applyFilters() {
-  // filters are reactive; closing the panel is a UX affordance
+  applyServerFilters({ resetPage: true })
   filtersOpen.value = false
 }
 
 function clearFilters() {
+  activeStatuses.value = []
   actorRole.value = ''
   createdFrom.value = ''
   createdTo.value = ''
 }
 
-const filteredLogs = computed(() => {
-  const q = String(searchQuery.value || '').trim().toLowerCase()
-  return (logsData.value || []).filter(l => {
-    if (q) {
-      switch (searchField.value) {
-        case 'id': if (!String(l?.id ?? '').toLowerCase().includes(q)) return false; break
-        case 'actor': if (!String(getActorName(l) || '').toLowerCase().includes(q)) return false; break
-        case 'action': if (!String(l.action || '').toLowerCase().includes(q)) return false; break
-      }
-    }
+function openShow(log) {
+  selected.value = log
+  modal.value = 'show'
+}
 
-    // actor role filter
-    if (actorRole.value) {
-      const role = String(l.actor_role || '').toLowerCase()
-      if (!role.includes(String(actorRole.value).toLowerCase())) return false
-    }
+function closeModal() {
+  modal.value = null
+  selected.value = null
+}
 
-    // created between filters
-    if (createdFrom.value) {
-      const from = new Date(createdFrom.value)
-      const created = new Date(l.created_at)
-      if (Number.isNaN(from.getTime()) === false && created < from) return false
-    }
-    if (createdTo.value) {
-      const to = new Date(createdTo.value)
-      to.setHours(23,59,59,999)
-      const created = new Date(l.created_at)
-      if (Number.isNaN(to.getTime()) === false && created > to) return false
-    }
+function clearFlash() { flashMessage.value = '' }
 
-    return true
-  })
-})
+function formatDate(value) {
+  if (!value) return '-'
+  try {
+    const d = new Date(value)
+    if (Number.isNaN(d.getTime())) return String(value)
+    return d.toLocaleString()
+  } catch {
+    return String(value)
+  }
+}
 
-const sortedLogs = computed(() => {
-  const list = Array.isArray(filteredLogs?.value) ? [...filteredLogs.value] : []
-  const key = sortKey.value
-  const dir = sortDir.value
-  list.sort((a,b) => {
-    let av = ''
-    let bv = ''
-    switch (key) {
-      case 'id': av = Number(a.id||0); bv = Number(b.id||0); break
-      case 'action': av = String(a.action||'').toLowerCase(); bv = String(b.action||'').toLowerCase(); break
-      case 'actor_role': av = String(a.actor_role||'').toLowerCase(); bv = String(b.actor_role||'').toLowerCase(); break
-      case 'actor': av = String(getActorName(a)||'').toLowerCase(); bv = String(getActorName(b)||'').toLowerCase(); break
-      case 'target':
-        av = String((a.target_type ? a.target_type + ' #' : '') + (a.target_id ?? '')).toLowerCase()
-        bv = String((b.target_type ? b.target_type + ' #' : '') + (b.target_id ?? '')).toLowerCase()
-        break
-      case 'created': av = new Date(a.created_at||0).getTime(); bv = new Date(b.created_at||0).getTime(); break
-      default: av = String(a[key]??'').toLowerCase(); bv = String(b[key]??'').toLowerCase();
-    }
-    if (av < bv) return dir === 'asc' ? -1 : 1
-    if (av > bv) return dir === 'asc' ? 1 : -1
-    return 0
-  })
-  return list
-})
-
-function toggleSort(key) { if (sortKey.value === key) { sortDir.value = sortDir.value === 'asc' ? 'desc' : 'asc'; return } sortKey.value = key; sortDir.value = 'asc' }
+function toggleSort(key) {
+  if (sortKey.value === key) {
+    sortDir.value = sortDir.value === 'asc' ? 'desc' : 'asc'
+    return
+  }
+  sortKey.value = key
+  sortDir.value = 'asc'
+}
 
 function getActorName(log) {
   if (!log) return '-'
@@ -333,7 +399,6 @@ function getActorName(log) {
 
 function getTargetLabel(log) {
   if (!log) return '-'
-  // If the log targets a patient profile, prefer attached patient name
   if (log.target_type === 'PatientProfile') {
     const p = log.patient || null
     if (p) {
@@ -342,14 +407,118 @@ function getTargetLabel(log) {
     }
     return `${log.target_type} #${log.target_id}`
   }
-  // Generic fallback
   return `${log.target_type || 'Target'} #${log.target_id ?? ''}`
 }
 
-function formatDate(value) { if (!value) return '-'; try { const d = new Date(value); if (Number.isNaN(d.getTime())) return String(value); return d.toLocaleString() } catch { return String(value) } }
+function getStatus(log) {
+  if (!log) return null
+  const action = String(log.action || '').toLowerCase()
+  if (action.includes('created')) return 'pending'
+  if (action.includes('confirm')) return 'confirmed'
+  if (action.includes('complete') || action.includes('completed')) return 'completed'
+  if (action.includes('cancel')) return 'cancelled'
+  if (action.includes('no_show') || action.includes('no-show') || action.includes('no show')) return 'no_show'
 
-function openShow(log) { selected.value = log; modal.value = 'show' }
-function closeModal() { modal.value = null; selected.value = null }
+  const desc = String(log.description || '').toLowerCase()
+  if (/\b(no[_\- ]?show)\b/.test(desc)) return 'no_show'
+  if (/\b(cancel|cancelled|canceled)\b/.test(desc)) return 'cancelled'
+  if (/\b(created|pending)\b/.test(desc)) return 'pending'
+  if (/\b(confirm|confirmed)\b/.test(desc)) return 'confirmed'
+  if (/\b(complete|completed)\b/.test(desc)) return 'completed'
+
+  const toMatch = desc.match(/to\s+([a-z_\-]+)/) || desc.match(/status\s+([a-z_\-]+)/)
+  if (toMatch && toMatch[1]) {
+    const t = toMatch[1].replace(/-/g, '_').toLowerCase()
+    const map = {
+      pending: 'pending',
+      created: 'pending',
+      confirm: 'confirmed',
+      confirmed: 'confirmed',
+      complete: 'completed',
+      completed: 'completed',
+      cancel: 'cancelled',
+      canceled: 'cancelled',
+      cancelled: 'cancelled',
+      'no_show': 'no_show',
+      'no-show': 'no_show',
+      'no show': 'no_show',
+      noshow: 'no_show',
+    }
+    return map[t] ?? null
+  }
+
+  return null
+}
+
+function statusBadgeClass(status) {
+  if (!status) return 'bg-gray-50 text-gray-700'
+  const s = String(status).toLowerCase()
+  switch (s) {
+    case 'pending':
+      return 'bg-yellow-100 text-yellow-800'
+    case 'confirmed':
+      return 'bg-blue-100 text-blue-800'
+    case 'completed':
+      return 'bg-green-100 text-green-800'
+    case 'cancelled':
+    case 'canceled':
+      return 'bg-red-100 text-red-800'
+    case 'no_show':
+      return 'bg-gray-100 text-gray-800'
+    default:
+      return 'bg-gray-50 text-gray-700'
+  }
+}
+
+const sortedLogs = computed(() => {
+  const list = Array.isArray(filteredLogs?.value) ? [...filteredLogs.value] : []
+  const key = sortKey.value
+  const dir = sortDir.value
+
+  list.sort((a, b) => {
+    let av = ''
+    let bv = ''
+    switch (key) {
+      case 'id':
+        av = Number(a.id || 0)
+        bv = Number(b.id || 0)
+        break
+      case 'action':
+        av = String(a.action || '').toLowerCase()
+        bv = String(b.action || '').toLowerCase()
+        break
+      case 'created':
+        av = new Date(a.created_at || 0).getTime()
+        bv = new Date(b.created_at || 0).getTime()
+        break
+      case 'actor_role':
+        av = String(a.actor_role || '').toLowerCase()
+        bv = String(b.actor_role || '').toLowerCase()
+        break
+      case 'status':
+        av = String(getStatus(a) || '').toLowerCase()
+        bv = String(getStatus(b) || '').toLowerCase()
+        break
+      case 'actor_username':
+        av = String(getActorName(a) || '').toLowerCase()
+        bv = String(getActorName(b) || '').toLowerCase()
+        break
+      case 'target':
+        av = String((a.target_type ? a.target_type + ' #' : '') + (a.target_id ?? '')).toLowerCase()
+        bv = String((b.target_type ? b.target_type + ' #' : '') + (b.target_id ?? '')).toLowerCase()
+        break
+      default:
+        av = String(a[key] ?? '').toLowerCase()
+        bv = String(b[key] ?? '').toLowerCase()
+    }
+
+    if (av < bv) return dir === 'asc' ? -1 : 1
+    if (av > bv) return dir === 'asc' ? 1 : -1
+    return 0
+  })
+
+  return list
+})
 
 function linkClasses(link) {
   const base = 'px-3 py-1.5 rounded border text-sm'
@@ -358,5 +527,11 @@ function linkClasses(link) {
   return `${base} bg-white border-gray-200 text-gray-700 hover:bg-gray-50`
 }
 
-function linkStyle(link) { if (link && link.active) { const c = 'rgb(89 151 172 / var(--tw-bg-opacity, 1))'; return { backgroundColor: c, borderColor: c, color: '#ffffff' } } return {} }
+function linkStyle(link) {
+  if (link && link.active) {
+    const c = 'rgb(89 151 172 / var(--tw-bg-opacity, 1))'
+    return { backgroundColor: c, borderColor: c, color: '#ffffff' }
+  }
+  return {}
+}
 </script>

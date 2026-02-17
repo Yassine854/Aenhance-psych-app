@@ -214,16 +214,25 @@ const menuGroups = [
 
       {
         name: "Psychologists",
-        icon: ListIcon,
+        icon: UserCircleIcon,
         roles: ['ADMIN'],
         subItems: [
           { name: "All Psychologists", path: "/psychologist-profiles", pro: false },
-              { name: "Payouts", path: "/admin/payouts", pro: false },
+          { name: "Payouts", path: "/admin/payouts", pro: false },
           { name: "Specialisations", path: "/specialisations", pro: false },
           { name: "Expertises", path: "/expertises", pro: false },
         ],
       },
 
+      {
+        name: "Patients",
+        icon: ChatIcon,
+        roles: ['ADMIN'],
+        subItems: [
+          { name: "All Patients", path: "/patient-profiles", pro: false },
+          { name: "Payments", path: "/admin/payments", pro: false },
+        ],
+      },
       {
         name: "Appointments",
         icon: CalenderIcon,
@@ -231,20 +240,14 @@ const menuGroups = [
         path: "/admin/appointments",
       },
       {
-        name: "Payments",
-        icon: TableIcon,
-        roles: ['ADMIN'],
-        path: "/admin/payments",
-      },
-      {
         name: "Rates",
-        icon: DocsIcon,
+        icon: PieChartIcon,
         roles: ['ADMIN'],
         path: "/admin/rates",
       },
       {
         name: "Reports",
-        icon: DocsIcon,
+        icon: PageIcon,
         roles: ['ADMIN'],
         path: "/admin/reports",
       },
@@ -261,19 +264,10 @@ const menuGroups = [
         roles: ['PSYCHOLOGIST'],
         path: "/psychologist/appointments",
       },
-      {
-        name: "Patients",
-        icon: ListIcon,
-        roles: ['ADMIN', 'PSYCHOLOGIST'], 
-        subItems: [
-          { name: "Patient Records", path: "/form-elements", pro: false },
-          { name: "All Patients", path: "/patient-profiles", pro: false },
-          { name: "Payment follow-up", path: "/form-elements", pro: false },
-        ],
-      },
+      
       {
         name: "Page Settings",
-        icon: ListIcon,
+        icon: PlugInIcon,
         roles: ['ADMIN'],
         subItems: [
           { name: "Ressources", path: "/form-elements", pro: false },
@@ -287,8 +281,8 @@ const menuGroups = [
         roles: ['ADMIN'],
         subItems: [
           { name: "Appointments", path: "/admin/logs/appointments", pro: false },
-          { name: "Payouts", path: "/admin/logs/payouts", pro: false },
           { name: "Sessions", path: "/admin/logs/sessions", pro: false },
+          { name: "Payouts", path: "/admin/logs/payouts", pro: false },
           { name: "Psychologists", path: "/admin/logs/psychologists", pro: false },
           { name: "Patients", path: "/admin/logs/patients", pro: false },
        
