@@ -24,10 +24,8 @@
           class="inline-flex items-center gap-2 px-4 py-2 text-white rounded-lg shadow btn-save disabled:opacity-50 min-w-[120px] justify-center"
           style="background-color:#AF5166;"
         >
-          <svg v-if="!saving" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-4 w-4">
-            <path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6" />
-            <path d="M9 15V9a3 3 0 0 1 3-3h0a3 3 0 0 1 3 3v6" />
-            <path d="M12 3v4" />
+          <svg v-if="!saving" class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
           </svg>
           <svg v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" class="h-4 w-4 animate-spin stroke-white">
             <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" opacity="0.25"/>

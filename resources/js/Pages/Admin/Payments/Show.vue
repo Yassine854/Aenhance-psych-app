@@ -61,9 +61,6 @@
                 <div>
                   <div class="text-sm font-semibold text-gray-900">Payment Info</div>
                 </div>
-                <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium" :class="paymentBadge(payment.status)">
-                  {{ paymentLabel(payment.status) }}
-                </span>
               </div>
 
               <div class="mt-3 grid grid-cols-1 md:grid-cols-4 gap-3">
@@ -82,6 +79,20 @@
                 <div>
                   <div class="text-xs text-gray-500">Payment ID</div>
                   <div class="text-sm text-gray-900">{{ payment.id || '—' }}</div>
+                </div>
+              </div>
+            </div>
+            <div class="rounded-xl border border-gray-200 p-4">
+              <div class="text-sm font-semibold text-gray-900">Appointment</div>
+              <div class="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <div class="text-xs text-gray-500">Appointment ID</div>
+                  <div class="text-sm text-gray-900">{{ payment.appointment?.id || payment.appointment_id || '—' }}</div>
+                </div>
+                <div>
+                  <div class="text-xs text-gray-500">Date</div>
+                  <div class="text-sm text-gray-900">{{ formatDateTime(appointmentDate(payment)) }}</div>
+
                 </div>
               </div>
             </div>
@@ -143,6 +154,24 @@ function paymentBadge(status) {
   if (s === 'failed') return 'bg-red-50 text-red-700 ring-1 ring-red-200'
   if (s === 'refunded') return 'bg-blue-50 text-blue-700 ring-1 ring-blue-200'
   return 'bg-gray-100 text-gray-700 ring-1 ring-gray-200'
+}
+
+function appointmentDate(p) {
+  if (!p) return null
+  // prefer explicit scheduled_start on the appointment
+  const appt = p.appointment || null
+  const candidates = [
+    appt?.scheduled_start,
+    appt?.scheduled_at,
+    appt?.start,
+    appt?.start_time,
+    p.paid_at,
+    p.created_at,
+  ]
+  for (const c of candidates) {
+    if (c !== null && c !== undefined && String(c) !== '') return c
+  }
+  return null
 }
 
 </script>

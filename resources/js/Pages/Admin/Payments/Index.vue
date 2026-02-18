@@ -143,7 +143,7 @@
       <div class="flex items-center justify-end gap-2 mt-4">
         <button type="button" @click="clearFilters" class="px-3 py-2 rounded-lg border bg-white text-sm text-gray-700 hover:bg-gray-50">Clear</button>
         <button type="button" @click="filtersOpen = false" class="px-3 py-2 rounded-lg border bg-white text-sm text-gray-700 hover:bg-gray-50">Close</button>
-        <button type="button" @click="applyFilters" class="px-3 py-2 rounded-lg text-white text-sm hover:opacity-90" style="background-color: rgb(89 151 172 / var(--tw-bg-opacity, 1))">Apply</button>
+        <button type="button" @click="applyFilters" class="px-3 py-2 rounded-lg text-white text-sm hover:opacity-90" style="background-color: rgb(175 81 102 / var(--tw-bg-opacity, 1))">Apply</button>
       </div>
     </div>
 
@@ -219,7 +219,7 @@
                 </div>
               </td>
               <td class="px-4 py-3 text-right">
-                <div class="flex flex-col items-end gap-2">
+                <div class="flex items-center justify-end gap-2">
                   <button
                     type="button"
                     title="View"
@@ -232,22 +232,43 @@
                     </svg>
                   </button>
 
-                  <div class="inline-flex items-center gap-2">
+                  <div class="relative inline-block text-left">
                     <button
-                      v-for="act in paymentActions(p)"
-                      :key="act.value"
                       type="button"
-                      @click="handlePaymentAction(p, act)"
-                      :disabled="savingId === p.id"
-                      class="inline-flex items-center justify-center h-8 px-2.5 rounded-lg border text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                      :class="act.classes"
-                      :title="act.title"
+                      @click="toggleActions(p.id)"
+                      class="inline-flex items-center justify-center h-9 w-9 rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
+                      :aria-expanded="openActionsId === p.id"
+                      :aria-haspopup="true"
+                      aria-label="Open actions"
                     >
-                      <span>{{ act.label }}</span>
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        <path d="M10 6a2 2 0 110-4 2 2 0 010 4zm0 6a2 2 0 110-4 2 2 0 010 4zm0 6a2 2 0 110-4 2 2 0 010 4z" />
+                      </svg>
                     </button>
+
+                    <div v-if="openActionsId === p.id" class="absolute right-0 mt-2 w-52 bg-white border rounded-lg shadow-lg z-50" role="menu" aria-orientation="vertical">
+                      <div class="py-1">
+                        <template v-for="act in paymentActions(p)" :key="act.value">
+                          <button
+                            type="button"
+                            @click="onSelectAction(p, act)"
+                            :class="['w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-gray-100', (act.classes || '').split(' ').filter(c => c.startsWith('text-') || c.startsWith('hover:text-')).join(' ')]"
+                            role="menuitem"
+                          >
+                            <svg :class="['h-4 w-4', (act.classes || '').split(' ').filter(c => c.startsWith('text-')).join(' ') || 'text-gray-500']" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="M12 5l7 7-7 7"></path></svg>
+                            <span>{{ act.label }}</span>
+                          </button>
+                        </template>
+
+                        <div v-if="paymentActions(p).length === 0" class="px-3 py-2 text-sm text-gray-500">No actions</div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </td>
+            </tr>
+            <tr v-if="(sorted || []).length === 0">
+              <td colspan="7" class="px-4 py-6 text-sm text-gray-500 text-center">No payments found.</td>
             </tr>
           </tbody>
         </table>
@@ -281,7 +302,7 @@
 import { Link, router, usePage } from '@inertiajs/vue3'
 import { computed, ref, watch } from 'vue'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
-import SortIcon from '@/Pages/Admin/Psychologist/SortIcon.vue'
+import SortIcon from '@/Components/SortIcon.vue'
 import Swal from 'sweetalert2'
 import Show from './Show.vue'
 
@@ -369,6 +390,7 @@ const searchDate = ref('')
 
 const modal = ref('')
 const selected = ref(null)
+const openActionsId = ref(null)
 
 const filtersOpen = ref(false)
 const statusOptions = [
@@ -449,7 +471,7 @@ function clearSearch() {
     searchDebounce = null
   }
   searchQuery.value = ''
-  applyServerFilters({ resetPage: true })
+  if (searchField.value !== 'date') applyServerFilters({ resetPage: true })
 }
 
 hydrateFiltersFromProps()
@@ -462,7 +484,7 @@ watch(searchField, (next) => {
   } else {
     searchDate.value = ''
   }
-  applyServerFilters({ resetPage: true })
+  // do not auto-apply filters; user must click Apply
 })
 
 watch(searchQuery, () => {
@@ -476,12 +498,12 @@ watch(searchQuery, () => {
 
 watch(searchDate, () => {
   if (isHydratingFilters.value || searchField.value !== 'date') return
-  applyServerFilters({ resetPage: true })
+  // no auto-apply; changes take effect only when user clicks Apply
 })
 
 watch([activeStatuses, createdFrom, createdTo], () => {
   if (isHydratingFilters.value) return
-  applyServerFilters({ resetPage: true })
+  // no auto-apply; changes take effect only when user clicks Apply
 }, { deep: true })
 
 function applyFilters() {
@@ -493,7 +515,6 @@ function clearFilters() {
   activeStatuses.value = []
   createdFrom.value = ''
   createdTo.value = ''
-  applyServerFilters({ resetPage: true })
 }
 
 function openShow(p) {
@@ -504,6 +525,16 @@ function openShow(p) {
 function closeModal() {
   modal.value = ''
   selected.value = null
+}
+
+function toggleActions(id) {
+  openActionsId.value = openActionsId.value === id ? null : id
+}
+
+function onSelectAction(p, act) {
+  openActionsId.value = null
+  if (!act) return
+  handlePaymentAction(p, act)
 }
 
 const searchPlaceholder = computed(() => {
@@ -521,7 +552,7 @@ const searchPlaceholder = computed(() => {
 
 const filtered = computed(() => (Array.isArray(data.value) ? [...data.value] : []))
 
-const sortKey = ref('created_at')
+const sortKey = ref('id')
 const sortDir = ref('desc')
 
 function toggleSort(key) {
@@ -620,8 +651,8 @@ function linkClasses(link) {
 function labelForStatus(value) {
   const v = String(value || '').toLowerCase()
   if (!v) return ''
-  if (v === 'paid') return 'Mark paid'
-  if (v === 'failed') return 'Mark failed'
+  if (v === 'paid') return 'paid'
+  if (v === 'failed') return 'failed'
   if (v === 'refunded') return 'Refund'
   return v
 }
@@ -680,14 +711,14 @@ function paymentActions(p) {
   const pay = String(p?.status || '').toLowerCase()
   if (pay === 'pending') {
     return [
-      { value: 'paid', label: 'Mark Paid', title: 'Mark as Paid', classes: 'border-green-200 bg-green-50 text-green-700 hover:bg-green-100' },
+      { value: 'paid', label: 'Paid', title: 'Mark as Paid', classes: 'border-green-200 bg-green-50 text-green-700 hover:bg-green-100' },
       { value: 'failed', label: 'Fail', title: 'Mark as Failed', classes: 'border-red-200 bg-red-50 text-red-700 hover:bg-red-100' },
     ]
   }
 
   if (pay === 'paid') {
     return [
-      { value: 'refunded', label: 'Refund', title: 'Refund payment', classes: 'border-yellow-200 bg-yellow-50 text-yellow-700 hover:bg-yellow-100' },
+      { value: 'refunded', label: 'Refund', title: 'Refund payment', classes: 'border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100' },
     ]
   }
 

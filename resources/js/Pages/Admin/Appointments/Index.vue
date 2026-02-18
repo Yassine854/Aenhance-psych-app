@@ -125,7 +125,7 @@
           <div class="text-sm font-medium text-gray-700 mb-2">Statuses</div>
           <div class="flex flex-col gap-2">
             <label v-for="s in statusOptions" :key="s.value" class="inline-flex items-center gap-2">
-              <input type="checkbox" :value="s.value" v-model="activeStatuses" class="form-checkbox" />
+              <input type="checkbox" :value="s.value" v-model="pendingActiveStatuses" class="form-checkbox" />
               <span class="text-sm text-gray-700">{{ s.label }}</span>
             </label>
           </div>
@@ -134,8 +134,8 @@
         <div>
           <div class="text-sm font-medium text-gray-700 mb-2">Created Between</div>
           <div class="flex gap-2">
-            <input type="date" v-model="createdFrom" class="rounded-lg border-gray-300 px-3 py-2 text-sm w-1/2" />
-            <input type="date" v-model="createdTo" class="rounded-lg border-gray-300 px-3 py-2 text-sm w-1/2" />
+            <input type="date" v-model="pendingCreatedFrom" class="rounded-lg border-gray-300 px-3 py-2 text-sm w-1/2" />
+            <input type="date" v-model="pendingCreatedTo" class="rounded-lg border-gray-300 px-3 py-2 text-sm w-1/2" />
           </div>
         </div>
       </div>
@@ -143,7 +143,7 @@
       <div class="flex items-center justify-end gap-2 mt-4">
         <button type="button" @click="clearFilters" class="px-3 py-2 rounded-lg border bg-white text-sm text-gray-700 hover:bg-gray-50">Clear</button>
         <button type="button" @click="filtersOpen = false" class="px-3 py-2 rounded-lg border bg-white text-sm text-gray-700 hover:bg-gray-50">Close</button>
-        <button type="button" @click="applyFilters" class="px-3 py-2 rounded-lg text-white text-sm hover:opacity-90" style="background-color: rgb(89 151 172 / var(--tw-bg-opacity, 1))">Apply</button>
+        <button type="button" @click="applyFilters" class="px-3 py-2 rounded-lg text-white text-sm hover:opacity-90" style="background-color: rgb(175 81 102 / var(--tw-bg-opacity, 1))">Apply</button>
       </div>
     </div>
 
@@ -178,7 +178,7 @@
               </th>
               <th class="px-4 py-3 text-left">
                 <button type="button" @click="toggleSort('status')" class="group inline-flex items-center gap-1 text-xs font-medium text-gray-500 uppercase tracking-wider hover:text-gray-700">
-                  Appointment
+                  Status
                   <SortIcon :active="sortKey === 'status'" :dir="sortDir" />
                 </button>
               </th>
@@ -193,6 +193,9 @@
           </thead>
 
           <tbody class="bg-white divide-y divide-gray-200">
+            <tr v-if="(sorted || []).length === 0">
+              <td colspan="7" class="px-4 py-6 text-sm text-gray-500 text-center">No appointments found.</td>
+            </tr>
             <tr
               v-for="a in sorted"
               :key="a.id"
@@ -215,32 +218,29 @@
                   <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium" :class="appointmentBadge(a.status)">
                     {{ appointmentLabel(a.status) }}
                   </span>
-                  <span
-                    v-if="a.price != null && !['cancelled', 'no_show'].includes(String(a.status || '').toLowerCase())"
-                    class="inline-flex items-center px-2 py-1 rounded text-xs font-semibold bg-gray-100 text-gray-800"
-                  >
-                    {{ Number(a.price).toFixed(2) }} {{ a.currency || 'TND' }}
-                  </span>
+                  
                 </div>
                 <div v-if="String(a.status || '').toLowerCase() === 'cancelled'" class="mt-1 text-xs text-gray-500">
-                  Cancelled by: {{ a.canceled_by || '—' }}<span v-if="a.canceled_by_user_id"> (user #{{ a.canceled_by_user_id }})</span>
+                  Cancelled by: {{ a.canceled_by || '—' }}
                 </div>
                 <div v-if="String(a.status || '').toLowerCase() === 'no_show'" class="mt-1 text-xs text-gray-500">
                   Missed by: {{ a.no_show_display || (a.no_show_by ? (a.no_show_by === 'patient' ? 'Patient' : (a.no_show_by === 'psychologist' ? 'Psychologist' : a.no_show_by)) : (a.no_show_user_id ? 'User #' + a.no_show_user_id : 'Both')) }}
                 </div>
               </td>
               <td class="px-4 py-3">
-                <div class="flex items-center gap-2 flex-wrap">
-                  <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium" :class="paymentBadge(a.payment?.status)">
-                    {{ paymentLabel(a.payment?.status) }}
-                  </span>
-                  <span v-if="a.payment?.provider" class="inline-flex items-center px-2 py-1 rounded text-xs font-semibold bg-gray-100 text-gray-800">
+                <div>
+                  <div class="flex items-center gap-2">
+                    <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium whitespace-nowrap" :class="paymentBadge(a.payment?.status)">
+                      {{ paymentLabel(a.payment?.status) }}
+                    </span>
+                  </div>
+                  <div v-if="a.payment?.provider" class="mt-1 text-xs text-gray-500">
                     {{ a.payment.provider }}
-                  </span>
+                  </div>
                 </div>
               </td>
               <td class="px-4 py-3 text-right">
-                <div class="flex flex-col items-end gap-2">
+                <div class="flex items-center justify-end gap-2">
                   <button
                     type="button"
                     title="View"
@@ -253,34 +253,51 @@
                     </svg>
                   </button>
 
-                  <div v-if="appointmentActions(a).length" class="inline-flex flex-wrap items-center justify-end gap-2">
+                    <div class="relative inline-block text-left">
                     <button
-                      v-for="act in appointmentActions(a)"
-                      :key="act.value"
                       type="button"
-                      @click="handleAppointmentAction(a, act)"
-                      :disabled="savingId === a.id"
-                      class="inline-flex items-center justify-center h-8 px-2.5 rounded-lg border text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                      :class="act.classes"
-                      :title="act.title"
+                      @click="toggleActions(a.id)"
+                      class="inline-flex items-center justify-center h-9 w-9 rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
+                      :aria-expanded="openActionsId === a.id"
+                      :aria-haspopup="true"
+                      aria-label="Open actions"
                     >
-                      <span>{{ act.label }}</span>
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        <path d="M10 6a2 2 0 110-4 2 2 0 010 4zm0 6a2 2 0 110-4 2 2 0 010 4zm0 6a2 2 0 110-4 2 2 0 010 4z" />
+                      </svg>
                     </button>
-                  </div>
 
-                  <div v-if="paymentActions(a).length" class="inline-flex flex-wrap items-center justify-end gap-2">
-                    <button
-                      v-for="act in paymentActions(a)"
-                      :key="act.value"
-                      type="button"
-                      @click="applyUpdate(a, { payment_status: act.value, appointment_status: act.appointment_status || null })"
-                      :disabled="savingId === a.id"
-                      class="inline-flex items-center justify-center h-8 px-2.5 rounded-lg border text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                      :class="act.classes"
-                      :title="act.title"
-                    >
-                      <span>{{ act.label }}</span>
-                    </button>
+                    <div v-if="openActionsId === a.id" class="absolute right-0 mt-2 w-52 bg-white border rounded-lg shadow-lg z-50" role="menu" aria-orientation="vertical">
+                      <div class="py-1">
+                        <template v-for="act in appointmentActions(a)" :key="'appt-'+act.value">
+                          <button
+                            type="button"
+                            @click="onSelectAction(a, {...act, __type: 'appointment'})"
+                            :class="['w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-gray-100', actionTextColor(act)]"
+                            role="menuitem"
+                          >
+                            <svg :class="['h-4 w-4', actionTextColor(act)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="M12 5l7 7-7 7"></path></svg>
+                            <span>{{ act.label }}</span>
+                          </button>
+                        </template>
+
+                        <div v-if="paymentActions(a).length" class="border-t my-1"></div>
+
+                        <template v-for="act in paymentActions(a)" :key="'pay-'+act.value">
+                          <button
+                            type="button"
+                            @click="onSelectAction(a, {...act, __type: 'payment'})"
+                            :class="['w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-gray-100', actionTextColor(act)]"
+                            role="menuitem"
+                          >
+                            <svg :class="['h-4 w-4', actionTextColor(act)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1v22"></path><path d="M5 6h14"></path></svg>
+                            <span>{{ act.label }}</span>
+                          </button>
+                        </template>
+
+                        <div v-if="(appointmentActions(a).length + paymentActions(a).length) === 0" class="px-3 py-2 text-sm text-gray-500">No actions</div>
+                      </div>
+                    </div>
                   </div>
 
                   
@@ -319,7 +336,7 @@
 import { Link, router, usePage } from '@inertiajs/vue3'
 import { computed, ref, watch } from 'vue'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
-import SortIcon from '@/Pages/Admin/Psychologist/SortIcon.vue'
+import SortIcon from '@/Components/SortIcon.vue'
 import Swal from 'sweetalert2'
 import Show from './Show.vue'
 
@@ -409,8 +426,9 @@ const searchField = ref('id')
 const searchQuery = ref('')
 const searchDate = ref('')
 
-const modal = ref('')
-const selected = ref(null)
+  const modal = ref('')
+  const selected = ref(null)
+  const openActionsId = ref(null)
 
 // Filters
 const filtersOpen = ref(false)
@@ -424,6 +442,11 @@ const statusOptions = [
 const activeStatuses = ref([])
 const createdFrom = ref('')
 const createdTo = ref('')
+
+// Pending UI values for filters panel — only applied when user clicks Apply
+const pendingActiveStatuses = ref([])
+const pendingCreatedFrom = ref('')
+const pendingCreatedTo = ref('')
 
 const isHydratingFilters = ref(false)
 let searchDebounce = null
@@ -452,6 +475,10 @@ function hydrateFiltersFromProps() {
   activeStatuses.value = f.statuses
   createdFrom.value = f.created_from
   createdTo.value = f.created_to
+  // initialize pending UI values from current server filters
+  pendingActiveStatuses.value = Array.isArray(f.statuses) ? [...f.statuses] : []
+  pendingCreatedFrom.value = f.created_from || ''
+  pendingCreatedTo.value = f.created_to || ''
   isHydratingFilters.value = false
 }
 
@@ -524,21 +551,24 @@ watch(searchDate, () => {
   applyServerFilters({ resetPage: true })
 })
 
-watch([activeStatuses, createdFrom, createdTo], () => {
-  if (isHydratingFilters.value) return
-  applyServerFilters({ resetPage: true })
-}, { deep: true })
+// Note: removed automatic application of filters when changing the panel fields.
+// Filters in the panel are pending until the user clicks Apply.
 
 function applyFilters() {
+  // copy pending UI values into active filters then apply
+  activeStatuses.value = Array.isArray(pendingActiveStatuses.value) ? [...pendingActiveStatuses.value] : []
+  createdFrom.value = String(pendingCreatedFrom.value || '')
+  createdTo.value = String(pendingCreatedTo.value || '')
+
   applyServerFilters({ resetPage: true })
   filtersOpen.value = false
 }
 
 function clearFilters() {
-  activeStatuses.value = []
-  createdFrom.value = ''
-  createdTo.value = ''
-  applyServerFilters({ resetPage: true })
+  // clear pending UI values (does not auto-apply)
+  pendingActiveStatuses.value = []
+  pendingCreatedFrom.value = ''
+  pendingCreatedTo.value = ''
 }
 
 function openShow(a) {
@@ -549,6 +579,21 @@ function openShow(a) {
 function closeModal() {
   modal.value = ''
   selected.value = null
+}
+
+function toggleActions(id) {
+  openActionsId.value = openActionsId.value === id ? null : id
+}
+
+function onSelectAction(a, act) {
+  openActionsId.value = null
+  if (!act) return
+  if (act.__type === 'payment') {
+    applyUpdate(a, { payment_status: act.value, appointment_status: act.appointment_status || null })
+    return
+  }
+  // default: appointment action
+  handleAppointmentAction(a, act)
 }
 
 const searchPlaceholder = computed(() => {
@@ -788,6 +833,19 @@ function labelForStatus(type, value) {
   }
 
   return v
+}
+
+function actionTextColor(act) {
+  const v = String(act?.value || '').toLowerCase()
+  if (v === 'confirmed') return 'text-blue-700'
+  if (v === 'cancelled') return 'text-red-700'
+  if (v === 'completed') return 'text-green-700'
+  if (v === 'no_show') return 'text-gray-800'
+  // payment-related
+  if (v === 'paid') return 'text-green-700'
+  if (v === 'failed') return 'text-red-700'
+  if (v === 'refunded') return 'text-blue-700'
+  return 'text-gray-700'
 }
 
 function statusTitleText(a, payload) {

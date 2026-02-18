@@ -6,13 +6,19 @@
       <div class="bg-gradient-to-r from-[rgb(141,61,79)] to-[rgb(89,151,172)] p-6">
         <div class="flex items-start justify-between gap-4">
           <div class="text-white">
-            <div class="text-xl font-semibold leading-tight">Report #{{ report.id }}</div>
-            <div class="text-sm opacity-90">{{ formatDate(report.created_at) }}</div>
+            <div class="flex items-center gap-3">
+              <div>
+                <div class="text-xl font-semibold leading-tight">Report #{{ report.id }}</div>
+                <div class="text-sm opacity-90">{{ formatDate(report.created_at) }}</div>
+              </div>
+              <div>
+                <span v-if="report" :class="report.is_resolved ? 'inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-white text-green-700' : 'inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-white text-yellow-800'">
+                  {{ report.is_resolved ? 'Resolved' : 'Open' }}
+                </span>
+              </div>
+            </div>
           </div>
           <div class="flex items-center gap-3">
-            <template v-if="!report.is_resolved">
-              <button @click="confirmResolve" class="px-3 py-1.5 rounded-lg bg-white text-gray-800 font-medium">Resolve</button>
-            </template>
             <button @click="close" class="text-white/90 hover:text-white text-2xl leading-none">✕</button>
           </div>
         </div>
@@ -55,10 +61,7 @@
                   <a :href="report.proof_image" target="_blank" class="text-brand-600 hover:underline">View image</a>
                 </dd>
               </div>
-              <div class="flex items-start justify-between gap-4">
-                <dt class="text-xs font-medium text-gray-500">Status</dt>
-                <dd class="text-sm font-medium text-gray-900 text-right">{{ report.is_resolved ? 'Resolved' : 'Open' }}</dd>
-              </div>
+              <!-- Status shown in modal header -->
               <div v-if="report.is_resolved" class="flex items-start justify-between gap-4">
                 <dt class="text-xs font-medium text-gray-500">Resolved at</dt>
                 <dd class="text-sm font-medium text-gray-900 text-right">{{ formatDate(report.resolved_at) }}</dd>

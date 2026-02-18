@@ -3,7 +3,6 @@
     <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
       <div>
         <h1 class="text-2xl font-semibold text-gray-900">Session Logs</h1>
-        <p class="text-sm text-gray-600">Manage audit entries related to appointment sessions.</p>
       </div>
 
       <div class="flex items-center gap-3 w-full md:w-auto">

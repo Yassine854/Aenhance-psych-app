@@ -149,7 +149,7 @@
 import { Link, router, usePage } from '@inertiajs/vue3'
 import { ref, computed, watch } from 'vue'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
-import SortIcon from '@/Pages/Admin/Psychologist/SortIcon.vue'
+import SortIcon from '@/Components/SortIcon.vue'
 import Swal from 'sweetalert2'
 import Show from './Show.vue'
 

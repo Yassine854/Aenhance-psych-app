@@ -86,8 +86,14 @@ class PaymentsController extends Controller
                 'provider' => $p->provider,
                 'status' => (string) $p->status,
                 'transaction_id' => $p->transaction_id,
+                'refund_reason' => $p->refund_reason,
                 'paid_at' => optional($p->paid_at)->toISOString() ?? ($p->paid_at ? (string) $p->paid_at : null),
                 'created_at' => optional($p->created_at)->toISOString() ?? (string) $p->created_at,
+                'updated_at' => optional($p->updated_at)->toISOString() ?? (string) $p->updated_at,
+                'appointment' => $p->appointment ? [
+                    'id' => $p->appointment->id,
+                    'scheduled_start' => optional($p->appointment->scheduled_start)->toISOString() ?? ($p->appointment->scheduled_start ? (string) $p->appointment->scheduled_start : null),
+                ] : null,
                 'patient' => $p->appointment && $p->appointment->patient ? [
                     'id' => $p->appointment->patient->id,
                     'name' => $p->appointment->patient->name,
@@ -151,6 +157,7 @@ class PaymentsController extends Controller
                     'id' => $payment->appointment->psychologist->id,
                     'name' => $payment->appointment->psychologist->name,
                 ] : null,
+                'scheduled_start' => optional($payment->appointment->scheduled_start)->toISOString() ?? ($payment->appointment->scheduled_start ? (string) $payment->appointment->scheduled_start : null),
             ] : null,
         ];
 

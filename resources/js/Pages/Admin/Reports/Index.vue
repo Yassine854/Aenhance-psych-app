@@ -125,7 +125,7 @@
                     </svg>
                   </button>
 
-                  <button v-if="!r.is_resolved" @click="resolveReport(r)" :disabled="savingId===r.id" class="inline-flex items-center justify-center h-9 px-3 rounded-lg border border-yellow-200 bg-yellow-50 text-yellow-800 hover:bg-yellow-100">
+                  <button v-if="!r.is_resolved" @click="resolveReport(r)" :disabled="savingId===r.id" class="inline-flex items-center justify-center h-9 px-3 rounded-lg border border-blue-200 bg-blue-50 text-blue-800 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                     Resolve
                   </button>
                 </div>
@@ -164,7 +164,7 @@
 import { Link, router, usePage } from '@inertiajs/vue3'
 import { ref, computed, watch } from 'vue'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
-import SortIcon from '@/Pages/Admin/Psychologist/SortIcon.vue'
+import SortIcon from '@/Components/SortIcon.vue'
 import Swal from 'sweetalert2'
 import Show from './Show.vue'
 
@@ -430,7 +430,27 @@ async function resolveReport(r) {
   savingId.value = r.id
   await router.patch(route('admin.reports.update', r.id), { is_resolved: true }, {
     preserveScroll: true,
-    onError: (errors) => { const msg = errors?.message || errors?.error || errors?.status; if (msg) showError(msg) },
+    preserveState: true,
+    onSuccess: () => {
+      // Clear the top-page flash messages to avoid duplicate notification
+      showFlash('')
+      showError('')
+      // Show a SweetAlert toast at top-right
+      Swal.fire({
+        toast: true,
+        position: 'top-end',
+        icon: 'success',
+        title: `Report #${r.id} resolved`,
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+      })
+    },
+    onError: (errors) => {
+      const msg = errors?.message || errors?.error || errors?.status || 'Failed to resolve'
+      // Use toast for errors as well
+      Swal.fire({ toast: true, position: 'top-end', icon: 'error', title: msg, showConfirmButton: false, timer: 3000, timerProgressBar: true })
+    },
     onFinish: () => { savingId.value = null }
   })
 }
