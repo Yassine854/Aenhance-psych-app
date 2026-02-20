@@ -8,7 +8,7 @@
             <img v-if="patient.profile_image_url" :src="patient.profile_image_url" class="h-14 w-14 rounded-full ring-2 ring-white/70 object-cover" />
             <div v-else class="h-14 w-14 rounded-full bg-white/20 flex items-center justify-center text-white text-sm">No</div>
             <div class="text-white">
-              <div class="text-xl font-semibold leading-tight">{{ patient.first_name }} {{ patient.last_name }}</div>
+              <div class="text-xl font-semibold leading-tight">{{ patient.user?.name || `${patient.first_name || ''} ${patient.last_name || ''}`.trim() || '—' }}</div>
               <div class="text-sm opacity-90">Patient #{{ patient.id }}</div>
             </div>
           </div>

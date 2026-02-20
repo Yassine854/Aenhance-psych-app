@@ -19,14 +19,47 @@ class PatientProfileController extends Controller
 {
     public function index(Request $request)
     {
-        $profiles = PatientProfile::query()
+        $searchField = strtolower(trim((string) $request->input('search_field', 'id')));
+        $searchQuery = trim((string) $request->input('search_query', ''));
+
+        if (! in_array($searchField, ['id', 'name', 'email', 'phone'], true)) {
+            $searchField = 'id';
+        }
+
+        $profilesQuery = PatientProfile::query()
             ->with(['user' => function ($query) {
                 $query->where('role', 'PATIENT');
             }])
             ->whereHas('user', function ($query) {
                 $query->where('role', 'PATIENT');
-            })
+            });
+
+        if ($searchQuery !== '') {
+            if ($searchField === 'id') {
+                $profilesQuery->where('id', 'like', '%'.$searchQuery.'%');
+            } elseif ($searchField === 'name') {
+                $profilesQuery->where(function ($query) use ($searchQuery) {
+                    $query
+                        ->where('first_name', 'like', '%'.$searchQuery.'%')
+                        ->orWhere('last_name', 'like', '%'.$searchQuery.'%')
+                        ->orWhereRaw("concat_ws(' ', first_name, last_name) like ?", ['%'.$searchQuery.'%'])
+                        ->orWhereHas('user', function ($userQuery) use ($searchQuery) {
+                            $userQuery->where('name', 'like', '%'.$searchQuery.'%');
+                        });
+                });
+            } elseif ($searchField === 'email') {
+                $profilesQuery->whereHas('user', function ($query) use ($searchQuery) {
+                    $query->where('email', 'like', '%'.$searchQuery.'%');
+                });
+            } elseif ($searchField === 'phone') {
+                $profilesQuery->where('phone', 'like', '%'.$searchQuery.'%');
+            }
+        }
+
+        $profiles = $profilesQuery
             ->paginate(15);
+
+        $profiles->appends($request->query());
 
         if ($request->wantsJson()) {
             return response()->json($profiles);
@@ -34,6 +67,10 @@ class PatientProfileController extends Controller
 
         return Inertia::render('Admin/Patient/Index', [
             'profiles' => $profiles,
+            'filters' => [
+                'search_field' => $searchField,
+                'search_query' => $searchQuery,
+            ],
         ]);
     }
 

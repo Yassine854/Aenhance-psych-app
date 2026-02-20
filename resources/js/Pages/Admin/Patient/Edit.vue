@@ -75,7 +75,7 @@
               </div>
               <div>
                 <label class="text-sm font-medium text-gray-700">Date of Birth <span class="text-red-500">*</span></label>
-                <input type="date" v-model="form.date_of_birth" class="mt-1 block w-full rounded-md border-gray-300 focus:ring-2 focus:ring-[rgb(89,151,172)]" />
+                <input type="date" v-model="form.date_of_birth" :max="maxAdultDob" class="mt-1 block w-full rounded-md border-gray-300 focus:ring-2 focus:ring-[rgb(89,151,172)]" />
                 <p v-if="form.errors.date_of_birth" class="mt-1 text-sm text-red-600">{{ form.errors.date_of_birth }}</p>
               </div>
             </div>
@@ -245,6 +245,27 @@ const headerImage = computed(() => {
   return imagePreview.value || props.patient?.profile_image_url || ''
 })
 
+const maxAdultDob = computed(() => {
+  const now = new Date()
+  const cutoff = new Date(now.getFullYear() - 18, now.getMonth(), now.getDate())
+  return cutoff.toISOString().slice(0, 10)
+})
+
+function isAdultDob(value) {
+  if (!value) return false
+  const dob = new Date(value)
+  if (Number.isNaN(dob.getTime())) return false
+
+  const today = new Date()
+  let age = today.getFullYear() - dob.getFullYear()
+  const monthDiff = today.getMonth() - dob.getMonth()
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+    age -= 1
+  }
+
+  return age >= 18
+}
+
 function formatForDateInput(value) {
   if (!value) return ''
   const s = String(value).trim()
@@ -402,6 +423,9 @@ async function submitUpdate() {
     }
     if (!form.date_of_birth) {
       form.setError('date_of_birth', 'Date of birth is required')
+      hasErrors = true
+    } else if (!isAdultDob(form.date_of_birth)) {
+      form.setError('date_of_birth', 'Patient must be 18 years or older')
       hasErrors = true
     }
 

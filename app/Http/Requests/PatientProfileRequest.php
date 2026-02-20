@@ -13,15 +13,13 @@ class PatientProfileRequest extends FormRequest
 
     public function rules(): array
     {
-        $spoofed = strtoupper((string) $this->input('_method', ''));
-        $effectiveMethod = $spoofed !== '' ? $spoofed : strtoupper($this->method());
-        $isCreate = $effectiveMethod === 'POST';
+        $adultCutoff = now()->subYears(18)->toDateString();
 
         return [
             'user_id' => ['nullable', 'exists:users,id'],
-            'first_name' => [$isCreate ? 'required' : 'nullable', 'string', 'max:255'],
-            'last_name' => [$isCreate ? 'required' : 'nullable', 'string', 'max:255'],
-            'date_of_birth' => [$isCreate ? 'required' : 'nullable', 'date'],
+            'first_name' => ['required', 'string', 'max:255'],
+            'last_name' => ['required', 'string', 'max:255'],
+            'date_of_birth' => ['required', 'date', 'before_or_equal:'.$adultCutoff],
             'gender' => ['nullable', 'string', 'max:50'],
             'country' => ['nullable', 'string', 'max:100'],
             'city' => ['nullable', 'string', 'max:100'],
