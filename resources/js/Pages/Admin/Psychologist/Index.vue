@@ -2,26 +2,7 @@
   <div class="p-6 space-y-6">
     <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
       <div>
-        <div v-if="flashMessage" class="mb-3 rounded-lg border border-green-200 bg-green-50 px-4 py-3">
-          <div class="flex items-start justify-between gap-3">
-            <div class="flex items-start gap-3">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-5 w-5 text-green-700 mt-0.5">
-                <path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12Zm13.61-1.814a.75.75 0 0 0-1.22-.872l-3.236 4.53-1.784-1.784a.75.75 0 1 0-1.06 1.06l2.4 2.4a.75.75 0 0 0 1.14-.094l3.76-5.24Z" clip-rule="evenodd" />
-              </svg>
-              <div>
-                <div class="text-sm font-medium text-green-800">Success</div>
-                <div class="text-sm text-green-800">{{ flashMessage }}</div>
-              </div>
-            </div>
-            <button type="button" @click="clearFlash" class="text-green-700/70 hover:text-green-800" aria-label="Dismiss">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-5 w-5">
-                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-              </svg>
-            </button>
-          </div>
-        </div>
         <h1 class="text-2xl font-semibold text-gray-900">Psychologists</h1>
-        <p class="text-sm text-gray-600">Manage profiles: list, view, add, and delete.</p>
       </div>
       <div class="flex items-center gap-3 w-full md:w-auto">
         <div class="flex items-center gap-2 flex-1">
@@ -38,10 +19,22 @@
 
           <div class="relative flex-1">
             <input v-model="searchQuery" type="text" :placeholder="searchPlaceholder" class="w-full rounded-lg border-gray-300 pl-10 pr-3 py-2"/>
+            <button
+              v-if="searchQuery"
+              type="button"
+              @click="clearSearch"
+              class="absolute right-2 top-1/2 -translate-y-1/2 inline-flex items-center justify-center h-7 w-7 rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+              aria-label="Clear text"
+              title="Clear"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-4 w-4">
+                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+              </svg>
+            </button>
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12.9 14.32a8 8 0 111.414-1.414l4.387 4.387a1 1 0 01-1.414 1.414l-4.387-4.387zM14 8a6 6 0 11-12 0 6 6 0 0112 0z" clip-rule="evenodd"/></svg>
           </div>
         </div>
-        <button @click="openCreate()" type="button" title="New Psychologist" class="inline-flex items-center justify-center h-10 w-10 bg-indigo-600 text-white rounded-lg shadow hover:bg-indigo-700">
+        <button @click="openCreate()" type="button" title="New Psychologist" class="inline-flex items-center justify-center h-10 w-10 text-white rounded-lg shadow" :style="{ backgroundColor: createButtonColor }">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-5 w-5">
             <path fill-rule="evenodd" d="M12 2.25c.414 0 .75.336.75.75v8.25H21a.75.75 0 0 1 0 1.5h-8.25V21a.75.75 0 0 1-1.5 0v-8.25H3a.75.75 0 0 1 0-1.5h8.25V3c0-.414.336-.75.75-.75Z" clip-rule="evenodd" />
           </svg>
@@ -105,7 +98,14 @@
                     </div>
                   </div>
                 </td>
-                <td class="px-4 py-3 text-sm text-gray-700">{{ (p.specialisations || []).map(s => s.name).join(', ') || '-' }}</td>
+                <td class="px-4 py-3 text-xs text-gray-700">
+                  <template v-if="(p.specialisations || []).length">
+                    <div v-for="(line, idx) in specialisationsLines(p.specialisations)" :key="`${p.id}-sp-line-${idx}`" class="leading-5">
+                      {{ line }}
+                    </div>
+                  </template>
+                  <template v-else>-</template>
+                </td>
                 <td class="px-4 py-3 text-sm text-gray-700">{{ formatCurrency(p.price_per_session) }}</td>
                 <td class="px-4 py-3">
                   <span :class="p.is_approved ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'" class="inline-flex items-center px-2 py-1 rounded text-xs font-medium">
@@ -173,7 +173,14 @@
         <div class="flex items-center justify-between px-4 py-3 border-t border-gray-200">
           <div class="text-sm text-gray-600">Showing {{ profiles.from }}-{{ profiles.to }} of {{ profiles.total }}</div>
           <div class="flex items-center gap-2">
-            <Link v-for="(link, i) in profiles.links" :key="i" :href="link.url || '#'" :class="linkClasses(link)" preserve-scroll>
+            <Link
+              v-for="(link, i) in profiles.links"
+              :key="i"
+              :href="link.url || '#'"
+              :class="linkClasses(link)"
+              :style="link.active ? { backgroundColor: brandColor, borderColor: brandColor, color: '#fff' } : null"
+              preserve-scroll
+            >
               <span v-html="link.label"></span>
             </Link>
           </div>
@@ -192,17 +199,21 @@
 </template>
 
 <script setup>
-import { Link } from '@inertiajs/vue3'
+import { Link, router } from '@inertiajs/vue3'
 import { ref, computed, watch } from 'vue'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import Edit from './Edit.vue'
 import Create from './Create.vue'
 import Show from './Show.vue'
-import SortIcon from './SortIcon.vue'
+import SortIcon from '@/Components/SortIcon.vue'
 import Swal from 'sweetalert2'
 
 const props = defineProps({
   profiles: Object,
+  filters: {
+    type: Object,
+    default: () => ({}),
+  },
   specialisations: {
     type: Array,
     default: () => [],
@@ -223,6 +234,84 @@ watch(
 
 const searchQuery = ref('')
 const searchField = ref('id')
+const isHydratingFilters = ref(false)
+let searchDebounce = null
+
+function normalizeFilters(filters = {}) {
+  const validField = ['id', 'name', 'email', 'specialization'].includes(String(filters?.search_field || '').toLowerCase())
+    ? String(filters.search_field).toLowerCase()
+    : 'id'
+
+  return {
+    search_field: validField,
+    search_query: String(filters?.search_query || filters?.q || ''),
+  }
+}
+
+function hydrateFiltersFromProps() {
+  const f = normalizeFilters(props.filters || {})
+  isHydratingFilters.value = true
+  searchField.value = f.search_field
+  searchQuery.value = f.search_query
+  isHydratingFilters.value = false
+}
+
+function currentQueryParams() {
+  const params = {
+    search_field: searchField.value,
+    search_query: String(searchQuery.value || '').trim(),
+  }
+
+  return Object.fromEntries(
+    Object.entries(params).filter(([_, value]) => value !== '' && value != null)
+  )
+}
+
+function applyServerFilters({ resetPage = true } = {}) {
+  if (isHydratingFilters.value) return
+
+  const params = currentQueryParams()
+  if (resetPage) params.page = 1
+
+  router.get(route('psychologist-profiles.index'), params, {
+    preserveScroll: true,
+    preserveState: true,
+    replace: true,
+    only: ['profiles', 'filters'],
+  })
+}
+
+function clearSearch() {
+  if (searchDebounce) {
+    clearTimeout(searchDebounce)
+    searchDebounce = null
+  }
+  searchQuery.value = ''
+  applyServerFilters({ resetPage: true })
+}
+
+hydrateFiltersFromProps()
+
+watch(
+  () => props.filters,
+  () => {
+    hydrateFiltersFromProps()
+  }
+)
+
+watch(searchField, () => {
+  if (isHydratingFilters.value) return
+  applyServerFilters({ resetPage: true })
+})
+
+watch(searchQuery, () => {
+  if (isHydratingFilters.value) return
+  if (searchDebounce) clearTimeout(searchDebounce)
+  searchDebounce = setTimeout(() => {
+    applyServerFilters({ resetPage: true })
+    searchDebounce = null
+  }, 300)
+})
 
 const searchPlaceholder = computed(() => {
   switch (searchField.value) {
@@ -239,31 +328,11 @@ const searchPlaceholder = computed(() => {
   }
 })
 
-const filtered = computed(() => {
-  const q = searchQuery.value.trim().toLowerCase()
-  if (!q) return profilesData.value || []
-
-  const list = profilesData.value || []
-
-  return list.filter(p => {
-    switch (searchField.value) {
-      case 'id':
-        return String(p?.id ?? '').toLowerCase().includes(q)
-      case 'name':
-        return `${p?.first_name ?? ''} ${p?.last_name ?? ''}`.toLowerCase().includes(q)
-      case 'email':
-        return String(p?.user?.email ?? '').toLowerCase().includes(q)
-      case 'specialization':
-        return String((p?.specialisations || []).map(s => s?.name).filter(Boolean).join(', ')).toLowerCase().includes(q)
-      default:
-        return false
-    }
-  })
-})
+const filtered = computed(() => (Array.isArray(profilesData.value) ? [...profilesData.value] : []))
 
 // Sorting (client-side, applies after search)
 const sortKey = ref('id')
-const sortDir = ref('asc') // 'asc' | 'desc'
+const sortDir = ref('desc') // 'asc' | 'desc'
 
 function toggleSort(key) {
   if (sortKey.value === key) {
@@ -271,8 +340,10 @@ function toggleSort(key) {
     return
   }
   sortKey.value = key
-  sortDir.value = 'asc'
+  sortDir.value = 'desc'
 }
+
+const createButtonColor = 'rgb(175 81 102 / var(--tw-bg-opacity, 1))'
 
 function getSortValue(p, key) {
   switch (key) {
@@ -327,10 +398,27 @@ function formatDate(value) {
   try { return new Date(value).toLocaleDateString() } catch { return '-' }
 }
 
+function specialisationsLines(items) {
+  const names = (Array.isArray(items) ? items : [])
+    .map((item) => String(item?.name || '').trim())
+    .filter(Boolean)
+
+  if (!names.length) return []
+
+  const lines = []
+  for (let i = 0; i < names.length; i += 3) {
+    lines.push(names.slice(i, i + 3).join(', '))
+  }
+  return lines
+}
+
+const brandColor = 'rgb(89 151 172 / var(--tw-bg-opacity, 1))'
+
 function linkClasses(link) {
-  const base = 'px-3 py-1.5 rounded text-sm'
-  if (!link.url) return base + ' text-gray-400 bg-gray-100 cursor-not-allowed'
-  return (link.active ? base + ' bg-indigo-600 text-white' : base + ' bg-gray-50 text-gray-700 hover:bg-gray-100')
+  const base = 'inline-flex items-center justify-center px-3 py-1.5 rounded-lg text-sm border '
+  if (link.active) return base + 'bg-indigo-600 text-white border-indigo-600'
+  if (!link.url) return base + 'bg-gray-50 text-gray-400 border-gray-200 cursor-not-allowed'
+  return base + 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
 }
 
 // Modals state
@@ -340,25 +428,13 @@ const selected = ref(null)
 const approvingId = ref(null)
 const activatingId = ref(null)
 
-const flashMessage = ref('')
-let flashTimer = null
-
-function showFlash(message) {
-  flashMessage.value = message
-  if (flashTimer) clearTimeout(flashTimer)
-  flashTimer = setTimeout(() => {
-    flashMessage.value = ''
-    flashTimer = null
-  }, 2500)
-}
-
-function clearFlash() {
-  flashMessage.value = ''
-  if (flashTimer) {
-    clearTimeout(flashTimer)
-    flashTimer = null
-  }
-}
+const toast = Swal.mixin({
+  toast: true,
+  position: 'top-end',
+  showConfirmButton: false,
+  timer: 2500,
+  timerProgressBar: true,
+})
 
 async function ensureCsrfToken() {
   const m1 = document.cookie.match(/XSRF-TOKEN=([^;]+)/)
@@ -411,9 +487,9 @@ function openEdit(p) {
 function handleSaved(payload) {
   closeModal()
   if (payload?.type === 'account') {
-    showFlash('Account saved successfully.')
+    toast.fire({ icon: 'success', title: 'Account saved successfully.' })
   } else {
-    showFlash('Psychologist saved successfully.')
+    toast.fire({ icon: 'success', title: 'Psychologist saved successfully.' })
   }
 
   if (payload?.profile?.id) {
@@ -437,7 +513,7 @@ function handleSaved(payload) {
 
 function handleCreated(payload) {
   closeModal()
-  showFlash('Psychologist created successfully.')
+  toast.fire({ icon: 'success', title: 'Psychologist created successfully.' })
 
   const created = payload?.profile
   if (created?.id) {

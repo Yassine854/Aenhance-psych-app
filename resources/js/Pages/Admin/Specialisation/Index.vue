@@ -2,67 +2,60 @@
   <div class="p-6 space-y-6">
     <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
       <div>
-        <div v-if="flashMessage" class="mb-3 rounded-lg border border-green-200 bg-green-50 px-4 py-3">
-          <div class="flex items-start justify-between gap-3">
-            <div class="flex items-start gap-3">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-5 w-5 text-green-700 mt-0.5">
-                <path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12Zm13.61-1.814a.75.75 0 0 0-1.22-.872l-3.236 4.53-1.784-1.784a.75.75 0 1 0-1.06 1.06l2.4 2.4a.75.75 0 0 0 1.14-.094l3.76-5.24Z" clip-rule="evenodd" />
-              </svg>
-              <div>
-                <div class="text-sm font-medium text-green-800">Success</div>
-                <div class="text-sm text-green-800">{{ flashMessage }}</div>
-              </div>
-            </div>
-            <button type="button" @click="clearFlash" class="text-green-700/70 hover:text-green-800" aria-label="Dismiss">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-5 w-5">
-                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-              </svg>
-            </button>
-          </div>
-        </div>
         <h1 class="text-2xl font-semibold text-gray-900">Specialisations</h1>
-        <p class="text-sm text-gray-600">Add and manage the list of specialisations used across the platform.</p>
       </div>
 
       <div class="flex items-center gap-3 w-full md:w-auto">
-        <div class="relative flex-1 md:w-80">
-          <input
-            v-model="searchQuery"
-            type="text"
-            placeholder="Search by name..."
-            class="w-full rounded-lg border-gray-300 pl-10 pr-3 py-2"
-          />
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-5 w-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-            viewBox="0 0 20 20"
-            fill="currentColor"
+        <div class="flex items-center gap-2 flex-1">
+          <select
+            v-model="searchField"
+            class="h-10 w-32 md:w-36 shrink-0 rounded-lg border-gray-300 bg-white px-3 text-sm text-gray-700"
+            aria-label="Search filter"
           >
-            <path
-              fill-rule="evenodd"
-              d="M12.9 14.32a8 8 0 111.414-1.414l4.387 4.387a1 1 0 01-1.414 1.414l-4.387-4.387zM14 8a6 6 0 11-12 0 6 6 0 0112 0z"
-              clip-rule="evenodd"
+            <option value="id">ID</option>
+            <option value="name">Name</option>
+          </select>
+
+          <div class="relative flex-1 md:w-80">
+            <input
+              v-model="searchQuery"
+              type="text"
+              :placeholder="searchPlaceholder"
+              class="w-full rounded-lg border-gray-300 pl-10 pr-3 py-2"
             />
-          </svg>
-            <button
-              v-if="searchQuery"
-              type="button"
-              @click="clearSearch"
-              class="absolute right-2 top-1/2 -translate-y-1/2 inline-flex items-center justify-center h-7 w-7 rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-700"
-              aria-label="Clear text"
-              title="Clear"
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-5 w-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+              viewBox="0 0 20 20"
+              fill="currentColor"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-4 w-4">
-                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-              </svg>
-            </button>
+              <path
+                fill-rule="evenodd"
+                d="M12.9 14.32a8 8 0 111.414-1.414l4.387 4.387a1 1 0 01-1.414 1.414l-4.387-4.387zM14 8a6 6 0 11-12 0 6 6 0 0112 0z"
+                clip-rule="evenodd"
+              />
+            </svg>
+              <button
+                v-if="searchQuery"
+                type="button"
+                @click="clearSearch"
+                class="absolute right-2 top-1/2 -translate-y-1/2 inline-flex items-center justify-center h-7 w-7 rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+                aria-label="Clear text"
+                title="Clear"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-4 w-4">
+                  <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                </svg>
+              </button>
+          </div>
         </div>
 
         <button
           @click="openCreate"
           type="button"
           title="New Specialisation"
-          class="inline-flex items-center justify-center h-10 w-10 bg-indigo-600 text-white rounded-lg shadow hover:bg-indigo-700"
+          class="inline-flex items-center justify-center h-10 w-10 text-white rounded-lg shadow"
+          :style="{ backgroundColor: createButtonColor }"
         >
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-5 w-5">
             <path fill-rule="evenodd" d="M12 2.25c.414 0 .75.336.75.75v8.25H21a.75.75 0 0 1 0 1.5h-8.25V21a.75.75 0 0 1-1.5 0v-8.25H3a.75.75 0 0 1 0-1.5h8.25V3c0-.414.336-.75.75-.75Z" clip-rule="evenodd" />
@@ -93,6 +86,9 @@
           </thead>
 
           <tbody class="bg-white divide-y divide-gray-200">
+            <tr v-if="(sorted || []).length === 0">
+              <td colspan="3" class="px-4 py-6 text-sm text-gray-500 text-center">No specialisations found.</td>
+            </tr>
             <tr v-for="s in sorted" :key="s.id" class="hover:bg-gray-50">
               <td class="px-4 py-3 text-sm text-gray-700">#{{ s.id }}</td>
               <td class="px-4 py-3">
@@ -187,22 +183,17 @@ watch(
   }
 )
 
-const flashMessage = ref('')
-let flashTimer = null
+const toast = Swal.mixin({
+  toast: true,
+  position: 'top-end',
+  showConfirmButton: false,
+  timer: 3500,
+  timerProgressBar: true,
+})
 
 function showFlash(message) {
-  flashMessage.value = message
-  if (flashTimer) clearTimeout(flashTimer)
-  flashTimer = setTimeout(() => {
-    flashMessage.value = ''
-    flashTimer = null
-  }, 3500)
-}
-
-function clearFlash() {
-  flashMessage.value = ''
-  if (flashTimer) clearTimeout(flashTimer)
-  flashTimer = null
+  if (!message) return
+  toast.fire({ icon: 'success', title: message })
 }
 
 const searchField = ref('name')
@@ -256,11 +247,9 @@ function clearSearch() {
 }
 
 const searchQuery = ref('')
-const filtered = computed(() => {
-  const q = searchQuery.value.trim().toLowerCase()
-  if (!q) return data.value || []
-  return (data.value || []).filter((s) => String(s?.name ?? '').toLowerCase().includes(q))
-})
+const filtered = computed(() => (Array.isArray(data.value) ? [...data.value] : []))
+
+const searchPlaceholder = computed(() => (searchField.value === 'id' ? 'Search by ID...' : 'Search by name...'))
 
 hydrateFiltersFromProps()
 
@@ -279,7 +268,7 @@ watch(searchQuery, () => {
 })
 
 const sortKey = ref('id')
-const sortDir = ref('asc')
+const sortDir = ref('desc')
 
 function toggleSort(key) {
   if (sortKey.value === key) {
@@ -287,7 +276,7 @@ function toggleSort(key) {
     return
   }
   sortKey.value = key
-  sortDir.value = 'asc'
+  sortDir.value = 'desc'
 }
 
 function getSortValue(item, key) {
@@ -365,6 +354,7 @@ function linkClasses(link) {
 }
 
 const brandColor = 'rgb(89 151 172 / var(--tw-bg-opacity, 1))'
+const createButtonColor = 'rgb(175 81 102 / var(--tw-bg-opacity, 1))'
 
 async function ensureCsrfToken() {
   const tokenEl = document.querySelector('meta[name="csrf-token"]')

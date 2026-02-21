@@ -2,44 +2,6 @@
   <div class="p-6 space-y-6">
     <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
       <div>
-        <div v-if="flashMessage" class="mb-3 rounded-lg border border-green-200 bg-green-50 px-4 py-3">
-          <div class="flex items-start justify-between gap-3">
-            <div class="flex items-start gap-3">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-5 w-5 text-green-700 mt-0.5">
-                <path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12Zm13.61-1.814a.75.75 0 0 0-1.22-.872l-3.236 4.53-1.784-1.784a.75.75 0 1 0-1.06 1.06l2.4 2.4a.75.75 0 0 0 1.14-.094l3.76-5.24Z" clip-rule="evenodd" />
-              </svg>
-              <div>
-                <div class="text-sm font-medium text-green-800">Success</div>
-                <div class="text-sm text-green-800">{{ flashMessage }}</div>
-              </div>
-            </div>
-            <button type="button" @click="clearFlash" class="text-green-700/70 hover:text-green-800" aria-label="Dismiss">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-5 w-5">
-                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        <div v-if="flashError" class="mb-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3">
-          <div class="flex items-start justify-between gap-3">
-            <div class="flex items-start gap-3">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-5 w-5 text-red-700 mt-0.5">
-                <path fill-rule="evenodd" d="M12 2.25c5.385 0 9.75 4.365 9.75 9.75S17.385 21.75 12 21.75 2.25 17.385 2.25 12 6.615 2.25 12 2.25Zm.75 6a.75.75 0 0 0-1.5 0V12a.75.75 0 0 0 1.5 0V8.25ZM12 15.75a.75.75 0 1 0 0 1.5.75.75 0 0 0 0-1.5Z" clip-rule="evenodd" />
-              </svg>
-              <div>
-                <div class="text-sm font-medium text-red-800">Not allowed</div>
-                <div class="text-sm text-red-800">{{ flashError }}</div>
-              </div>
-            </div>
-            <button type="button" @click="clearError" class="text-red-700/70 hover:text-red-800" aria-label="Dismiss">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-5 w-5">
-                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-              </svg>
-            </button>
-          </div>
-        </div>
-
         <h1 class="text-2xl font-semibold text-gray-900">Payments</h1>
       </div>
 
@@ -232,7 +194,7 @@
                     </svg>
                   </button>
 
-                  <div class="relative inline-block text-left">
+                  <div class="relative inline-block text-left" data-payment-actions>
                     <button
                       type="button"
                       @click="toggleActions(p.id)"
@@ -300,7 +262,7 @@
 
 <script setup>
 import { Link, router, usePage } from '@inertiajs/vue3'
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch, onMounted, onBeforeUnmount } from 'vue'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import SortIcon from '@/Components/SortIcon.vue'
 import Swal from 'sweetalert2'
@@ -315,38 +277,22 @@ const props = defineProps({
 })
 
 const page = usePage()
-const flashMessage = ref('')
-const flashError = ref('')
-
-let flashTimer = null
-let errorTimer = null
+const toast = Swal.mixin({
+  toast: true,
+  position: 'top-end',
+  showConfirmButton: false,
+  timer: 3500,
+  timerProgressBar: true,
+})
 
 function showFlash(message) {
-  flashMessage.value = message || ''
-  if (flashTimer) {
-    clearTimeout(flashTimer)
-    flashTimer = null
-  }
-  if (!flashMessage.value) return
-
-  flashTimer = setTimeout(() => {
-    flashMessage.value = ''
-    flashTimer = null
-  }, 5000)
+  if (!message) return
+  toast.fire({ icon: 'success', title: message })
 }
 
 function showError(message) {
-  flashError.value = message || ''
-  if (errorTimer) {
-    clearTimeout(errorTimer)
-    errorTimer = null
-  }
-  if (!flashError.value) return
-
-  errorTimer = setTimeout(() => {
-    flashError.value = ''
-    errorTimer = null
-  }, 5000)
+  if (!message) return
+  toast.fire({ icon: 'error', title: message })
 }
 
 // initialize from first render
@@ -373,14 +319,6 @@ watch(
     if (next) showError(next)
   }
 )
-
-function clearFlash() {
-  showFlash('')
-}
-
-function clearError() {
-  showError('')
-}
 
 const data = computed(() => props.payments?.data || [])
 
@@ -536,6 +474,20 @@ function onSelectAction(p, act) {
   if (!act) return
   handlePaymentAction(p, act)
 }
+
+function handleDocumentClick(event) {
+  const target = event?.target
+  if (target instanceof Element && target.closest('[data-payment-actions]')) return
+  openActionsId.value = null
+}
+
+onMounted(() => {
+  document.addEventListener('click', handleDocumentClick)
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener('click', handleDocumentClick)
+})
 
 const searchPlaceholder = computed(() => {
   switch (searchField.value) {

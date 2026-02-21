@@ -2,44 +2,6 @@
   <div class="p-6 space-y-6">
     <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
       <div>
-        <div v-if="flashMessage" class="mb-3 rounded-lg border border-green-200 bg-green-50 px-4 py-3">
-          <div class="flex items-start justify-between gap-3">
-            <div class="flex items-start gap-3">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-5 w-5 text-green-700 mt-0.5">
-                <path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12Zm13.61-1.814a.75.75 0 0 0-1.22-.872l-3.236 4.53-1.784-1.784a.75.75 0 1 0-1.06 1.06l2.4 2.4a.75.75 0 0 0 1.14-.094l3.76-5.24Z" clip-rule="evenodd" />
-              </svg>
-              <div>
-                <div class="text-sm font-medium text-green-800">Success</div>
-                <div class="text-sm text-green-800">{{ flashMessage }}</div>
-              </div>
-            </div>
-            <button type="button" @click="clearFlash" class="text-green-700/70 hover:text-green-800" aria-label="Dismiss">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-5 w-5">
-                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        <div v-if="flashError" class="mb-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3">
-          <div class="flex items-start justify-between gap-3">
-            <div class="flex items-start gap-3">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-5 w-5 text-red-700 mt-0.5">
-                <path fill-rule="evenodd" d="M12 2.25c5.385 0 9.75 4.365 9.75 9.75S17.385 21.75 12 21.75 2.25 17.385 2.25 12 6.615 2.25 12 2.25Zm.75 6a.75.75 0 0 0-1.5 0V12a.75.75 0 0 0 1.5 0V8.25ZM12 15.75a.75.75 0 1 0 0 1.5.75.75 0 0 0 0-1.5Z" clip-rule="evenodd" />
-              </svg>
-              <div>
-                <div class="text-sm font-medium text-red-800">Not allowed</div>
-                <div class="text-sm text-red-800">{{ flashError }}</div>
-              </div>
-            </div>
-            <button type="button" @click="clearError" class="text-red-700/70 hover:text-red-800" aria-label="Dismiss">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-5 w-5">
-                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-              </svg>
-            </button>
-          </div>
-        </div>
-
         <h1 class="text-2xl font-semibold text-gray-900">Payouts</h1>
       </div>
 
@@ -127,7 +89,7 @@
           <div class="text-sm font-medium text-gray-700 mb-2">Statuses</div>
           <div class="flex flex-col gap-2">
             <label v-for="s in statusOptions" :key="s.value" class="inline-flex items-center gap-2">
-              <input type="checkbox" :value="s.value" v-model="activeStatuses" class="form-checkbox" />
+              <input type="checkbox" :value="s.value" v-model="pendingActiveStatuses" class="form-checkbox" />
               <span class="text-sm text-gray-700">{{ s.label }}</span>
             </label>
           </div>
@@ -136,8 +98,8 @@
         <div>
           <div class="text-sm font-medium text-gray-700 mb-2">Updated Between</div>
           <div class="flex gap-2">
-            <input type="date" v-model="createdFrom" class="rounded-lg border-gray-300 px-3 py-2 text-sm w-1/2" />
-            <input type="date" v-model="createdTo" class="rounded-lg border-gray-300 px-3 py-2 text-sm w-1/2" />
+            <input type="date" v-model="pendingCreatedFrom" class="rounded-lg border-gray-300 px-3 py-2 text-sm w-1/2" />
+            <input type="date" v-model="pendingCreatedTo" class="rounded-lg border-gray-300 px-3 py-2 text-sm w-1/2" />
           </div>
         </div>
       </div>
@@ -145,7 +107,7 @@
       <div class="flex items-center justify-end gap-2 mt-4">
         <button type="button" @click="clearFilters" class="px-3 py-2 rounded-lg border bg-white text-sm text-gray-700 hover:bg-gray-50">Clear</button>
         <button type="button" @click="filtersOpen = false" class="px-3 py-2 rounded-lg border bg-white text-sm text-gray-700 hover:bg-gray-50">Close</button>
-        <button type="button" @click="applyFilters" class="px-3 py-2 rounded-lg text-white text-sm hover:opacity-90" style="background-color: rgb(89 151 172 / var(--tw-bg-opacity, 1))">Apply</button>
+        <button type="button" @click="applyFilters" class="px-3 py-2 rounded-lg text-white text-sm hover:opacity-90" style="background-color: rgb(175 81 102 / var(--tw-bg-opacity, 1))">Apply</button>
       </div>
     </div>
 
@@ -206,6 +168,9 @@
           </thead>
 
           <tbody class="bg-white divide-y divide-gray-200">
+            <tr v-if="(sorted || []).length === 0">
+              <td colspan="7" class="px-4 py-6 text-sm text-gray-500 text-center">No payouts found.</td>
+            </tr>
             <tr
               v-for="p in sorted"
               :key="p.id"
@@ -230,7 +195,7 @@
                 </div>
               </td>
               <td class="px-4 py-3 text-right">
-                <div class="flex flex-col items-end gap-2">
+                <div class="flex items-center justify-end gap-2">
                   <button
                     type="button"
                     title="View"
@@ -243,19 +208,38 @@
                     </svg>
                   </button>
 
-                  <div class="inline-flex items-center gap-2">
+                  <div class="relative inline-block text-left" data-payout-actions>
                     <button
-                      v-for="act in payoutActions(p)"
-                      :key="act.value"
                       type="button"
-                      @click="handlePayoutAction(p, act)"
-                      :disabled="savingId === p.id"
-                      class="inline-flex items-center justify-center h-8 px-2.5 rounded-lg border text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                      :class="act.classes"
-                      :title="act.title"
+                      @click="toggleActions(p.id)"
+                      class="inline-flex items-center justify-center h-9 w-9 rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
+                      :aria-expanded="openActionsId === p.id"
+                      :aria-haspopup="true"
+                      aria-label="Open actions"
                     >
-                      <span>{{ act.label }}</span>
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        <path d="M10 6a2 2 0 110-4 2 2 0 010 4zm0 6a2 2 0 110-4 2 2 0 010 4zm0 6a2 2 0 110-4 2 2 0 010 4z" />
+                      </svg>
                     </button>
+
+                    <div v-if="openActionsId === p.id" class="absolute right-0 mt-2 w-52 bg-white border rounded-lg shadow-lg z-50" role="menu" aria-orientation="vertical">
+                      <div class="py-1">
+                        <template v-for="act in payoutActions(p)" :key="'pay-'+act.value">
+                          <button
+                            type="button"
+                            @click="onSelectAction(p, act)"
+                            :class="['w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-gray-100', actionTextColor(act)]"
+                            role="menuitem"
+                            :disabled="savingId === p.id"
+                          >
+                            <svg :class="['h-4 w-4', actionTextColor(act)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="M12 5l7 7-7 7"></path></svg>
+                            <span>{{ act.label }}</span>
+                          </button>
+                        </template>
+
+                        <div v-if="payoutActions(p).length === 0" class="px-3 py-2 text-sm text-gray-500">No actions</div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </td>
@@ -290,9 +274,9 @@
 
 <script setup>
 import { Link, router, usePage } from '@inertiajs/vue3'
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch, onMounted, onBeforeUnmount } from 'vue'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
-import SortIcon from '@/Pages/Admin/Psychologist/SortIcon.vue'
+import SortIcon from '@/Components/SortIcon.vue'
 import Swal from 'sweetalert2'
 import Show from './Show.vue'
 
@@ -301,38 +285,22 @@ defineOptions({ layout: AdminLayout })
 const props = defineProps({ payouts: Object, status: { type: String, default: '' }, filters: { type: Object, default: () => ({}) } })
 
 const page = usePage()
-const flashMessage = ref('')
-const flashError = ref('')
-
-let flashTimer = null
-let errorTimer = null
+const toast = Swal.mixin({
+  toast: true,
+  position: 'top-end',
+  showConfirmButton: false,
+  timer: 3500,
+  timerProgressBar: true,
+})
 
 function showFlash(message) {
-  flashMessage.value = message || ''
-  if (flashTimer) {
-    clearTimeout(flashTimer)
-    flashTimer = null
-  }
-  if (!flashMessage.value) return
-
-  flashTimer = setTimeout(() => {
-    flashMessage.value = ''
-    flashTimer = null
-  }, 5000)
+  if (!message) return
+  toast.fire({ icon: 'success', title: message })
 }
 
 function showError(message) {
-  flashError.value = message || ''
-  if (errorTimer) {
-    clearTimeout(errorTimer)
-    errorTimer = null
-  }
-  if (!flashError.value) return
-
-  errorTimer = setTimeout(() => {
-    flashError.value = ''
-    errorTimer = null
-  }, 5000)
+  if (!message) return
+  toast.fire({ icon: 'error', title: message })
 }
 
 // initialize from first render
@@ -359,9 +327,6 @@ watch(
     if (next) showError(next)
   }
 )
-
-function clearFlash() { showFlash('') }
-function clearError() { showError('') }
 
 const data = computed(() => props.payouts?.data || [])
 
@@ -396,6 +361,9 @@ function hydrateFiltersFromProps() {
   activeStatuses.value = f.statuses
   createdFrom.value = f.created_from
   createdTo.value = f.created_to
+  pendingActiveStatuses.value = Array.isArray(f.statuses) ? [...f.statuses] : []
+  pendingCreatedFrom.value = f.created_from || ''
+  pendingCreatedTo.value = f.created_to || ''
   isHydratingFilters.value = false
 }
 
@@ -444,6 +412,7 @@ function clearSearch() {
 
 const modal = ref('')
 const selected = ref(null)
+const openActionsId = ref(null)
 
 const filtersOpen = ref(false)
 const statusOptions = [
@@ -455,6 +424,9 @@ const statusOptions = [
 const activeStatuses = ref([])
 const createdFrom = ref('')
 const createdTo = ref('')
+const pendingActiveStatuses = ref([])
+const pendingCreatedFrom = ref('')
+const pendingCreatedTo = ref('')
 
 hydrateFiltersFromProps()
 
@@ -483,16 +455,46 @@ watch(searchDate, () => {
   applyServerFilters({ resetPage: true })
 })
 
-watch([activeStatuses, createdFrom, createdTo], () => {
-  if (isHydratingFilters.value) return
+function applyFilters() {
+  activeStatuses.value = Array.isArray(pendingActiveStatuses.value) ? [...pendingActiveStatuses.value] : []
+  createdFrom.value = String(pendingCreatedFrom.value || '')
+  createdTo.value = String(pendingCreatedTo.value || '')
   applyServerFilters({ resetPage: true })
-}, { deep: true })
+  filtersOpen.value = false
+}
 
-function applyFilters() { filtersOpen.value = false }
-function clearFilters() { activeStatuses.value = []; createdFrom.value = ''; createdTo.value = '' }
+function clearFilters() {
+  pendingActiveStatuses.value = []
+  pendingCreatedFrom.value = ''
+  pendingCreatedTo.value = ''
+}
 
 function openShow(p) { selected.value = p; modal.value = 'show' }
 function closeModal() { modal.value = ''; selected.value = null }
+
+function toggleActions(id) {
+  openActionsId.value = openActionsId.value === id ? null : id
+}
+
+function onSelectAction(p, act) {
+  openActionsId.value = null
+  if (!act) return
+  handlePayoutAction(p, act)
+}
+
+function handleDocumentClick(event) {
+  const target = event?.target
+  if (target instanceof Element && target.closest('[data-payout-actions]')) return
+  openActionsId.value = null
+}
+
+onMounted(() => {
+  document.addEventListener('click', handleDocumentClick)
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener('click', handleDocumentClick)
+})
 
 // selection / bulk
 const selectedIds = ref([])
@@ -507,71 +509,17 @@ watch(selectAll, (v) => {
 const searchPlaceholder = computed(() => {
   switch (searchField.value) {
     case 'id': return 'Search by ID...'
-    case 'patient': return 'Search by patient name...'
     case 'psychologist': return 'Search by psychologist name...'
     default: return 'Search...'
   }
 })
 
-const filtered = computed(() => {
-  let list = Array.isArray(data.value) ? [...data.value] : []
+const filtered = computed(() => (Array.isArray(data.value) ? [...data.value] : []))
 
-  if (searchField.value === 'date') {
-    const d = String(searchDate.value || '').trim()
-    if (d) {
-      list = list.filter((a) => {
-        const updated = a?.updated_at
-        if (!updated) return false
-        try {
-          const iso = new Date(updated).toISOString().slice(0, 10)
-          return iso === d
-        } catch { return false }
-      })
-    }
-  } else {
-    const q = String(searchQuery.value || '').trim().toLowerCase()
-    if (q) {
-      list = list.filter((a) => {
-        if (searchField.value === 'id') return String(a?.id ?? '').toLowerCase().includes(q)
-        if (searchField.value === 'patient') return String(a?.patient?.name ?? '').toLowerCase().includes(q)
-        if (searchField.value === 'psychologist') return String(a?.psychologist?.name ?? '').toLowerCase().includes(q)
-        const hay = [String(a?.id ?? ''), String(a?.patient?.name ?? ''), String(a?.psychologist?.name ?? '')].join(' ').toLowerCase()
-        return hay.includes(q)
-      })
-    }
-  }
-
-  if ((activeStatuses.value || []).length > 0) {
-    list = list.filter((a) => { const s = String(a?.status || '').toLowerCase(); return activeStatuses.value.includes(s) })
-  }
-
-  const fromVal = String(createdFrom.value || '').trim()
-  const toVal = String(createdTo.value || '').trim()
-  if (fromVal || toVal) {
-    list = list.filter((a) => {
-      const updatedRaw = a?.updated_at || null
-      if (!updatedRaw) return false
-      const updated = new Date(updatedRaw)
-      if (fromVal) {
-        const from = new Date(fromVal)
-        if (!Number.isNaN(from.getTime()) && updated < from) return false
-      }
-      if (toVal) {
-        const to = new Date(toVal)
-        to.setHours(23,59,59,999)
-        if (!Number.isNaN(to.getTime()) && updated > to) return false
-      }
-      return true
-    })
-  }
-
-  return list
-})
-
-const sortKey = ref('created_at')
+const sortKey = ref('id')
 const sortDir = ref('desc')
 
-function toggleSort(key) { if (sortKey.value === key) { sortDir.value = sortDir.value === 'asc' ? 'desc' : 'asc'; return } sortKey.value = key; sortDir.value = 'asc' }
+function toggleSort(key) { if (sortKey.value === key) { sortDir.value = sortDir.value === 'asc' ? 'desc' : 'asc'; return } sortKey.value = key; sortDir.value = 'desc' }
 
 function getSortValue(a, key) {
   switch (key) {
@@ -602,11 +550,6 @@ const sorted = computed(() => {
     })
     .map(x => x.item)
 })
-
-const totalFiltered = computed(() => (filtered.value || []).length)
-const totalPages = computed(() => Math.max(1, Math.ceil(totalFiltered.value / perPage.value)))
-
-const paginated = computed(() => { if (!isSearching.value) return sorted.value; const start = (clientPage.value - 1) * perPage.value; return sorted.value.slice(start, start + perPage.value) })
 
 const brandColor = 'rgb(89 151 172 / var(--tw-bg-opacity, 1))'
 
@@ -651,6 +594,15 @@ function payoutActions(p) {
   ]
   const st = String(p?.status || '').toLowerCase()
   return all.filter(a => a.value !== st)
+}
+
+function actionTextColor(act) {
+  const v = String(act?.value || '').toLowerCase()
+  if (v === 'paid') return 'text-green-700'
+  if (v === 'pending') return 'text-yellow-800'
+  if (v === 'on_hold') return 'text-indigo-700'
+  if (v === 'refund') return 'text-red-700'
+  return 'text-gray-700'
 }
 
 function statusTitleText(p, payload) {

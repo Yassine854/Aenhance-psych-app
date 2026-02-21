@@ -403,10 +403,10 @@ function statusBadgeClass(status) {
   }
 }
 
-const sortKey = ref('created_at')
+const sortKey = ref('id')
 const sortDir = ref('desc')
 
-function toggleSort(key) { if (sortKey.value === key) { sortDir.value = sortDir.value === 'asc' ? 'desc' : 'asc'; return } sortKey.value = key; sortDir.value = 'asc' }
+function toggleSort(key) { if (sortKey.value === key) { sortDir.value = sortDir.value === 'asc' ? 'desc' : 'asc'; return } sortKey.value = key; sortDir.value = 'desc' }
 
 const sortedLogsData = computed(() => {
   const rows = [...(logsData.value || [])]

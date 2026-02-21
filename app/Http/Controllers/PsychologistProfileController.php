@@ -124,19 +124,51 @@ class PsychologistProfileController extends Controller
     {
         $query = PsychologistProfile::query()->with(['user', 'specialisations', 'expertises', 'diplomas', 'availabilities']);
 
-        if ($request->filled('q')) {
-            $q = $request->input('q');
-            $query->whereHas('user', function($u) use ($q) {
-                $u->where('name', 'like', "%{$q}%")
-                  ->orWhere('email', 'like', "%{$q}%");
-            })->orWhere('phone', 'like', "%{$q}%");
+        $searchField = strtolower((string) $request->input('search_field', 'id'));
+        if (! in_array($searchField, ['id', 'name', 'email', 'specialization'], true)) {
+            $searchField = 'id';
+        }
+
+        $searchQuery = trim((string) $request->input('search_query', $request->input('q', '')));
+
+        if ($searchQuery !== '') {
+            switch ($searchField) {
+                case 'id':
+                    $query->where('id', 'like', "%{$searchQuery}%");
+                    break;
+
+                case 'name':
+                    $query->where(function ($q) use ($searchQuery) {
+                        $q->where('first_name', 'like', "%{$searchQuery}%")
+                          ->orWhere('last_name', 'like', "%{$searchQuery}%")
+                          ->orWhereHas('user', function ($u) use ($searchQuery) {
+                              $u->where('name', 'like', "%{$searchQuery}%");
+                          });
+                    });
+                    break;
+
+                case 'email':
+                    $query->whereHas('user', function ($u) use ($searchQuery) {
+                        $u->where('email', 'like', "%{$searchQuery}%");
+                    });
+                    break;
+
+                case 'specialization':
+                    $query->whereHas('specialisations', function ($s) use ($searchQuery) {
+                        $s->where('name', 'like', "%{$searchQuery}%");
+                    });
+                    break;
+            }
         }
 
         $profiles = $query->orderBy('id', 'desc')->paginate(15)->withQueryString();
 
         return Inertia::render('Admin/Psychologist/Index', [
             'profiles' => $profiles,
-            'filters' => $request->only(['q']),
+            'filters' => [
+                'search_field' => $searchField,
+                'search_query' => $searchQuery,
+            ],
             'specialisations' => Specialisation::query()->orderBy('name')->get(['id', 'name']),
             'expertises' => Expertise::query()->orderBy('name')->get(['id', 'name']),
         ]);
