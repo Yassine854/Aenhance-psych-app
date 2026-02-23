@@ -6,70 +6,99 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
+use Inertia\Response;
 
 class PsychologistPatientController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request): Response|RedirectResponse
     {
         $user = $request->user();
         if (! $user || ! method_exists($user, 'isPsychologist') || ! $user->isPsychologist()) {
             return redirect()->route('dashboard');
         }
 
-        $search = trim((string) $request->input('search', ''));
+        $searchField = strtolower(trim((string) $request->input('search_field', 'patient')));
+        $searchQuery = trim((string) $request->input('search_query', ''));
+        $searchDate = trim((string) $request->input('search_date', ''));
 
-        $rows = DB::table('appointments')
+        if (! in_array($searchField, ['patient', 'date'], true)) {
+            $searchField = 'patient';
+        }
+
+        $latestDurationSub = DB::table('appointment_sessions as s2')
+            ->join('appointments as a2', 'a2.id', '=', 's2.appointment_id')
+            ->select('s2.duration_minutes')
+            ->whereColumn('a2.patient_id', 'patients.id')
+            ->where('a2.psychologist_id', $user->id)
+            ->orderByDesc('s2.started_at')
+            ->limit(1);
+
+        $patientsQuery = DB::table('appointments')
             ->join('users as patients', 'appointments.patient_id', '=', 'patients.id')
             ->leftJoin('patient_profiles', 'patients.id', '=', 'patient_profiles.user_id')
             ->join('appointment_sessions', 'appointment_sessions.appointment_id', '=', 'appointments.id')
-            ->leftJoin('appointment_session_notes', 'appointment_session_notes.appointment_session_id', '=', 'appointment_sessions.id')
             ->where('appointments.psychologist_id', $user->id)
-            ->when($search !== '', function ($q) use ($search) {
-                $q->where('patients.name', 'like', "%{$search}%");
+            ->when($searchField === 'date' && $searchDate !== '', function ($q) use ($searchDate) {
+                $q->whereDate('appointment_sessions.started_at', $searchDate);
+            })
+            ->when($searchField === 'patient' && $searchQuery !== '', function ($q) use ($searchQuery) {
+                $q->where('patients.name', 'like', '%'.$searchQuery.'%');
             })
             ->select(
                 'patients.id as patient_id',
                 'patients.name as patient_name',
                 'patient_profiles.profile_image_url as profile_image_url',
                 'patient_profiles.date_of_birth as date_of_birth',
-                'appointment_sessions.id as session_id',
-                'appointment_sessions.started_at as session_started_at',
-                'appointment_sessions.duration_minutes as session_duration',
-                'appointment_session_notes.id as note_id'
+                DB::raw('MAX(appointment_sessions.started_at) as last_session_started_at')
+            )
+            ->selectSub($latestDurationSub, 'last_session_duration')
+            ->groupBy(
+                'patients.id',
+                'patients.name',
+                'patient_profiles.profile_image_url',
+                'patient_profiles.date_of_birth'
             )
             ->orderBy('patients.name')
-            ->orderByDesc('appointment_sessions.started_at')
-            ->get();
+            ->orderByDesc('last_session_started_at');
 
-        $grouped = [];
-        foreach ($rows as $r) {
-            $pid = $r->patient_id;
-            if (! isset($grouped[$pid])) {
-                $grouped[$pid] = [
-                    'id' => $pid,
-                    'name' => $r->patient_name,
-                    'profile_image_url' => $r->profile_image_url ?? null,
-                    'date_of_birth' => $r->date_of_birth ?? null,
-                    'age' => $r->date_of_birth ? Carbon::parse($r->date_of_birth)->age : null,
-                    'profile_cloudinary' => $r->profile_cloudinary ?? null,
-                    'sessions' => [],
-                ];
-            }
+        /** @var LengthAwarePaginator $patients */
+        $patients = $patientsQuery
+            ->paginate(15)
+            ->appends($request->query());
 
-            $grouped[$pid]['sessions'][] = [
-                'session_id' => $r->session_id,
-                'started_at' => $r->session_started_at,
-                'duration' => $r->session_duration,
-                'note_id' => $r->note_id,
+        $mappedItems = collect($patients->items())->map(function ($r) {
+            return [
+                'id' => $r->patient_id,
+                'name' => $r->patient_name,
+                'profile_image_url' => $r->profile_image_url ?? null,
+                'date_of_birth' => $r->date_of_birth ?? null,
+                'age' => $r->date_of_birth ? Carbon::parse($r->date_of_birth)->age : null,
+                'last_session_started_at' => $r->last_session_started_at,
+                'last_session_duration' => $r->last_session_duration !== null ? (int) $r->last_session_duration : null,
             ];
-        }
+        })->values()->all();
 
-        $patients = array_values($grouped);
+        $payload = new LengthAwarePaginator(
+            $mappedItems,
+            $patients->total(),
+            $patients->perPage(),
+            $patients->currentPage(),
+            [
+                'path' => $request->url(),
+                'query' => $request->query(),
+            ]
+        );
 
         return Inertia::render('Psychologist/Patients/Index', [
-            'patients' => $patients,
-            'search' => $search,
+            'patients' => $payload,
+            'filters' => [
+                'search_field' => $searchField,
+                'search_query' => $searchQuery,
+                'search_date' => $searchDate,
+            ],
         ]);
     }
 

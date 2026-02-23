@@ -258,12 +258,7 @@ watch(() => Object.keys(form.errors).length, (errorCount, oldErrorCount) => {
     <!-- Approved Status Message -->
     <div v-else-if="profile?.is_approved" class="mx-auto max-w-6xl px-4 py-6">
       <div class="bg-green-50 border border-green-200 rounded-xl p-4">
-        <div class="flex items-center gap-3">
-          <div class="w-5 h-5 text-green-600 flex-shrink-0">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-            </svg>
-          </div>
+        <div class="flex items-center">
           <div class="flex-1">
             <h3 class="text-sm font-medium text-green-800">Profile Approved</h3>
             <p class="text-sm text-green-700 mt-1">Congratulations! Your profile has been approved and is now visible to patients. You can continue updating your information as needed.</p>
@@ -292,12 +287,21 @@ watch(() => Object.keys(form.errors).length, (errorCount, oldErrorCount) => {
               </div>
             </div>
             <div v-else-if="!verification_details" class="mt-3">
-              <Link :href="route('psychologist.verification.create')" class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-yellow-600 hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 transition-colors duration-200">
-                <svg class="-ml-0.5 mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
-                </svg>
-                Complete Verification
-              </Link>
+              <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
+                <h4 class="text-sm font-semibold text-yellow-900">Verification Required</h4>
+                <p class="text-sm text-yellow-800 mt-1">
+                  Please send your verification details by email to
+                  <a href="mailto:contact@aenhance.tn" class="font-semibold underline decoration-yellow-700/60 hover:text-yellow-900">contact@aenhance.tn</a>.
+                </p>
+                <ul class="mt-2 text-sm text-yellow-800 list-disc list-inside space-y-1">
+                  <li>CIN</li>
+                  <li>Legalized copies of diplomas</li>
+                  <li>RIB (from bank)</li>
+                </ul>
+                <p class="mt-2 text-xs text-yellow-800">
+                  Note: Files must be images or PDF format.
+                </p>
+              </div>
             </div>
             <div v-else class="mt-3">
               <div class="flex items-center gap-3">

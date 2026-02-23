@@ -67,34 +67,49 @@
             </select>
 
             <div class="relative flex-1 md:w-80">
-              <input
-                v-if="searchField !== 'date'"
-                v-model="searchQuery"
-                type="text"
-                :placeholder="searchPlaceholder"
-                class="w-full rounded-lg border-gray-300 pl-10 pr-3 py-2"
-              />
+              <template v-if="searchField !== 'date'">
+                <input
+                  v-model="searchQuery"
+                  type="text"
+                  :placeholder="searchPlaceholder"
+                  class="w-full rounded-lg border-gray-300 pl-10 pr-3 py-2"
+                />
 
-              <input
-                v-else
-                v-model="searchDate"
-                type="date"
-                class="w-full rounded-lg border-gray-300 pl-10 pr-10 py-2"
-                aria-label="Search date"
-              />
+                <button
+                  v-if="searchQuery"
+                  type="button"
+                  @click="clearSearch"
+                  class="absolute right-2 top-1/2 -translate-y-1/2 inline-flex items-center justify-center h-7 w-7 rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+                  aria-label="Clear text"
+                  title="Clear"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-4 w-4">
+                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                  </svg>
+                </button>
+              </template>
 
-              <button
-                v-if="searchField === 'date' && searchDate"
-                type="button"
-                @click="searchDate = ''"
-                class="absolute right-2 top-1/2 -translate-y-1/2 inline-flex items-center justify-center h-7 w-7 rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-700"
-                aria-label="Clear date"
-                title="Clear"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-4 w-4">
-                  <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-                </svg>
-              </button>
+              <template v-else>
+                <input
+                  v-model="searchDate"
+                  type="date"
+                  class="w-full rounded-lg border-gray-300 pl-10 pr-10 py-2"
+                  aria-label="Search date"
+                />
+
+                <button
+                  v-if="searchDate"
+                  type="button"
+                  @click="searchDate = ''"
+                  class="absolute right-2 top-1/2 -translate-y-1/2 inline-flex items-center justify-center h-7 w-7 rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+                  aria-label="Clear date"
+                  title="Clear"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-4 w-4">
+                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                  </svg>
+                </button>
+              </template>
 
               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
                 <path
@@ -185,7 +200,7 @@
           <div class="flex items-center justify-between px-4 py-3 border-t border-gray-200">
             <div class="text-sm text-gray-600">Showing {{ payouts.from }}-{{ payouts.to }} of {{ payouts.total }}</div>
             <div class="flex items-center gap-2">
-              <Link v-for="(link, i) in payouts.links" :key="i" :href="link.url || '#'" :class="linkClasses(link)" preserve-scroll>
+              <Link v-for="(link, i) in payouts.links" :key="i" :href="link.url || '#'" :class="linkClasses(link)" :style="link.active ? { backgroundColor: brandColor, borderColor: brandColor, color: '#fff' } : null" preserve-scroll>
                 <span v-html="link.label"></span>
               </Link>
             </div>
@@ -202,12 +217,13 @@
 import { Head, Link, router, usePage } from '@inertiajs/vue3'
 import { computed, ref, watch } from 'vue'
 import Navbar from '@/Components/Navbar.vue'
-import SortIcon from '@/Pages/Admin/Psychologist/SortIcon.vue'
+import SortIcon from '@/Components/SortIcon.vue'
 import PayoutDetails from '@/Pages/Psychologist/Payouts/PayoutDetails.vue'
 
 const props = defineProps({
   payouts: Object,
   status: { type: String, default: '' },
+  filters: { type: Object, default: () => ({}) },
   canLogin: Boolean,
   canRegister: Boolean,
   authUser: Object,
@@ -280,16 +296,101 @@ const data = computed(() => props.payouts?.data || [])
 const searchField = ref('patient')
 const searchQuery = ref('')
 const searchDate = ref('')
+const isHydratingFilters = ref(false)
+let searchDebounce = null
 
-watch(searchField, () => {
+function normalizeFilters(filters = {}) {
+  const validField = ['patient', 'date'].includes(String(filters?.search_field || '').toLowerCase())
+    ? String(filters.search_field).toLowerCase()
+    : 'patient'
+
+  return {
+    search_field: validField,
+    search_query: String(filters?.search_query || ''),
+    search_date: String(filters?.search_date || ''),
+  }
+}
+
+function hydrateFiltersFromProps() {
+  const f = normalizeFilters(props.filters || {})
+  isHydratingFilters.value = true
+  searchField.value = f.search_field
+  searchQuery.value = f.search_query
+  searchDate.value = f.search_date
+  isHydratingFilters.value = false
+}
+
+function currentQueryParams() {
+  const params = {
+    search_field: searchField.value,
+    search_query: searchField.value === 'date' ? '' : String(searchQuery.value || '').trim(),
+    search_date: searchField.value === 'date' ? String(searchDate.value || '').trim() : '',
+  }
+
+  return Object.fromEntries(
+    Object.entries(params).filter(([_, value]) => value !== '' && value != null)
+  )
+}
+
+function applyServerFilters({ resetPage = true } = {}) {
+  if (isHydratingFilters.value) return
+
+  const params = currentQueryParams()
+  if (resetPage) params.page = 1
+
+  router.get(route('psychologist.payouts.index'), params, {
+    preserveScroll: true,
+    preserveState: true,
+    replace: true,
+    only: ['payouts', 'filters', 'status'],
+  })
+}
+
+function clearSearch() {
+  if (searchDebounce) {
+    clearTimeout(searchDebounce)
+    searchDebounce = null
+  }
   searchQuery.value = ''
-  searchDate.value = ''
+  applyServerFilters({ resetPage: true })
+}
+
+hydrateFiltersFromProps()
+
+watch(
+  () => props.filters,
+  () => {
+    hydrateFiltersFromProps()
+  }
+)
+
+watch(searchField, (next) => {
+  if (isHydratingFilters.value) return
+
+  if (next === 'date') {
+    searchQuery.value = ''
+  } else {
+    searchDate.value = ''
+  }
+  applyServerFilters({ resetPage: true })
+})
+
+watch(searchQuery, () => {
+  if (isHydratingFilters.value || searchField.value === 'date') return
+  if (searchDebounce) clearTimeout(searchDebounce)
+  searchDebounce = setTimeout(() => {
+    applyServerFilters({ resetPage: true })
+    searchDebounce = null
+  }, 300)
+})
+
+watch(searchDate, () => {
+  if (isHydratingFilters.value || searchField.value !== 'date') return
+  applyServerFilters({ resetPage: true })
 })
 
 const searchPlaceholder = computed(() => {
   switch (searchField.value) {
-    case 'id':
-      return 'Search by ID...'
     case 'patient':
       return 'Search by patient name...'
     default:
@@ -297,34 +398,7 @@ const searchPlaceholder = computed(() => {
   }
 })
 
-const filtered = computed(() => {
-  const list = data.value || []
-
-  if (searchField.value === 'date') {
-    const d = String(searchDate.value || '').trim()
-    if (!d) return list
-
-    return list.filter((p) => {
-      const start = p?.appointment?.scheduled_start
-      if (!start) return false
-      try {
-        const iso = new Date(start).toISOString().slice(0, 10)
-        return iso === d
-      } catch {
-        return false
-      }
-    })
-  }
-
-  const q = searchQuery.value.trim().toLowerCase()
-  if (!q) return list
-
-  return list.filter((p) => {
-    if (searchField.value === 'id') return String(p?.id ?? '').toLowerCase().includes(q)
-    if (searchField.value === 'patient') return String(p?.patient?.name ?? '').toLowerCase().includes(q)
-    return [String(p?.id ?? ''), String(p?.patient?.name ?? '')].join(' ').toLowerCase().includes(q)
-  })
-})
+const filtered = computed(() => (Array.isArray(data.value) ? [...data.value] : []))
 
 const sortKey = ref('scheduled_start')
 const sortDir = ref('desc')
@@ -340,8 +414,6 @@ function toggleSort(key) {
 
 function getSortValue(item, key) {
   switch (key) {
-    case 'id':
-      return Number(item?.id || 0)
     case 'patient':
       return String(item?.patient?.name || '').toLowerCase()
     case 'scheduled_start':
@@ -407,4 +479,6 @@ function linkClasses(link) {
   if (!link.url) return base + 'bg-gray-50 text-gray-400 border-gray-200 cursor-not-allowed'
   return base + 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
 }
+
+const brandColor = 'rgb(89 151 172 / var(--tw-bg-opacity, 1))'
 </script>

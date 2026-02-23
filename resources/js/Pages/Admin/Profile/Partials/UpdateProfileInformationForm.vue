@@ -1,5 +1,6 @@
 <script setup>
 import { computed } from 'vue'
+import Swal from 'sweetalert2'
 import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
@@ -27,7 +28,6 @@ const form = useForm({
 const submit = () => {
     form.patch(route('profile.update'), {
         onSuccess: () => {
-            // Immediately update the shared Inertia auth.user props so nav updates without waiting for a full page visit
             if (page.props?.value) {
                 page.props.value = {
                     ...page.props.value,
@@ -44,6 +44,16 @@ const submit = () => {
                 page.props.auth.user.name = form.name;
                 page.props.auth.user.email = form.email;
             }
+
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'success',
+                title: 'Profile updated successfully!',
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true,
+            })
         }
     })
 }

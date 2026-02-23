@@ -1,7 +1,7 @@
 <template>
   <aside
     :class="[
-      'fixed mt-16 flex flex-col lg:mt-0 top-0 px-5 left-0 bg-white dark:bg-gray-900 dark:border-gray-800 text-gray-900 dark:text-gray-300 h-screen transition-all duration-300 ease-in-out z-50 border-r border-gray-200 pointer-events-auto',
+      'fixed top-16 h-[calc(100vh-4rem)] lg:top-0 lg:h-screen flex flex-col px-5 left-0 bg-white dark:bg-gray-900 dark:border-gray-800 text-gray-900 dark:text-gray-300 transition-all duration-300 ease-in-out z-50 border-r border-gray-200 pointer-events-auto',
       {
         'lg:w-[290px]': isExpanded || isMobileOpen || isHovered,
         'lg:w-[90px]': !isExpanded && !isHovered,
@@ -25,7 +25,7 @@
   </div>
 
     <div
-      class="flex flex-col overflow-y-auto duration-300 ease-linear no-scrollbar"
+      class="flex-1 min-h-0 flex flex-col overflow-y-auto duration-300 ease-linear no-scrollbar pb-4"
     >
       <nav class="mb-6">
         <div class="flex flex-col gap-4">
@@ -116,7 +116,6 @@
           </div>
         </div>
       </nav>
-      <SidebarWidget v-if="isExpanded || isHovered || isMobileOpen" />
     </div>
   </aside>
 </template>
@@ -140,7 +139,6 @@ import {
   ListIcon,
   PlugInIcon,
 } from "../../../vue-tailwind-admin-dashboard-main/src/icons";
-import SidebarWidget from "./SidebarWidget.vue";
 import BoxCubeIcon from "@/icons/BoxCubeIcon.vue";
 import { useSidebar } from "@/composables/useSidebar";
 import { ref as vueRef } from "vue";
@@ -150,6 +148,7 @@ const isExpanded = sidebarState.isExpanded ?? vueRef(false);
 const isMobileOpen = sidebarState.isMobileOpen ?? vueRef(false);
 const isHovered = sidebarState.isHovered ?? vueRef(false);
 const openSubmenu = sidebarState.openSubmenu ?? vueRef(null);
+const closeMobileSidebar = sidebarState.closeMobileSidebar ?? (() => {});
 import { usePage } from '@inertiajs/vue3'
 import { Inertia } from '@inertiajs/inertia'
 
@@ -158,6 +157,9 @@ const page = usePage()
 const pressedItem = ref(null);
 const pressItem = (parentName, path) => {
   pressedItem.value = path;
+  if (isMobileOpen.value) {
+    closeMobileSidebar();
+  }
   // ensure the parent dropdown stays open
   try {
     if (openSubmenu && typeof openSubmenu === 'object' && 'value' in openSubmenu) {

@@ -21,19 +21,38 @@ class PsychologistAppointmentController extends Controller
             return redirect()->route('dashboard');
         }
 
+        $searchField = strtolower(trim((string) $request->input('search_field', 'patient')));
+        $searchQuery = trim((string) $request->input('search_query', ''));
+        $searchDate = trim((string) $request->input('search_date', ''));
+
+        if (! in_array($searchField, ['patient', 'date'], true)) {
+            $searchField = 'patient';
+        }
+
         /** @var LengthAwarePaginator $appointments */
-        $appointments = Appointment::query()
+        $appointmentsQuery = Appointment::query()
             ->where('psychologist_id', $user->id)
             ->with([
                 'patient:id,name,role',
                 'session:id,appointment_id,room_id,status,started_at',
-            ])
+            ]);
+
+        if ($searchField === 'date') {
+            if ($searchDate !== '') {
+                $appointmentsQuery->whereDate('scheduled_start', $searchDate);
+            }
+        } elseif ($searchQuery !== '') {
+            $appointmentsQuery->whereHas('patient', function ($q) use ($searchQuery) {
+                $q->where('name', 'like', '%'.$searchQuery.'%');
+            });
+        }
+
+        $appointments = $appointmentsQuery
             ->orderByDesc('scheduled_start')
-            ->paginate(15);
+            ->paginate(15)
+            ->appends($request->query());
 
-        $appointments->withQueryString();
-
-        $payload = $appointments->through(function (Appointment $a) {
+        $mappedItems = collect($appointments->items())->map(function (Appointment $a) {
             $start = $a->scheduled_start;
             $cutoff = now()->addHours(24);
             $canCancel = $start ? $start->greaterThanOrEqualTo($cutoff) : false;
@@ -58,11 +77,27 @@ class PsychologistAppointmentController extends Controller
                 'session_status' => (string) ($a->session?->status ?: ''),
                 'session_started_at' => optional($a->session?->started_at)->toISOString() ?? ($a->session?->started_at ? (string) $a->session->started_at : null),
             ];
-        });
+        })->values()->all();
+
+        $payload = new LengthAwarePaginator(
+            $mappedItems,
+            $appointments->total(),
+            $appointments->perPage(),
+            $appointments->currentPage(),
+            [
+                'path' => $request->url(),
+                'query' => $request->query(),
+            ]
+        );
 
         return Inertia::render('Psychologist/Appointments/Index', [
             'appointments' => $payload,
             'status' => session('status'),
+            'filters' => [
+                'search_field' => $searchField,
+                'search_query' => $searchQuery,
+                'search_date' => $searchDate,
+            ],
         ]);
     }
 

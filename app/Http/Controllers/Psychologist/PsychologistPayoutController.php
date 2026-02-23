@@ -18,16 +18,37 @@ class PsychologistPayoutController extends Controller
             return Inertia::render('Dashboard');
         }
 
+        $searchField = strtolower(trim((string) $request->input('search_field', 'patient')));
+        $searchQuery = trim((string) $request->input('search_query', ''));
+        $searchDate = trim((string) $request->input('search_date', ''));
+
+        if (! in_array($searchField, ['patient', 'date'], true)) {
+            $searchField = 'patient';
+        }
+
         /** @var LengthAwarePaginator $payouts */
-        $payouts = PsychologistPayout::query()
+        $payoutsQuery = PsychologistPayout::query()
             ->where('psychologist_id', $user->id)
-            ->with(['appointment.patient', 'payment'])
+            ->with(['appointment.patient', 'payment']);
+
+        if ($searchField === 'date') {
+            if ($searchDate !== '') {
+                $payoutsQuery->whereHas('appointment', function ($q) use ($searchDate) {
+                    $q->whereDate('scheduled_start', $searchDate);
+                });
+            }
+        } elseif ($searchQuery !== '') {
+            $payoutsQuery->whereHas('appointment.patient', function ($q) use ($searchQuery) {
+                $q->where('name', 'like', '%'.$searchQuery.'%');
+            });
+        }
+
+        $payouts = $payoutsQuery
             ->orderByDesc('created_at')
-            ->paginate(15);
+            ->paginate(15)
+            ->appends($request->query());
 
-        $payouts->withQueryString();
-
-        $payload = $payouts->through(function (PsychologistPayout $p) {
+        $mappedItems = collect($payouts->items())->map(function (PsychologistPayout $p) {
             return [
                 'id' => $p->id,
                 'appointment' => $p->appointment ? [
@@ -49,11 +70,27 @@ class PsychologistPayoutController extends Controller
                 'created_at' => optional($p->created_at)->toISOString(),
                 'refund_at' => optional($p->refund_at)->toISOString()
                 ];
-        });
+        })->values()->all();
+
+        $payload = new LengthAwarePaginator(
+            $mappedItems,
+            $payouts->total(),
+            $payouts->perPage(),
+            $payouts->currentPage(),
+            [
+                'path' => $request->url(),
+                'query' => $request->query(),
+            ]
+        );
 
         return Inertia::render('Psychologist/Payouts/Index', [
             'payouts' => $payload,
             'status' => session('status'),
+            'filters' => [
+                'search_field' => $searchField,
+                'search_query' => $searchQuery,
+                'search_date' => $searchDate,
+            ],
         ]);
     }
 }
