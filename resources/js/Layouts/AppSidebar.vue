@@ -208,8 +208,8 @@ const menuGroups = [
       {
         icon: GridIcon,
         name: "Dashboard",
-        subItems: [{ name: "Ecommerce", path: "/", pro: false }],
-        // visible to all
+        roles: ['ADMIN'],
+        path: "/dashboard",
       },
       // Admin: direct links for psychologists (use same style as other items)
 
@@ -259,6 +259,12 @@ const menuGroups = [
         icon: UserCircleIcon,
         roles: ['PSYCHOLOGIST'],
         path: "/psychologist/profile",
+      },
+      {
+        name: "Payment History",
+        icon: DocsIcon,
+        roles: ['PATIENT'],
+        path: "/patient/payments",
       },
       {
         name: "Appointments",

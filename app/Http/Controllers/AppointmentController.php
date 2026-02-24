@@ -235,6 +235,86 @@ class AppointmentController extends Controller
         ]);
     }
 
+    /**
+     * Patient payments history UI.
+     */
+    public function patientPaymentsIndex(Request $request): Response|RedirectResponse
+    {
+        $user = $request->user();
+        if (! $user || ! method_exists($user, 'isPatient') || ! $user->isPatient()) {
+            return redirect()->route('dashboard');
+        }
+
+        $payments = Payment::query()
+            ->whereHas('appointment', function ($q) use ($user) {
+                $q->where('patient_id', $user->id);
+            })
+            ->with(['appointment:id,psychologist_id,scheduled_start,scheduled_end,status'])
+            ->orderByDesc('id')
+            ->get([
+                'id',
+                'appointment_id',
+                'amount',
+                'currency',
+                'provider',
+                'status',
+                'transaction_id',
+                'failure_reason',
+                'refund_reason',
+                'paid_at',
+                'created_at',
+            ]);
+
+        $psychologistUserIds = $payments
+            ->pluck('appointment.psychologist_id')
+            ->filter()
+            ->unique()
+            ->values();
+
+        $profilesByUserId = PsychologistProfile::query()
+            ->whereIn('user_id', $psychologistUserIds)
+            ->get(['user_id', 'first_name', 'last_name'])
+            ->keyBy('user_id');
+
+        $paymentsPayload = $payments->map(function (Payment $p) use ($profilesByUserId) {
+            $appointment = $p->appointment;
+            $profile = $appointment ? $profilesByUserId->get($appointment->psychologist_id) : null;
+            $psychologistName = null;
+            if ($profile) {
+                $psychologistName = trim(($profile->first_name ?? '').' '.($profile->last_name ?? '')) ?: null;
+            }
+
+            return [
+                'id' => $p->id,
+                'appointment_id' => $p->appointment_id,
+                'amount' => $p->amount,
+                'currency' => (string) ($p->currency ?: 'TND'),
+                'provider' => (string) ($p->provider ?: 'clictopay'),
+                'status' => (string) $p->status,
+                'transaction_id' => $p->transaction_id,
+                'failure_reason' => $p->failure_reason,
+                'refund_reason' => $p->refund_reason,
+                'paid_at' => optional($p->paid_at)->toISOString() ?? ($p->paid_at ? (string) $p->paid_at : null),
+                'created_at' => optional($p->created_at)->toISOString() ?? ($p->created_at ? (string) $p->created_at : null),
+                'appointment' => $appointment ? [
+                    'id' => $appointment->id,
+                    'status' => (string) $appointment->status,
+                    'scheduled_start' => optional($appointment->scheduled_start)->toISOString() ?? (string) $appointment->scheduled_start,
+                    'scheduled_end' => optional($appointment->scheduled_end)->toISOString() ?? (string) $appointment->scheduled_end,
+                    'psychologist_name' => $psychologistName,
+                ] : null,
+            ];
+        })->values();
+
+        return Inertia::render('Patient/Payments/Index', [
+            'canLogin' => Route::has('login'),
+            'canRegister' => Route::has('register'),
+            'authUser' => $user,
+            'status' => session('status'),
+            'payments' => $paymentsPayload,
+        ]);
+    }
+
     // Create appointment (Patient)
     public function store(Request $request)
     {

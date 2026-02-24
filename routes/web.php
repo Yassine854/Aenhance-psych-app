@@ -27,6 +27,7 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Controllers\AppFeeController;
 use App\Http\Controllers\Admin\PaymentsController;
+use App\Http\Controllers\Admin\DashboardController;
 
 /*
 |--------------------------------------------------------------------------
@@ -112,22 +113,9 @@ Route::get('/services', [ServicesController::class, 'index'])->name('services.in
 Route::get('/services/consultation', [ServicesController::class, 'consultation'])->name('services.consultation');
 
 
-Route::get('/dashboard', function () {
-    $user = Auth::user();
-    if ($user) {
-        if ($user->isAdmin()) {
-            return Inertia::render('Admin/Dashboard');
-        }
-        if ($user->isPsychologist()) {
-            return redirect()->route('home');
-        }
-        if ($user->isPatient()) {
-            return redirect()->route('home');
-        }
-    }
-    // Fallback for unexpected cases
-    return Inertia::render('Dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+Route::get('/dashboard', [DashboardController::class, 'index'])
+    ->middleware(['auth', 'verified'])
+    ->name('dashboard');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -277,6 +265,8 @@ Route::middleware(['auth'])->group(function () {
     // Patient appointments UI
     Route::get('/patient/appointments', [AppointmentController::class, 'patientIndex'])
         ->name('patient.appointments');
+    Route::get('/patient/payments', [AppointmentController::class, 'patientPaymentsIndex'])
+        ->name('patient.payments');
 
     // Session ratings (patient submits rating after completed session)
     Route::post('/session-ratings', [SessionRatingController::class, 'store'])->name('session-ratings.store');

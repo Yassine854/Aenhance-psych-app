@@ -117,11 +117,11 @@
             Appointments
           </Link>
           <Link
-            :href="route('patient.appointments')"
+            :href="route('patient.payments')"
             class="block w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition text-[13px]"
             @click="showPatientMenu = false"
           >
-            History
+            Payment history
           </Link>
           <div class="border-t border-gray-200"></div>
           <button
