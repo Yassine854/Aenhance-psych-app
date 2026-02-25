@@ -253,6 +253,12 @@ const menuGroups = [
         roles: ['ADMIN'],
         path: "/admin/reports",
       },
+      {
+        name: "Notifications",
+        icon: MailIcon,
+        roles: ['ADMIN', 'PSYCHOLOGIST'],
+        path: "/notifications",
+      },
       // Psychologist: self profile entry
       {
         name: "My Profile",

@@ -28,6 +28,7 @@ use Inertia\Inertia;
 use App\Http\Controllers\AppFeeController;
 use App\Http\Controllers\Admin\PaymentsController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\NotificationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -146,6 +147,16 @@ Route::middleware(['auth'])->group(function () {
     // Rates (Admin)
     Route::get('/admin/rates', [App\Http\Controllers\Admin\RatesController::class, 'index'])->name('admin.rates.index');
     Route::get('/admin/rates/{rating}', [App\Http\Controllers\Admin\RatesController::class, 'show'])->name('admin.rates.show');
+
+    // Notifications (Admin)
+    Route::get('/admin/notifications', [NotificationController::class, 'index'])->name('admin.notifications.index');
+    Route::get('/admin/notifications/feed', [NotificationController::class, 'feed'])->name('admin.notifications.feed');
+    Route::post('/admin/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('admin.notifications.read-all');
+    Route::post('/admin/notifications/{notification}/read', [NotificationController::class, 'markAsRead'])->name('admin.notifications.read');
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::get('/notifications/feed', [NotificationController::class, 'feed'])->name('notifications.feed');
+    Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
+    Route::post('/notifications/{notification}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
 
     // Reports (Admin)
     Route::get('/admin/reports', [App\Http\Controllers\Admin\ReportsController::class, 'index'])->name('admin.reports.index');

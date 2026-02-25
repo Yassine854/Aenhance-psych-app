@@ -69,6 +69,11 @@ class User extends Authenticatable
         return $this->hasMany(Appointment::class, 'psychologist_id');
     }
 
+    public function appNotifications()
+    {
+        return $this->hasMany(Notification::class);
+    }
+
 
     public function isAdmin()
 {

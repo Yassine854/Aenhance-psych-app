@@ -19,6 +19,7 @@ use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 use App\Services\ActivityLogger;
+use App\Services\AdminNotificationService;
 
 class AppointmentController extends Controller
 {
@@ -745,9 +746,12 @@ class AppointmentController extends Controller
             ]);
         }
 
-        DB::transaction(function () use ($appointment, $orderId, $user) {
+        $justConfirmed = false;
+
+        DB::transaction(function () use ($appointment, $orderId, $user, &$justConfirmed) {
             if (strtolower((string) $appointment->status) === 'pending') {
                 $appointment->update(['status' => 'confirmed']);
+                $justConfirmed = true;
             }
 
             $session = AppointmentSession::query()->firstOrCreate(
@@ -793,6 +797,10 @@ class AppointmentController extends Controller
                 ActivityLogger::log($user->id, $user->role ?? null, 'created_payment', 'Payment', $created->id, 'ClickToPay payment created and marked paid for appointment '.$appointment->id);
             }
         });
+
+        if ($justConfirmed) {
+            AdminNotificationService::notifyAppointmentConfirmed($appointment->fresh());
+        }
 
         ActivityLogger::log($user->id, $user->role ?? null, 'confirmed_appointment', 'Appointment', $appointment->id, 'Appointment confirmed after ClickToPay payment');
 
@@ -916,6 +924,10 @@ class AppointmentController extends Controller
                     ActivityLogger::log($appointment->patient_id, 'SYSTEM', 'created_payment', 'Payment', $created->id, 'Payment created on appointment confirmation');
                 }
             });
+
+            if ($prevStatus !== 'confirmed') {
+                AdminNotificationService::notifyAppointmentConfirmed($appointment->fresh());
+            }
 
             ActivityLogger::log($user->id, $user->role ?? null, 'confirmed_appointment', 'Appointment', $appointment->id, 'Appointment status changed from '.$prevStatus.' to confirmed (patient confirmed and paid)');
 

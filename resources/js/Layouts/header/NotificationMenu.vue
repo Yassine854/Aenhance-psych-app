@@ -37,7 +37,7 @@
       <div
         class="flex items-center justify-between pb-3 mb-3 border-b border-gray-100 dark:border-gray-800"
       >
-        <h5 class="text-lg font-semibold text-gray-800 dark:text-white/90">Notification</h5>
+        <h5 class="text-lg font-semibold text-gray-800 dark:text-white/90">Notifications</h5>
 
         <button @click="closeDropdown" class="text-gray-500 dark:text-gray-400">
           <svg
@@ -58,16 +58,37 @@
         </button>
       </div>
 
+      <div v-if="canUseNotifications" class="mb-2 flex items-center justify-between px-1">
+        <p class="text-xs text-gray-500 dark:text-gray-400">
+          {{ unreadCount }} unread
+        </p>
+        <button
+          type="button"
+          class="text-xs font-medium text-brand-600 hover:text-brand-700 dark:text-brand-400"
+          @click="markAllAsRead"
+          :disabled="unreadCount === 0"
+        >
+          Mark all as read
+        </button>
+      </div>
+
       <ul class="flex flex-col h-auto overflow-y-auto custom-scrollbar">
-        <li v-for="notification in notifications" :key="notification.id" @click="handleItemClick">
+        <li
+          v-for="notification in notifications"
+          :key="notification.id"
+          @click="handleItemClick(notification, $event)"
+        >
           <a
             class="flex gap-3 rounded-lg border-b border-gray-100 p-3 px-4.5 py-3 hover:bg-gray-100 dark:border-gray-800 dark:hover:bg-white/5"
+            :class="notification.is_read ? 'opacity-80' : ''"
             href="#"
           >
             <span class="relative block w-full h-10 rounded-full z-1 max-w-10">
-              <img :src="notification.userImage" alt="User" class="overflow-hidden rounded-full" />
+              <span class="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 text-sm font-semibold text-gray-700 dark:bg-gray-700 dark:text-gray-100">
+                #{{ notification.index_no }}
+              </span>
               <span
-                :class="notification.status === 'online' ? 'bg-success-500' : 'bg-error-500'"
+                :class="notification.is_read ? 'bg-gray-300' : 'bg-success-500'"
                 class="absolute bottom-0 right-0 z-10 h-2.5 w-full max-w-2.5 rounded-full border-[1.5px] border-white dark:border-gray-900"
               ></span>
             </span>
@@ -75,126 +96,120 @@
             <span class="block">
               <span class="mb-1.5 block text-theme-sm text-gray-500 dark:text-gray-400">
                 <span class="font-medium text-gray-800 dark:text-white/90">
-                  {{ notification.userName }}
+                  {{ notification.title }}
                 </span>
-                {{ notification.action }}
-                <span class="font-medium text-gray-800 dark:text-white/90">
-                  {{ notification.project }}
+                <span class="mt-1 block text-gray-500 dark:text-gray-400">
+                  {{ notification.message }}
                 </span>
               </span>
 
               <span class="flex items-center gap-2 text-gray-500 text-theme-xs dark:text-gray-400">
                 <span>{{ notification.type }}</span>
                 <span class="w-1 h-1 bg-gray-400 rounded-full"></span>
-                <span>{{ notification.time }}</span>
+                <span>{{ notification.time_ago }}</span>
               </span>
             </span>
           </a>
         </li>
+
+        <li v-if="canUseNotifications && notifications.length === 0" class="px-3 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
+          No notifications yet.
+        </li>
+
+        <li v-if="!canUseNotifications" class="px-3 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
+          Notifications are available for admin and psychologist accounts.
+        </li>
       </ul>
 
-      <button @click="handleViewAllClick" class="mt-3 flex justify-center ... w-full text-center">
-  View All Notification
-</button>
+      <button
+        @click="handleViewAllClick"
+        class="mt-3 flex w-full items-center justify-center rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-700"
+      >
+        View all notifications
+      </button>
     </div>
     <!-- Dropdown End -->
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { router, usePage } from '@inertiajs/vue3'
 
 const dropdownOpen = ref(false)
-const notifying = ref(true)
+const notifying = ref(false)
 const dropdownRef = ref(null)
+const notifications = ref([])
+const unreadCount = ref(0)
+const latestId = ref(0)
+const pollTimerRef = ref(null)
 
-const notifications = ref([
-  {
-    id: 1,
-    userName: 'Terry Franci',
-    userImage: '/images/user/user-02.jpg',
-    action: 'requests permission to change',
-    project: 'Project - Nganter App',
-    type: 'Project',
-    time: '5 min ago',
-    status: 'online',
-  },
-  {
-    id: 2,
-    userName: 'Terry Franci',
-    userImage: '/images/user/user-03.jpg',
-    action: 'requests permission to change',
-    project: 'Project - Nganter App',
-    type: 'Project',
-    time: '5 min ago',
-    status: 'offline',
-  },
-  {
-    id: 3,
-    userName: 'Terry Franci',
-    userImage: '/images/user/user-04.jpg',
-    action: 'requests permission to change',
-    project: 'Project - Nganter App',
-    type: 'Project',
-    time: '5 min ago',
-    status: 'online',
-  },
-  {
-    id: 4,
-    userName: 'Terry Franci',
-    userImage: '/images/user/user-05.jpg',
-    action: 'requests permission to change',
-    project: 'Project - Nganter App',
-    type: 'Project',
-    time: '5 min ago',
-    status: 'online',
-  },
-  {
-    id: 5,
-    userName: 'Terry Franci',
-    userImage: '/images/user/user-06.jpg',
-    action: 'requests permission to change',
-    project: 'Project - Nganter App',
-    type: 'Project',
-    time: '5 min ago',
-    status: 'offline',
-  },
-  {
-    id: 6,
-    userName: 'Terry Franci',
-    userImage: '/images/user/user-07.jpg',
-    action: 'requests permission to change',
-    project: 'Project - Nganter App',
-    type: 'Project',
-    time: '5 min ago',
-    status: 'online',
-  },
-  {
-    id: 7,
-    userName: 'Terry Franci',
-    userImage: '/images/user/user-08.jpg',
-    action: 'requests permission to change',
-    project: 'Project - Nganter App',
-    type: 'Project',
-    time: '5 min ago',
-    status: 'online',
-  },
-  {
-    id: 7,
-    userName: 'Terry Franci',
-    userImage: '/images/user/user-09.jpg',
-    action: 'requests permission to change',
-    project: 'Project - Nganter App',
-    type: 'Project',
-    time: '5 min ago',
-    status: 'online',
-  },
-  // Add more notifications here...
-])
+const page = usePage()
+const canUseNotifications = computed(() => {
+  const role = String(page?.props?.auth?.user?.role || '').toUpperCase().trim()
+  return role === 'ADMIN' || role === 'PSYCHOLOGIST'
+})
+
+const applyFeed = (payload) => {
+  notifications.value = Array.isArray(payload?.notifications) ? payload.notifications : []
+  unreadCount.value = Number(payload?.unread_count || 0)
+  latestId.value = Number(payload?.latest_id || 0)
+  notifying.value = unreadCount.value > 0
+}
+
+const fetchFeed = async () => {
+  if (!canUseNotifications.value) return
+
+  try {
+    const { data } = await window.axios.get('/notifications/feed')
+    applyFeed(data)
+  } catch (error) {
+    console.error('Failed to fetch notifications feed', error)
+  }
+}
+
+const fetchLite = async () => {
+  if (!canUseNotifications.value) return
+
+  try {
+    const { data } = await window.axios.get('/notifications/feed?lite=1')
+    const unread = Number(data?.unread_count || 0)
+    const latest = Number(data?.latest_id || 0)
+    const hasChanges = latest > latestId.value
+
+    unreadCount.value = unread
+    notifying.value = unread > 0
+
+    if (hasChanges || dropdownOpen.value) {
+      await fetchFeed()
+    }
+  } catch (error) {
+    console.error('Failed to fetch lightweight notifications feed', error)
+  }
+}
+
+const startPolling = () => {
+  stopPolling()
+  if (!canUseNotifications.value) return
+
+  pollTimerRef.value = setInterval(() => {
+    if (document.visibilityState !== 'visible') return
+    fetchLite()
+  }, 10000)
+}
+
+const stopPolling = () => {
+  if (!pollTimerRef.value) return
+  clearInterval(pollTimerRef.value)
+  pollTimerRef.value = null
+}
 
 const toggleDropdown = () => {
   dropdownOpen.value = !dropdownOpen.value
-  notifying.value = false
+  if (dropdownOpen.value) {
+    notifying.value = unreadCount.value > 0
+    fetchFeed()
+  }
 }
 
 const closeDropdown = () => {
@@ -207,25 +222,46 @@ const handleClickOutside = (event) => {
   }
 }
 
-const handleItemClick = (event) => {
+const handleItemClick = async (notification, event) => {
   event.preventDefault()
-  // Handle the item click action here
-  console.log('Notification item clicked')
+
+  if (canUseNotifications.value && notification && !notification.is_read) {
+    try {
+      const { data } = await window.axios.post(`/notifications/${notification.id}/read`)
+      applyFeed(data)
+    } catch (error) {
+      console.error('Failed to mark notification as read', error)
+    }
+  }
+
   closeDropdown()
+  router.visit(notification?.action_url || '/notifications')
 }
 
 const handleViewAllClick = (event) => {
   event.preventDefault()
-  // Handle the "View All Notification" action here
-  console.log('View All Notifications clicked')
   closeDropdown()
+  router.visit('/notifications')
+}
+
+const markAllAsRead = async () => {
+  if (!canUseNotifications.value || unreadCount.value === 0) return
+
+  try {
+    const { data } = await window.axios.post('/notifications/read-all')
+    applyFeed(data)
+  } catch (error) {
+    console.error('Failed to mark all notifications as read', error)
+  }
 }
 
 onMounted(() => {
   document.addEventListener('click', handleClickOutside)
+  fetchFeed().then(() => startPolling())
 })
 
 onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside)
+  stopPolling()
 })
 </script>

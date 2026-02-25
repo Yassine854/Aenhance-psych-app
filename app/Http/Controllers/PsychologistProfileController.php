@@ -19,6 +19,7 @@ use Illuminate\Validation\ValidationException;
 use Illuminate\Database\QueryException;
 use Symfony\Component\HttpFoundation\Response as HttpResponse;
 use App\Services\ActivityLogger;
+use App\Services\AdminNotificationService;
 
 class PsychologistProfileController extends Controller
 {
@@ -748,7 +749,12 @@ class PsychologistProfileController extends Controller
 
     public function approve(PsychologistProfile $psychologistProfile): HttpResponse
     {
+        $wasApproved = (bool) $psychologistProfile->is_approved;
         $psychologistProfile->update(['is_approved' => true]);
+
+        if (! $wasApproved && $psychologistProfile->user) {
+            AdminNotificationService::notifyPsychologistApproved($psychologistProfile->user);
+        }
 
         return response()->json(['message' => 'Psychologist approved successfully']);
     }

@@ -22,6 +22,7 @@ use Carbon\Carbon;
 use Inertia\Inertia;
 use Inertia\Response;
 use App\Services\ActivityLogger;
+use App\Services\AdminNotificationService;
 
 class RegisteredUserController extends Controller
 {
@@ -351,6 +352,8 @@ class RegisteredUserController extends Controller
             }
             ActivityLogger::log($user->id, $user->role ?? null, 'created_profile', 'PsychologistProfile', $profile->id ?? null, 'Psychologist profile created on registration');
         }
+
+        AdminNotificationService::notifyNewRegistration($user);
 
         event(new Registered($user));
 

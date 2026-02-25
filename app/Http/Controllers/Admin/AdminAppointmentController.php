@@ -12,6 +12,7 @@ use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 use App\Services\ActivityLogger;
+use App\Services\AdminNotificationService;
 
 class AdminAppointmentController extends Controller
 {
@@ -191,8 +192,10 @@ class AdminAppointmentController extends Controller
         $appointmentStatus = $validated['appointment_status'] ?? null;
         $paymentStatus = $validated['payment_status'] ?? null;
 
+        $justConfirmed = false;
+
         try {
-            DB::transaction(function () use ($user, $appointment, $appointmentStatus, $paymentStatus, $validated) {
+            DB::transaction(function () use ($user, $appointment, $appointmentStatus, $paymentStatus, $validated, &$justConfirmed) {
                 $currentAppointmentStatus = $this->normalizeStatus((string) $appointment->status);
                 $targetAppointmentStatus = $appointmentStatus ? $this->normalizeStatus($appointmentStatus) : null;
                 $targetPaymentStatus = $paymentStatus ? $this->normalizeStatus($paymentStatus) : null;
@@ -269,6 +272,11 @@ class AdminAppointmentController extends Controller
                         $appointment->update([
                             'status' => $targetAppointmentStatus,
                         ]);
+
+                        if ($targetAppointmentStatus === 'confirmed' && $currentAppointmentStatus !== 'confirmed') {
+                            $justConfirmed = true;
+                        }
+
                         // If admin explicitly marked a no-show, log who missed and persist no_show fields.
                         if ($targetAppointmentStatus === 'no_show') {
                             $who = $validated['no_show_by'] ?? null;
@@ -353,6 +361,10 @@ class AdminAppointmentController extends Controller
                     }
                 }
             });
+
+            if ($justConfirmed) {
+                AdminNotificationService::notifyAppointmentConfirmed($appointment->fresh());
+            }
         } catch (ValidationException $e) {
             return redirect()->back()->with('error', $e->errors()['appointment_status'][0] ?? $e->errors()['payment_status'][0] ?? 'Invalid update.');
         }
