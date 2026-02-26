@@ -80,6 +80,7 @@ class NotificationController extends Controller
             && (
                 (method_exists($user, 'isAdmin') && $user->isAdmin())
                 || (method_exists($user, 'isPsychologist') && $user->isPsychologist())
+                || (method_exists($user, 'isPatient') && $user->isPatient())
             );
 
         abort_unless($allowed, 403);
@@ -87,19 +88,19 @@ class NotificationController extends Controller
         return $user;
     }
 
-    private function buildFeed(int $adminId, int $limit = 8): array
+    private function buildFeed(int $recipientId, int $limit = 8): array
     {
         $total = (int) Notification::query()
-            ->where('user_id', $adminId)
+            ->where('user_id', $recipientId)
             ->count();
 
         $unread = (int) Notification::query()
-            ->where('user_id', $adminId)
+            ->where('user_id', $recipientId)
             ->where('is_read', false)
             ->count();
 
         $items = Notification::query()
-            ->where('user_id', $adminId)
+            ->where('user_id', $recipientId)
             ->latest('id')
             ->limit($limit)
             ->get();
@@ -127,23 +128,23 @@ class NotificationController extends Controller
         ];
     }
 
-    private function getStats(int $adminId): array
+    private function getStats(int $recipientId): array
     {
         return [
-            'total_count' => (int) Notification::query()->where('user_id', $adminId)->count(),
-            'unread_count' => (int) Notification::query()->where('user_id', $adminId)->where('is_read', false)->count(),
+            'total_count' => (int) Notification::query()->where('user_id', $recipientId)->count(),
+            'unread_count' => (int) Notification::query()->where('user_id', $recipientId)->where('is_read', false)->count(),
         ];
     }
 
-    private function buildLiteFeed(int $adminId): array
+    private function buildLiteFeed(int $recipientId): array
     {
         return [
             'unread_count' => (int) Notification::query()
-                ->where('user_id', $adminId)
+                ->where('user_id', $recipientId)
                 ->where('is_read', false)
                 ->count(),
             'latest_id' => (int) (Notification::query()
-                ->where('user_id', $adminId)
+                ->where('user_id', $recipientId)
                 ->max('id') ?? 0),
         ];
     }

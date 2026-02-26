@@ -19,7 +19,7 @@ use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 use App\Services\ActivityLogger;
-use App\Services\AdminNotificationService;
+use App\Services\NotificationService;
 
 class AppointmentController extends Controller
 {
@@ -799,7 +799,7 @@ class AppointmentController extends Controller
         });
 
         if ($justConfirmed) {
-            AdminNotificationService::notifyAppointmentConfirmed($appointment->fresh());
+            NotificationService::notifyAppointmentConfirmed($appointment->fresh());
         }
 
         ActivityLogger::log($user->id, $user->role ?? null, 'confirmed_appointment', 'Appointment', $appointment->id, 'Appointment confirmed after ClickToPay payment');
@@ -926,7 +926,7 @@ class AppointmentController extends Controller
             });
 
             if ($prevStatus !== 'confirmed') {
-                AdminNotificationService::notifyAppointmentConfirmed($appointment->fresh());
+                NotificationService::notifyAppointmentConfirmed($appointment->fresh());
             }
 
             ActivityLogger::log($user->id, $user->role ?? null, 'confirmed_appointment', 'Appointment', $appointment->id, 'Appointment status changed from '.$prevStatus.' to confirmed (patient confirmed and paid)');
@@ -953,6 +953,10 @@ class AppointmentController extends Controller
                 'canceled_at' => now(),
             ]);
             ActivityLogger::log($user->id, $user->role ?? null, 'cancelled_appointment', 'Appointment', $appointment->id, 'Appointment status changed from '.$prevStatus.' to cancelled by '.$canceledBy);
+
+            if ($canceledBy === 'psychologist') {
+                NotificationService::notifyAppointmentCancelledByPsychologist($appointment->fresh(), $validated['cancellation_reason'] ?? null);
+            }
         } else {
             $prevStatus = (string) $appointment->status;
             $appointment->update(['status' => $requestedStatus]);

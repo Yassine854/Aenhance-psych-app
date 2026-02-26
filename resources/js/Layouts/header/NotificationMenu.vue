@@ -147,7 +147,7 @@ const pollTimerRef = ref(null)
 const page = usePage()
 const canUseNotifications = computed(() => {
   const role = String(page?.props?.auth?.user?.role || '').toUpperCase().trim()
-  return role === 'ADMIN' || role === 'PSYCHOLOGIST'
+  return role === 'ADMIN' || role === 'PSYCHOLOGIST' || role === 'PATIENT'
 })
 
 const applyFeed = (payload) => {

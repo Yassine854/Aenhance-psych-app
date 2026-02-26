@@ -256,7 +256,7 @@ const menuGroups = [
       {
         name: "Notifications",
         icon: MailIcon,
-        roles: ['ADMIN', 'PSYCHOLOGIST'],
+        roles: ['ADMIN', 'PSYCHOLOGIST', 'PATIENT'],
         path: "/notifications",
       },
       // Psychologist: self profile entry

@@ -4,10 +4,11 @@ namespace App\Services;
 
 use App\Models\Appointment;
 use App\Models\Notification;
+use App\Models\PsychologistProfile;
 use App\Models\User;
 use Illuminate\Support\Str;
 
-class AdminNotificationService
+class NotificationService
 {
     public static function notifyNewRegistration(User $registeredUser): void
     {
@@ -171,6 +172,16 @@ class AdminNotificationService
             : null;
 
         $psychologistName = trim((string) ($psychologist?->name ?? ''));
+        if ($psychologistName === '' && $psychologistId > 0) {
+            $profile = PsychologistProfile::query()
+                ->where('user_id', $psychologistId)
+                ->first(['first_name', 'last_name']);
+
+            if ($profile) {
+                $psychologistName = trim((string) (($profile->first_name ?? '').' '.($profile->last_name ?? '')));
+            }
+        }
+
         if ($psychologistName === '') {
             $psychologistName = $psychologistId > 0 ? ('User #'.$psychologistId) : 'Unknown psychologist';
         }
