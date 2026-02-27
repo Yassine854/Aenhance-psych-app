@@ -7,6 +7,7 @@ use App\Models\Report;
 use App\Models\User;
 use App\Models\PatientProfile;
 use App\Models\PsychologistProfile;
+use App\Models\Notification;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -189,6 +190,79 @@ class ReportsController extends Controller
             $report->resolved_at = $report->updated_at;
             $report->save();
             $report->timestamps = true;
+            // Notify the original reporter that their report was resolved
+            try {
+                // Resolve reporter -> user id
+                $report->refresh();
+                $repType = strtolower(trim((string) $report->reporter_type));
+                $reporterUserId = null;
+                if (str_contains($repType, 'patient')) {
+                    $p = PatientProfile::find($report->reporter_id);
+                    $reporterUserId = $p?->user?->id ?? null;
+                    if (! $reporterUserId) {
+                        $u = User::find($report->reporter_id);
+                        $reporterUserId = $u?->id ?? null;
+                    }
+                } elseif (str_contains($repType, 'psychologist')) {
+                    $pp = PsychologistProfile::find($report->reporter_id);
+                    $reporterUserId = $pp?->user?->id ?? null;
+                    if (! $reporterUserId) {
+                        $u = User::find($report->reporter_id);
+                        $reporterUserId = $u?->id ?? null;
+                    }
+                } else {
+                    $u = User::find($report->reporter_id);
+                    $reporterUserId = $u?->id ?? null;
+                }
+
+                if ($reporterUserId) {
+                    // Resolve reported display name
+                    $reportedName = null;
+                    $reportedType = strtolower(trim((string) $report->reported_type));
+                    if (str_contains($reportedType, 'patient')) {
+                        $p2 = PatientProfile::find($report->reported_id);
+                        $reportedName = $p2?->user?->name ?? trim((string) (($p2?->first_name ?? '') . ' ' . ($p2?->last_name ?? '')));
+                        if (! $reportedName) {
+                            $u2 = User::find($report->reported_id);
+                            $reportedName = $u2?->name ?? null;
+                        }
+                    } elseif (str_contains($reportedType, 'psychologist')) {
+                        $pp2 = PsychologistProfile::find($report->reported_id);
+                        $reportedName = $pp2?->user?->name ?? trim((string) (($pp2?->first_name ?? '') . ' ' . ($pp2?->last_name ?? '')));
+                        if (! $reportedName) {
+                            $u2 = User::find($report->reported_id);
+                            $reportedName = $u2?->name ?? null;
+                        }
+                    } else {
+                        $u2 = User::find($report->reported_id);
+                        $reportedName = $u2?->name ?? null;
+                    }
+
+                    $reportedName = $reportedName ?: ('User #'.(int) $report->reported_id);
+
+                    $actorPath = str_contains($repType, 'patient') ? '/patient/reports' : (str_contains($repType, 'psychologist') ? '/psychologist/reports' : '/reports');
+
+                    $message = sprintf('Your report #%d has been resolved. You reported %s.', $report->id, $reportedName);
+
+                    Notification::query()->create([
+                        'user_id' => (int) $reporterUserId,
+                        'title' => 'Report resolved',
+                        'message' => $message,
+                        'type' => 'report',
+                        'channel' => 'in_app',
+                        'action_url' => $actorPath,
+                        'data' => json_encode([
+                            'event_type' => 'report_resolved',
+                            'report_id' => (int) $report->id,
+                            'reported' => ['type' => $report->reported_type, 'id' => (int) $report->reported_id, 'name' => $reportedName],
+                        ], JSON_UNESCAPED_UNICODE),
+                        'is_read' => false,
+                        'read_at' => null,
+                    ]);
+                }
+            } catch (\Throwable $e) {
+                // don't break admin action for notification errors
+            }
         } else {
             $report->update([
                 'is_resolved' => false,

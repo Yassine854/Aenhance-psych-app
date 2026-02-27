@@ -57,6 +57,12 @@ class FinalizeAppointmentSessions extends Command
                     $session->save();
                 }
 
+
+                    try {
+                        \App\Services\AdminNotificationService::notifyAppointmentCompleted($appointment, 'system', null);
+                    } catch (\Throwable $e) {
+                        // don't fail the job for notification errors
+                    }
                 // If the session already ended, don't touch it.
                 if ($session->ended_at || strtolower((string) $session->status) === 'completed') {
                     return;
@@ -137,6 +143,11 @@ class FinalizeAppointmentSessions extends Command
                     );
                 } catch (\Throwable $e) {
                     // ignore logging errors
+                }
+                try {
+                    \App\Services\AdminNotificationService::notifyAppointmentNoShow($appointment, $noShowBy, $noShowUserId);
+                } catch (\Throwable $e) {
+                    // don't fail job for notification errors
                 }
             });
         }

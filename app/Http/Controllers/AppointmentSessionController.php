@@ -171,7 +171,7 @@ class AppointmentSessionController extends Controller
 
         $prevStatus = AppointmentSession::query()->where('appointment_id', $appointment->id)->value('status');
 
-        $session = DB::transaction(function () use ($appointment) {
+        $session = DB::transaction(function () use ($appointment, $user) {
             /** @var AppointmentSession $session */
             $session = AppointmentSession::query()->lockForUpdate()->firstOrCreate(
                 ['appointment_id' => $appointment->id],
@@ -203,6 +203,11 @@ class AppointmentSessionController extends Controller
                     ActivityLogger::log($appointment->patient_id ?? null, 'PSYCHOLOGIST', 'completed_appointment', 'Appointment', $appointment->id, 'Appointment completed by psychologist');
                 } catch (\Throwable $e) {
                     // don't fail on logging error
+                }
+                try {
+                    \App\Services\AdminNotificationService::notifyAppointmentCompleted($appointment, 'psychologist', $user->id ?? null);
+                } catch (\Throwable $e) {
+                    // ignore notification failures
                 }
             }
 

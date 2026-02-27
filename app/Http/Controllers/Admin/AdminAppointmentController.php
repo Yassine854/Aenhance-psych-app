@@ -314,6 +314,11 @@ class AdminAppointmentController extends Controller
                             }
 
                             ActivityLogger::log($user->id, $user->role ?? null, 'no_show_appointment', 'Appointment', $appointment->id, $desc);
+                            try {
+                                \App\Services\AdminNotificationService::notifyAppointmentNoShow($appointment->fresh(), $who, $noShowUserIdToSave);
+                            } catch (\Throwable $e) {
+                                // don't let notification failures block admin update
+                            }
                         }
                     }
                 }

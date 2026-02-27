@@ -7,6 +7,7 @@ use App\Models\PsychologistPayout;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Models\Log;
+use App\Models\Notification;
 
 class PayoutsController extends Controller
 {
@@ -177,6 +178,7 @@ class PayoutsController extends Controller
         $payout->update($update);
 
         // Record activity log for this payout status change
+        // Record activity logs for each payout changed and notify psychologists when applicable
         try {
             Log::record([
                 'actor_id' => $user ? $user->id : null,
@@ -189,6 +191,39 @@ class PayoutsController extends Controller
             ]);
         } catch (\Throwable $e) {
             // intentionally ignore logging failures
+        }
+
+        // Notify psychologist when payout is paid or refunded
+        if (in_array($newStatus, ['paid', 'refund'], true)) {
+            try {
+                $psychologistId = $payout->psychologist_id ?? ($payout->psychologist?->id ?? null);
+                if ($psychologistId) {
+                    $title = $newStatus === 'paid' ? 'Payout paid' : 'Payout refunded';
+                    $message = $newStatus === 'paid'
+                        ? sprintf('Your payout #%d has been marked Paid. Net amount: %s %s', $payout->id, (string) $payout->net_amount, $payout->currency ?? 'TND')
+                        : sprintf('Your payout #%d has been marked Refunded. Net amount: %s %s', $payout->id, (string) $payout->net_amount, $payout->currency ?? 'TND');
+
+                    Notification::query()->create([
+                        'user_id' => (int) $psychologistId,
+                        'title' => $title,
+                        'message' => $message,
+                        'type' => 'payout',
+                        'channel' => 'in_app',
+                        'action_url' => '/psychologist/payouts',
+                        'data' => json_encode([
+                            'event_type' => 'payout_status_changed',
+                            'payout_id' => (int) $payout->id,
+                            'status' => $newStatus,
+                            'amount' => (string) $payout->net_amount,
+                            'currency' => $payout->currency ?? 'TND',
+                        ], JSON_UNESCAPED_UNICODE),
+                        'is_read' => false,
+                        'read_at' => null,
+                    ]);
+                }
+            } catch (\Throwable $e) {
+                // ignore notification failures
+            }
         }
 
         if ($request->wantsJson() || $request->expectsJson()) {
@@ -244,6 +279,7 @@ class PayoutsController extends Controller
         if ($request->wantsJson() || $request->expectsJson()) {
             return response()->json(['updated' => count($ids)]);
         }
+
 
         return redirect()->route('admin.payouts.index')->with('status', 'Payouts updated.');
     }

@@ -75,6 +75,7 @@ class AdminNotificationService
             ->all();
 
         $psychologistId = (int) ($appointment->psychologist_id ?? 0);
+        $patientId = (int) ($appointment->patient_id ?? 0);
 
         $recipientActionMap = [];
 
@@ -84,6 +85,10 @@ class AdminNotificationService
 
         if ($psychologistId > 0) {
             $recipientActionMap[$psychologistId] = '/psychologist/appointments';
+        }
+
+        if ($patientId > 0) {
+            $recipientActionMap[$patientId] = '/patient/appointments';
         }
 
         if (empty($recipientActionMap)) {
@@ -101,7 +106,7 @@ class AdminNotificationService
             'event_key' => $eventKey,
             'event_type' => 'appointment_confirmed',
             'appointment_id' => (int) $appointment->id,
-            'patient_id' => (int) ($appointment->patient_id ?? 0),
+            'patient_id' => $patientId,
             'psychologist_id' => $psychologistId,
             'status' => 'confirmed',
             'scheduled_start' => $scheduledStart,
@@ -161,10 +166,6 @@ class AdminNotificationService
             ->map(fn ($id) => (int) $id)
             ->all();
 
-        if (empty($adminIds)) {
-            return;
-        }
-
         $psychologistId = (int) ($appointment->psychologist_id ?? 0);
         $psychologist = $psychologistId > 0
             ? User::query()->find($psychologistId, ['id', 'name'])
@@ -197,6 +198,109 @@ class AdminNotificationService
             $rows[] = [
                 'user_id' => $adminId,
                 'title' => 'Appointment cancelled',
+                'message' => $message,
+                'type' => 'appointment',
+                'channel' => 'in_app',
+                'action_url' => '/admin/appointments',
+                'data' => json_encode($payload, JSON_UNESCAPED_UNICODE),
+                'is_read' => false,
+                'read_at' => null,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ];
+        }
+
+        Notification::query()->insert($rows);
+    }
+
+    public static function notifyAppointmentNoShow(Appointment $appointment, ?string $who = null, ?int $noShowUserId = null): void
+    {
+        $adminIds = User::query()
+            ->whereRaw('UPPER(role) = ?', ['ADMIN'])
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+
+        if (empty($adminIds)) {
+            return;
+        }
+
+        $whoText = 'Unknown';
+        if ($who === 'patient') {
+            $whoText = 'Patient';
+        } elseif ($who === 'psychologist') {
+            $whoText = 'Psychologist';
+        } elseif ($who === 'both' || (is_null($who) && is_null($noShowUserId))) {
+            $whoText = 'Both participants';
+        }
+
+        $message = 'Appointment #'.$appointment->id.' marked no-show: '.$whoText.' missed the appointment.';
+
+        $payload = [
+            'event_type' => 'appointment_no_show',
+            'appointment_id' => (int) $appointment->id,
+            'patient_id' => (int) ($appointment->patient_id ?? 0),
+            'psychologist_id' => (int) ($appointment->psychologist_id ?? 0),
+            'no_show_by' => $who,
+            'no_show_user_id' => $noShowUserId,
+            'status' => 'no_show',
+        ];
+
+        $now = now();
+        $rows = [];
+        foreach ($adminIds as $adminId) {
+            $rows[] = [
+                'user_id' => (int) $adminId,
+                'title' => 'Appointment missed',
+                'message' => $message,
+                'type' => 'appointment',
+                'channel' => 'in_app',
+                'action_url' => '/admin/appointments',
+                'data' => json_encode($payload, JSON_UNESCAPED_UNICODE),
+                'is_read' => false,
+                'read_at' => null,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ];
+        }
+
+        Notification::query()->insert($rows);
+    }
+
+    public static function notifyAppointmentCompleted(Appointment $appointment, ?string $completedBy = null, ?int $actorId = null): void
+    {
+        $adminIds = User::query()
+            ->whereRaw('UPPER(role) = ?', ['ADMIN'])
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+
+        if (empty($adminIds)) {
+            return;
+        }
+
+        $byText = 'System';
+        if ($completedBy === 'psychologist') $byText = 'Psychologist';
+        if ($completedBy === 'patient') $byText = 'Patient';
+
+        $message = 'Appointment #'.$appointment->id.' marked completed by '.$byText.'.';
+
+        $payload = [
+            'event_type' => 'appointment_completed',
+            'appointment_id' => (int) $appointment->id,
+            'patient_id' => (int) ($appointment->patient_id ?? 0),
+            'psychologist_id' => (int) ($appointment->psychologist_id ?? 0),
+            'completed_by' => $completedBy,
+            'actor_id' => $actorId,
+            'status' => 'completed',
+        ];
+
+        $now = now();
+        $rows = [];
+        foreach ($adminIds as $adminId) {
+            $rows[] = [
+                'user_id' => (int) $adminId,
+                'title' => 'Appointment completed',
                 'message' => $message,
                 'type' => 'appointment',
                 'channel' => 'in_app',

@@ -162,11 +162,8 @@ class NotificationService
             ->map(fn ($id) => (int) $id)
             ->all();
 
-        if (empty($adminIds)) {
-            return;
-        }
-
         $psychologistId = (int) ($appointment->psychologist_id ?? 0);
+        $patientId = (int) ($appointment->patient_id ?? 0);
         $psychologist = $psychologistId > 0
             ? User::query()->find($psychologistId, ['id', 'name'])
             : null;
@@ -212,6 +209,22 @@ class NotificationService
                 'type' => 'appointment',
                 'channel' => 'in_app',
                 'action_url' => '/admin/appointments',
+                'data' => json_encode($payload, JSON_UNESCAPED_UNICODE),
+                'is_read' => false,
+                'read_at' => null,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ];
+        }
+
+        if ($patientId > 0) {
+            $rows[] = [
+                'user_id' => $patientId,
+                'title' => 'Appointment cancelled',
+                'message' => $message,
+                'type' => 'appointment',
+                'channel' => 'in_app',
+                'action_url' => '/patient/appointments',
                 'data' => json_encode($payload, JSON_UNESCAPED_UNICODE),
                 'is_read' => false,
                 'read_at' => null,
