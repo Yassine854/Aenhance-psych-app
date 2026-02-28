@@ -240,7 +240,12 @@ class ReportsController extends Controller
 
                     $reportedName = $reportedName ?: ('User #'.(int) $report->reported_id);
 
-                    $actorPath = str_contains($repType, 'patient') ? '/patient/reports' : (str_contains($repType, 'psychologist') ? '/psychologist/reports' : '/reports');
+                    $isPatientReporter = str_contains($repType, 'patient');
+                    $isPsychologistReporter = str_contains($repType, 'psychologist');
+
+                    $actorPath = $isPatientReporter
+                        ? '/patient/appointments'
+                        : ($isPsychologistReporter ? '/psychologist/appointments' : '/notifications');
 
                     $message = sprintf('Your report #%d has been resolved. You reported %s.', $report->id, $reportedName);
 
@@ -251,11 +256,16 @@ class ReportsController extends Controller
                         'type' => 'report',
                         'channel' => 'in_app',
                         'action_url' => $actorPath,
-                        'data' => json_encode([
+                        'data' => [
                             'event_type' => 'report_resolved',
                             'report_id' => (int) $report->id,
+                            'patient_id' => $isPatientReporter ? (int) $reporterUserId : null,
+                            'reporter' => [
+                                'type' => $report->reporter_type,
+                                'id' => (int) $report->reporter_id,
+                            ],
                             'reported' => ['type' => $report->reported_type, 'id' => (int) $report->reported_id, 'name' => $reportedName],
-                        ], JSON_UNESCAPED_UNICODE),
+                        ],
                         'is_read' => false,
                         'read_at' => null,
                     ]);

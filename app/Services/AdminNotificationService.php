@@ -148,7 +148,7 @@ class AdminNotificationService
             'message' => 'Your psychologist profile has been approved. Please send the remaining verification documents by email.',
             'type' => 'verification',
             'channel' => 'in_app',
-            'action_url' => '/notifications',
+            'action_url' => '/psychologist/register',
             'data' => [
                 'event_type' => 'psychologist_profile_approved',
                 'psychologist_user_id' => (int) $psychologistUser->id,

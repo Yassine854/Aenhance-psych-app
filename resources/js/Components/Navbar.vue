@@ -17,6 +17,87 @@
     </div>
 
     <div class="flex gap-2.5 items-center">
+      <!-- Patient notifications (navbar) -->
+      <div v-if="isPatient" class="relative" ref="patientNotificationDropdownRef">
+        <button
+          type="button"
+          @click="togglePatientNotifications"
+          class="inline-flex items-center justify-center p-2 bg-white/10 text-white rounded-full border border-white/20 hover:bg-white/20 transition"
+          aria-label="Notifications"
+          title="Notifications"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V4a2 2 0 10-4 0v1.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 17a3 3 0 006 0" />
+          </svg>
+        </button>
+        <span
+          v-if="patientUnreadCount > 0"
+          class="absolute -top-1 -right-1 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-semibold leading-none text-white bg-red-500 rounded-full shadow-md"
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+        >
+          {{ patientUnreadCount }}
+        </span>
+
+        <div
+          v-if="showPatientNotifications"
+          class="absolute right-0 top-full mt-1 bg-white dark:bg-gray-800 text-black dark:text-white rounded shadow-md w-80 z-50 overflow-hidden"
+        >
+          <div class="px-4 py-3 border-b border-gray-200 bg-gray-50 dark:bg-gray-700 flex items-center justify-between">
+            <div class="text-sm font-medium text-gray-900 dark:text-white">Notifications</div>
+            <button
+              type="button"
+              class="text-xs font-medium text-[#5997ac] disabled:opacity-50"
+              @click="markAllPatientNotificationsAsRead"
+              :disabled="patientUnreadCount === 0"
+            >
+              Mark all as read
+            </button>
+          </div>
+
+          <ul class="max-h-80 overflow-y-auto">
+            <li
+              v-for="notification in patientNotifications"
+              :key="notification.id"
+              class="border-b border-gray-100 dark:border-gray-700"
+            >
+              <button
+                type="button"
+                class="w-full text-left px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+                :class="notification.is_read ? 'opacity-80' : ''"
+                @click="openPatientNotification(notification)"
+              >
+                <div class="flex items-start gap-2">
+                  <span
+                    class="mt-1 w-2 h-2 rounded-full"
+                    :class="notification.is_read ? 'bg-gray-300' : 'bg-green-500'"
+                  ></span>
+                  <div class="flex-1 min-w-0">
+                    <div class="text-sm font-medium text-gray-900 dark:text-white truncate">{{ notification.title }}</div>
+                    <div class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ notification.message }}</div>
+                    <div class="text-[11px] text-gray-400 mt-1">{{ notification.time_ago }}</div>
+                  </div>
+                </div>
+              </button>
+            </li>
+
+            <li v-if="patientNotifications.length === 0" class="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
+              No notifications yet.
+            </li>
+          </ul>
+
+          <button
+            type="button"
+            class="w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+            @click="viewAllPatientNotifications"
+          >
+            View all notifications
+          </button>
+        </div>
+      </div>
+
       <!-- Appointments icon (shows pending appointments count for patient) -->
       <div v-if="isPatient" class="relative">
         <Link
@@ -133,6 +214,88 @@
           </button>
         </div>
       </div>
+
+      <!-- Psychologist notifications (navbar) -->
+      <div v-if="isPsychologist" class="relative" ref="psychologistNotificationDropdownRef">
+        <button
+          type="button"
+          @click="togglePsychologistNotifications"
+          class="inline-flex items-center justify-center p-2 bg-white/10 text-white rounded-full border border-white/20 hover:bg-white/20 transition"
+          aria-label="Notifications"
+          title="Notifications"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V4a2 2 0 10-4 0v1.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 17a3 3 0 006 0" />
+          </svg>
+        </button>
+        <span
+          v-if="psychologistUnreadCount > 0"
+          class="absolute -top-1 -right-1 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-semibold leading-none text-white bg-red-500 rounded-full shadow-md"
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+        >
+          {{ psychologistUnreadCount }}
+        </span>
+
+        <div
+          v-if="showPsychologistNotifications"
+          class="absolute right-0 top-full mt-1 bg-white dark:bg-gray-800 text-black dark:text-white rounded shadow-md w-80 z-50 overflow-hidden"
+        >
+          <div class="px-4 py-3 border-b border-gray-200 bg-gray-50 dark:bg-gray-700 flex items-center justify-between">
+            <div class="text-sm font-medium text-gray-900 dark:text-white">Notifications</div>
+            <button
+              type="button"
+              class="text-xs font-medium text-[#5997ac] disabled:opacity-50"
+              @click="markAllPsychologistNotificationsAsRead"
+              :disabled="psychologistUnreadCount === 0"
+            >
+              Mark all as read
+            </button>
+          </div>
+
+          <ul class="max-h-80 overflow-y-auto">
+            <li
+              v-for="notification in psychologistNotifications"
+              :key="notification.id"
+              class="border-b border-gray-100 dark:border-gray-700"
+            >
+              <button
+                type="button"
+                class="w-full text-left px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+                :class="notification.is_read ? 'opacity-80' : ''"
+                @click="openPsychologistNotification(notification)"
+              >
+                <div class="flex items-start gap-2">
+                  <span
+                    class="mt-1 w-2 h-2 rounded-full"
+                    :class="notification.is_read ? 'bg-gray-300' : 'bg-green-500'"
+                  ></span>
+                  <div class="flex-1 min-w-0">
+                    <div class="text-sm font-medium text-gray-900 dark:text-white truncate">{{ notification.title }}</div>
+                    <div class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ notification.message }}</div>
+                    <div class="text-[11px] text-gray-400 mt-1">{{ notification.time_ago }}</div>
+                  </div>
+                </div>
+              </button>
+            </li>
+
+            <li v-if="psychologistNotifications.length === 0" class="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
+              No notifications yet.
+            </li>
+          </ul>
+
+          <button
+            type="button"
+            class="w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+            @click="viewAllPsychologistNotifications"
+          >
+            View all notifications
+          </button>
+        </div>
+      </div>
+
       <!-- Psychologist menu (shown when a psychologist is logged in) -->
       <div v-if="isPsychologist" class="relative">
         <button
@@ -408,8 +571,7 @@
 </template>
 
 <script setup>
-import { Link, usePage } from "@inertiajs/vue3";
-import { Inertia } from '@inertiajs/inertia'
+import { Link, router, usePage } from "@inertiajs/vue3";
 import { useI18n } from "vue-i18n";
 import { ref, onMounted, computed, watch, onBeforeUnmount } from "vue";
 
@@ -440,6 +602,18 @@ const showSupportDropdown = ref(false);
 const showMobileMenu = ref(false);
 const showPatientMenu = ref(false)
 const showPsychologistMenu = ref(false)
+const showPatientNotifications = ref(false)
+const showPsychologistNotifications = ref(false)
+const patientNotificationDropdownRef = ref(null)
+const psychologistNotificationDropdownRef = ref(null)
+const patientNotifications = ref([])
+const psychologistNotifications = ref([])
+const patientUnreadCount = ref(0)
+const psychologistUnreadCount = ref(0)
+const patientLatestNotificationId = ref(0)
+const psychologistLatestNotificationId = ref(0)
+const patientNotificationPollTimerRef = ref(null)
+const psychologistNotificationPollTimerRef = ref(null)
 const { t, locale } = useI18n();
 const currentLang = ref("");
 
@@ -560,16 +734,247 @@ function handleAppointmentCountUpdated(evt) {
   }
 }
 
+function applyPatientNotificationFeed(payload) {
+  patientNotifications.value = Array.isArray(payload?.notifications) ? payload.notifications : []
+  patientUnreadCount.value = Number(payload?.unread_count || 0)
+  patientLatestNotificationId.value = Number(payload?.latest_id || 0)
+}
+
+function applyPsychologistNotificationFeed(payload) {
+  psychologistNotifications.value = Array.isArray(payload?.notifications) ? payload.notifications : []
+  psychologistUnreadCount.value = Number(payload?.unread_count || 0)
+  psychologistLatestNotificationId.value = Number(payload?.latest_id || 0)
+}
+
+async function fetchPatientNotificationFeed() {
+  if (!isPatient.value) return
+
+  try {
+    const { data } = await window.axios.get('/notifications/feed')
+    applyPatientNotificationFeed(data)
+  } catch (error) {
+    console.error('Failed to fetch patient notifications feed', error)
+  }
+}
+
+async function fetchPsychologistNotificationFeed() {
+  if (!isPsychologist.value) return
+
+  try {
+    const { data } = await window.axios.get('/notifications/feed')
+    applyPsychologistNotificationFeed(data)
+  } catch (error) {
+    console.error('Failed to fetch psychologist notifications feed', error)
+  }
+}
+
+async function fetchPatientNotificationLite() {
+  if (!isPatient.value) return
+
+  try {
+    const { data } = await window.axios.get('/notifications/feed?lite=1')
+    const unread = Number(data?.unread_count || 0)
+    const latest = Number(data?.latest_id || 0)
+    const hasChanges = latest > patientLatestNotificationId.value
+
+    patientUnreadCount.value = unread
+
+    if (hasChanges || showPatientNotifications.value) {
+      await fetchPatientNotificationFeed()
+    }
+  } catch (error) {
+    console.error('Failed to fetch patient notifications lite feed', error)
+  }
+}
+
+async function fetchPsychologistNotificationLite() {
+  if (!isPsychologist.value) return
+
+  try {
+    const { data } = await window.axios.get('/notifications/feed?lite=1')
+    const unread = Number(data?.unread_count || 0)
+    const latest = Number(data?.latest_id || 0)
+    const hasChanges = latest > psychologistLatestNotificationId.value
+
+    psychologistUnreadCount.value = unread
+
+    if (hasChanges || showPsychologistNotifications.value) {
+      await fetchPsychologistNotificationFeed()
+    }
+  } catch (error) {
+    console.error('Failed to fetch psychologist notifications lite feed', error)
+  }
+}
+
+function startPatientNotificationPolling() {
+  stopPatientNotificationPolling()
+  if (!isPatient.value) return
+
+  patientNotificationPollTimerRef.value = setInterval(() => {
+    if (document.visibilityState !== 'visible') return
+    fetchPatientNotificationLite()
+  }, 3000)
+}
+
+function startPsychologistNotificationPolling() {
+  stopPsychologistNotificationPolling()
+  if (!isPsychologist.value) return
+
+  psychologistNotificationPollTimerRef.value = setInterval(() => {
+    if (document.visibilityState !== 'visible') return
+    fetchPsychologistNotificationLite()
+  }, 3000)
+}
+
+function stopPatientNotificationPolling() {
+  if (!patientNotificationPollTimerRef.value) return
+  clearInterval(patientNotificationPollTimerRef.value)
+  patientNotificationPollTimerRef.value = null
+}
+
+function stopPsychologistNotificationPolling() {
+  if (!psychologistNotificationPollTimerRef.value) return
+  clearInterval(psychologistNotificationPollTimerRef.value)
+  psychologistNotificationPollTimerRef.value = null
+}
+
+function handlePatientNotificationVisibilityChange() {
+  if (document.visibilityState !== 'visible') return
+  if (isPatient.value) fetchPatientNotificationLite()
+  if (isPsychologist.value) fetchPsychologistNotificationLite()
+}
+
+function handlePatientNotificationWindowFocus() {
+  if (isPatient.value) fetchPatientNotificationLite()
+  if (isPsychologist.value) fetchPsychologistNotificationLite()
+}
+
+function togglePatientNotifications() {
+  showPatientNotifications.value = !showPatientNotifications.value
+  showPsychologistNotifications.value = false
+  showPatientMenu.value = false
+  showPsychologistMenu.value = false
+
+  if (showPatientNotifications.value) {
+    fetchPatientNotificationFeed()
+  }
+}
+
+function togglePsychologistNotifications() {
+  showPsychologistNotifications.value = !showPsychologistNotifications.value
+  showPatientNotifications.value = false
+  showPatientMenu.value = false
+  showPsychologistMenu.value = false
+
+  if (showPsychologistNotifications.value) {
+    fetchPsychologistNotificationFeed()
+  }
+}
+
+function closePatientNotifications() {
+  showPatientNotifications.value = false
+}
+
+function closePsychologistNotifications() {
+  showPsychologistNotifications.value = false
+}
+
+function handlePatientNotificationOutsideClick(event) {
+  const patientRoot = patientNotificationDropdownRef.value
+  if (patientRoot && !patientRoot.contains(event.target)) {
+    closePatientNotifications()
+  }
+
+  const psychologistRoot = psychologistNotificationDropdownRef.value
+  if (psychologistRoot && !psychologistRoot.contains(event.target)) {
+    closePsychologistNotifications()
+  }
+}
+
+async function openPatientNotification(notification) {
+  if (!notification) return
+
+  if (!notification.is_read) {
+    try {
+      const { data } = await window.axios.post(`/notifications/${notification.id}/read`)
+      applyPatientNotificationFeed(data)
+    } catch (error) {
+      console.error('Failed to mark patient notification as read', error)
+    }
+  }
+}
+
+async function markAllPatientNotificationsAsRead() {
+  if (!isPatient.value || patientUnreadCount.value === 0) return
+
+  try {
+    const { data } = await window.axios.post('/notifications/read-all')
+    applyPatientNotificationFeed(data)
+  } catch (error) {
+    console.error('Failed to mark all patient notifications as read', error)
+  }
+}
+
+async function openPsychologistNotification(notification) {
+  if (!notification) return
+
+  if (!notification.is_read) {
+    try {
+      const { data } = await window.axios.post(`/notifications/${notification.id}/read`)
+      applyPsychologistNotificationFeed(data)
+    } catch (error) {
+      console.error('Failed to mark psychologist notification as read', error)
+    }
+  }
+}
+
+async function markAllPsychologistNotificationsAsRead() {
+  if (!isPsychologist.value || psychologistUnreadCount.value === 0) return
+
+  try {
+    const { data } = await window.axios.post('/notifications/read-all')
+    applyPsychologistNotificationFeed(data)
+  } catch (error) {
+    console.error('Failed to mark all psychologist notifications as read', error)
+  }
+}
+
+function viewAllPatientNotifications() {
+  closePatientNotifications()
+  router.visit('/notifications')
+}
+
+function viewAllPsychologistNotifications() {
+  closePsychologistNotifications()
+  router.visit('/notifications')
+}
+
 onMounted(() => {
   window.addEventListener('appointment:added', handleAppointmentAdded)
   window.addEventListener('appointment:removed', handleAppointmentRemoved)
   window.addEventListener('appointment:count-updated', handleAppointmentCountUpdated)
+  document.addEventListener('click', handlePatientNotificationOutsideClick)
+  document.addEventListener('visibilitychange', handlePatientNotificationVisibilityChange)
+  window.addEventListener('focus', handlePatientNotificationWindowFocus)
+
+  if (isPatient.value) {
+    fetchPatientNotificationFeed().then(() => startPatientNotificationPolling())
+  }
+
+  if (isPsychologist.value) {
+    fetchPsychologistNotificationFeed().then(() => startPsychologistNotificationPolling())
+  }
 })
 
 onBeforeUnmount(() => {
   window.removeEventListener('appointment:added', handleAppointmentAdded)
   window.removeEventListener('appointment:removed', handleAppointmentRemoved)
   window.removeEventListener('appointment:count-updated', handleAppointmentCountUpdated)
+  document.removeEventListener('click', handlePatientNotificationOutsideClick)
+  document.removeEventListener('visibilitychange', handlePatientNotificationVisibilityChange)
+  window.removeEventListener('focus', handlePatientNotificationWindowFocus)
+  stopPatientNotificationPolling()
+  stopPsychologistNotificationPolling()
 })
 
 const psychologistDisplayName = computed(() => {
@@ -606,6 +1011,8 @@ function setLang(lang) {
   showDropdown.value = false;
   showPatientMenu.value = false
   showPsychologistMenu.value = false
+  showPatientNotifications.value = false
+  showPsychologistNotifications.value = false
   
   // Set document direction based on language
   if (lang === 'ar') {
@@ -642,7 +1049,7 @@ const supportItems = computed(() => [
 async function handlePatientLogout(e) {
   try {
     try { localStorage.removeItem('pendingAppointmentsCount') } catch (e) {}
-    await Inertia.post(route('logout'))
+    await router.post(route('logout'))
   } finally {
     // hide menu after request starts/completes
     showPatientMenu.value = false
@@ -652,7 +1059,7 @@ async function handlePatientLogout(e) {
 async function handlePsychologistLogout(e) {
   try {
     try { localStorage.removeItem('pendingAppointmentsCount') } catch (e) {}
-    await Inertia.post(route('logout'))
+    await router.post(route('logout'))
   } finally {
     showPsychologistMenu.value = false
   }

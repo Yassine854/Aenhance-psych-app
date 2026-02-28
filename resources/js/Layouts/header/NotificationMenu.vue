@@ -233,9 +233,6 @@ const handleItemClick = async (notification, event) => {
       console.error('Failed to mark notification as read', error)
     }
   }
-
-  closeDropdown()
-  router.visit(notification?.action_url || '/notifications')
 }
 
 const handleViewAllClick = (event) => {
