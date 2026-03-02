@@ -14,12 +14,24 @@ class RoleMiddleware
      * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
      */
     public function handle($request, \Closure $next, ...$roles)
-{
-    if (!auth()->check() || !in_array(auth()->user()->role, $roles)) {
-        abort(403);
-    }
+    {
+        $user = auth()->user();
 
-    return $next($request);
-}
+        if (! $user) {
+            abort(403);
+        }
+
+        $normalizedUserRole = strtoupper(trim((string) $user->role));
+        $normalizedAllowedRoles = array_map(
+            static fn ($role) => strtoupper(trim((string) $role)),
+            $roles
+        );
+
+        if (! in_array($normalizedUserRole, $normalizedAllowedRoles, true)) {
+            abort(403);
+        }
+
+        return $next($request);
+    }
 
 }

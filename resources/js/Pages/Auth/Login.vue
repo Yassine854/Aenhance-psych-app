@@ -24,8 +24,13 @@ const form = useForm({
 const submit = () => {
     form.post(route('login'), {
         onFinish: () => form.reset('password'),
-        onSuccess: () => {
-            window.location.reload()
+        onSuccess: (page) => {
+            const role = page?.props?.auth?.user?.role;
+            if (typeof role === 'string' && role.trim().toUpperCase() === 'ADMIN') {
+                setTimeout(() => {
+                    window.location.reload();
+                }, 120);
+            }
         },
     });
 };
