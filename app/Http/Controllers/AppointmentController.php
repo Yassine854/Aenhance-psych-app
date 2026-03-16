@@ -19,12 +19,19 @@ use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 use App\Services\ActivityLogger;
+use App\Services\AppointmentMailService;
 use App\Services\NotificationService;
 
 class AppointmentController extends Controller
 {
     private const SESSION_MINUTES = 60;
     private const BOOKING_DAYS_AHEAD = 90;
+
+    private function dispatchAppointmentConfirmedCommunication(Appointment $appointment): void
+    {
+        NotificationService::notifyAppointmentConfirmed($appointment);
+        AppointmentMailService::sendConfirmed($appointment);
+    }
 
     // List appointments (role-based)
     public function index()
@@ -387,6 +394,63 @@ class AppointmentController extends Controller
 
         if (strtolower((string) $appointment->status) !== 'pending') {
             return redirect()->back()->with('status', 'This appointment cannot be paid (not pending).');
+        }
+
+        $disableRedirect = filter_var(config('services.clictopay.disable_redirect', false), FILTER_VALIDATE_BOOLEAN);
+        if ($disableRedirect) {
+            DB::transaction(function () use ($appointment, $user) {
+                if (strtolower((string) $appointment->status) === 'pending') {
+                    $appointment->update(['status' => 'confirmed']);
+                }
+
+                $session = AppointmentSession::query()->firstOrCreate(
+                    ['appointment_id' => $appointment->id],
+                    [
+                        'room_id' => (string) Str::uuid(),
+                        'status' => 'active',
+                    ]
+                );
+
+                if ($session && $session->wasRecentlyCreated && strtolower((string) $session->status) === 'active') {
+                    ActivityLogger::log(
+                        $user->id ?? null,
+                        $user->role ?? null,
+                        'created_session_status',
+                        'AppointmentSession',
+                        $session->id,
+                        'Session created with status active after appointment confirmation (ClickToPay bypass)'
+                    );
+                }
+
+                $payment = Payment::query()
+                    ->where('appointment_id', $appointment->id)
+                    ->latest('id')
+                    ->first();
+
+                $payload = [
+                    'appointment_id' => $appointment->id,
+                    'amount' => $appointment->price,
+                    'currency' => (string) ($appointment->currency ?: 'TND'),
+                    'provider' => 'manual',
+                    'status' => 'paid',
+                    'payment_method' => 'card',
+                    'paid_at' => now(),
+                ];
+
+                if ($payment) {
+                    $payment->update($payload);
+                    ActivityLogger::log($user->id, $user->role ?? null, 'updated_payment', 'Payment', $payment->id, 'Payment marked paid (ClickToPay bypass) for appointment '.$appointment->id);
+                } else {
+                    $created = Payment::create($payload);
+                    ActivityLogger::log($user->id, $user->role ?? null, 'created_payment', 'Payment', $created->id, 'Payment created and marked paid (ClickToPay bypass) for appointment '.$appointment->id);
+                }
+            });
+
+            $this->dispatchAppointmentConfirmedCommunication($appointment->fresh(['patient', 'psychologist']));
+
+            ActivityLogger::log($user->id, $user->role ?? null, 'confirmed_appointment', 'Appointment', $appointment->id, 'Appointment confirmed with ClickToPay redirect disabled');
+
+            return redirect()->back()->with('status', 'Payment successful. Appointment confirmed.');
         }
 
         $client = new ClicToPayClient();
@@ -799,7 +863,7 @@ class AppointmentController extends Controller
         });
 
         if ($justConfirmed) {
-            NotificationService::notifyAppointmentConfirmed($appointment->fresh());
+            $this->dispatchAppointmentConfirmedCommunication($appointment->fresh(['patient', 'psychologist']));
         }
 
         ActivityLogger::log($user->id, $user->role ?? null, 'confirmed_appointment', 'Appointment', $appointment->id, 'Appointment confirmed after ClickToPay payment');
@@ -926,7 +990,7 @@ class AppointmentController extends Controller
             });
 
             if ($prevStatus !== 'confirmed') {
-                NotificationService::notifyAppointmentConfirmed($appointment->fresh());
+                $this->dispatchAppointmentConfirmedCommunication($appointment->fresh(['patient', 'psychologist']));
             }
 
             ActivityLogger::log($user->id, $user->role ?? null, 'confirmed_appointment', 'Appointment', $appointment->id, 'Appointment status changed from '.$prevStatus.' to confirmed (patient confirmed and paid)');
@@ -961,6 +1025,11 @@ class AppointmentController extends Controller
             $prevStatus = (string) $appointment->status;
             $appointment->update(['status' => $requestedStatus]);
             ActivityLogger::log($user->id, $user->role ?? null, 'updated_appointment_status', 'Appointment', $appointment->id, 'Appointment status changed from '.$prevStatus.' to '.$requestedStatus);
+
+            if ($requestedStatus === 'confirmed' && $prevStatus !== 'confirmed') {
+                $this->dispatchAppointmentConfirmedCommunication($appointment->fresh(['patient', 'psychologist']));
+            }
+
             if ($requestedStatus === 'completed') {
                 try {
                     // If psychologist triggered the completed status, record actor_id as the patient id and actor_role as PSYCHOLOGIST

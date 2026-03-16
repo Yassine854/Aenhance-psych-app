@@ -1,8 +1,9 @@
 <template>
-  <div class="relative" ref="dropdownRef">
+  <div class="relative z-[70]" ref="dropdownRef" @click.stop>
     <button
+      type="button"
       class="flex items-center text-gray-700 dark:text-gray-400"
-      @click.prevent="toggleDropdown"
+      @click.stop.prevent="toggleDropdown"
     >
       <span class="mr-3 overflow-hidden rounded-full h-11 w-11">
         <img :src="avatarSrc" :alt="user.name" />
@@ -16,7 +17,7 @@
     <!-- Dropdown Start -->
     <div
       v-if="dropdownOpen"
-      class="absolute right-0 mt-[17px] flex w-[260px] flex-col rounded-2xl border border-gray-200 bg-white p-3 shadow-theme-lg dark:border-gray-800 dark:bg-gray-800"
+      class="absolute right-0 z-[80] mt-[17px] flex w-[260px] flex-col rounded-2xl border border-gray-200 bg-white p-3 shadow-theme-lg pointer-events-auto dark:border-gray-800 dark:bg-gray-800"
     >
       <div>
         <span class="block font-medium text-gray-700 text-theme-sm dark:text-gray-400">
@@ -58,14 +59,14 @@
 
 <script setup>
 import { UserCircleIcon, ChevronDownIcon, LogoutIcon, SettingsIcon, InfoCircleIcon } from '@/icons'
-import { Link, usePage } from '@inertiajs/vue3'
-import { Inertia } from '@inertiajs/inertia'
+import { Link, router, usePage } from '@inertiajs/vue3'
 import { ref, onMounted, onUnmounted, computed } from 'vue'
 
 const dropdownOpen = ref(false)
 const dropdownRef = ref(null)
 const page = usePage()
-const user = computed(() => page.props?.value?.auth?.user ?? page.props.auth.user)
+const user = computed(() => page.props?.auth?.user ?? page.props?.value?.auth?.user ?? {})
+const userRole = computed(() => String(user.value?.role || '').toUpperCase().trim())
 
 // Try multiple prop paths to find a psychologist's profile image URL.
 // Fallbacks ensure we don't break for other roles or missing data.
@@ -81,24 +82,38 @@ const profileImageUrl = computed(() => {
 })
 
 const avatarSrc = computed(() => {
-  if (user.value?.role === 'ADMIN') return '/storage/aenhance.svg'
-  if (user.value?.role === 'PSYCHOLOGIST' && profileImageUrl.value) return profileImageUrl.value
+  if (userRole.value === 'ADMIN') return '/storage/aenhance.svg'
+  if (userRole.value === 'PSYCHOLOGIST' && profileImageUrl.value) return profileImageUrl.value
   return '/images/user/owner.jpg'
 })
 
 const menuItems = computed(() => {
-  if (user.value?.role === 'PSYCHOLOGIST') {
+  if (userRole.value === 'PSYCHOLOGIST') {
     return [
-      { href: route('psychologist.profile.self'), icon: UserCircleIcon, text: 'Edit profile', disabled: false },
-      { href: route('profile.edit'), icon: SettingsIcon, text: 'Account settings', disabled: false },
+      { href: '/psychologist/profile/edit', icon: UserCircleIcon, text: 'Edit profile', disabled: false },
+      { href: '/psychologist/account', icon: SettingsIcon, text: 'Account settings', disabled: false },
       { href: '/support', icon: InfoCircleIcon, text: 'Support', disabled: false },
     ]
   }
 
+  if (userRole.value === 'PATIENT') {
+    return [
+      { href: '/patient/profile', icon: UserCircleIcon, text: 'Edit profile', disabled: false },
+      { href: '/patient/account', icon: SettingsIcon, text: 'Account settings', disabled: false },
+      { href: '/support', icon: InfoCircleIcon, text: 'Support', disabled: false },
+    ]
+  }
+
+  if (userRole.value === 'ADMIN') {
+    return [
+      { href: '/profile', icon: SettingsIcon, text: 'Account settings', disabled: false },
+      { href: '/notifications', icon: InfoCircleIcon, text: 'Notifications', disabled: false },
+    ]
+  }
+
   return [
-    { href: route('profile.edit'), icon: UserCircleIcon, text: 'Edit profile', disabled: user.value?.role === 'ADMIN' },
-    { href: route('profile.edit'), icon: SettingsIcon, text: 'Account settings', disabled: false },
-    { href: '/support', icon: InfoCircleIcon, text: 'Support', disabled: user.value?.role === 'ADMIN' },
+    { href: '/dashboard', icon: SettingsIcon, text: 'Dashboard', disabled: false },
+    { href: '/support', icon: InfoCircleIcon, text: 'Support', disabled: false },
   ]
 })
 
@@ -113,22 +128,26 @@ const closeDropdown = () => {
 }
 
 const signOut = () => {
-  // Send a POST to logout (Laravel's /logout route); adjust if you use a named route
-  Inertia.post('/logout')
+  router.post('/logout')
   closeDropdown()
 }
 
 const handleClickOutside = (event) => {
-  if (dropdownRef.value && !dropdownRef.value.contains(event.target)) {
+  const root = dropdownRef.value
+  if (!root) return
+  const path = typeof event.composedPath === 'function' ? event.composedPath() : []
+  const clickedInside = path.length ? path.includes(root) : root.contains(event.target)
+
+  if (!clickedInside) {
     closeDropdown()
   }
 }
 
 onMounted(() => {
-  document.addEventListener('click', handleClickOutside)
+  document.addEventListener('mousedown', handleClickOutside)
 })
 
 onUnmounted(() => {
-  document.removeEventListener('click', handleClickOutside)
+  document.removeEventListener('mousedown', handleClickOutside)
 })
 </script>

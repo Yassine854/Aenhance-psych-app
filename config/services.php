@@ -50,6 +50,7 @@ return [
         'username' => env('CLICTOPAY_USERNAME'),
         'password' => env('CLICTOPAY_PASSWORD'),
         'language' => env('CLICTOPAY_LANGUAGE', 'en'),
+        'disable_redirect' => env('CLICTOPAY_DISABLE_REDIRECT', false),
     ],
 
 ];

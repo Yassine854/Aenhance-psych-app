@@ -171,7 +171,10 @@ Route::middleware(['auth'])->group(function () {
 
     // Admin routes
     Route::middleware('role:ADMIN')->group(function () {
-        
+        // Admin account settings
+        Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+        Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+        Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
         
         Route::get('/users', [UserController::class, 'index']);
         Route::post('/users', [UserController::class, 'store']);
