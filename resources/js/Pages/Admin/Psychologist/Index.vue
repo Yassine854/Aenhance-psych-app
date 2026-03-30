@@ -87,6 +87,9 @@
               </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
+              <tr v-if="(sorted || []).length === 0">
+                <td colspan="7" class="px-4 py-6 text-sm text-gray-500 text-center">No psychologists found.</td>
+              </tr>
               <tr v-for="p in sorted" :key="p.id" class="hover:bg-gray-50">
                 <td class="px-4 py-3 text-sm text-gray-700">#{{ p.id }}</td>
                 <td class="px-4 py-3">

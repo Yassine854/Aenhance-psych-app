@@ -564,7 +564,8 @@ const searchPlaceholder = computed(() => {
 const filtered = computed(() => (Array.isArray(data.value) ? [...data.value] : []))
 
 // Sorting (client-side, applies after search)
-const sortKey = ref('scheduled_start')
+// Default to ID descending
+const sortKey = ref('id')
 const sortDir = ref('desc') // 'asc' | 'desc'
 
 function toggleSort(key) {

@@ -9,6 +9,7 @@ use App\Models\Payment;
 use App\Models\AppFee;
 use Illuminate\Support\Facades\Log;
 use App\Services\ActivityLogger;
+use App\Services\AppointmentMailService;
 use Carbon\Carbon;
 
 class Appointment extends Model
@@ -61,6 +62,15 @@ class Appointment extends Model
             try {
                 $original = $appointment->getOriginal('status');
                 $current = $appointment->status;
+
+                // If status changed to 'cancelled', send cancellation emails
+                if ($current === 'cancelled' && $original !== 'cancelled') {
+                    try {
+                        AppointmentMailService::sendCancelled($appointment);
+                    } catch (\Throwable $e) {
+                        Log::warning('Failed sending appointment cancelled email: '.$e->getMessage(), ['appointment_id' => $appointment->id]);
+                    }
+                }
 
                 // Only act when appointment status flips to 'completed'
                 if ($current !== 'completed' || $original === 'completed') {

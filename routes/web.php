@@ -147,7 +147,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/appointments/pending-count', [AppointmentController::class, 'pendingCount'])->name('appointments.pendingCount');
         Route::post('/appointments', [AppointmentController::class, 'store'])->name('appointments.store');
         Route::patch('/appointments/{appointment}', [AppointmentController::class, 'update'])->name('appointments.update');
-        // Route::delete('/appointments/{appointment}', [AppointmentController::class, 'destroy'])->name('appointments.destroy');
+        Route::delete('/appointments/{appointment}', [AppointmentController::class, 'destroy'])->name('appointments.destroy');
         Route::get('/dashboard', [DashboardController::class, 'index'])
         ->middleware(['auth', 'verified'])
         ->name('dashboard');

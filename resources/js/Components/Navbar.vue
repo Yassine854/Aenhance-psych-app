@@ -21,7 +21,7 @@
       <div v-if="isPatient" class="relative" ref="patientNotificationDropdownRef">
         <button
           type="button"
-          @click="togglePatientNotifications"
+          @click.stop="togglePatientNotifications"
           class="inline-flex items-center justify-center p-2 bg-white/10 text-white rounded-full border border-white/20 hover:bg-white/20 transition"
           aria-label="Notifications"
           title="Notifications"
@@ -43,7 +43,8 @@
 
         <div
           v-if="showPatientNotifications"
-          class="absolute right-0 top-full mt-1 bg-white dark:bg-gray-800 text-black dark:text-white rounded shadow-md w-80 z-50 overflow-hidden"
+          @click.stop
+          :class="['absolute top-full mt-1 bg-white dark:bg-gray-800 text-black dark:text-white rounded shadow-md w-80 z-50 overflow-hidden', isRtl ? 'left-0' : 'right-0']"
         >
           <div class="px-4 py-3 border-b border-gray-200 bg-gray-50 dark:bg-gray-700 flex items-center justify-between">
             <div class="text-sm font-medium text-gray-900 dark:text-white">Notifications</div>
@@ -129,7 +130,7 @@
       <div v-if="isPatient" class="relative">
         <button
           type="button"
-          @click="showPatientMenu = !showPatientMenu"
+          @click.stop="showPatientMenu = !showPatientMenu"
           class="flex items-center gap-2 px-3.5 py-1.5 bg-white/10 text-white text-[12px] rounded-full border border-white/20 hover:bg-white/20 transition"
         >
           <span class="inline-flex h-7 w-7 items-center justify-center rounded-full overflow-hidden ring-2 ring-white/25 bg-white/10">
@@ -149,7 +150,9 @@
 
         <div
           v-if="showPatientMenu"
-          class="absolute right-0 top-full mt-1 bg-white dark:bg-gray-800 text-black dark:text-white rounded shadow-md w-56 z-50 overflow-hidden"
+          ref="patientMenuRef"
+          @click.stop
+          :class="['absolute top-full mt-1 bg-white dark:bg-gray-800 text-black dark:text-white rounded shadow-md w-56 z-50 overflow-hidden', isRtl ? 'left-0' : 'right-0']"
         >
           <!-- Profile Header -->
           <div class="px-4 py-3 border-b border-gray-200 bg-gray-50 dark:bg-gray-700">
@@ -219,7 +222,7 @@
       <div v-if="isPsychologist" class="relative" ref="psychologistNotificationDropdownRef">
         <button
           type="button"
-          @click="togglePsychologistNotifications"
+          @click.stop="togglePsychologistNotifications"
           class="inline-flex items-center justify-center p-2 bg-white/10 text-white rounded-full border border-white/20 hover:bg-white/20 transition"
           aria-label="Notifications"
           title="Notifications"
@@ -241,7 +244,8 @@
 
         <div
           v-if="showPsychologistNotifications"
-          class="absolute right-0 top-full mt-1 bg-white dark:bg-gray-800 text-black dark:text-white rounded shadow-md w-80 z-50 overflow-hidden"
+          @click.stop
+          :class="['absolute top-full mt-1 bg-white dark:bg-gray-800 text-black dark:text-white rounded shadow-md w-80 z-50 overflow-hidden', isRtl ? 'left-0' : 'right-0']"
         >
           <div class="px-4 py-3 border-b border-gray-200 bg-gray-50 dark:bg-gray-700 flex items-center justify-between">
             <div class="text-sm font-medium text-gray-900 dark:text-white">Notifications</div>
@@ -300,7 +304,7 @@
       <div v-if="isPsychologist" class="relative">
         <button
           type="button"
-          @click="showPsychologistMenu = !showPsychologistMenu"
+          @click.stop="showPsychologistMenu = !showPsychologistMenu"
           class="flex items-center gap-2 px-3.5 py-1.5 bg-white/10 text-white text-[12px] rounded-full border border-white/20 hover:bg-white/20 transition"
         >
           <span class="inline-flex h-7 w-7 items-center justify-center rounded-full overflow-hidden ring-2 ring-white/25 bg-white/10">
@@ -320,7 +324,9 @@
 
         <div
           v-if="showPsychologistMenu"
-          class="absolute right-0 top-full mt-1 bg-white dark:bg-gray-800 text-black dark:text-white rounded shadow-md w-56 z-50 overflow-hidden"
+          ref="psychologistMenuRef"
+          @click.stop
+          :class="['absolute top-full mt-1 bg-white dark:bg-gray-800 text-black dark:text-white rounded shadow-md w-56 z-50 overflow-hidden', isRtl ? 'left-0' : 'right-0']"
         >
           <!-- Profile Header -->
           <div class="px-4 py-3 border-b border-gray-200 bg-gray-50 dark:bg-gray-700">
@@ -606,6 +612,8 @@ const showPatientNotifications = ref(false)
 const showPsychologistNotifications = ref(false)
 const patientNotificationDropdownRef = ref(null)
 const psychologistNotificationDropdownRef = ref(null)
+const patientMenuRef = ref(null)
+const psychologistMenuRef = ref(null)
 const patientNotifications = ref([])
 const psychologistNotifications = ref([])
 const patientUnreadCount = ref(0)
@@ -616,6 +624,14 @@ const patientNotificationPollTimerRef = ref(null)
 const psychologistNotificationPollTimerRef = ref(null)
 const { t, locale } = useI18n();
 const currentLang = ref("");
+
+const isRtl = computed(() => {
+  try {
+    return (locale?.value || '').toString() === 'ar' || document.documentElement.getAttribute('dir') === 'rtl'
+  } catch (e) {
+    return (locale?.value || '').toString() === 'ar'
+  }
+})
 
 const isPatient = computed(() => {
   const role = (resolvedAuthUser.value?.role ?? '').toString().trim().toUpperCase()
@@ -888,6 +904,16 @@ function handlePatientNotificationOutsideClick(event) {
   const psychologistRoot = psychologistNotificationDropdownRef.value
   if (psychologistRoot && !psychologistRoot.contains(event.target)) {
     closePsychologistNotifications()
+  }
+  
+  const patientMenu = patientMenuRef.value
+  if (patientMenu && !patientMenu.contains(event.target)) {
+    showPatientMenu.value = false
+  }
+
+  const psychologistMenu = psychologistMenuRef.value
+  if (psychologistMenu && !psychologistMenu.contains(event.target)) {
+    showPsychologistMenu.value = false
   }
 }
 

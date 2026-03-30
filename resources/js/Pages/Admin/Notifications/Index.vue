@@ -2,7 +2,7 @@
   <div class="space-y-6 p-6">
     <header class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
       <div>
-        <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">Notifications</h1>
+        <h1 class="text-2xl font-semibold text-gray-900">Notifications</h1>
         <p class="text-sm text-gray-500 dark:text-gray-400">
           {{ stats.total_count }} total · {{ stats.unread_count }} unread
         </p>
@@ -18,72 +18,99 @@
       </button>
     </header>
 
-    <div class="overflow-hidden rounded-lg bg-white shadow dark:bg-gray-900">
+    <div class="bg-white rounded-lg shadow overflow-hidden">
       <div class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-800">
-          <thead class="bg-gray-50 dark:bg-gray-800">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
             <tr>
-              <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">#</th>
-              <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Title</th>
-              <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Message</th>
-              <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Type</th>
-              <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Date</th>
-              <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Status</th>
-              <th class="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">Action</th>
+              <th class="px-4 py-3 text-left">
+                  <button type="button" @click="toggleSort('id')" class="group inline-flex items-center gap-1 text-xs font-medium text-gray-500 uppercase tracking-wider hover:text-gray-700">
+                    ID
+                    <SortIcon :active="sortKey === 'id'" :dir="sortDir" />
+                  </button>
+              </th>
+              <th class="px-4 py-3 text-left">
+                  <button type="button" @click="toggleSort('title')" class="group inline-flex items-center gap-1 text-xs font-medium text-gray-500 uppercase tracking-wider hover:text-gray-700">
+                    Title
+                    <SortIcon :active="sortKey === 'title'" :dir="sortDir" />
+                  </button>
+              </th>
+              <th class="px-4 py-3 text-left">
+                  <button type="button" @click="toggleSort('message')" class="group inline-flex items-center gap-1 text-xs font-medium text-gray-500 uppercase tracking-wider hover:text-gray-700">
+                    Message
+                    <SortIcon :active="sortKey === 'message'" :dir="sortDir" />
+                  </button>
+              </th>
+              <th class="px-4 py-3 text-left">
+                  <button type="button" @click="toggleSort('type')" class="group inline-flex items-center gap-1 text-xs font-medium text-gray-500 uppercase tracking-wider hover:text-gray-700">
+                    Type
+                    <SortIcon :active="sortKey === 'type'" :dir="sortDir" />
+                  </button>
+              </th>
+              <th class="px-4 py-3 text-left">
+                  <button type="button" @click="toggleSort('created_at')" class="group inline-flex items-center gap-1 text-xs font-medium text-gray-500 uppercase tracking-wider hover:text-gray-700">
+                    Date
+                    <SortIcon :active="sortKey === 'created_at'" :dir="sortDir" />
+                  </button>
+              </th>
+              <th class="px-4 py-3 text-left">
+                  <button type="button" @click="toggleSort('status')" class="group inline-flex items-center gap-1 text-xs font-medium text-gray-500 uppercase tracking-wider hover:text-gray-700">
+                    Status
+                    <SortIcon :active="sortKey === 'status'" :dir="sortDir" />
+                  </button>
+              </th>
+              <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
             </tr>
           </thead>
 
-          <tbody class="divide-y divide-gray-200 bg-white dark:divide-gray-800 dark:bg-gray-900">
-            <tr v-for="notification in notifications.data || []" :key="notification.id" class="hover:bg-gray-50 dark:hover:bg-gray-800/70">
-              <td class="px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-200">
-                #{{ notification.index_no }}
+          <tbody class="bg-white divide-y divide-gray-200">
+            <tr v-if="(notifications.data || []).length === 0">
+              <td colspan="7" class="px-4 py-6 text-sm text-gray-500 text-center">No notifications found.</td>
+            </tr>
+
+            <tr
+              v-for="n in (sortedNotifications || [])"
+              :key="n.id"
+              class="hover:bg-gray-50"
+            >
+              <td class="px-4 py-3 text-sm text-gray-700">#{{ n.index_no }}</td>
+              <td class="px-4 py-3">
+                <div class="text-sm font-medium text-gray-900">{{ n.title || '—' }}</div>
               </td>
-              <td class="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">
-                {{ notification.title }}
+              <td class="px-4 py-3">
+                <div class="text-sm text-gray-700">{{ n.message || '—' }}</div>
               </td>
-              <td class="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
-                {{ notification.message }}
+              <td class="px-4 py-3">
+                <div class="text-sm text-gray-600">{{ n.type || '—' }}</div>
               </td>
-              <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">
-                {{ notification.type }}
+              <td class="px-4 py-3">
+                <div class="text-sm font-medium text-gray-900">{{ formatDate(n.created_at) }}</div>
+                <div class="text-xs text-gray-500">{{ n.time_ago || '' }}</div>
               </td>
-              <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">
-                <div>{{ notification.time_ago }}</div>
-                <div class="text-xs text-gray-400">{{ formatDate(notification.created_at) }}</div>
-              </td>
-              <td class="px-4 py-3 text-sm">
-                <span
-                  class="inline-flex rounded-full px-2.5 py-1 text-xs font-medium"
-                  :class="notification.is_read
-                    ? 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-200'
-                    : 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300'"
-                >
-                  {{ notification.is_read ? 'Read' : 'Unread' }}
+              <td class="px-4 py-3">
+                <span class="inline-flex rounded-full px-2.5 py-1 text-xs font-medium" :class="n.is_read ? 'bg-gray-100 text-gray-700' : 'bg-green-100 text-green-700'">
+                  {{ n.is_read ? 'Read' : 'Unread' }}
                 </span>
               </td>
               <td class="px-4 py-3 text-right">
-                <button
-                  v-if="!notification.is_read"
-                  type="button"
-                  class="inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
-                  @click="markAsRead(notification.id)"
-                >
-                  Mark read
-                </button>
-              </td>
-            </tr>
-
-            <tr v-if="(notifications.data || []).length === 0">
-              <td colspan="7" class="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
-                No notifications found.
+                <div class="flex items-center justify-end gap-2">
+                  <button
+                    v-if="!n.is_read"
+                    type="button"
+                    class="inline-flex items-center justify-center h-9 px-3 rounded-lg border border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
+                    @click="markAsRead(n.id)"
+                  >
+                    Mark read
+                  </button>
+                </div>
               </td>
             </tr>
           </tbody>
         </table>
       </div>
 
-      <div class="flex items-center justify-between border-t border-gray-200 px-4 py-3 dark:border-gray-800">
-        <div class="text-sm text-gray-600 dark:text-gray-300">
+      <div class="flex items-center justify-between px-4 py-3 border-t border-gray-200">
+        <div class="text-sm text-gray-600">
           Showing {{ notifications.from || 0 }}-{{ notifications.to || 0 }} of {{ notifications.total || 0 }}
         </div>
 
@@ -106,8 +133,9 @@
 
 <script setup>
 import { Link, router } from '@inertiajs/vue3'
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
+import SortIcon from '@/Components/SortIcon.vue'
 
 defineOptions({ layout: AdminLayout })
 
@@ -122,11 +150,68 @@ const props = defineProps({
 const markingAll = ref(false)
 const brandColor = 'rgb(89 151 172 / var(--tw-bg-opacity, 1))'
 
+// Sorting (client-side)
+// Default to ID descending
+const sortKey = ref('id')
+const sortDir = ref('desc')
+
+function toggleSort(key) {
+  if (sortKey.value === key) {
+    sortDir.value = sortDir.value === 'asc' ? 'desc' : 'asc'
+    return
+  }
+  sortKey.value = key
+  sortDir.value = 'asc'
+}
+
+function getSortValue(item, key) {
+  if (!item) return ''
+  switch (key) {
+    case 'id':
+      return Number(item?.id || item?.index_no || 0)
+    case 'title':
+      return String(item?.title || '').toLowerCase()
+    case 'message':
+      return String(item?.message || '').toLowerCase()
+    case 'type':
+      return String(item?.type || '').toLowerCase()
+    case 'created_at':
+      try { return new Date(item?.created_at || 0).getTime() || 0 } catch { return 0 }
+    case 'status':
+      return item?.is_read ? 'read' : 'unread'
+    default:
+      return ''
+  }
+}
+
+const sortedNotifications = computed(() => {
+  const list = Array.isArray(props.notifications?.data) ? [...props.notifications.data] : []
+  const key = sortKey.value
+  const dir = sortDir.value
+  const multiplier = dir === 'asc' ? 1 : -1
+
+  return list
+    .map((item, idx) => ({ item, idx }))
+    .sort((a, b) => {
+      const av = getSortValue(a.item, key)
+      const bv = getSortValue(b.item, key)
+
+      if (typeof av === 'number' && typeof bv === 'number') {
+        const diff = av - bv
+        return diff !== 0 ? diff * multiplier : a.idx - b.idx
+      }
+
+      const diff = String(av).localeCompare(String(bv))
+      return diff !== 0 ? diff * multiplier : a.idx - b.idx
+    })
+    .map(x => x.item)
+})
+
 const linkClasses = (link) => {
-  const base = 'inline-flex min-w-[36px] items-center justify-center rounded-md border px-3 py-1.5 text-sm transition'
-  if (!link?.url) return `${base} cursor-not-allowed border-gray-200 text-gray-400 dark:border-gray-700 dark:text-gray-600`
-  if (link.active) return `${base} border-transparent text-white`
-  return `${base} border-gray-200 text-gray-700 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-700`
+  const base = 'inline-flex items-center justify-center px-3 py-1.5 rounded-lg text-sm border '
+  if (link.active) return base + 'bg-indigo-600 text-white border-indigo-600'
+  if (!link.url) return base + 'bg-gray-50 text-gray-400 border-gray-200 cursor-not-allowed'
+  return base + 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
 }
 
 const formatDate = (value) => {
