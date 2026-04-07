@@ -6,7 +6,7 @@
       <div class="bg-gradient-to-r from-[rgb(141,61,79)] to-[rgb(89,151,172)] p-6">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-4">
-            <img v-if="psychologist.profile_image_url" :src="psychologist.profile_image_url" class="h-14 w-14 rounded-full ring-2 ring-white/70 object-cover" />
+            <img v-if="psychologist.profile_image_url" :src="resolveStorageUrl(psychologist.profile_image_url)" class="h-14 w-14 rounded-full ring-2 ring-white/70 object-cover" />
             <div v-else class="h-14 w-14 rounded-full bg-white/20 flex items-center justify-center text-white">No</div>
             <div class="text-white">
               <div class="text-xl font-semibold">{{ psychologist.first_name }} {{ psychologist.last_name }}</div>
@@ -600,6 +600,7 @@ import { useForm } from '@inertiajs/vue3'
 import { Inertia } from '@inertiajs/inertia'
 import { getCountries, getCitiesByCountryName, splitInternationalPhoneNumber } from '@/utils/geoData'
 import Multiselect from '@vueform/multiselect'
+import { resolveStorageUrl } from '@/utils/storage'
 import Swal from 'sweetalert2'
 
 const props = defineProps({
@@ -704,7 +705,7 @@ const dialCodes = computed(() => countriesList.value.map(c => c.dialCode).filter
 
 const imagePreview = computed(() => {
   if (form.profile_image) return URL.createObjectURL(form.profile_image)
-  return form.profile_image_url || props.psychologist?.profile_image_url || ''
+  return resolveStorageUrl(form.profile_image_url || props.psychologist?.profile_image_url) || ''
 })
 
 const fileNameFromUrl = (url) => {
@@ -1196,9 +1197,7 @@ async function submitProfile() {
     fd.append('city', form.city ?? '')
     fd.append('address', form.address ?? '')
     fd.append('date_of_birth', form.date_of_birth ?? '')
-    fd.append('profile_image_url', form.profile_image_url ?? '')
     fd.append('diploma', form.diploma ?? '')
-    fd.append('cv', form.cv ?? '')
     if (form.profile_image) fd.append('profile_image', form.profile_image)
     if (Array.isArray(form.diploma_files) && form.diploma_files.length) {
       form.diploma_files.forEach((f) => fd.append('diploma_files[]', f))

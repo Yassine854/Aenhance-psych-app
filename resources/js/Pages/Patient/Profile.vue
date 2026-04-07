@@ -8,6 +8,7 @@ import { Head, useForm, usePage } from '@inertiajs/vue3'
 import { computed, ref, watch } from 'vue'
 import Swal from 'sweetalert2'
 import { getCountries, getCitiesByCountryName, splitInternationalPhoneNumber } from '@/utils/geoData'
+import { resolveStorageUrl } from '@/utils/storage'
 
 const props = defineProps({
   canLogin: Boolean,
@@ -86,7 +87,7 @@ const imagePreview = computed(() => {
 
 const headerImage = computed(() => {
   if (form.remove_profile_image) return ''
-  return imagePreview.value || props.profile?.profile_image_url || page.props?.auth?.user?.profile_image_url || ''
+  return imagePreview.value || resolveStorageUrl(props.profile?.profile_image_url) || resolveStorageUrl(page.props?.auth?.user?.profile_image_url) || ''
 })
 
 function syncPhoneToForm() {

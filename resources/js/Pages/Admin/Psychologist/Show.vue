@@ -6,7 +6,7 @@
       <div class="bg-gradient-to-r from-[rgb(141,61,79)] to-[rgb(89,151,172)] p-6">
         <div class="flex items-start justify-between gap-4">
           <div class="flex items-center gap-4">
-            <img v-if="psychologist.profile_image_url" :src="psychologist.profile_image_url" class="h-14 w-14 rounded-full ring-2 ring-white/70 object-cover" />
+            <img v-if="psychologist.profile_image_url" :src="resolveStorageUrl(psychologist.profile_image_url)" class="h-14 w-14 rounded-full ring-2 ring-white/70 object-cover" />
             <div v-else class="h-14 w-14 rounded-full bg-white/20 flex items-center justify-center text-white text-sm">No</div>
             <div class="text-white">
               <div class="text-xl font-semibold leading-tight">{{ psychologist.first_name }} {{ psychologist.last_name }}</div>
@@ -38,7 +38,7 @@
               <div class="mt-3 space-y-2">
                 <div v-if="(displayPsychologist.diplomas || []).length">
                   <div class="space-y-2">
-                    <a v-for="(d, idx) in displayPsychologist.diplomas" :key="d.id || idx" :href="d.file_url" target="_blank" rel="noopener" class="flex items-center justify-between gap-3 rounded-lg border border-gray-200 px-3 py-2 hover:bg-gray-50">
+                    <a v-for="(d, idx) in displayPsychologist.diplomas" :key="d.id || idx" :href="resolveStorageUrl(d.file_url)" target="_blank" rel="noopener" class="flex items-center justify-between gap-3 rounded-lg border border-gray-200 px-3 py-2 hover:bg-gray-50">
                       <div class="min-w-0">
                         <div class="text-sm font-medium text-gray-900">Diploma {{ idx + 1 }} (PDF)</div>
                         <div class="text-xs text-gray-500 truncate">Open document</div>
@@ -49,7 +49,7 @@
                 </div>
                 <div v-else class="rounded-lg border border-dashed border-gray-200 px-3 py-2 text-sm text-gray-500">Diploma not available</div>
 
-                <a v-if="psychologist.cv" :href="psychologist.cv" target="_blank" rel="noopener" class="flex items-center justify-between gap-3 rounded-lg border border-gray-200 px-3 py-2 hover:bg-gray-50">
+                <a v-if="psychologist.cv" :href="resolveStorageUrl(psychologist.cv)" target="_blank" rel="noopener" class="flex items-center justify-between gap-3 rounded-lg border border-gray-200 px-3 py-2 hover:bg-gray-50">
                   <div class="min-w-0">
                     <div class="text-sm font-medium text-gray-900">CV (PDF)</div>
                     <div class="text-xs text-gray-500 truncate">Open document</div>
@@ -272,6 +272,7 @@
 <script setup>
 
 import { computed } from 'vue'
+import { resolveStorageUrl } from '@/utils/storage'
 const props = defineProps({
   show: Boolean,
   psychologist: Object,

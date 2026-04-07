@@ -59,6 +59,8 @@ return [
 
     'asset_url' => env('ASSET_URL'),
 
+    'avatar_disk' => env('AVATAR_DISK', 'public'),
+
     /*
     |--------------------------------------------------------------------------
     | Application Timezone

@@ -580,6 +580,7 @@
 import { Link, router, usePage } from "@inertiajs/vue3";
 import { useI18n } from "vue-i18n";
 import { ref, onMounted, computed, watch, onBeforeUnmount } from "vue";
+import { resolveStorageUrl } from '@/utils/storage'
 
 const props = defineProps({
   canLogin: { type: Boolean },
@@ -643,11 +644,7 @@ const patientDisplayName = computed(() => {
 })
 
 const patientAvatarUrl = computed(() => {
-  const url = resolvedAuthUser.value?.profile_image_url
-  if (!url) return null
-  if (typeof url !== 'string') return null
-  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('/')) return url
-  return `/${url}`
+  return resolveStorageUrl(resolvedAuthUser.value?.profile_image_url) || null
 })
 
 const patientInitials = computed(() => {
@@ -1008,11 +1005,7 @@ const psychologistDisplayName = computed(() => {
 })
 
 const psychologistAvatarUrl = computed(() => {
-  const url = resolvedAuthUser.value?.profile_image_url
-  if (!url) return null
-  if (typeof url !== 'string') return null
-  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('/')) return url
-  return `/${url}`
+  return resolveStorageUrl(resolvedAuthUser.value?.profile_image_url) || null
 })
 
 const psychologistInitials = computed(() => {

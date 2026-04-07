@@ -9,6 +9,7 @@ import Multiselect from '@vueform/multiselect'
 import { Head, useForm, usePage, Link } from '@inertiajs/vue3'
 import { computed, ref, watch, nextTick } from 'vue'
 import { getCountries, getCitiesByCountryName } from '@/utils/geoData'
+import { resolveStorageUrl } from '@/utils/storage'
 import Swal from 'sweetalert2'
 
 const props = defineProps({
@@ -51,6 +52,7 @@ const form = useForm({
   specialisation_ids: props.profile?.specialisations?.map(s => s.id) || [],
   expertise_ids: props.profile?.expertises?.map(e => e.id) || [],
   profile_image: null,
+  remove_profile_image: false,
   cv: null,
   diploma_files: [],
   remove_diplomas: [],
@@ -80,7 +82,7 @@ const imagePreview = computed(() => {
 
 const headerImage = computed(() => {
   if (form.remove_profile_image) return ''
-  return imagePreview.value || props.profile?.profile_image_url || page.props?.auth?.user?.psychologistProfile?.profile_image_url || ''
+  return imagePreview.value || resolveStorageUrl(props.profile?.profile_image_url) || resolveStorageUrl(page.props?.auth?.user?.psychologistProfile?.profile_image_url) || ''
 })
 
 const specialisationOptions = computed(() =>
@@ -890,7 +892,7 @@ watch(() => Object.keys(form.errors).length, (errorCount, oldErrorCount) => {
                         <div class="flex items-center gap-2">
                           <a
                             v-if="diploma.file_url.toLowerCase().endsWith('.pdf')"
-                            :href="diploma.file_url"
+                            :href="resolveStorageUrl(diploma.file_url)"
                             target="_blank"
                             rel="noopener"
                             class="p-1.5 text-[#5997ac] hover:text-white hover:bg-[#5997ac] rounded-lg transition-colors duration-200"
@@ -971,7 +973,7 @@ watch(() => Object.keys(form.errors).length, (errorCount, oldErrorCount) => {
                       <div class="flex items-center gap-2">
                         <a
                           v-if="profile.cv.toLowerCase().endsWith('.pdf')"
-                          :href="profile.cv"
+                          :href="resolveStorageUrl(profile.cv)"
                           target="_blank"
                           rel="noopener"
                           class="p-1.5 text-[#5997ac] hover:text-white hover:bg-[#5997ac] rounded-lg transition-colors duration-200"

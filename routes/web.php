@@ -151,7 +151,13 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'index'])
         ->middleware(['auth', 'verified'])
         ->name('dashboard');
-        });
+
+        // Shared notifications UI/API (admin + psychologist + patient)
+        Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+        Route::get('/notifications/feed', [NotificationController::class, 'feed'])->name('notifications.feed');
+        Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
+        Route::post('/notifications/{notification}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
+    });
 
     // Shared session/video routes (patient + psychologist)
     Route::middleware('role:PSYCHOLOGIST,PATIENT')->group(function () {
@@ -202,10 +208,6 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/admin/notifications/feed', [NotificationController::class, 'feed'])->name('admin.notifications.feed');
         Route::post('/admin/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('admin.notifications.read-all');
         Route::post('/admin/notifications/{notification}/read', [NotificationController::class, 'markAsRead'])->name('admin.notifications.read');
-        Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
-        Route::get('/notifications/feed', [NotificationController::class, 'feed'])->name('notifications.feed');
-        Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
-        Route::post('/notifications/{notification}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
 
         // Reports (Admin)
         Route::get('/admin/reports', [App\Http\Controllers\Admin\ReportsController::class, 'index'])->name('admin.reports.index');

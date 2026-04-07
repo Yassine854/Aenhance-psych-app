@@ -172,11 +172,11 @@ class PsychologistSelfProfileController extends Controller
             'remove_diplomas.*' => ['integer'],
         ];
 
-        if (!$profile->cv) {
+        if (! $profile || ! $profile->cv) {
             $rules['cv'] = ['required', 'file', 'max:10240'];
         }
 
-        if ($profile->diplomas->isEmpty()) {
+        if (! $profile || $profile->diplomas->isEmpty()) {
             $rules['diploma_files'] = ['required', 'array', 'min:1'];
             $rules['diploma_files.*'] = ['file', 'max:10240'];
         }
@@ -187,57 +187,60 @@ class PsychologistSelfProfileController extends Controller
 
         // Handle profile image
         if (! empty($data['remove_profile_image'])) {
+            if ($profile && ! empty($profile->profile_image_url)) {
+                try {
+                    $deleted = $profile->deleteProfileImageFile();
+                    if (! $deleted) {
+                        self::deleteCloudinaryFile($profile->getRawOriginal('profile_image_url'));
+                    }
+                } catch (\Throwable $e) {
+                    Log::warning('Failed to delete existing psychologist avatar: '.$e->getMessage());
+                }
+            }
+
             $data['profile_image_url'] = null;
         }
 
         if ($request->hasFile('profile_image')) {
             // Delete old profile image if exists
-            if (!empty($profile->profile_image_url)) {
-                self::deleteCloudinaryFile($profile->profile_image_url);
-            }
-            try {
-                $uploaded = Cloudinary::upload($request->file('profile_image')->getRealPath(), [
-                    'folder' => 'psychologist_profiles',
-                    'transformation' => ['width' => 800, 'height' => 800, 'crop' => 'limit'],
-                ]);
-
-                $url = method_exists($uploaded, 'getSecurePath')
-                    ? $uploaded->getSecurePath()
-                    : (method_exists($uploaded, 'getPath') ? $uploaded->getPath() : null);
-
-                if ($url) {
-                    $data['profile_image_url'] = $url;
+            if ($profile && ! empty($profile->profile_image_url)) {
+                try {
+                    $deleted = $profile->deleteProfileImageFile();
+                    if (! $deleted) {
+                        self::deleteCloudinaryFile($profile->getRawOriginal('profile_image_url'));
+                    }
+                } catch (\Throwable $e) {
+                    Log::warning('Failed to delete existing psychologist avatar before upload: '.$e->getMessage());
                 }
+            }
+
+            try {
+                $path = $request->file('profile_image')->store('avatars', config('app.avatar_disk', 'public'));
+                $data['profile_image_url'] = $path;
             } catch (\Throwable $e) {
-                Log::warning('Cloudinary psychologist profile_image upload failed: '.$e->getMessage());
-                $path = $request->file('profile_image')->store('psychologist_profiles', 'public');
-                $data['profile_image_url'] = Storage::url($path);
+                Log::warning('Local psychologist profile_image upload failed: '.$e->getMessage());
             }
         }
 
         // Handle CV
         if ($request->hasFile('cv')) {
             // Delete old CV if exists
-            if (!empty($profile->cv)) {
-                self::deleteCloudinaryFile($profile->cv);
-            }
-            try {
-                $uploaded = Cloudinary::uploadFile($request->file('cv')->getRealPath(), [
-                    'folder' => 'psychologist_profiles/cvs',
-                    'resource_type' => 'image',
-                ]);
-
-                $url = method_exists($uploaded, 'getSecurePath')
-                    ? $uploaded->getSecurePath()
-                    : (method_exists($uploaded, 'getPath') ? $uploaded->getPath() : null);
-
-                if ($url) {
-                    $data['cv'] = $url;
+            if ($profile && ! empty($profile->cv)) {
+                try {
+                    $deleted = $profile->deleteCvFile();
+                    if (! $deleted) {
+                        self::deleteCloudinaryFile($profile->getRawOriginal('cv'));
+                    }
+                } catch (\Throwable $e) {
+                    Log::warning('Failed to delete existing psychologist CV: '.$e->getMessage());
                 }
+            }
+
+            try {
+                $path = $request->file('cv')->store('psychologists/cvs', config('app.avatar_disk', 'public'));
+                $data['cv'] = $path;
             } catch (\Throwable $e) {
-                Log::warning('Cloudinary psychologist CV upload failed: '.$e->getMessage());
-                $path = $request->file('cv')->store('psychologist_cvs', 'public');
-                $data['cv'] = Storage::url($path);
+                Log::warning('Local psychologist CV upload failed: '.$e->getMessage());
             }
         }
 
@@ -265,7 +268,14 @@ class PsychologistSelfProfileController extends Controller
             $diplomasToRemove = $profile->diplomas()->whereIn('id', $validated['remove_diplomas'])->get();
             foreach ($diplomasToRemove as $diploma) {
                 if (!empty($diploma->file_url)) {
-                    self::deleteCloudinaryFile($diploma->file_url);
+                    try {
+                        $deleted = $diploma->deleteFile();
+                        if (! $deleted) {
+                            self::deleteCloudinaryFile($diploma->getRawOriginal('file_url'));
+                        }
+                    } catch (\Throwable $e) {
+                        Log::warning('Failed to delete existing psychologist diploma: '.$e->getMessage());
+                    }
                 }
             }
             $profile->diplomas()->whereIn('id', $validated['remove_diplomas'])->delete();
@@ -274,20 +284,13 @@ class PsychologistSelfProfileController extends Controller
         if ($request->hasFile('diploma_files')) {
             foreach ($request->file('diploma_files') as $file) {
                 try {
-                    $uploaded = Cloudinary::uploadFile($file->getRealPath(), [
-                        'folder' => 'psychologist_profiles/diplomas',
-                        'resource_type' => 'image',
-                    ]);
+                    $path = $file->store('psychologists/diplomas', config('app.avatar_disk', 'public'));
 
-                    $url = method_exists($uploaded, 'getSecurePath')
-                        ? $uploaded->getSecurePath()
-                        : (method_exists($uploaded, 'getPath') ? $uploaded->getPath() : null);
-
-                    if ($url) {
-                        $profile->diplomas()->create(['file_url' => $url]);
+                    if ($path) {
+                        $profile->diplomas()->create(['file_url' => $path]);
                     }
                 } catch (\Throwable $e) {
-                    Log::warning('Cloudinary psychologist diploma upload failed: '.$e->getMessage());
+                    Log::warning('Local psychologist diploma upload failed: '.$e->getMessage());
                 }
             }
         }

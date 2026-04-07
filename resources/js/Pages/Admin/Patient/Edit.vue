@@ -126,7 +126,7 @@
                 class="mt-1 border-2 border-dashed border-gray-300 rounded-lg p-3 flex items-center justify-center hover:border-[rgb(89,151,172)] hover:bg-gray-50 transition cursor-pointer"
               >
                 <img v-if="imagePreview" :src="imagePreview" class="h-16 w-16 rounded-full object-cover" />
-                <img v-else-if="patient?.profile_image_url" :src="patient.profile_image_url" class="h-16 w-16 rounded-full object-cover" />
+                <img v-else-if="patient?.profile_image_url" :src="resolveStorageUrl(patient.profile_image_url)" class="h-16 w-16 rounded-full object-cover" />
                 <span v-else class="text-sm text-gray-600">Drag & drop or click</span>
               </div>
               <input ref="profileInput" type="file" accept="image/*" @change="onFileChange('profile_image', $event)" class="hidden" />
@@ -196,6 +196,7 @@
 import { ref, computed, watch } from 'vue'
 import { useForm } from '@inertiajs/vue3'
 import { getCountries, getCitiesByCountryName } from '@/utils/geoData'
+import { resolveStorageUrl} from '@/utils/storage'
 
 const props = defineProps({
   show: Boolean,
@@ -242,7 +243,7 @@ const imagePreview = computed(() => {
 })
 
 const headerImage = computed(() => {
-  return imagePreview.value || props.patient?.profile_image_url || ''
+  return imagePreview.value || resolveAvatarUrl(props.patient?.profile_image_url) || ''
 })
 
 const maxAdultDob = computed(() => {

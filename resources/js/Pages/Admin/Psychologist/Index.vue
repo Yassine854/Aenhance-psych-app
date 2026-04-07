@@ -94,7 +94,7 @@
                 <td class="px-4 py-3 text-sm text-gray-700">#{{ p.id }}</td>
                 <td class="px-4 py-3">
                   <div class="flex items-center gap-3">
-                    <img v-if="p.profile_image_url" :src="p.profile_image_url" class="h-9 w-9 rounded-full object-cover" />
+                    <img v-if="p.profile_image_url" :src="resolveStorageUrl(p.profile_image_url)" class="h-9 w-9 rounded-full object-cover" />
                     <div>
                       <div class="text-sm font-medium text-gray-900">{{ p.first_name }} {{ p.last_name }}</div>
                       <div class="text-xs text-gray-500">{{ p.gender || '-' }}</div>
@@ -209,6 +209,7 @@ import Edit from './Edit.vue'
 import Create from './Create.vue'
 import Show from './Show.vue'
 import SortIcon from '@/Components/SortIcon.vue'
+import { resolveStorageUrl } from '@/utils/storage'
 import Swal from 'sweetalert2'
 
 const props = defineProps({

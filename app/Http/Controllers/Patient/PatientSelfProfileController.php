@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Patient;
 
 use App\Http\Controllers\Controller;
 use App\Models\PatientProfile;
-use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
@@ -57,28 +56,37 @@ class PatientSelfProfileController extends Controller
 
         $data = $validated;
 
+        // If user requested removal, delete existing local avatar if present
         if (! empty($data['remove_profile_image'])) {
+            $existing = $user->patientProfile;
+            if ($existing && ! empty($existing->profile_image_url)) {
+                try {
+                    $existing->deleteProfileImageFile();
+                } catch (\Throwable $e) {
+                    Log::warning('Failed to delete existing avatar: '.$e->getMessage());
+                }
+            }
+
             $data['profile_image_url'] = null;
         }
 
+        // Handle uploaded profile image: store locally in `public/avatars`
         if ($request->hasFile('profile_image')) {
-            try {
-                $uploaded = Cloudinary::upload($request->file('profile_image')->getRealPath(), [
-                    'folder' => 'patient_profiles',
-                    'transformation' => ['width' => 800, 'height' => 800, 'crop' => 'limit'],
-                ]);
-
-                $url = method_exists($uploaded, 'getSecurePath')
-                    ? $uploaded->getSecurePath()
-                    : (method_exists($uploaded, 'getPath') ? $uploaded->getPath() : null);
-
-                if ($url) {
-                    $data['profile_image_url'] = $url;
+            // delete previous local avatar if exists
+            $existing = $user->patientProfile;
+            if ($existing && ! empty($existing->profile_image_url)) {
+                try {
+                    $existing->deleteProfileImageFile();
+                } catch (\Throwable $e) {
+                    Log::warning('Failed to delete existing avatar before upload: '.$e->getMessage());
                 }
+            }
+
+            try {
+                $path = $request->file('profile_image')->store('avatars', config('app.avatar_disk', 'public'));
+                $data['profile_image_url'] = $path;
             } catch (\Throwable $e) {
-                Log::warning('Cloudinary patient profile_image upload failed: '.$e->getMessage());
-                $path = $request->file('profile_image')->store('patient_profiles', 'public');
-                $data['profile_image_url'] = Storage::url($path);
+                Log::warning('Local patient profile_image upload failed: '.$e->getMessage());
             }
         }
 
