@@ -87,7 +87,7 @@ const imagePreview = computed(() => {
 
 const headerImage = computed(() => {
   if (form.remove_profile_image) return ''
-  return imagePreview.value || resolveStorageUrl(props.profile?.profile_image_url) || resolveStorageUrl(page.props?.auth?.user?.profile_image_url) || ''
+  return imagePreview.value || resolveStorageUrl(props.profile?.profile_image_url) || resolveAvatarUrl(page.props?.auth?.user?.profile_image_url) || ''
 })
 
 function syncPhoneToForm() {

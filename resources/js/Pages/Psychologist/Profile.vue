@@ -67,6 +67,7 @@ const availableLanguages = [
 ]
 const selectedLanguage = ref('')
 const diplomaInput = ref(null)
+const cvInput = ref(null)
 
 const dialCodes = computed(() => countriesList.value.map(c => c.dialCode).filter(Boolean))
 
@@ -132,6 +133,24 @@ function removePhoto() {
 function onCvChange(e) {
   const file = e?.target?.files?.[0] || null
   form.cv = file
+}
+
+function getFileName(fileOrPath) {
+  if (!fileOrPath) return ''
+
+  if (typeof fileOrPath === 'object' && 'name' in fileOrPath) {
+    return fileOrPath.name
+  }
+
+  const normalizedPath = String(fileOrPath).split('?')[0]
+  const parts = normalizedPath.split('/')
+  const rawName = parts[parts.length - 1] || normalizedPath
+
+  try {
+    return decodeURIComponent(rawName)
+  } catch {
+    return rawName
+  }
 }
 
 function addLanguage() {
@@ -881,22 +900,21 @@ watch(() => Object.keys(form.errors).length, (errorCount, oldErrorCount) => {
                         :key="diploma.id"
                         class="flex items-center justify-between p-3 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg border border-gray-200 hover:shadow-sm transition-shadow duration-200"
                       >
-                        <div class="flex items-center gap-3">
+                        <div class="flex min-w-0 flex-1 items-center gap-3">
                           <div class="w-8 h-8 bg-[#5997ac]/10 rounded-lg flex items-center justify-center">
                             <svg class="w-4 h-4 text-[#5997ac]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                             </svg>
                           </div>
-                          <span class="text-sm font-medium text-gray-700">{{ diploma.file_url.split('/').pop() }}</span>
+                          <span class="truncate text-sm font-medium text-gray-700" :title="getFileName(diploma.file_url)">{{ getFileName(diploma.file_url) }}</span>
                         </div>
-                        <div class="flex items-center gap-2">
+                        <div class="ml-3 flex shrink-0 items-center gap-2">
                           <a
-                            v-if="diploma.file_url.toLowerCase().endsWith('.pdf')"
                             :href="resolveStorageUrl(diploma.file_url)"
                             target="_blank"
                             rel="noopener"
                             class="p-1.5 text-[#5997ac] hover:text-white hover:bg-[#5997ac] rounded-lg transition-colors duration-200"
-                            title="View PDF"
+                            title="View document"
                           >
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
@@ -939,13 +957,25 @@ watch(() => Object.keys(form.errors).length, (errorCount, oldErrorCount) => {
                   </div>
 
                   <div class="space-y-3">
-                    <div class="relative">
-                      <input
-                        type="file"
-                        accept=".pdf,.doc,.docx"
-                        @change="onCvChange"
-                        class="block w-full text-sm text-gray-500 file:mr-4 file:py-3 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-[#5997ac] file:text-white hover:file:bg-[#467891] file:cursor-pointer transition-colors duration-200"
-                      />
+                    <input
+                      ref="cvInput"
+                      type="file"
+                      accept=".pdf,.doc,.docx"
+                      @change="onCvChange"
+                      class="hidden"
+                    />
+                    <div class="flex items-center gap-3">
+                      <PrimaryButton type="button" @click="cvInput?.click()" class="px-4 py-2 bg-[#5997ac] hover:bg-[#4a7a95] rounded-lg transition-colors duration-200 flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                        </svg>
+                        Choose CV
+                      </PrimaryButton>
+                      <div class="min-w-0 flex-1 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">
+                        <span class="block truncate text-sm text-gray-600" :title="form.cv ? getFileName(form.cv) : 'No file selected'">
+                          {{ form.cv ? getFileName(form.cv) : 'No file selected' }}
+                        </span>
+                      </div>
                     </div>
                     <div class="text-xs text-gray-500 bg-gray-50 p-2 rounded-lg">
                       Accepted format: PDF. Maximum 1MB
@@ -962,22 +992,21 @@ watch(() => Object.keys(form.errors).length, (errorCount, oldErrorCount) => {
                       Current CV
                     </h4>
                     <div class="flex items-center justify-between p-3 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg border border-gray-200 hover:shadow-sm transition-shadow duration-200">
-                      <div class="flex items-center gap-3">
+                      <div class="flex min-w-0 flex-1 items-center gap-3">
                         <div class="w-8 h-8 bg-[#5997ac]/10 rounded-lg flex items-center justify-center">
                           <svg class="w-4 h-4 text-[#5997ac]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                           </svg>
                         </div>
-                        <span class="text-sm font-medium text-gray-700">{{ profile.cv.split('/').pop() }}</span>
+                        <span class="truncate text-sm font-medium text-gray-700" :title="getFileName(profile.cv)">{{ getFileName(profile.cv) }}</span>
                       </div>
-                      <div class="flex items-center gap-2">
+                      <div class="ml-3 flex shrink-0 items-center gap-2">
                         <a
-                          v-if="profile.cv.toLowerCase().endsWith('.pdf')"
                           :href="resolveStorageUrl(profile.cv)"
                           target="_blank"
                           rel="noopener"
                           class="p-1.5 text-[#5997ac] hover:text-white hover:bg-[#5997ac] rounded-lg transition-colors duration-200"
-                          title="View PDF"
+                          title="View document"
                         >
                           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>

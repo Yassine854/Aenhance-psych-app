@@ -22,7 +22,10 @@ const form = useForm({
 });
 
 const submit = () => {
-    form.post(route('login'), {
+    form.transform((data) => ({
+        ...data,
+        remember: Boolean(data.remember),
+    })).post(route('login'), {
         onFinish: () => form.reset('password'),
         onSuccess: (page) => {
             const role = page?.props?.auth?.user?.role;
@@ -90,9 +93,11 @@ const submit = () => {
                         </div>
 
                         <div class="flex items-center justify-between pt-1">
-                            <label class="flex items-center">
-                                <Checkbox name="remember" v-model:checked="form.remember" />
-                                <span class="ms-2 text-sm text-gray-600">Remember me</span>
+                            <label class="flex items-start gap-2">
+                                <Checkbox name="remember" v-model:checked="form.remember" class="mt-0.5" />
+                                <span>
+                                    <span class="block text-sm text-gray-600">Remember me</span>
+                                </span>
                             </label>
 
                             <Link
