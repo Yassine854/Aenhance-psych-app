@@ -15,6 +15,7 @@ class AppointmentMailService
         $appointment->loadMissing([
             'patient:id,name,email',
             'psychologist:id,name,email',
+            'beneficiary:appointment_id,first_name,last_name,date_of_birth,gender,relationship_to_patient',
         ]);
 
         $patient = $appointment->patient;
@@ -50,6 +51,7 @@ class AppointmentMailService
         $appointment->loadMissing([
             'patient:id,name,email',
             'psychologist:id,name,email',
+            'beneficiary:appointment_id,first_name,last_name,date_of_birth,gender,relationship_to_patient',
         ]);
 
         $patient = $appointment->patient;

@@ -14,6 +14,11 @@ use Carbon\Carbon;
 
 class Appointment extends Model
 {
+    public function beneficiary()
+    {
+        return $this->hasOne(AppointmentBeneficiary::class);
+    }
+
     public function session()
     {
         return $this->hasOne(AppointmentSession::class);
@@ -28,6 +33,7 @@ class Appointment extends Model
     protected $fillable = [
         'patient_id',
         'psychologist_id',
+        'booking_for',
         'scheduled_start',
         'scheduled_end',
         'status',

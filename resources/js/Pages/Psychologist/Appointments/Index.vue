@@ -127,10 +127,15 @@
               <table class="min-w-full divide-y divide-gray-200">
               <thead class="bg-gray-50">
                 <tr>
-                  <!-- ID column removed intentionally -->
+                  <th class="px-4 py-3 text-left">
+                    <button type="button" @click="toggleSort('id')" class="group inline-flex items-center gap-1 text-xs font-medium text-gray-500 uppercase tracking-wider hover:text-gray-700">
+                      ID
+                      <SortIcon :active="sortKey === 'id'" :dir="sortDir" />
+                    </button>
+                  </th>
                   <th class="px-4 py-3 text-left">
                     <button type="button" @click="toggleSort('patient')" class="group inline-flex items-center gap-1 text-xs font-medium text-gray-500 uppercase tracking-wider hover:text-gray-700">
-                      Patient
+                      Appointment For
                       <SortIcon :active="sortKey === 'patient'" :dir="sortDir" />
                     </button>
                   </th>
@@ -157,9 +162,21 @@
                   class="hover:bg-gray-50"
                   :class="normalizeStatus(a.status) === 'cancelled' ? 'bg-red-50/30' : ''"
                 >
-                  <!-- ID cell removed -->
                   <td class="px-4 py-3">
-                    <div class="text-sm font-medium text-gray-900">{{ a.patient?.name || '—' }}</div>
+                    <div class="text-sm font-medium text-gray-900">{{ a.id }}</div>
+                  </td>
+                  <td class="px-4 py-3">
+                    <div class="flex items-center gap-2 flex-wrap">
+                      <div class="text-sm font-medium text-gray-900">{{ bookedForName(a) }}</div>
+                      <span
+                        class="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold"
+                        :class="String(a.booking_for || '').toLowerCase() === 'other' ? 'bg-yellow-100 text-yellow-800' : 'bg-[#5997ac]/10 text-[#5997ac]'"
+                      >
+                        {{ bookedForBadge(a) }}
+                      </span>
+                    </div>
+                    <div class="mt-1 text-xs text-gray-500">{{ bookedForMeta(a) }}</div>
+                    <div v-if="bookedForDetails(a)" class="mt-1 text-xs text-gray-500">{{ bookedForDetails(a) }}</div>
                   </td>
                   <td class="px-4 py-3">
                     <div class="text-sm font-medium text-gray-900">{{ formatDate(a.scheduled_start) }}</div>
@@ -468,11 +485,57 @@ watch(searchDate, () => {
 const searchPlaceholder = computed(() => {
   switch (searchField.value) {
     case 'patient':
-      return 'Search by patient name...'
+      return 'Search by patient or beneficiary name...'
     default:
       return 'Search...'
   }
 })
+
+function bookedForName(a) {
+  const beneficiary = a?.beneficiary || null
+  if (String(a?.booking_for || '').toLowerCase() === 'other' && beneficiary) {
+    return beneficiary.full_name || [beneficiary.first_name, beneficiary.last_name].filter(Boolean).join(' ') || 'Another person'
+  }
+
+  return a?.patient?.name || 'Patient'
+}
+
+function bookedForBadge(a) {
+  return String(a?.booking_for || '').toLowerCase() === 'other' ? 'Another person' : 'Patient account owner'
+}
+
+function bookedForMeta(a) {
+  const beneficiary = a?.beneficiary || null
+  if (String(a?.booking_for || '').toLowerCase() !== 'other' || !beneficiary) {
+    return 'Account owner: ' + (a?.patient?.name || 'patient')
+  }
+
+  const parts = ['Booked by ' + (a?.patient?.name || 'patient')]
+  if (beneficiary.relationship_to_patient) parts.push(beneficiary.relationship_to_patient)
+  return parts.join(' • ')
+}
+
+function bookedForDetails(a) {
+  const beneficiary = a?.beneficiary || null
+  if (String(a?.booking_for || '').toLowerCase() !== 'other' || !beneficiary) {
+    return ''
+  }
+
+  const parts = []
+  const age = calculateAge(beneficiary.date_of_birth)
+  if (age !== null) parts.push('Age: ' + age)
+  return parts.join(' • ')
+}
+
+function calculateAge(dateOfBirth) {
+  if (!dateOfBirth) return null
+
+  const birthYear = Number(String(dateOfBirth).slice(0, 4))
+  if (!Number.isFinite(birthYear) || birthYear <= 0) return null
+
+  const age = new Date().getFullYear() - birthYear
+  return age >= 0 ? age : null
+}
 
 const filtered = computed(() => {
   return Array.isArray(data.value) ? [...data.value] : []
@@ -495,7 +558,7 @@ function getSortValue(a, key) {
     case 'id':
       return Number(a?.id || 0)
     case 'patient':
-      return String(a?.patient?.name || '').toLowerCase()
+      return String(bookedForName(a) || a?.patient?.name || '').toLowerCase()
     case 'scheduled_start':
       try {
         return new Date(a?.scheduled_start || 0).getTime() || 0

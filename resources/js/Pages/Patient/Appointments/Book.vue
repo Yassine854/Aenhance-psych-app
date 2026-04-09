@@ -5,11 +5,14 @@ import Swal from 'sweetalert2'
 import { useI18n } from 'vue-i18n'
 import Navbar from '@/Components/Navbar.vue'
 import Footer from '@/Components/Footer.vue'
+import { resolveStorageUrl } from '@/utils/storage'
 
 const props = defineProps({
   canLogin: { type: Boolean },
   canRegister: { type: Boolean },
   authUser: { type: Object },
+  patientProfile: { type: Object, default: null },
+  previousBeneficiaries: { type: Array, default: () => [] },
   status: { type: String, default: '' },
   psychologistProfile: { type: Object, required: true },
   days: { type: Array, default: () => [] },
@@ -69,11 +72,35 @@ function fullName(p) {
   return `${first} ${last}`.trim() || p?.user?.name || 'Psychologist'
 }
 
+function patientDisplayName() {
+  const first = (props.patientProfile?.first_name || '').trim()
+  const last = (props.patientProfile?.last_name || '').trim()
+  return `${first} ${last}`.trim() || props.authUser?.name || 'You'
+}
+
+function bookingForLabel(value) {
+  return value === 'other' ? 'Another person' : 'Myself'
+}
+
+function beneficiarySignature(beneficiary) {
+  return [
+    String(beneficiary?.first_name || '').trim().toLowerCase(),
+    String(beneficiary?.last_name || '').trim().toLowerCase(),
+    String(beneficiary?.date_of_birth || '').trim(),
+    String(beneficiary?.gender || '').trim().toLowerCase(),
+    String(beneficiary?.relationship_to_patient || '').trim().toLowerCase(),
+  ].join('|')
+}
+
+function beneficiaryNameSignature(beneficiary) {
+  return [
+    String(beneficiary?.first_name || '').trim().toLowerCase(),
+    String(beneficiary?.last_name || '').trim().toLowerCase(),
+  ].join('|')
+}
+
 function avatarUrl(p) {
-  const url = p?.profile_image_url
-  if (!url || typeof url !== 'string') return null
-  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('/')) return url
-  return `/${url}`
+  return resolveStorageUrl(p?.profile_image_url) || null
 }
 
 function initials(p) {
@@ -109,6 +136,12 @@ function formatIsoDate(dt) {
   const d = String(dt.getDate()).padStart(2, '0')
   return `${y}-${m}-${d}`
 }
+
+const maxBeneficiaryDateOfBirth = computed(() => {
+  const dt = new Date()
+  dt.setFullYear(dt.getFullYear() - 1)
+  return formatIsoDate(dt)
+})
 
 function monthKey(dt) {
   const y = dt.getFullYear()
@@ -246,7 +279,66 @@ const calendarCells = computed(() => {
 const form = useForm({
   psychologist_id: props.psychologistProfile?.user_id || '',
   scheduled_start: '',
+  booking_for: 'self',
+  beneficiary_first_name: '',
+  beneficiary_last_name: '',
+  beneficiary_date_of_birth: '',
+  beneficiary_gender: '',
+  beneficiary_relationship: '',
 })
+
+const previousBeneficiaries = computed(() => {
+  const source = Array.isArray(props.previousBeneficiaries) ? props.previousBeneficiaries : []
+  const seen = new Set()
+
+  return source.filter((beneficiary) => {
+    const signature = beneficiaryNameSignature(beneficiary)
+    if (seen.has(signature)) return false
+    seen.add(signature)
+    return true
+  })
+})
+
+const selectedBeneficiarySignature = computed(() => {
+  if (form.booking_for !== 'other') return ''
+
+  return beneficiarySignature({
+    first_name: form.beneficiary_first_name,
+    last_name: form.beneficiary_last_name,
+    date_of_birth: form.beneficiary_date_of_birth,
+    gender: form.beneficiary_gender,
+    relationship_to_patient: form.beneficiary_relationship,
+  })
+})
+
+watch(
+  () => form.booking_for,
+  (value) => {
+    if (value !== 'other') {
+      form.beneficiary_first_name = ''
+      form.beneficiary_last_name = ''
+      form.beneficiary_date_of_birth = ''
+      form.beneficiary_gender = ''
+      form.beneficiary_relationship = ''
+    }
+  }
+)
+
+function selectedBeneficiaryName() {
+  if (form.booking_for !== 'other') return patientDisplayName()
+  return `${String(form.beneficiary_first_name || '').trim()} ${String(form.beneficiary_last_name || '').trim()}`.trim() || 'Another person'
+}
+
+function applyPreviousBeneficiary(beneficiary) {
+  if (!beneficiary) return
+
+  form.booking_for = 'other'
+  form.beneficiary_first_name = String(beneficiary.first_name || '')
+  form.beneficiary_last_name = String(beneficiary.last_name || '')
+  form.beneficiary_date_of_birth = String(beneficiary.date_of_birth || '')
+  form.beneficiary_gender = String(beneficiary.gender || '')
+  form.beneficiary_relationship = String(beneficiary.relationship_to_patient || '')
+}
 
 function pickDate(date) {
   if (!availableDateSet.value.has(date)) return
@@ -260,7 +352,20 @@ function pickSlot(slot) {
   form.scheduled_start = slot?.start_iso || ''
 }
 
-const canSubmit = computed(() => !!form.psychologist_id && !!form.scheduled_start && !form.processing)
+const beneficiaryIsComplete = computed(() => {
+  if (form.booking_for !== 'other') return true
+
+  return [
+    form.beneficiary_first_name,
+    form.beneficiary_last_name,
+    form.beneficiary_date_of_birth,
+    form.beneficiary_relationship,
+  ].every((value) => String(value || '').trim() !== '')
+})
+
+const canSubmit = computed(() => {
+  return !!form.psychologist_id && !!form.scheduled_start && beneficiaryIsComplete.value && !form.processing
+})
 
 function submit() {
   if (!canSubmit.value) return
@@ -485,6 +590,109 @@ function submit() {
                 </div>
               </Transition>
 
+              <div class="mt-6 rounded-2xl border border-gray-200 bg-gray-50 p-4 sm:p-5">
+                <div>
+                  <div class="text-sm font-semibold text-gray-900">Who is this appointment for?</div>
+                  <div class="mt-1 text-xs text-gray-500">The booking remains under your account, but you can set who will attend the session.</div>
+                </div>
+
+                <div class="mt-4 grid gap-3 md:grid-cols-2">
+                  <button
+                    type="button"
+                    @click="form.booking_for = 'self'"
+                    class="rounded-2xl border px-4 py-4 text-left transition focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#5997ac]/30"
+                    :class="form.booking_for === 'self' ? 'border-[#5997ac] bg-white ring-1 ring-[#5997ac]/20' : 'border-gray-200 bg-white hover:border-gray-300'"
+                  >
+                    <div class="flex items-start justify-between gap-3">
+                      <div>
+                        <div class="text-sm font-semibold text-gray-900">Myself</div>
+                        <div class="mt-1 text-sm text-gray-600">You are the person attending this appointment.</div>
+                      </div>
+                      <span class="inline-flex h-5 w-5 items-center justify-center rounded-full border" :class="form.booking_for === 'self' ? 'border-[#5997ac] bg-[#5997ac] text-white' : 'border-gray-300 bg-white text-transparent'">•</span>
+                    </div>
+                    <div class="mt-3 text-xs text-gray-500">{{ patientDisplayName() }}</div>
+                  </button>
+
+                  <button
+                    type="button"
+                    @click="form.booking_for = 'other'"
+                    class="rounded-2xl border px-4 py-4 text-left transition focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#5997ac]/30"
+                    :class="form.booking_for === 'other' ? 'border-[#5997ac] bg-white ring-1 ring-[#5997ac]/20' : 'border-gray-200 bg-white hover:border-gray-300'"
+                  >
+                    <div class="flex items-start justify-between gap-3">
+                      <div>
+                        <div class="text-sm font-semibold text-gray-900">Another person</div>
+                        <div class="mt-1 text-sm text-gray-600">Use this when the session is for a child or another family member.</div>
+                      </div>
+                      <span class="inline-flex h-5 w-5 items-center justify-center rounded-full border" :class="form.booking_for === 'other' ? 'border-[#5997ac] bg-[#5997ac] text-white' : 'border-gray-300 bg-white text-transparent'">•</span>
+                    </div>
+                  </button>
+                </div>
+
+                <div v-if="form.errors.booking_for" class="mt-3 text-sm text-red-600">{{ form.errors.booking_for }}</div>
+
+                <div v-if="form.booking_for === 'other'" class="mt-5 space-y-5">
+                  <div v-if="previousBeneficiaries.length" class="rounded-2xl border border-[#5997ac]/15 bg-white p-4">
+                    <div class="text-sm font-semibold text-gray-900">Previous people you booked for</div>
+                    <div class="mt-1 text-xs text-gray-500">Select one to fill the form automatically.</div>
+
+                    <div class="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-2">
+                      <button
+                        v-for="beneficiary in previousBeneficiaries"
+                        :key="beneficiarySignature(beneficiary)"
+                        type="button"
+                        @click="applyPreviousBeneficiary(beneficiary)"
+                        class="rounded-2xl border px-4 py-3 text-left transition focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#5997ac]/30"
+                        :class="selectedBeneficiarySignature === beneficiarySignature(beneficiary) ? 'border-[#5997ac] bg-[#5997ac]/5 ring-1 ring-[#5997ac]/20' : 'border-gray-200 bg-white hover:border-gray-300'"
+                      >
+                        <div class="text-sm font-semibold text-gray-900">{{ beneficiary.full_name || 'Another person' }}</div>
+                        <div class="mt-1 text-xs text-gray-500">
+                          {{ beneficiary.relationship_to_patient || 'Relationship not provided' }}
+                          <span v-if="beneficiary.date_of_birth"> · {{ beneficiary.date_of_birth }}</span>
+                        </div>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700">First name</label>
+                      <input v-model="form.beneficiary_first_name" type="text" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-[#5997ac] focus:ring-[#5997ac]" placeholder="First name" />
+                      <div v-if="form.errors.beneficiary_first_name" class="mt-1 text-sm text-red-600">{{ form.errors.beneficiary_first_name }}</div>
+                    </div>
+
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700">Last name</label>
+                      <input v-model="form.beneficiary_last_name" type="text" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-[#5997ac] focus:ring-[#5997ac]" placeholder="Last name" />
+                      <div v-if="form.errors.beneficiary_last_name" class="mt-1 text-sm text-red-600">{{ form.errors.beneficiary_last_name }}</div>
+                    </div>
+
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700">Date of birth</label>
+                      <input v-model="form.beneficiary_date_of_birth" type="date" :max="maxBeneficiaryDateOfBirth" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-[#5997ac] focus:ring-[#5997ac]" />
+                      <div v-if="form.errors.beneficiary_date_of_birth" class="mt-1 text-sm text-red-600">{{ form.errors.beneficiary_date_of_birth }}</div>
+                    </div>
+
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700">Relationship to you</label>
+                      <input v-model="form.beneficiary_relationship" type="text" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-[#5997ac] focus:ring-[#5997ac]" placeholder="Child, spouse, sibling, parent..." />
+                      <div v-if="form.errors.beneficiary_relationship" class="mt-1 text-sm text-red-600">{{ form.errors.beneficiary_relationship }}</div>
+                    </div>
+
+                    <div class="md:col-span-2">
+                      <label class="block text-sm font-medium text-gray-700">Gender</label>
+                      <select v-model="form.beneficiary_gender" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-[#5997ac] focus:ring-[#5997ac]">
+                        <option value="">Prefer not to say</option>
+                        <option value="female">Female</option>
+                        <option value="male">Male</option>
+                        <option value="other">Other</option>
+                      </select>
+                      <div v-if="form.errors.beneficiary_gender" class="mt-1 text-sm text-red-600">{{ form.errors.beneficiary_gender }}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <div class="mt-6 flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
                 <div class="text-sm text-gray-700">
                   <div class="font-medium text-gray-900">Selected</div>
@@ -492,6 +700,11 @@ function submit() {
                     {{ selectedDay.date }} · {{ selectedSlot.start_time }} – {{ selectedSlot.end_time }}
                   </div>
                   <div v-else class="text-gray-500">Choose a date and time.</div>
+
+                  <div class="mt-2 text-gray-700">
+                    For: <span class="font-medium text-gray-900">{{ selectedBeneficiaryName() }}</span>
+                    <span class="text-gray-500">({{ bookingForLabel(form.booking_for) }})</span>
+                  </div>
 
                   <div v-if="form.errors.scheduled_start" class="mt-2 text-sm text-red-600">{{ form.errors.scheduled_start }}</div>
                 </div>

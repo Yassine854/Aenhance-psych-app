@@ -24,9 +24,11 @@
     </div>
     <div class="body">
       <p>Hi {{ $recipient->name }},</p>
-      <p>We wanted to let you know that <strong>appointment #{{ $appointment->id }}</strong> between you and <strong>{{ $counterpart->name }}</strong> has been cancelled.</p>
+      <p>We wanted to let you know that <strong>appointment #{{ $appointment->id }}</strong> with <strong>{{ $counterpart->name }}</strong> has been cancelled.</p>
 
       <div class="meta">
+        <p><span class="label">Appointment for:</span> {{ $attendeeName ?? ($appointment->patient->name ?? 'The patient') }}</p>
+        <p><span class="label">Booking details:</span> {{ $bookingContext ?: 'Booked for the patient account owner.' }}</p>
         <p><span class="label">When:</span>
         @if($start)
           {{ $start->format('l, j M Y H:i') }} - {{ $end ? $end->format('H:i') : '' }}

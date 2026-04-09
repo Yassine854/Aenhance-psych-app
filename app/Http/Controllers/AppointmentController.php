@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Appointment;
+use App\Models\AppointmentBeneficiary;
 use App\Models\AppointmentSession;
 use App\Models\Payment;
+use App\Models\PatientProfile;
 use App\Models\PsychologistProfile;
 use App\Services\ClicToPayClient;
 use App\Services\JaaSJitsiJwt;
@@ -26,6 +28,58 @@ class AppointmentController extends Controller
 {
     private const SESSION_MINUTES = 60;
     private const BOOKING_DAYS_AHEAD = 90;
+
+    private function serializeBeneficiary(?AppointmentBeneficiary $beneficiary, ?string $bookingFor = null): ?array
+    {
+        if (($bookingFor ?: 'self') !== 'other' || ! $beneficiary) {
+            return null;
+        }
+
+        return [
+            'first_name' => (string) $beneficiary->first_name,
+            'last_name' => (string) $beneficiary->last_name,
+            'full_name' => trim(($beneficiary->first_name ?? '').' '.($beneficiary->last_name ?? '')),
+            'date_of_birth' => optional($beneficiary->date_of_birth)->toDateString() ?? ($beneficiary->date_of_birth ? (string) $beneficiary->date_of_birth : null),
+            'gender' => $beneficiary->gender,
+            'relationship_to_patient' => $beneficiary->relationship_to_patient,
+        ];
+    }
+
+    private function previousBeneficiariesForPatient(int $patientUserId): array
+    {
+        return AppointmentBeneficiary::query()
+            ->select([
+                'appointment_beneficiaries.first_name',
+                'appointment_beneficiaries.last_name',
+                'appointment_beneficiaries.date_of_birth',
+                'appointment_beneficiaries.gender',
+                'appointment_beneficiaries.relationship_to_patient',
+                'appointments.created_at as appointment_created_at',
+            ])
+            ->join('appointments', 'appointments.id', '=', 'appointment_beneficiaries.appointment_id')
+            ->where('appointments.patient_id', $patientUserId)
+            ->where('appointments.booking_for', 'other')
+            ->orderByDesc('appointments.created_at')
+            ->get()
+            ->unique(function ($beneficiary) {
+                return implode('|', [
+                    Str::lower(trim((string) $beneficiary->first_name)),
+                    Str::lower(trim((string) $beneficiary->last_name)),
+                ]);
+            })
+            ->values()
+            ->map(function ($beneficiary) {
+                return [
+                    'first_name' => (string) $beneficiary->first_name,
+                    'last_name' => (string) $beneficiary->last_name,
+                    'full_name' => trim(($beneficiary->first_name ?? '').' '.($beneficiary->last_name ?? '')),
+                    'date_of_birth' => optional($beneficiary->date_of_birth)->toDateString() ?? ($beneficiary->date_of_birth ? (string) $beneficiary->date_of_birth : null),
+                    'gender' => $beneficiary->gender,
+                    'relationship_to_patient' => $beneficiary->relationship_to_patient,
+                ];
+            })
+            ->all();
+    }
 
     private function dispatchAppointmentConfirmedCommunication(Appointment $appointment): void
     {
@@ -68,6 +122,12 @@ class AppointmentController extends Controller
         if (! $profile->user || ! $profile->is_approved) {
             return redirect()->route('services.consultation');
         }
+
+        $patientProfile = PatientProfile::query()
+            ->where('user_id', $user->id)
+            ->first();
+
+        $previousBeneficiaries = $this->previousBeneficiariesForPatient($user->id);
 
         $tz = config('app.timezone') ?: 'UTC';
         $now = Carbon::now($tz);
@@ -150,6 +210,14 @@ class AppointmentController extends Controller
             'canLogin' => Route::has('login'),
             'canRegister' => Route::has('register'),
             'authUser' => $user,
+            'patientProfile' => $patientProfile ? [
+                'first_name' => $patientProfile->first_name,
+                'last_name' => $patientProfile->last_name,
+                'date_of_birth' => optional($patientProfile->date_of_birth)->toDateString(),
+                'gender' => $patientProfile->gender,
+                'phone' => $patientProfile->phone,
+            ] : null,
+            'previousBeneficiaries' => $previousBeneficiaries,
             'status' => session('status'),
             'psychologistProfile' => [
                 'id' => $profile->id,
@@ -186,12 +254,13 @@ class AppointmentController extends Controller
 
         $appointments = Appointment::query()
             ->where('patient_id', $user->id)
-            ->with(['session:id,appointment_id,room_id,status,started_at'])
+            ->with(['session:id,appointment_id,room_id,status,started_at', 'beneficiary:appointment_id,first_name,last_name,date_of_birth,gender,relationship_to_patient'])
             ->orderByDesc('scheduled_start')
             ->get([
                 'id',
                 'patient_id',
                 'psychologist_id',
+                'booking_for',
                 'scheduled_start',
                 'scheduled_end',
                 'status',
@@ -221,6 +290,8 @@ class AppointmentController extends Controller
                 'psychologist_id' => $a->psychologist_id,
                 'psychologist_profile_id' => $p?->id,
                 'psychologist_name' => $psychName,
+                'booking_for' => (string) ($a->booking_for ?: 'self'),
+                'beneficiary' => $this->serializeBeneficiary($a->beneficiary, $a->booking_for),
                 'scheduled_start' => optional($a->scheduled_start)->toISOString() ?? (string) $a->scheduled_start,
                 'scheduled_end' => optional($a->scheduled_end)->toISOString() ?? (string) $a->scheduled_end,
                 'status' => (string) $a->status,
@@ -334,6 +405,12 @@ class AppointmentController extends Controller
         $validated = $request->validate([
             'psychologist_id' => ['required', 'exists:users,id'],
             'scheduled_start' => ['required', 'date'],
+            'booking_for' => ['required', 'in:self,other'],
+            'beneficiary_first_name' => ['required_if:booking_for,other', 'nullable', 'string', 'max:255'],
+            'beneficiary_last_name' => ['required_if:booking_for,other', 'nullable', 'string', 'max:255'],
+            'beneficiary_date_of_birth' => ['required_if:booking_for,other', 'nullable', 'date', 'before_or_equal:'.now()->subYear()->toDateString()],
+            'beneficiary_gender' => ['nullable', 'string', 'max:50'],
+            'beneficiary_relationship' => ['required_if:booking_for,other', 'nullable', 'string', 'max:100'],
         ]);
 
         $tz = config('app.timezone') ?: 'UTC';
@@ -363,15 +440,30 @@ class AppointmentController extends Controller
             ]);
         }
 
-        $appointment = Appointment::create([
-            'patient_id' => $user->id,
-            'psychologist_id' => (int) $validated['psychologist_id'],
-            'scheduled_start' => $start,
-            'scheduled_end' => $end,
-            'status' => 'pending',
-            'price' => $price,
-            'currency' => 'TND',
-        ]);
+        $appointment = DB::transaction(function () use ($user, $validated, $start, $end, $price) {
+            $appointment = Appointment::create([
+                'patient_id' => $user->id,
+                'psychologist_id' => (int) $validated['psychologist_id'],
+                'booking_for' => (string) ($validated['booking_for'] ?? 'self'),
+                'scheduled_start' => $start,
+                'scheduled_end' => $end,
+                'status' => 'pending',
+                'price' => $price,
+                'currency' => 'TND',
+            ]);
+
+            if (($validated['booking_for'] ?? 'self') === 'other') {
+                $appointment->beneficiary()->create([
+                    'first_name' => trim((string) $validated['beneficiary_first_name']),
+                    'last_name' => trim((string) $validated['beneficiary_last_name']),
+                    'date_of_birth' => $validated['beneficiary_date_of_birth'],
+                    'gender' => $validated['beneficiary_gender'] ?? null,
+                    'relationship_to_patient' => trim((string) $validated['beneficiary_relationship']),
+                ]);
+            }
+
+            return $appointment;
+        });
 
         ActivityLogger::log($user->id, $user->role ?? null, 'created_appointment', 'Appointment', $appointment->id, 'Appointment requested');
 

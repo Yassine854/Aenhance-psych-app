@@ -240,6 +240,27 @@ function missedByLabel(value) {
   return String(value)
 }
 
+function appointmentForName(a) {
+  const beneficiary = a?.beneficiary || null
+  if (String(a?.booking_for || '').toLowerCase() === 'other' && beneficiary) {
+    return beneficiary.full_name || [beneficiary.first_name, beneficiary.last_name].filter(Boolean).join(' ') || 'Another person'
+  }
+
+  return 'Myself'
+}
+
+function appointmentForMeta(a) {
+  const beneficiary = a?.beneficiary || null
+  if (String(a?.booking_for || '').toLowerCase() !== 'other' || !beneficiary) {
+    return 'Booked for your own session'
+  }
+
+  const parts = []
+  if (beneficiary.relationship_to_patient) parts.push(beneficiary.relationship_to_patient)
+  if (beneficiary.date_of_birth) parts.push(`Born ${beneficiary.date_of_birth}`)
+  return parts.join(' • ') || 'Booked for another person'
+}
+
 
 function canPay(a) {
   return String(a?.status || '').toLowerCase() === 'pending'
@@ -514,7 +535,7 @@ async function cancelAppointment(a) {
 
               <div class="mt-2 text-sm text-gray-700">
                 <div class="mt-3 rounded-2xl border border-gray-200 bg-gray-50 -ml-1 -mr-3 md:-ml-2 md:-mr-4 px-4 md:px-5 py-4">
-                  <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
                     <div>
                       <div class="text-xs font-semibold text-gray-500">Date</div>
                       <div class="mt-1 text-sm font-semibold text-gray-900">{{ formatDate(a.scheduled_start) || '—' }}</div>
@@ -539,6 +560,12 @@ async function cancelAppointment(a) {
                       <div v-if="a.reference" class="mt-2 text-xs text-gray-500">Ref:
                         <span class="inline-flex items-center rounded-md bg-white px-2 py-0.5 font-mono text-[11px] text-gray-700 ring-1 ring-gray-200">{{ a.reference }}</span>
                       </div>
+                    </div>
+
+                    <div>
+                      <div class="text-xs font-semibold text-gray-500">Booked for</div>
+                      <div class="mt-1 text-sm font-semibold text-gray-900">{{ appointmentForName(a) }}</div>
+                      <div class="mt-0.5 text-xs text-gray-500">{{ appointmentForMeta(a) }}</div>
                     </div>
                   </div>
                 </div>

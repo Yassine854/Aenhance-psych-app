@@ -5,6 +5,7 @@ import { computed, onMounted, ref, onBeforeUnmount, nextTick, reactive } from "v
 import Navbar from "@/Components/Navbar.vue";
 import Footer from "@/Components/Footer.vue";
 import ReportModal from '@/Components/ReportModal.vue'
+import { resolveStorageUrl } from '@/utils/storage'
 
 const props = defineProps({
   canLogin: { type: Boolean },
@@ -51,10 +52,7 @@ function fullName(profile) {
 }
 
 function avatarUrl(profile) {
-  const url = profile?.profile_image_url;
-  if (!url || typeof url !== "string") return null;
-  if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("/")) return url;
-  return `/${url}`;
+  return resolveStorageUrl(profile?.profile_image_url) || null;
 }
 
 function initials(profile) {

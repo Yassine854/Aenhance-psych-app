@@ -24,6 +24,8 @@ class AppointmentCancelledMail extends Mailable
     {
         $start = $this->appointment->scheduled_start ? Carbon::parse($this->appointment->scheduled_start) : null;
         $end = $this->appointment->scheduled_end ? Carbon::parse($this->appointment->scheduled_end) : null;
+        $attendeeName = $this->attendeeName();
+        $bookingContext = $this->bookingContext();
 
         return $this
             ->subject('Appointment cancelled #'.$this->appointment->id)
@@ -34,6 +36,8 @@ class AppointmentCancelledMail extends Mailable
                 'counterpart' => $this->counterpart,
                 'start' => $start,
                 'end' => $end,
+                'attendeeName' => $attendeeName,
+                'bookingContext' => $bookingContext,
             ])
             ->attachData(
                 $this->buildCalendarCancel(),
@@ -66,7 +70,9 @@ class AppointmentCancelledMail extends Mailable
         $summary = $this->escapeIcsText('Therapy appointment cancelled');
         $description = $this->escapeIcsText(
             'Appointment #'.$this->appointment->id.
-            ' between '.$this->recipient->name.' and '.$this->counterpart->name.
+            ' with '.$this->counterpart->name.
+            ' for '.$this->attendeeName().
+            ($this->bookingContext() ? '. '.$this->bookingContext() : '').
             ' was cancelled.'
         );
         $location = $this->escapeIcsText('Online / '.$appUrl);
@@ -106,5 +112,33 @@ class AppointmentCancelledMail extends Mailable
             ["\\\\", "\\;", "\\,", "\\n", "\\n", "\\n"],
             $value
         );
+    }
+
+    private function attendeeName(): string
+    {
+        $beneficiary = $this->appointment->beneficiary;
+        if ((string) ($this->appointment->booking_for ?: 'self') === 'other' && $beneficiary) {
+            $name = trim(($beneficiary->first_name ?? '').' '.($beneficiary->last_name ?? ''));
+            if ($name !== '') {
+                return $name;
+            }
+        }
+
+        return (string) ($this->appointment->patient?->name ?: 'the patient');
+    }
+
+    private function bookingContext(): ?string
+    {
+        $beneficiary = $this->appointment->beneficiary;
+        if ((string) ($this->appointment->booking_for ?: 'self') !== 'other' || ! $beneficiary) {
+            return null;
+        }
+
+        $patientName = (string) ($this->appointment->patient?->name ?: 'the patient');
+        $relationship = trim((string) ($beneficiary->relationship_to_patient ?? ''));
+
+        return $relationship !== ''
+            ? 'Booked by '.$patientName.' for their '.$relationship.'.'
+            : 'Booked by '.$patientName.' for another person.';
     }
 }

@@ -35,6 +35,7 @@ class PsychologistAppointmentController extends Controller
             ->where('psychologist_id', $user->id)
             ->with([
                 'patient:id,name,role',
+                'beneficiary:appointment_id,first_name,last_name,date_of_birth,gender,relationship_to_patient',
                 'session:id,appointment_id,room_id,status,started_at',
             ]);
 
@@ -43,8 +44,15 @@ class PsychologistAppointmentController extends Controller
                 $appointmentsQuery->whereDate('scheduled_start', $searchDate);
             }
         } elseif ($searchQuery !== '') {
-            $appointmentsQuery->whereHas('patient', function ($q) use ($searchQuery) {
-                $q->where('name', 'like', '%'.$searchQuery.'%');
+            $appointmentsQuery->where(function ($q) use ($searchQuery) {
+                $q->whereHas('patient', function ($patientQuery) use ($searchQuery) {
+                    $patientQuery->where('name', 'like', '%'.$searchQuery.'%');
+                })->orWhereHas('beneficiary', function ($beneficiaryQuery) use ($searchQuery) {
+                    $beneficiaryQuery
+                        ->where('first_name', 'like', '%'.$searchQuery.'%')
+                        ->orWhere('last_name', 'like', '%'.$searchQuery.'%')
+                        ->orWhereRaw("CONCAT(first_name, ' ', last_name) like ?", ['%'.$searchQuery.'%']);
+                });
             });
         }
 
@@ -63,6 +71,15 @@ class PsychologistAppointmentController extends Controller
                 'patient' => $a->patient ? [
                     'id' => $a->patient->id,
                     'name' => $a->patient->name,
+                ] : null,
+                'booking_for' => (string) ($a->booking_for ?: 'self'),
+                'beneficiary' => $a->beneficiary ? [
+                    'first_name' => (string) $a->beneficiary->first_name,
+                    'last_name' => (string) $a->beneficiary->last_name,
+                    'full_name' => trim(($a->beneficiary->first_name ?? '').' '.($a->beneficiary->last_name ?? '')),
+                    'date_of_birth' => optional($a->beneficiary->date_of_birth)->toDateString() ?? ($a->beneficiary->date_of_birth ? (string) $a->beneficiary->date_of_birth : null),
+                    'gender' => $a->beneficiary->gender,
+                    'relationship_to_patient' => $a->beneficiary->relationship_to_patient,
                 ] : null,
                 'scheduled_start' => optional($a->scheduled_start)->toISOString() ?? (string) $a->scheduled_start,
                 'scheduled_end' => optional($a->scheduled_end)->toISOString() ?? (string) $a->scheduled_end,

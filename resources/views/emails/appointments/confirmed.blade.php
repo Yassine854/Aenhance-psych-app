@@ -19,7 +19,7 @@
     $utcStart = $start ? $start->copy()->utc()->format('Ymd\\THis\\Z') : '';
     $utcEnd = $end ? $end->copy()->utc()->format('Ymd\\THis\\Z') : '';
     $title = rawurlencode('Therapy appointment confirmed #'.$appointment->id);
-    $details = rawurlencode('Appointment with '.($counterpart->name ?? 'your counterpart').' via '.config('app.name'));
+    $details = rawurlencode('Appointment with '.($counterpart->name ?? 'your counterpart').' for '.($attendeeName ?? 'the patient').' via '.config('app.name'));
     $location = rawurlencode(config('app.url'));
     $googleCalendarUrl = $utcStart && $utcEnd
         ? 'https://calendar.google.com/calendar/render?action=TEMPLATE&text='.$title.'&dates='.$utcStart.'/'.$utcEnd.'&details='.$details.'&location='.$location
@@ -59,8 +59,16 @@
                                         <div style="font-size:13px;color:#64748b;margin-bottom:4px;">With</div>
                                         <div style="font-size:16px;font-weight:700;color:#0f172a;margin-bottom:12px;">{{ $counterpart->name ?? 'Your counterpart' }}</div>
 
-                                        <div style="font-size:13px;color:#64748b;margin-bottom:4px;">Session</div>
-                                        <div style="font-size:15px;font-weight:600;color:#0f172a;">Online consultation</div>
+                                        <div style="font-size:13px;color:#64748b;margin-bottom:4px;">Appointment for</div>
+                                        <div style="font-size:16px;font-weight:700;color:#0f172a;margin-bottom:12px;">{{ $attendeeName ?? ($appointment->patient->name ?? 'The patient') }}</div>
+
+                                        @if(!empty($bookingContext))
+                                            <div style="font-size:13px;color:#64748b;margin-bottom:4px;">Booking details</div>
+                                            <div style="font-size:15px;font-weight:600;color:#0f172a;">{{ $bookingContext }}</div>
+                                        @else
+                                            <div style="font-size:13px;color:#64748b;margin-bottom:4px;">Booking details</div>
+                                            <div style="font-size:15px;font-weight:600;color:#0f172a;">Booked for the patient account owner</div>
+                                        @endif
                                     </td>
                                 </tr>
                             </table>
