@@ -74,6 +74,11 @@ class User extends Authenticatable
         return $this->hasMany(Notification::class);
     }
 
+    public function blogs()
+    {
+        return $this->hasMany(Blog::class, 'author_id');
+    }
+
 
     public function isAdmin()
 {

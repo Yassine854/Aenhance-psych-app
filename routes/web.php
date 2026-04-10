@@ -26,6 +26,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Controllers\AppFeeController;
+use App\Http\Controllers\Admin\BlogController;
 use App\Http\Controllers\Admin\PaymentsController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\NotificationController;
@@ -213,6 +214,9 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/admin/reports', [App\Http\Controllers\Admin\ReportsController::class, 'index'])->name('admin.reports.index');
         Route::get('/admin/reports/{report}', [App\Http\Controllers\Admin\ReportsController::class, 'show'])->name('admin.reports.show');
         Route::patch('/admin/reports/{report}', [App\Http\Controllers\Admin\ReportsController::class, 'update'])->name('admin.reports.update');
+
+        // Blogs (Admin)
+        Route::resource('/admin/blogs', BlogController::class)->names('admin.blogs');
 
         // Payouts (Admin)
         Route::get('/admin/payouts', [App\Http\Controllers\Admin\PayoutsController::class, 'index'])->name('admin.payouts.index');

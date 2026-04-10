@@ -285,7 +285,7 @@ const menuGroups = [
         roles: ['ADMIN'],
         subItems: [
           { name: "Ressources", path: "/form-elements", pro: false },
-          { name: "Blogs", path: "/form-elements", pro: false },
+          { name: "Blogs", path: "/admin/blogs", pro: false },
           { name: "App Fee", path: "/app-fees", pro: false },
         ],
       },
