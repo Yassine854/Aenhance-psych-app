@@ -12,6 +12,8 @@ class ClicToPayClient
     private string $username;
     private string $password;
     private string $language;
+    private ?string $caBundle;
+    private bool $sslVerify;
 
     public function __construct()
     {
@@ -19,6 +21,8 @@ class ClicToPayClient
         $this->username = (string) config('services.clictopay.username');
         $this->password = (string) config('services.clictopay.password');
         $this->language = (string) (config('services.clictopay.language') ?: 'en');
+        $this->caBundle = $this->resolveCaBundlePath((string) config('services.clictopay.ca_bundle'));
+        $this->sslVerify = (bool) config('services.clictopay.ssl_verify', true);
     }
 
     public function isConfigured(): bool
@@ -37,10 +41,11 @@ class ClicToPayClient
             'userName' => $this->username,
             'password' => $this->password,
             'language' => $this->language,
-        ], $params);
+        ], $this->normalizeRegisterParams($params));
 
         // ClickToPay supports GET and POST; we use POST form-encoded.
         $response = Http::asForm()
+            ->withOptions($this->requestOptions())
             ->timeout(20)
             ->post($this->baseUrl.'/register.do', $payload);
 
@@ -62,6 +67,7 @@ class ClicToPayClient
         ];
 
         $response = Http::asForm()
+            ->withOptions($this->requestOptions())
             ->timeout(20)
             ->post($this->baseUrl.'/getOrderStatus.do', $payload);
 
@@ -85,6 +91,7 @@ class ClicToPayClient
         ];
 
         $response = Http::asForm()
+            ->withOptions($this->requestOptions())
             ->timeout(20)
             ->post($this->baseUrl.'/getOrderStatusExtended.do', $payload);
 
@@ -146,6 +153,92 @@ class ClicToPayClient
         if (! $this->isConfigured()) {
             throw new \RuntimeException('ClickToPay is not configured. Set CLICTOPAY_BASE_URL/USERNAME/PASSWORD.');
         }
+    }
+
+    private function requestOptions(): array
+    {
+        if (! $this->sslVerify) {
+            return ['verify' => false];
+        }
+
+        if ($this->caBundle) {
+            return ['verify' => $this->caBundle];
+        }
+
+        return ['verify' => true];
+    }
+
+    private function normalizeRegisterParams(array $params): array
+    {
+        $normalized = $params;
+
+        if (array_key_exists('orderNumber', $normalized)) {
+            $normalized['orderNumber'] = $this->sanitizeOrderNumber((string) $normalized['orderNumber']);
+        }
+
+        if (array_key_exists('description', $normalized)) {
+            $normalized['description'] = $this->sanitizeDescription((string) $normalized['description']);
+        }
+
+        if (array_key_exists('pageView', $normalized)) {
+            $normalized['pageView'] = $this->normalizePageView((string) $normalized['pageView']);
+        }
+
+        if (! array_key_exists('sessionTimeoutSecs', $normalized) && ! array_key_exists('expirationDate', $normalized)) {
+            $normalized['sessionTimeoutSecs'] = 1200;
+        }
+
+        return $normalized;
+    }
+
+    private function sanitizeOrderNumber(string $value): string
+    {
+        $value = $this->stripForbiddenBankCharacters($value);
+        $value = trim($value);
+
+        if ($value === '') {
+            throw new \InvalidArgumentException('ClickToPay orderNumber cannot be empty.');
+        }
+
+        return Str::limit($value, 32, '');
+    }
+
+    private function sanitizeDescription(string $value): string
+    {
+        $value = $this->stripForbiddenBankCharacters($value);
+        $value = trim($value);
+
+        return Str::limit($value, 99, '');
+    }
+
+    private function stripForbiddenBankCharacters(string $value): string
+    {
+        return str_replace(["%", "+", "\r", "\n"], ' ', $value);
+    }
+
+    private function normalizePageView(string $value): string
+    {
+        return strtoupper(trim($value)) === 'MOBILE' ? 'MOBILE' : 'DESKTOP';
+    }
+
+    private function resolveCaBundlePath(string $configuredPath): ?string
+    {
+        $candidates = array_filter([
+            trim($configuredPath),
+            (string) ini_get('curl.cainfo'),
+            (string) ini_get('openssl.cafile'),
+            'C:/xampp/apache/bin/curl-ca-bundle.crt',
+            'C:/xampp/php/extras/ssl/cacert.pem',
+        ]);
+
+        foreach ($candidates as $candidate) {
+            $normalized = str_replace('\\', '/', trim($candidate));
+            if ($normalized !== '' && is_file($normalized) && is_readable($normalized)) {
+                return $normalized;
+            }
+        }
+
+        return null;
     }
 
     private function decodeJson($response): array

@@ -27,6 +27,7 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Controllers\AppFeeController;
 use App\Http\Controllers\Admin\BlogController;
+use App\Http\Controllers\Admin\RessourceController;
 use App\Http\Controllers\Admin\PaymentsController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\NotificationController;
@@ -217,6 +218,9 @@ Route::middleware(['auth'])->group(function () {
 
         // Blogs (Admin)
         Route::resource('/admin/blogs', BlogController::class)->names('admin.blogs');
+
+        // Ressources (Admin)
+        Route::resource('/admin/ressources', RessourceController::class)->names('admin.ressources');
 
         // Payouts (Admin)
         Route::get('/admin/payouts', [App\Http\Controllers\Admin\PayoutsController::class, 'index'])->name('admin.payouts.index');

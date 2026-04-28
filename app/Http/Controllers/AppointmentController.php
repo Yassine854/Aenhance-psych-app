@@ -29,6 +29,11 @@ class AppointmentController extends Controller
     private const SESSION_MINUTES = 60;
     private const BOOKING_DAYS_AHEAD = 90;
 
+    private function clickToPayClient(): ClicToPayClient
+    {
+        return app(ClicToPayClient::class);
+    }
+
     private function serializeBeneficiary(?AppointmentBeneficiary $beneficiary, ?string $bookingFor = null): ?array
     {
         if (($bookingFor ?: 'self') !== 'other' || ! $beneficiary) {
@@ -488,64 +493,7 @@ class AppointmentController extends Controller
             return redirect()->back()->with('status', 'This appointment cannot be paid (not pending).');
         }
 
-        $disableRedirect = filter_var(config('services.clictopay.disable_redirect', false), FILTER_VALIDATE_BOOLEAN);
-        if ($disableRedirect) {
-            DB::transaction(function () use ($appointment, $user) {
-                if (strtolower((string) $appointment->status) === 'pending') {
-                    $appointment->update(['status' => 'confirmed']);
-                }
-
-                $session = AppointmentSession::query()->firstOrCreate(
-                    ['appointment_id' => $appointment->id],
-                    [
-                        'room_id' => (string) Str::uuid(),
-                        'status' => 'active',
-                    ]
-                );
-
-                if ($session && $session->wasRecentlyCreated && strtolower((string) $session->status) === 'active') {
-                    ActivityLogger::log(
-                        $user->id ?? null,
-                        $user->role ?? null,
-                        'created_session_status',
-                        'AppointmentSession',
-                        $session->id,
-                        'Session created with status active after appointment confirmation (ClickToPay bypass)'
-                    );
-                }
-
-                $payment = Payment::query()
-                    ->where('appointment_id', $appointment->id)
-                    ->latest('id')
-                    ->first();
-
-                $payload = [
-                    'appointment_id' => $appointment->id,
-                    'amount' => $appointment->price,
-                    'currency' => (string) ($appointment->currency ?: 'TND'),
-                    'provider' => 'manual',
-                    'status' => 'paid',
-                    'payment_method' => 'card',
-                    'paid_at' => now(),
-                ];
-
-                if ($payment) {
-                    $payment->update($payload);
-                    ActivityLogger::log($user->id, $user->role ?? null, 'updated_payment', 'Payment', $payment->id, 'Payment marked paid (ClickToPay bypass) for appointment '.$appointment->id);
-                } else {
-                    $created = Payment::create($payload);
-                    ActivityLogger::log($user->id, $user->role ?? null, 'created_payment', 'Payment', $created->id, 'Payment created and marked paid (ClickToPay bypass) for appointment '.$appointment->id);
-                }
-            });
-
-            $this->dispatchAppointmentConfirmedCommunication($appointment->fresh(['patient', 'psychologist']));
-
-            ActivityLogger::log($user->id, $user->role ?? null, 'confirmed_appointment', 'Appointment', $appointment->id, 'Appointment confirmed with ClickToPay redirect disabled');
-
-            return redirect()->back()->with('status', 'Payment successful. Appointment confirmed.');
-        }
-
-        $client = new ClicToPayClient();
+        $client = $this->clickToPayClient();
         if (! $client->isConfigured()) {
             return redirect()->back()->withErrors([
                 'payment' => 'ClickToPay is not configured on the server.',
@@ -565,20 +513,12 @@ class AppointmentController extends Controller
 
         $returnUrl = route('payments.clictopay.return', ['appointment' => $appointment->id], true);
         $failUrl = route('payments.clictopay.fail', ['appointment' => $appointment->id], true);
+        $pageView = $request->header('Sec-CH-UA-Mobile') === '?1' || $request->boolean('is_mobile')
+            ? 'MOBILE'
+            : 'DESKTOP';
 
         try {
             $currency = (string) ($appointment->currency ?: 'TND');
-
-            $testDescription = $testNo !== '' ? match ($testNo) {
-                '0001' => 'Transaction autorisée (VISA)',
-                '0002' => 'Transaction autorisée (MasterCard)',
-                '0004' => 'Plafond atteint',
-                '0005' => 'Solde insuffisant',
-                '0007' => 'Carte non valide',
-                '0008' => 'Validité incorrecte',
-                '0009' => 'CVV2 incorrecte',
-                default => 'Test case '.$testNo,
-            } : null;
 
             $result = $client->register([
                 'orderNumber' => $orderNumber,
@@ -586,10 +526,8 @@ class AppointmentController extends Controller
                 'currency' => $client->currencyToIso4217Numeric($currency),
                 'returnUrl' => $returnUrl,
                 'failUrl' => $failUrl,
-                'description' => $testDescription
-                    ? ('Appointment '.$appointment->id.' - '.$testDescription)
-                    : ('Appointment '.$appointment->id),
-                'pageView' => 'DESKTOP',
+                'description' => 'Appointment '.$appointment->id,
+                'pageView' => $pageView,
             ]);
         } catch (\Throwable $e) {
             return redirect()->back()->withErrors([
@@ -665,7 +603,7 @@ class AppointmentController extends Controller
             ]);
         }
 
-        $client = new ClicToPayClient();
+        $client = $this->clickToPayClient();
         if (! $client->isConfigured()) {
             return redirect()->route('patient.appointments')->withErrors([
                 'payment' => 'ClickToPay is not configured on the server.',
@@ -718,99 +656,11 @@ class AppointmentController extends Controller
             $testNoFromOrder = (string) $m[1];
         }
 
-        $testDescription = $testNoFromOrder !== '' ? match ($testNoFromOrder) {
-            '0001' => 'Transaction autorisée (VISA)',
-            '0002' => 'Transaction autorisée (MasterCard)',
-            '0004' => 'Plafond atteint',
-            '0005' => 'Solde insuffisant',
-            '0007' => 'Carte non valide',
-            '0008' => 'Validité incorrecte',
-            '0009' => 'CVV2 incorrecte',
-            default => 'Test case '.$testNoFromOrder,
-        } : null;
-
-        // If orderNumber was tagged with a test_no (T0004, ...), check whether the
-        // returned masked PAN/expiration matches what the test matrix expects.
-        // This catches common testing mistakes (wrong card/expiry entered).
-        $expected = null;
-        if ($testNoFromOrder !== '') {
-            $expected = match ($testNoFromOrder) {
-                '0001' => ['pan6' => '450921', 'exp_yyyymm' => '202612'],
-                '0002' => ['pan6' => '544021', 'exp_yyyymm' => '202612'],
-                '0004' => ['pan6' => '456894', 'exp_yyyymm' => '202512'],
-                '0005' => ['pan6' => '510405', 'exp_yyyymm' => '202512'],
-                '0007' => ['pan6' => '455769', 'exp_yyyymm' => '202512'],
-                '0008' => ['pan6' => '450921', 'exp_yyyymm' => '202512'],
-                '0009' => ['pan6' => '450921', 'exp_yyyymm' => '202612'],
-                default => null,
-            };
-        }
-
-        // Best-effort inference from gateway-provided masked PAN/expiration.
-        // Note: we can NEVER infer CVV-only cases (0001 vs 0009) because CVV is not returned.
-        $testGuess = null;
-        if ($testDescription) {
-            $testGuess = $testDescription;
-        } elseif ($cardPanMasked !== '') {
-            $pan6 = preg_match('/^(\d{6})/', $cardPanMasked, $m) ? (string) $m[1] : '';
-            $exp = $cardExpiration;
-
-            // ClickToPay typically returns YYYYMM (e.g. 201512). Keep it flexible.
-            $expYyyyMm = '';
-            if (preg_match('/^(\d{4})(\d{2})$/', $exp, $m2)) {
-                $expYyyyMm = $m2[1].$m2[2];
-            }
-
-            $testGuess = match (true) {
-                $pan6 === '456894' => 'Plafond atteint (0004)',
-                $pan6 === '510405' => 'Solde insuffisant (0005)',
-                $pan6 === '455769' => 'Carte non valide (0007)',
-                $pan6 === '544021' => 'Transaction autorisée (MasterCard) (0002)',
-                // VISA test card used in multiple cases
-                $pan6 === '450921' && $expYyyyMm === '202512' => 'Validité incorrecte (0008)',
-                $pan6 === '450921' && $expYyyyMm === '202612' => 'VISA success-like case (0001 or 0009; CVV-only cases are indistinguishable)',
-                $pan6 === '450921' => 'VISA test card (0001/0008/0009)',
-                default => null,
-            };
-        }
-
-        if (is_array($expected) && $cardPanMasked !== '' && $cardExpiration !== '') {
-            $pan6Actual = preg_match('/^(\d{6})/', $cardPanMasked, $m) ? (string) $m[1] : '';
-            $expActual = '';
-            if (preg_match('/^(\d{4})(\d{2})$/', $cardExpiration, $m2)) {
-                $expActual = $m2[1].$m2[2];
-            }
-
-            $mismatch = false;
-            if (($expected['pan6'] ?? '') !== '' && $pan6Actual !== '' && (string) $expected['pan6'] !== $pan6Actual) {
-                $mismatch = true;
-            }
-            if (($expected['exp_yyyymm'] ?? '') !== '' && $expActual !== '' && (string) $expected['exp_yyyymm'] !== $expActual) {
-                $mismatch = true;
-            }
-
-            if ($mismatch) {
-                Log::warning('ClickToPay test case mismatch', [
-                    'appointment_id' => $appointment->id,
-                    'orderId' => $orderId,
-                    'orderNumber' => $gatewayOrderNumber !== '' ? $gatewayOrderNumber : null,
-                    'test_no' => $testNoFromOrder,
-                    'expected' => $expected,
-                    'actual' => [
-                        'pan6' => $pan6Actual !== '' ? $pan6Actual : null,
-                        'exp_yyyymm' => $expActual !== '' ? $expActual : null,
-                    ],
-                ]);
-            }
-        }
-
         Log::info('ClickToPay verification response', [
             'appointment_id' => $appointment->id,
             'orderId' => $orderId,
             'orderNumber' => $gatewayOrderNumber !== '' ? $gatewayOrderNumber : null,
             'test_no' => $testNoFromOrder !== '' ? $testNoFromOrder : null,
-            'test_description' => $testDescription,
-            'test_guess' => $testGuess,
             'orderStatus' => $orderStatusStr,
             'actionCode' => $actionCodeStr,
             'errorCode' => $errorCodeStr,
@@ -834,7 +684,6 @@ class AppointmentController extends Controller
             'appointment_id' => $appointment->id,
             'orderId' => $orderId,
             'classification' => $classification,
-            'test_description' => $testDescription,
         ]);
 
         // IMPORTANT: do NOT treat a missing actionCode as success.
@@ -862,7 +711,6 @@ class AppointmentController extends Controller
             'appointment_id' => $appointment->id,
             'orderId' => $orderId,
             'orderNumber' => $gatewayOrderNumber !== '' ? $gatewayOrderNumber : null,
-            'test_guess' => $testGuess,
             'orderStatus' => $orderStatusStr,
             'actionCode' => $actionCodeStr,
             'errorCode' => $errorCodeStr,

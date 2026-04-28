@@ -11,7 +11,6 @@
           </div>
 
           <h1 class="mt-4 max-w-4xl text-4xl font-semibold leading-tight">{{ blog.title }}</h1>
-          <p v-if="blog.excerpt" class="mt-4 max-w-3xl text-base leading-7 text-white/85">{{ blog.excerpt }}</p>
 
           <div class="mt-6 flex flex-wrap items-center gap-3 text-sm text-white/75">
             <span>By {{ blog.author?.name || 'Admin' }}</span>

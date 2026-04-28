@@ -21,9 +21,6 @@ const paymentError = computed(() => page.props?.errors?.payment || '')
 const confirmingId = ref(null)
 const cancelingId = ref(null)
 
-const isDev = Boolean(import.meta?.env?.DEV)
-const clickToPayTestNo = ref('')
-
 // Pagination: server already returns recent-first; paginate when more than 5
 const pageSize = ref(5)
 const currentPage = ref(1)
@@ -270,14 +267,9 @@ function payAndConfirm(a) {
   if (!a?.id || !canPay(a)) return
   confirmingId.value = a.id
 
-  const payload = {}
-  if (isDev && clickToPayTestNo.value) {
-    payload.test_no = String(clickToPayTestNo.value)
-  }
-
   router.post(
     route('appointments.pay', a.id),
-    payload,
+    {},
     {
       preserveScroll: true,
       onError: () => {
@@ -402,27 +394,6 @@ async function cancelAppointment(a) {
           </div>
         </div>
 
-        <div v-if="isDev" class="mt-5 rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3">
-          <div class="text-xs font-semibold text-indigo-700">Dev: ClickToPay test case</div>
-          <div class="mt-2 flex flex-col sm:flex-row sm:items-center gap-3">
-            <select
-              v-model="clickToPayTestNo"
-              class="w-full sm:w-72 rounded-lg border border-indigo-200 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-300"
-            >
-              <option value="">(none)</option>
-              <option value="0001">0001 - Transaction autorisée</option>
-              <option value="0002">0002 - Transaction autorisée (MasterCard)</option>
-              <option value="0004">0004 - Plafond atteint</option>
-              <option value="0005">0005 - Solde insuffisant</option>
-              <option value="0007">0007 - Carte non valide</option>
-              <option value="0008">0008 - Validité incorrecte</option>
-              <option value="0009">0009 - CVV2 incorrecte</option>
-            </select>
-            <div class="text-xs text-indigo-800">
-              This only tags logs/orderNumber; it does not force a decline.
-            </div>
-          </div>
-        </div>
       </div>
 
       <div v-if="!appointments.length" class="bg-white border border-gray-200 rounded-2xl shadow-sm p-8 text-gray-700">

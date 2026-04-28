@@ -50,6 +50,8 @@ return [
         'username' => env('CLICTOPAY_USERNAME'),
         'password' => env('CLICTOPAY_PASSWORD'),
         'language' => env('CLICTOPAY_LANGUAGE', 'en'),
+        'ca_bundle' => env('CLICTOPAY_CA_BUNDLE'),
+        'ssl_verify' => env('CLICTOPAY_SSL_VERIFY', true),
         'disable_redirect' => env('CLICTOPAY_DISABLE_REDIRECT', false),
     ],
 
