@@ -494,8 +494,22 @@
             </ul>
           </li>
           
-          <li><a href="#" class="px-3 py-1 text-gray-700 font-medium hover:bg-gray-100 transition">{{ t('nav.resources') }}</a></li>
-          <li><a href="#" class="px-3 py-1 text-gray-700 font-medium hover:bg-gray-100 transition">{{ t('nav.blog') }}</a></li>
+          <li>
+            <Link
+              :href="route('ressources.index')"
+              class="px-3 py-1 text-gray-700 font-medium hover:bg-gray-100 transition"
+            >
+              {{ t('nav.resources') }}
+            </Link>
+          </li>
+          <li>
+            <Link
+              :href="route('blogs.index')"
+              class="px-3 py-1 text-gray-700 font-medium hover:bg-gray-100 transition"
+            >
+              {{ t('nav.blog') }}
+            </Link>
+          </li>
         </ul>
 
         <!-- Hamburger (mobile) -->
@@ -568,8 +582,24 @@
             </ul>
           </li>
           
-          <li><a href="#" class="block px-3 py-2 text-gray-700 font-medium hover:bg-gray-100 transition">{{ t('nav.resources') }}</a></li>
-          <li><a href="#" class="block px-3 py-2 text-gray-700 font-medium hover:bg-gray-100 transition">{{ t('nav.blog') }}</a></li>
+          <li>
+            <Link
+              :href="route('ressources.index')"
+              class="block px-3 py-2 text-gray-700 font-medium hover:bg-gray-100 transition"
+              @click="showMobileMenu = false"
+            >
+              {{ t('nav.resources') }}
+            </Link>
+          </li>
+          <li>
+            <Link
+              :href="route('blogs.index')"
+              class="block px-3 py-2 text-gray-700 font-medium hover:bg-gray-100 transition"
+              @click="showMobileMenu = false"
+            >
+              {{ t('nav.blog') }}
+            </Link>
+          </li>
         </ul>
       </div>
     </div>

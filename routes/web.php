@@ -17,6 +17,8 @@ use App\Http\Controllers\ExpertiseController;
 use App\Http\Controllers\AppointmentSessionController;
 use App\Http\Controllers\SessionRatingController;
 use App\Http\Controllers\AppointmentSessionNoteController;
+use App\Http\Controllers\GuestBlogController;
+use App\Http\Controllers\GuestRessourceController;
 use App\Http\Controllers\Psychologist\PsychologistPatientController;
 use App\Http\Controllers\Psychologist\PsychologistPayoutController;
 use Illuminate\Foundation\Application;
@@ -114,6 +116,12 @@ Route::get('/how-it-works', function () {
 // Services (public)
 Route::get('/services', [ServicesController::class, 'index'])->name('services.index');
 Route::get('/services/consultation', [ServicesController::class, 'consultation'])->name('services.consultation');
+
+// Blogs (public)
+Route::get('/blogs', [GuestBlogController::class, 'index'])->name('blogs.index');
+
+// Ressources (public)
+Route::get('/ressources', [GuestRessourceController::class, 'index'])->name('ressources.index');
 
 
 Route::get('/test-cloudinary', function () {

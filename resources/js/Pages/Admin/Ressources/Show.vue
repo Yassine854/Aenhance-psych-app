@@ -184,6 +184,18 @@ async function confirmDelete() {
   padding-left: 1.5rem;
 }
 
+.ressource-description :deep(li[data-list='bullet']) {
+  list-style-type: disc;
+}
+
+.ressource-description :deep(li[data-list='ordered']) {
+  list-style-type: decimal;
+}
+
+.ressource-description :deep(li > .ql-ui) {
+  display: none;
+}
+
 .ressource-description :deep(li) {
   margin: 0.35rem 0;
 }
