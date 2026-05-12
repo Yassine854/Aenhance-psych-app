@@ -762,7 +762,175 @@
         "description": "Collaborate with healthcare providers, educational institutions, and community organizations to create a comprehensive ecosystem of mental health support and education."
       }
     }
+  },
+  "ourCareTeam": {
+    "banner": {
+      "title": "Our Care Team",
+      "home": "Home",
+      "about": "About",
+      "current": "Our Care Team"
+    },
+    "intro": {
+      "eyebrow": "Meet AEnhance",
+      "title": "A care team built for trust, warmth, and clinical excellence.",
+      "description": "Our psychologists combine professional rigor with humane, culturally aware care. Explore a team designed to make online therapy feel personal, accessible, and grounded in real therapeutic expertise."
+    },
+    "stats": {
+      "psychologists": "Psychologists",
+      "specialisations": "Specialisations",
+      "languages": "Languages",
+      "availability": "Coverage Days"
+    },
+    "highlights": {
+      "approved": {
+        "title": "Approved Professionals",
+        "description": "Every profile shown here belongs to an approved AEnhance psychologist with an active account on the platform."
+      },
+      "evidenceBased": {
+        "title": "Evidence-Based Care",
+        "description": "Our team supports clients through approaches shaped by clinical training, ethical practice, and real-world experience."
+      },
+      "multilingual": {
+        "title": "Multilingual Support",
+        "description": "Find psychologists who can meet you in the language that feels most natural, comfortable, and clear to you."
+      }
+    },
+    "team": {
+      "title": "Explore The Team",
+      "subtitle": "Browse AEnhance psychologists, discover their areas of focus, and choose the professional who feels like the right fit for your next step.",
+      "book": "Book With This Psychologist",
+      "consultation": "See Consultation Page",
+      "viewAllServices": "Browse Consultation Interface",
+      "empty": "Our team profiles will appear here as soon as they are published.",
+      "noBio": "This psychologist has not added a biography yet.",
+      "priceUnknown": "Contact Us",
+      "unknownName": "AEnhance Psychologist",
+      "verified": "Verified",
+      "ratingsLabel": "reviews",
+      "availabilityTitle": "Weekly availability"
+    },
+    "sidebar": {
+      "about": {
+        "title": "ABOUT",
+        "items": {
+          "telementalHealth": "Telemental Health",
+          "whoWeAre": "Who We Are",
+          "ourCareTeam": "Our Care Team",
+          "termsAndConditions": "Terms & Conditions",
+          "privacyProtection": "Privacy Protection"
+        }
+      },
+      "navigation": {
+        "title": "MAIN NAVIGATION",
+        "items": {
+          "about": "About",
+          "ourServices": "Our Services",
+          "support": "Support",
+          "resources": "Resources",
+          "blog": "Blog"
+        }
+      },
+      "launch": {
+        "title": "CARE THAT FITS REAL LIFE",
+        "description": "Meet psychologists who offer flexible online support, thoughtful specialisation, and a therapy experience designed around accessibility."
+      }
+    }
+  },
+  "joinOurTeamPage": {
+    "banner": {
+      "title": "Join Our Team",
+      "home": "Home",
+      "about": "About",
+      "current": "Join Our Team"
+    },
+    "hero": {
+      "eyebrow": "For Psychologists",
+      "title": "Bring your practice online with a platform built for thoughtful care.",
+      "description": "AEnhance invites licensed psychologists to join a digital care environment designed around accessibility, flexibility, and meaningful therapeutic impact. If you want to reach more people while keeping your work professional and human, this is where to start.",
+      "pillars": {
+        "1": { "label": "Way Of Working", "value": "Flexible online sessions" },
+        "2": { "label": "Platform Style", "value": "Simple, guided onboarding" },
+        "3": { "label": "Mission", "value": "Expand access to mental health care" }
+      },
+      "card": {
+        "title": "A place for modern therapeutic practice",
+        "description": "Build your presence, manage your availability, and connect with clients through an experience shaped for trusted online psychology."
+      }
+    },
+    "benefits": {
+      "flexibility": {
+        "title": "Work With Real Flexibility",
+        "description": "Set up your online availability around your own rhythm and offer sessions in a structure that respects your schedule and practice style."
+      },
+      "reach": {
+        "title": "Reach A Wider Community",
+        "description": "Connect with people who need support across different locations and backgrounds, without being limited by physical distance."
+      },
+      "platform": {
+        "title": "Use A Focused Platform",
+        "description": "Present your profile clearly, organise your services, and work from a platform that helps clients understand your expertise quickly."
+      },
+      "impact": {
+        "title": "Grow Meaningful Impact",
+        "description": "Join a mission centered on expanding access to quality mental health care while staying aligned with clinical seriousness and empathy."
+      }
+    },
+    "steps": {
+      "title": "How To Get Started",
+      "description": "The process is straightforward. Create your account, complete your professional information, and prepare your presence on AEnhance.",
+      "items": {
+        "create": "Create your account and choose the psychologist registration path.",
+        "complete": "Fill in your profile details, specialisations, and availability so patients can understand your practice.",
+        "launch": "Once your profile is ready, you can begin building your online presence with AEnhance."
+      }
+    },
+    "requirements": {
+      "title": "What We Value",
+      "items": {
+        "1": "A professional mindset grounded in ethical, high-quality mental health care.",
+        "2": "Clear communication that helps clients feel safe, informed, and respected.",
+        "3": "A willingness to use telemental-health tools thoughtfully and responsibly.",
+        "4": "A genuine commitment to accessibility, empathy, and clinically sound support."
+      }
+    },
+    "cta": {
+      "register": "Register As A Psychologist",
+      "login": "Log In To Continue",
+      "dashboard": "Open Your Dashboard",
+      "learnMore": "Learn More",
+      "meetTeam": "Meet The Current Team"
+    },
+    "finalCta": {
+      "eyebrow": "Start Here",
+      "title": "If your expertise can help more people, let it travel further.",
+      "description": "Join AEnhance and shape an online practice that is accessible, intentional, and ready for the realities of modern mental health care."
+    },
+    "sidebar": {
+      "about": {
+        "title": "ABOUT",
+        "items": {
+          "telementalHealth": "Telemental Health",
+          "whoWeAre": "Who We Are",
+          "ourCareTeam": "Our Care Team",
+          "joinOurTeam": "Join Our Team",
+          "termsAndConditions": "Terms & Conditions",
+          "privacyProtection": "Privacy Protection"
+        }
+      },
+      "navigation": {
+        "title": "MAIN NAVIGATION",
+        "items": {
+          "about": "About",
+          "ourServices": "Our Services",
+          "support": "Support",
+          "resources": "Resources",
+          "blog": "Blog"
+        }
+      },
+      "box": {
+        "title": "Ready To Join AEnhance?",
+        "description": "Create your psychologist account and begin building your online presence with a platform designed for trusted therapeutic work."
+      }
+    }
   }
-  
-
 }

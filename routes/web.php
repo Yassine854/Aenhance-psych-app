@@ -80,6 +80,16 @@ Route::get('/who-we-are', function () {
     ]);
 })->name('who-we-are');
 
+Route::get('/our-care-team', [ServicesController::class, 'ourCareTeam'])->name('our-care-team');
+
+Route::get('/join-our-team', function () {
+    return Inertia::render('guest/about/JoinOurTeam', [
+        'canLogin' => Route::has('login'),
+        'canRegister' => Route::has('register'),
+        'authUser' => Auth::user(),
+    ]);
+})->name('join-our-team');
+
 Route::get('/terms-conditions', function () {
     return Inertia::render('guest/about/TermsConditions', [
         'canLogin' => Route::has('login'),

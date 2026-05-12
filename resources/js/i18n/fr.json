@@ -762,6 +762,175 @@
         "description": "Collaborer avec des prestataires de soins de santé, des institutions éducatives et des organisations communautaires pour créer un écosystème complet de soutien et d'éducation en matière de santé mentale."
       }
     }
-  
+  },
+  "ourCareTeam": {
+    "banner": {
+      "title": "Notre Équipe de Soins",
+      "home": "Accueil",
+      "about": "À Propos",
+      "current": "Notre Équipe de Soins"
+    },
+    "intro": {
+      "eyebrow": "Rencontrez AEnhance",
+      "title": "Une équipe de soins fondée sur la confiance, la chaleur humaine et l'excellence clinique.",
+      "description": "Nos psychologues associent rigueur professionnelle et accompagnement humain, sensible au contexte culturel. Découvrez une équipe pensée pour rendre la thérapie en ligne plus personnelle, accessible et profondément ancrée dans l'expertise clinique."
+    },
+    "stats": {
+      "psychologists": "Psychologues",
+      "specialisations": "Spécialisations",
+      "languages": "Langues",
+      "availability": "Jours couverts"
+    },
+    "highlights": {
+      "approved": {
+        "title": "Professionnels Approuvés",
+        "description": "Chaque profil affiché ici appartient à un psychologue AEnhance approuvé disposant d'un compte actif sur la plateforme."
+      },
+      "evidenceBased": {
+        "title": "Prise en Charge Fondée sur les Preuves",
+        "description": "Notre équipe accompagne les clients avec des approches nourries par la formation clinique, la pratique éthique et l'expérience de terrain."
+      },
+      "multilingual": {
+        "title": "Accompagnement Multilingue",
+        "description": "Trouvez des psychologues capables de vous accompagner dans la langue qui vous semble la plus naturelle, confortable et claire."
+      }
+    },
+    "team": {
+      "title": "Découvrir L'Équipe",
+      "subtitle": "Parcourez les psychologues d'AEnhance, découvrez leurs domaines d'intervention et choisissez le professionnel qui correspond le mieux à votre prochaine étape.",
+      "book": "Prendre Rendez-Vous",
+      "consultation": "Voir la Page Consultation",
+      "viewAllServices": "Ouvrir l'Interface Consultation",
+      "empty": "Les profils de notre équipe apparaîtront ici dès leur publication.",
+      "noBio": "Ce psychologue n'a pas encore ajouté de biographie.",
+      "priceUnknown": "Nous Contacter",
+      "unknownName": "Psychologue AEnhance",
+      "verified": "Vérifié",
+      "ratingsLabel": "avis",
+      "availabilityTitle": "Disponibilité hebdomadaire"
+    },
+    "sidebar": {
+      "about": {
+        "title": "À PROPOS",
+        "items": {
+          "telementalHealth": "Télésanté Mentale",
+          "whoWeAre": "Qui Sommes-Nous",
+          "ourCareTeam": "Notre Équipe de Soins",
+          "termsAndConditions": "Termes et Conditions",
+          "privacyProtection": "Protection de la Vie Privée"
+        }
+      },
+      "navigation": {
+        "title": "NAVIGATION PRINCIPALE",
+        "items": {
+          "about": "À Propos",
+          "ourServices": "Nos Services",
+          "support": "Support",
+          "resources": "Ressources",
+          "blog": "Blog"
+        }
+      },
+      "launch": {
+        "title": "DES SOINS ADAPTÉS À LA VRAIE VIE",
+        "description": "Rencontrez des psychologues qui proposent un accompagnement en ligne flexible, des spécialisations réfléchies et une expérience thérapeutique pensée pour l'accessibilité."
+      }
+    }
+  },
+  "joinOurTeamPage": {
+    "banner": {
+      "title": "Rejoignez Notre Équipe",
+      "home": "Accueil",
+      "about": "À Propos",
+      "current": "Rejoignez Notre Équipe"
+    },
+    "hero": {
+      "eyebrow": "Pour Les Psychologues",
+      "title": "Développez votre pratique en ligne avec une plateforme conçue pour un accompagnement réfléchi.",
+      "description": "AEnhance invite les psychologues agréés à rejoindre un environnement de soins numériques pensé autour de l'accessibilité, de la flexibilité et d'un impact thérapeutique réel. Si vous souhaitez accompagner davantage de personnes tout en gardant une pratique professionnelle et humaine, c'est ici que cela commence.",
+      "pillars": {
+        "1": { "label": "Mode De Travail", "value": "Séances en ligne flexibles" },
+        "2": { "label": "Expérience Plateforme", "value": "Intégration simple et guidée" },
+        "3": { "label": "Mission", "value": "Élargir l'accès aux soins psychiques" }
+      },
+      "card": {
+        "title": "Un espace pour une pratique thérapeutique moderne",
+        "description": "Développez votre présence, gérez vos disponibilités et connectez-vous avec vos patients grâce à une expérience pensée pour une psychologie en ligne de confiance."
+      }
+    },
+    "benefits": {
+      "flexibility": {
+        "title": "Travaillez Avec Une Vraie Flexibilité",
+        "description": "Organisez vos disponibilités en ligne selon votre propre rythme et proposez des séances dans un cadre respectueux de votre emploi du temps et de votre style de pratique."
+      },
+      "reach": {
+        "title": "Touchez Une Communauté Plus Large",
+        "description": "Entrez en relation avec des personnes qui ont besoin de soutien dans différents lieux et contextes, sans être limité par la distance physique."
+      },
+      "platform": {
+        "title": "Utilisez Une Plateforme Ciblée",
+        "description": "Présentez clairement votre profil, organisez vos services et travaillez depuis une plateforme qui aide les patients à comprendre rapidement votre expertise."
+      },
+      "impact": {
+        "title": "Développez Un Impact Utile",
+        "description": "Rejoignez une mission centrée sur l'élargissement de l'accès à des soins psychiques de qualité tout en restant fidèle à l'exigence clinique et à l'empathie."
+      }
+    },
+    "steps": {
+      "title": "Comment Commencer",
+      "description": "Le parcours est simple. Créez votre compte, complétez vos informations professionnelles et préparez votre présence sur AEnhance.",
+      "items": {
+        "create": "Créez votre compte et choisissez le parcours d'inscription destiné aux psychologues.",
+        "complete": "Complétez votre profil, vos spécialisations et vos disponibilités afin que les patients comprennent votre pratique.",
+        "launch": "Une fois votre profil prêt, vous pouvez commencer à construire votre présence en ligne avec AEnhance."
+      }
+    },
+    "requirements": {
+      "title": "Ce Que Nous Valorisons",
+      "items": {
+        "1": "Un état d'esprit professionnel fondé sur une prise en charge éthique et de haute qualité.",
+        "2": "Une communication claire qui aide les patients à se sentir en sécurité, informés et respectés.",
+        "3": "Une volonté d'utiliser les outils de télésanté mentale avec sérieux et responsabilité.",
+        "4": "Un engagement sincère envers l'accessibilité, l'empathie et un accompagnement cliniquement solide."
+      }
+    },
+    "cta": {
+      "register": "S'inscrire En Tant Que Psychologue",
+      "login": "Se Connecter Pour Continuer",
+      "dashboard": "Ouvrir Votre Tableau De Bord",
+      "learnMore": "En Savoir Plus",
+      "meetTeam": "Découvrir L'Équipe Actuelle"
+    },
+    "finalCta": {
+      "eyebrow": "Commencez Ici",
+      "title": "Si votre expertise peut aider plus de personnes, faites-la aller plus loin.",
+      "description": "Rejoignez AEnhance et construisez une pratique en ligne accessible, intentionnelle et adaptée aux réalités actuelles de la santé mentale."
+    },
+    "sidebar": {
+      "about": {
+        "title": "À PROPOS",
+        "items": {
+          "telementalHealth": "Télésanté Mentale",
+          "whoWeAre": "Qui Sommes-Nous",
+          "ourCareTeam": "Notre Équipe de Soins",
+          "joinOurTeam": "Rejoignez Notre Équipe",
+          "termsAndConditions": "Termes et Conditions",
+          "privacyProtection": "Protection de la Vie Privée"
+        }
+      },
+      "navigation": {
+        "title": "NAVIGATION PRINCIPALE",
+        "items": {
+          "about": "À Propos",
+          "ourServices": "Nos Services",
+          "support": "Support",
+          "resources": "Ressources",
+          "blog": "Blog"
+        }
+      },
+      "box": {
+        "title": "Prêt À Rejoindre AEnhance ?",
+        "description": "Créez votre compte psychologue et commencez à bâtir votre présence en ligne avec une plateforme conçue pour un travail thérapeutique de confiance."
+      }
+    }
   }
 }

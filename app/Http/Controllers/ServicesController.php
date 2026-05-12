@@ -21,7 +21,29 @@ class ServicesController extends Controller
 
     public function consultation()
     {
-        $profiles = PsychologistProfile::query()
+        $profiles = $this->approvedPsychologistProfiles();
+
+        return Inertia::render('guest/services/Consultation', [
+            'canLogin' => Route::has('login'),
+            'canRegister' => Route::has('register'),
+            'authUser' => Auth::user(),
+            'profiles' => $profiles,
+        ]);
+    }
+
+    public function ourCareTeam()
+    {
+        return Inertia::render('guest/about/OurCareTeam', [
+            'canLogin' => Route::has('login'),
+            'canRegister' => Route::has('register'),
+            'authUser' => Auth::user(),
+            'profiles' => $this->approvedPsychologistProfiles(),
+        ]);
+    }
+
+    private function approvedPsychologistProfiles()
+    {
+        return PsychologistProfile::query()
             ->with(['user', 'availabilities', 'specialisations', 'expertises'])
             ->where('is_approved', true)
             ->whereHas('user', function ($query) {
@@ -41,7 +63,6 @@ class ServicesController extends Controller
                     $languages = [];
                 }
 
-                // compute rating average and count from session_ratings (tied to user id)
                 $rating = DB::table('session_ratings')
                     ->where('psychologist_id', $profile->user_id)
                     ->selectRaw('AVG(rating) as avg, COUNT(*) as count')
@@ -78,18 +99,10 @@ class ServicesController extends Controller
                                 'end_time' => (string) $availability->end_time,
                             ];
                         }),
-                    // rating fields: average (decimal) and count (int)
-                    'rating_average' => $rating->avg !== null ? round((float)$rating->avg, 2) : null,
+                    'rating_average' => $rating->avg !== null ? round((float) $rating->avg, 2) : null,
                     'ratings_count' => $rating->count ?? 0,
                 ];
             })
             ->values();
-
-        return Inertia::render('guest/services/Consultation', [
-            'canLogin' => Route::has('login'),
-            'canRegister' => Route::has('register'),
-            'authUser' => Auth::user(),
-            'profiles' => $profiles,
-        ]);
     }
 }

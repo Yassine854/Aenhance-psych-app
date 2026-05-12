@@ -1083,8 +1083,8 @@ onMounted(() => {
 const aboutItems = computed(() => [
   { label: t("nav.aboutItems.0"), href: route('telemental-health') },
   { label: t("nav.aboutItems.1"), href: route('who-we-are') },
-  { label: t("nav.aboutItems.2"), href: "#" },
-  { label: t("nav.aboutItems.3"), href: "#" },
+  { label: t("nav.aboutItems.2"), href: route('our-care-team') },
+  { label: t("nav.aboutItems.3"), href: route('join-our-team') },
   { label: t("nav.aboutItems.4"), href: route('terms-conditions') },
   { label: t("nav.aboutItems.5"), href: route('privacy-protection') }
 ]);
