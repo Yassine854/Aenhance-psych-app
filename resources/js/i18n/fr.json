@@ -2,9 +2,9 @@
   "login": "Connexion",
   "register": "Créer un compte",
   "dashboard": "Tableau de bord",
-  "heroTitle": "Santé Mentale à Distance",
-  "aboutTitle": "À propos de la santé mentale à distance",
-  "aboutDesc": "La santé mentale à distance, également appelée...",
+  "heroTitle": "Télésanté Mentale",
+  "aboutTitle": "À propos de la télésanté Mentale",
+  "aboutDesc": "La télésanté Mentale, également appelée...",
   "nav": {
     "about": "À propos",
     "services": "Nos Services",
@@ -191,29 +191,29 @@
   },
   "telementalHealth": {
     "banner": {
-      "title": "Santé Mentale à Distance",
+      "title": "Télésanté Mentale",
       "home": "Accueil",
       "about": "À Propos",
-      "current": "Santé Mentale à Distance"
+      "current": "Télésanté Mentale"
     },
     "content": {
-      "aboutTitle": "À Propos de la Santé Mentale à Distance",
-      "aboutParagraph": "La santé mentale à distance, également connue sous le nom de thérapie en ligne ou téléthérapie, change notre approche des soins de santé mentale. Elle utilise la puissance de la technologie pour rendre la thérapie plus accessible, plus pratique et très efficace. Chez AEnhance, nous fournissons des services de télésanté mentale de haute qualité pour aider les individus à améliorer leur bien-être mental et à vivre une vie plus heureuse et plus épanouissante.",
-      "whatIsTitle": "Qu'est-ce que la Santé Mentale à Distance ?",
-      "whatIsParagraph": "La santé mentale à distance fait référence à la prestation de services de santé mentale, y compris la thérapie et le conseil, via des plateformes numériques telles que la vidéoconférence, les appels téléphoniques ou la messagerie sécurisée. Cette approche innovante permet aux individus de se connecter avec des professionnels de la santé mentale agréés depuis le confort de leur domicile ou de tout endroit avec accès à Internet.",
-      "whyChooseTitle": "Pourquoi Choisir la Santé Mentale à Distance ?",
+      "aboutTitle": "À Propos de la Télésanté Mentale",
+      "aboutParagraph": "La télésanté Mentale, également connue sous le nom de thérapie en ligne ou téléthérapie, change notre approche des soins de santé mentale. Elle utilise la puissance de la technologie pour rendre la thérapie plus accessible, plus pratique et très efficace. Chez AEnhance, nous fournissons des services de télésanté mentale de haute qualité pour aider les individus à améliorer leur bien-être mental et à vivre une vie plus heureuse et plus épanouissante.",
+      "whatIsTitle": "Qu'est-ce que la Télésanté Mentale ?",
+      "whatIsParagraph": "La télésanté Mentale fait référence à la prestation de services de santé mentale, y compris la thérapie et le conseil, via des plateformes numériques telles que la vidéoconférence, les appels téléphoniques ou la messagerie sécurisée. Cette approche innovante permet aux individus de se connecter avec des professionnels de la santé mentale agréés depuis le confort de leur domicile ou de tout endroit avec accès à Internet.",
+      "whyChooseTitle": "Pourquoi Choisir la Télésanté Mentale ?",
       "reasons": {
         "accessibility": {
           "title": "Accessibilité",
-          "description": "La santé mentale à distance élimine les barrières géographiques, rendant la thérapie accessible aux personnes vivant dans des zones rurales ou mal desservies. Vous pouvez recevoir du soutien sans avoir besoin de longs trajets ou de déplacements."
+          "description": "La télésanté Mentale élimine les barrières géographiques, rendant la thérapie accessible aux personnes vivant dans des zones rurales ou mal desservies. Vous pouvez recevoir du soutien sans avoir besoin de longs trajets ou de déplacements."
         },
         "convenience": {
           "title": "Commodité",
-          "description": "Dites adieu aux tracas de planification et de déplacement. La santé mentale à distance offre une flexibilité dans les horaires et les lieux de rendez-vous, vous permettant d'intégrer la thérapie dans votre vie bien remplie."
+          "description": "Dites adieu aux tracas de planification et de déplacement. La télésanté Mentale offre une flexibilité dans les horaires et les lieux de rendez-vous, vous permettant d'intégrer la thérapie dans votre vie bien remplie."
         },
         "privacy": {
           "title": "Confidentialité",
-          "description": "Notre plateforme de santé mentale à distance garantit des sessions sécurisées et confidentielles. Vous pouvez discuter de vos préoccupations ouvertement et honnêtement, sachant que votre vie privée est protégée."
+          "description": "Notre plateforme de télésanté Mentale garantit des sessions sécurisées et confidentielles. Vous pouvez discuter de vos préoccupations ouvertement et honnêtement, sachant que votre vie privée est protégée."
         },
         "choice": {
           "title": "Choix de Thérapeutes",
@@ -221,7 +221,7 @@
         },
         "effectiveness": {
           "title": "Résultats Efficaces",
-          "description": "De nombreuses études ont montré que la santé mentale à distance peut être aussi efficace que la thérapie en personne pour de nombreux individus. La clé est de trouver le bon thérapeute et l'approche qui vous convient."
+          "description": "De nombreuses études ont montré que la télésanté Mentale peut être aussi efficace que la thérapie en personne pour de nombreux individus. La clé est de trouver le bon thérapeute et l'approche qui vous convient."
         }
       },
       "references": {
@@ -237,7 +237,7 @@
       "about": {
         "title": "À PROPOS",
         "items": {
-          "telementalHealth": "Santé Mentale à Distance",
+          "telementalHealth": "Télésanté Mentale",
           "whoWeAre": "Qui Sommes-Nous",
           "ourCareTeam": "Notre Équipe de Soins",
           "joinOurTeam": "Rejoignez Notre Équipe",
@@ -248,7 +248,7 @@
       "navigation": {
         "title": "NAVIGATION PRINCIPALE",
         "items": {
-          "about": "À Propos",
+          "about": "À PROPOS",
           "ourServices": "Nos Services",
           "support": "Support",
           "resources": "Ressources",
@@ -503,7 +503,7 @@
     },
     "sidebar": {
       "about": {
-        "title": "À Propos",
+        "title": "À PROPOS",
         "items": {
           "telementalHealth": "Télésanté Mentale",
           "whoWeAre": "Qui Sommes-Nous",
@@ -661,7 +661,7 @@
     
     "sidebar": {
       "about": {
-        "title": "À Propos",
+        "title": "À PROPOS",
         "items": {
           "telementalHealth": "Télésanté Mentale",
           "whoWeAre": "Qui Sommes-Nous",
@@ -686,7 +686,7 @@
     },
     "sidebar": {
       "about": {
-        "title": "À Propos",
+        "title": "À PROPOS",
         "items": {
           "telementalHealth": "Télésanté Mentale",
           "whoWeAre": "Qui Sommes-Nous",
@@ -823,7 +823,7 @@
       "navigation": {
         "title": "NAVIGATION PRINCIPALE",
         "items": {
-          "about": "À Propos",
+          "about": "À PROPOS",
           "ourServices": "Nos Services",
           "support": "Support",
           "resources": "Ressources",
@@ -920,7 +920,7 @@
       "navigation": {
         "title": "NAVIGATION PRINCIPALE",
         "items": {
-          "about": "À Propos",
+          "about": "À PROPOS",
           "ourServices": "Nos Services",
           "support": "Support",
           "resources": "Ressources",

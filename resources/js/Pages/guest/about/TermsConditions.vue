@@ -1,5 +1,5 @@
 <script setup>
-import { Head } from "@inertiajs/vue3";
+import { Head, Link } from "@inertiajs/vue3";
 import { useI18n } from "vue-i18n";
 import { ref, onMounted } from "vue";
 import Navbar from '@/Components/Navbar.vue';
@@ -363,49 +363,49 @@ onMounted(() => {
         <div class="lg:col-span-1">
           
           <!-- About Section -->
-          <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
-            <h3 class="text-xl font-bold text-[#5997ac] mb-4 pb-3 border-b-2 border-[#5997ac]">
-              {{ t('termsConditions.sidebar.about.title') }}
-            </h3>
-            <ul class="space-y-2">
-              <li>
-                <a href="#" class="flex items-center gap-2 text-gray-700 hover:text-[#af5166] transition-colors py-2">
-                  <span class="text-[#af5166]">›</span>
-                  {{ t('termsConditions.sidebar.about.items.telementalHealth') }}
-                </a>
-              </li>
-              <li>
-                <a href="#" class="flex items-center gap-2 text-gray-700 hover:text-[#af5166] transition-colors py-2">
-                  <span class="text-[#af5166]">›</span>
-                  {{ t('termsConditions.sidebar.about.items.whoWeAre') }}
-                </a>
-              </li>
-              <li>
-                <a href="#" class="flex items-center gap-2 text-gray-700 hover:text-[#af5166] transition-colors py-2">
-                  <span class="text-[#af5166]">›</span>
-                  {{ t('termsConditions.sidebar.about.items.ourCareTeam') }}
-                </a>
-              </li>
-              <li>
-                <a href="#" class="flex items-center gap-2 text-gray-700 hover:text-[#af5166] transition-colors py-2">
-                  <span class="text-[#af5166]">›</span>
-                  {{ t('termsConditions.sidebar.about.items.joinOurTeam') }}
-                </a>
-              </li>
-              <li>
-                <a href="#" class="flex items-center gap-2 text-[#af5166] font-semibold py-2 transition-colors">
-                  <span class="text-[#af5166]">›</span>
-                  {{ t('termsConditions.sidebar.about.items.termsAndConditions') }}
-                </a>
-              </li>
-              <li>
-                <a href="#" class="flex items-center gap-2 text-gray-700 hover:text-[#af5166] transition-colors py-2">
-                  <span class="text-[#af5166]">›</span>
-                  {{ t('termsConditions.sidebar.about.items.privacyProtection') }}
-                </a>
-              </li>
-            </ul>
-          </div>
+<div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+  <h3 class="text-xl font-bold text-[#5997ac] mb-4 pb-3 border-b-2 border-[#5997ac]">
+    {{ t('termsConditions.sidebar.about.title') }}
+  </h3>
+  <ul class="space-y-2">
+    <li>
+      <Link href="/telemental-health" class="flex items-center gap-2 text-gray-700 hover:text-[#af5166] transition-colors py-2">
+        <span class="text-[#af5166]">›</span>
+        {{ t('termsConditions.sidebar.about.items.telementalHealth') }}
+      </Link>
+    </li>
+    <li>
+      <Link href="/who-we-are" class="flex items-center gap-2 text-gray-700 hover:text-[#af5166] transition-colors py-2">
+        <span class="text-[#af5166]">›</span>
+        {{ t('termsConditions.sidebar.about.items.whoWeAre') }}
+      </Link>
+    </li>
+    <li>
+      <Link href="/our-care-team" class="flex items-center gap-2 text-gray-700 hover:text-[#af5166] transition-colors py-2">
+        <span class="text-[#af5166]">›</span>
+        {{ t('termsConditions.sidebar.about.items.ourCareTeam') }}
+      </Link>
+    </li>
+    <li>
+      <Link href="/join-our-team" class="flex items-center gap-2 text-gray-700 hover:text-[#af5166] transition-colors py-2">
+        <span class="text-[#af5166]">›</span>
+        {{ t('termsConditions.sidebar.about.items.joinOurTeam') }}
+      </Link>
+    </li>
+    <li>
+      <Link href="/terms-conditions" class="flex items-center gap-2 text-[#af5166] font-semibold py-2 transition-colors">
+        <span class="text-[#af5166]">›</span>
+        {{ t('termsConditions.sidebar.about.items.termsAndConditions') }}
+      </Link>
+    </li>
+    <li>
+      <Link href="/privacy-protection" class="flex items-center gap-2 text-gray-700 hover:text-[#af5166] transition-colors py-2">
+        <span class="text-[#af5166]">›</span>
+        {{ t('termsConditions.sidebar.about.items.privacyProtection') }}
+      </Link>
+    </li>
+  </ul>
+</div>
 
           <!-- Important Notice -->
           <div class="bg-gradient-to-br from-[#5997ac] to-[#af5166] rounded-lg shadow-lg p-6 text-white">

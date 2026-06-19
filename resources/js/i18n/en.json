@@ -263,6 +263,7 @@
     "banner": {
       "title": "FAQ",
       "home": "Home",
+      "About":"About",
       "support": "Support",
       "current": "FAQ"
     },
@@ -277,7 +278,7 @@
       "navigation": {
         "title": "MAIN NAVIGATION",
         "items": {
-          "about": "About",
+          "about": "ABOUT",
           "ourServices": "Our Services",
           "support": "Support",
           "resources": "Resources",
@@ -336,6 +337,7 @@
     "banner": {
       "title": "How It Works?",
       "home": "Home",
+      "About":"About",
       "support": "Support",
       "current": "How It Works?"
     },
@@ -400,7 +402,7 @@
       "navigation": {
         "title": "MAIN NAVIGATION",
         "items": {
-          "about": "About",
+          "about": "ABOUT",
           "ourServices": "Our Services",
           "support": "Support",
           "resources": "Resources",
@@ -501,7 +503,7 @@
     },
     "sidebar": {
       "about": {
-        "title": "About",
+        "title": "ABOUT",
         "items": {
           "telementalHealth": "Telemental Health",
           "whoWeAre": "Who We Are",
@@ -660,7 +662,7 @@
     
     "sidebar": {
       "about": {
-        "title": "About",
+        "title": "ABOUT",
         "items": {
           "telementalHealth": "Telemental Health",
           "whoWeAre": "Who We Are",
@@ -685,7 +687,7 @@
     },
     "sidebar": {
       "about": {
-        "title": "About",
+        "title": "ABOUT",
         "items": {
           "telementalHealth": "Telemental Health",
           "whoWeAre": "Who We Are",
@@ -823,7 +825,7 @@
       "navigation": {
         "title": "MAIN NAVIGATION",
         "items": {
-          "about": "About",
+          "about": "ABOUT",
           "ourServices": "Our Services",
           "support": "Support",
           "resources": "Resources",
@@ -920,7 +922,7 @@
       "navigation": {
         "title": "MAIN NAVIGATION",
         "items": {
-          "about": "About",
+          "about": "ABOUT",
           "ourServices": "Our Services",
           "support": "Support",
           "resources": "Resources",
