@@ -7,10 +7,13 @@ import InputError from '@/Components/InputError.vue'
 import PrimaryButton from '@/Components/PrimaryButton.vue'
 import Multiselect from '@vueform/multiselect'
 import { Head, useForm, usePage, Link } from '@inertiajs/vue3'
-import { computed, ref, watch, nextTick } from 'vue'
+import { computed, ref, watch, nextTick, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { getCountries, getCitiesByCountryName } from '@/utils/geoData'
 import { resolveStorageUrl } from '@/utils/storage'
 import Swal from 'sweetalert2'
+
+const { t, locale } = useI18n()
 
 const props = defineProps({
   canLogin: Boolean,
@@ -27,9 +30,27 @@ const props = defineProps({
 
 const page = usePage()
 
+function setLang(lang) {
+  locale.value = lang
+  localStorage.setItem('locale', lang)
+
+  if (lang === 'ar') {
+    document.documentElement.setAttribute('dir', 'rtl')
+    document.documentElement.setAttribute('lang', 'ar')
+    return
+  }
+
+  document.documentElement.setAttribute('dir', 'ltr')
+  document.documentElement.setAttribute('lang', lang)
+}
+
+onMounted(() => {
+  const savedLang = localStorage.getItem('locale') || locale.value
+  setLang(savedLang)
+})
+
 function formatDateForInput(dateValue) {
   if (!dateValue) return ''
-  // Inertia often sends YYYY-MM-DD already; keep it if so.
   if (typeof dateValue === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateValue)) return dateValue
   const date = new Date(dateValue)
   if (Number.isNaN(date.getTime())) return ''
@@ -171,7 +192,7 @@ function onDiplomaChange(e) {
   const files = e.target.files
   if (files && files.length > 0) {
     form.diploma_files = [...form.diploma_files, ...Array.from(files)]
-    e.target.value = '' // reset to allow selecting same files again
+    e.target.value = ''
   }
 }
 
@@ -181,17 +202,14 @@ function submit() {
     forceFormData: true,
     preserveScroll: true,
     onSuccess: (page) => {
-      // Clear diploma files after successful submission
       form.diploma_files.splice(0)
-      // Reset file input
       if (diplomaInput.value) {
         diplomaInput.value.value = ''
       }
-      // Show success message
       Swal.fire({
         position: 'top-end',
         icon: 'success',
-        title: 'Profile updated successfully!',
+        title: t('profile.profileUpdated'),
         showConfirmButton: false,
         timer: 3000,
         toast: true,
@@ -203,8 +221,8 @@ function submit() {
       Swal.fire({
         position: 'top-end',
         icon: 'error',
-        title: 'Update failed',
-        text: 'Please check the form for errors.',
+        title: t('profile.updateFailed'),
+        text: t('profile.checkFormErrors'),
         showConfirmButton: false,
         timer: 3000,
         toast: true,
@@ -222,7 +240,7 @@ watch(() => Object.keys(form.errors).length, (errorCount, oldErrorCount) => {
     Swal.fire({
       position: 'top-end',
       icon: 'error',
-      title: 'Validation Error',
+      title: t('profile.validationError'),
       text: Array.isArray(firstError) ? firstError[0] : firstError,
       showConfirmButton: false,
       timer: 4000,
@@ -235,7 +253,7 @@ watch(() => Object.keys(form.errors).length, (errorCount, oldErrorCount) => {
 </script>
 
 <template>
-  <Head title="Profile" />
+  <Head :title="`${t('profile.title')} - AEnhance`" />
 
   <Navbar
     :canLogin="canLogin"
@@ -252,8 +270,8 @@ watch(() => Object.keys(form.errors).length, (errorCount, oldErrorCount) => {
             <span v-else class="text-white font-semibold">{{ (authUser?.name || authUser?.email || 'A').slice(0, 1).toUpperCase() }}</span>
           </div>
           <div>
-            <h1 class="text-2xl sm:text-3xl font-semibold text-white">Profile info</h1>
-            <p class="mt-1 text-sm text-white/90">Update your professional information and manage your practice.</p>
+            <h1 class="text-2xl sm:text-3xl font-semibold text-white">{{ t('profile.title') }}</h1>
+            <p class="mt-1 text-sm text-white/90">{{ t('profile.subtitle') }}</p>
           </div>
         </div>
       </div>
@@ -269,8 +287,8 @@ watch(() => Object.keys(form.errors).length, (errorCount, oldErrorCount) => {
             </svg>
           </div>
           <div>
-            <h3 class="text-sm font-medium text-yellow-800">Profile Under Review</h3>
-            <p class="text-sm text-yellow-700 mt-1">Your profile is currently waiting for approval. You can still update your information, but it won't be visible to patients until approved.</p>
+            <h3 class="text-sm font-medium text-yellow-800">{{ t('profile.underReview') }}</h3>
+            <p class="text-sm text-yellow-700 mt-1">{{ t('profile.underReviewDesc') }}</p>
           </div>
         </div>
       </div>
@@ -281,8 +299,8 @@ watch(() => Object.keys(form.errors).length, (errorCount, oldErrorCount) => {
       <div class="bg-green-50 border border-green-200 rounded-xl p-4">
         <div class="flex items-center">
           <div class="flex-1">
-            <h3 class="text-sm font-medium text-green-800">Profile Approved</h3>
-            <p class="text-sm text-green-700 mt-1">Congratulations! Your profile has been approved and is now visible to patients. You can continue updating your information as needed.</p>
+            <h3 class="text-sm font-medium text-green-800">{{ t('profile.approved') }}</h3>
+            <p class="text-sm text-green-700 mt-1">{{ t('profile.approvedDesc') }}</p>
             <div v-if="verification_details && verification_details.verification_status === 'rejected'" class="mt-3">
               <div class="flex items-center gap-4 bg-red-50 rounded-2xl p-3 border border-red-100 transition-shadow duration-200">
                 <div class="flex-shrink-0">
@@ -295,12 +313,12 @@ watch(() => Object.keys(form.errors).length, (errorCount, oldErrorCount) => {
                 <div class="flex-1 min-w-0">
                   <div class="flex items-start justify-between gap-3">
                     <div class="min-w-0">
-                      <div class="text-sm font-semibold text-red-800">Verification Rejected</div>
-                      <div class="text-sm text-red-600 mt-1 truncate max-w-xl" :title="verification_details.rejection_reason || 'No reason provided.'">{{ verification_details.rejection_reason || 'No reason provided.' }}</div>
+                      <div class="text-sm font-semibold text-red-800">{{ t('profile.verificationRejected') }}</div>
+                      <div class="text-sm text-red-600 mt-1 truncate max-w-xl" :title="verification_details.rejection_reason || t('profile.noReason')">{{ verification_details.rejection_reason || t('profile.noReason') }}</div>
                     </div>
                     <div class="flex-shrink-0">
                       <Link :href="route('psychologist.verification.create')" class="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-md text-red-700 bg-white border border-red-100 hover:bg-red-50 transition-colors duration-150">
-                        Edit & Resubmit
+                        {{ t('profile.editResubmit') }}
                       </Link>
                     </div>
                   </div>
@@ -309,18 +327,18 @@ watch(() => Object.keys(form.errors).length, (errorCount, oldErrorCount) => {
             </div>
             <div v-else-if="!verification_details" class="mt-3">
               <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
-                <h4 class="text-sm font-semibold text-yellow-900">Verification Required</h4>
+                <h4 class="text-sm font-semibold text-yellow-900">{{ t('profile.verificationRequired') }}</h4>
                 <p class="text-sm text-yellow-800 mt-1">
-                  Please send your verification details by email to
+                  {{ t('profile.verificationRequiredDesc') }}
                   <a href="mailto:contact@aenhance.tn" class="font-semibold underline decoration-yellow-700/60 hover:text-yellow-900">contact@aenhance.tn</a>.
                 </p>
                 <ul class="mt-2 text-sm text-yellow-800 list-disc list-inside space-y-1">
-                  <li>CIN</li>
-                  <li>Legalized copies of diplomas</li>
-                  <li>RIB (from bank)</li>
+                  <li>{{ t('profile.cin') }}</li>
+                  <li>{{ t('profile.legalizedDiplomas') }}</li>
+                  <li>{{ t('profile.rib') }}</li>
                 </ul>
                 <p class="mt-2 text-xs text-yellow-800">
-                  Note: Files must be images or PDF format.
+                  {{ t('profile.fileNote') }}
                 </p>
               </div>
             </div>
@@ -331,7 +349,7 @@ watch(() => Object.keys(form.errors).length, (errorCount, oldErrorCount) => {
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
                   </svg>
-                  View Verification Details
+                  {{ t('profile.viewVerification') }}
                 </Link>
 
                 <span v-if="verification_details && verification_details.verification_status" class="text-sm font-medium px-2 py-1 rounded-md"
@@ -345,7 +363,7 @@ watch(() => Object.keys(form.errors).length, (errorCount, oldErrorCount) => {
               </div>
 
               <p v-if="verification_details && verification_details.verification_status === 'rejected'" class="text-sm text-red-600 mt-2">
-                Reason: {{ verification_details.rejection_reason || 'No reason provided.' }}
+                {{ t('profile.reason') }}: {{ verification_details.rejection_reason || t('profile.noReason') }}
               </p>
             </div>
           </div>
@@ -365,28 +383,26 @@ watch(() => Object.keys(form.errors).length, (errorCount, oldErrorCount) => {
                 </svg>
               </div>
               <div>
-                <h2 class="text-lg font-semibold text-white">Profile Overview</h2>
-                <p class="text-sm text-white/80">Your photo, bio, and pricing</p>
+                <h2 class="text-lg font-semibold text-white">{{ t('profile.profileOverview') }}</h2>
+                <p class="text-sm text-white/80">{{ t('profile.profileOverviewDesc') }}</p>
               </div>
             </div>
           </div>
           <div class="p-6 sm:p-8">
-            
-
             <div class="flex flex-col items-center space-y-6">
               <div class="relative group">
                 <div class="relative h-32 w-32 rounded-2xl overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center ring-4 ring-[#5997ac]/20 group-hover:ring-[#5997ac]/40 transition-all duration-300">
                   <img
                     v-if="headerImage"
                     :src="headerImage"
-                    alt="Profile photo"
+                    :alt="t('profile.profilePhoto')"
                     class="h-full w-full object-cover"
                   />
                   <div v-else class="flex flex-col items-center justify-center text-gray-400">
                     <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
                     </svg>
-                    <span class="mt-2 text-sm font-medium">No photo</span>
+                    <span class="mt-2 text-sm font-medium">{{ t('profile.noPhoto') }}</span>
                   </div>
 
                   <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center rounded-2xl">
@@ -415,7 +431,7 @@ watch(() => Object.keys(form.errors).length, (errorCount, oldErrorCount) => {
                   type="button"
                   @click="removePhoto"
                   class="absolute -top-2 -right-2 h-8 w-8 rounded-full bg-red-500 text-white shadow-lg flex items-center justify-center hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors duration-200"
-                  title="Remove photo"
+                  :title="t('profile.removePhoto')"
                 >
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -432,21 +448,21 @@ watch(() => Object.keys(form.errors).length, (errorCount, oldErrorCount) => {
                     </svg>
                   </div>
                   <div>
-                    <p class="text-sm font-medium text-blue-900">Profile Photo Tips</p>
-                    <p class="text-xs text-blue-700 mt-1">Upload a professional photo to build trust with patients. Recommended size: 400x400px, max 5MB.</p>
+                    <p class="text-sm font-medium text-blue-900">{{ t('profile.photoTips') }}</p>
+                    <p class="text-xs text-blue-700 mt-1">{{ t('profile.photoTipsDesc') }}</p>
                   </div>
                 </div>
               </div>
 
               <!-- Bio Section -->
               <div class="w-full space-y-2">
-                <InputLabel value="Bio" class="text-sm font-medium text-gray-700" />
+                <InputLabel :value="t('profile.bio')" class="text-sm font-medium text-gray-700" />
                 <div class="relative">
                   <Textarea
                     v-model="form.bio"
                     rows="4"
                     class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#5997ac] focus:border-transparent transition-colors duration-200 resize-none"
-                    placeholder="Tell patients about your experience, approach, and what they can expect from sessions with you..."
+                    :placeholder="t('profile.bioPlaceholder')"
                   />
                   <div class="absolute top-3 left-3 pointer-events-none">
                     <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -460,7 +476,7 @@ watch(() => Object.keys(form.errors).length, (errorCount, oldErrorCount) => {
               <!-- Price Section -->
               <div class="w-full space-y-2">
                 <InputLabel class="text-sm font-medium text-gray-700">
-                  Price per session (TND) <span class="text-red-500">*</span>
+                  {{ t('profile.pricePerSession') }} <span class="text-red-500">*</span>
                   <span v-if="profile?.is_approved" class="text-xs text-gray-500 font-normal"></span>
                 </InputLabel>
                 <div class="relative">
@@ -473,7 +489,7 @@ watch(() => Object.keys(form.errors).length, (errorCount, oldErrorCount) => {
                       :readonly="profile?.is_approved"
                       :class="profile?.is_approved ? 'bg-gray-100 cursor-not-allowed' : ''"
                       class="w-full pl-16 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#5997ac] focus:border-transparent transition-colors duration-200"
-                      placeholder="0.00"
+                      :placeholder="t('profile.pricePlaceholder')"
                     />
                     <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                       <span class="text-gray-500 text-sm font-medium">TND</span>
@@ -482,8 +498,6 @@ watch(() => Object.keys(form.errors).length, (errorCount, oldErrorCount) => {
                 </div>
                 <InputError class="mt-2" :message="form.errors.price_per_session" />
               </div>
-
-              
             </div>
           </div>
         </aside>
@@ -500,8 +514,8 @@ watch(() => Object.keys(form.errors).length, (errorCount, oldErrorCount) => {
                   </svg>
                 </div>
                 <div>
-                  <h2 class="text-lg font-semibold text-white">Personal Information</h2>
-                  <p class="text-sm text-white/80">Your basic personal details</p>
+                  <h2 class="text-lg font-semibold text-white">{{ t('profile.personalInformation') }}</h2>
+                  <p class="text-sm text-white/80">{{ t('profile.personalInfoDesc') }}</p>
                 </div>
               </div>
             </div>
@@ -509,10 +523,10 @@ watch(() => Object.keys(form.errors).length, (errorCount, oldErrorCount) => {
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div class="space-y-2">
                   <InputLabel class="text-sm font-medium text-gray-700">
-                    First Name <span class="text-red-500">*</span>
+                    {{ t('profile.firstName') }} <span class="text-red-500">*</span>
                   </InputLabel>
                   <div class="relative">
-                    <TextInput v-model="form.first_name" class="mt-1 block w-full pl-10" placeholder="Enter first name" />
+                    <TextInput v-model="form.first_name" class="mt-1 block w-full pl-10" :placeholder="t('profile.firstNamePlaceholder')" />
                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                       <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
@@ -523,10 +537,10 @@ watch(() => Object.keys(form.errors).length, (errorCount, oldErrorCount) => {
                 </div>
                 <div class="space-y-2">
                   <InputLabel class="text-sm font-medium text-gray-700">
-                    Last Name <span class="text-red-500">*</span>
+                    {{ t('profile.lastName') }} <span class="text-red-500">*</span>
                   </InputLabel>
                   <div class="relative">
-                    <TextInput v-model="form.last_name" class="mt-1 block w-full pl-10" placeholder="Enter last name" />
+                    <TextInput v-model="form.last_name" class="mt-1 block w-full pl-10" :placeholder="t('profile.lastNamePlaceholder')" />
                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                       <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
@@ -538,7 +552,7 @@ watch(() => Object.keys(form.errors).length, (errorCount, oldErrorCount) => {
 
                 <div class="space-y-2">
                   <InputLabel class="text-sm font-medium text-gray-700">
-                    Date of Birth <span class="text-red-500">*</span>
+                    {{ t('profile.dateOfBirth') }} <span class="text-red-500">*</span>
                   </InputLabel>
                   <div class="relative">
                     <input
@@ -556,16 +570,16 @@ watch(() => Object.keys(form.errors).length, (errorCount, oldErrorCount) => {
                 </div>
 
                 <div class="space-y-2">
-                  <InputLabel value="Gender" class="text-sm font-medium text-gray-700" />
+                  <InputLabel :value="t('profile.gender')" class="text-sm font-medium text-gray-700" />
                   <div class="relative">
                     <select
                       v-model="form.gender"
                       class="mt-1 block w-full pl-10 rounded-md border-gray-300 focus:border-[#5997ac] focus:ring-[#5997ac] shadow-sm"
                     >
-                      <option value="">Select gender</option>
-                      <option value="MALE">Male</option>
-                      <option value="FEMALE">Female</option>
-                      <option value="OTHER">Other</option>
+                      <option value="">{{ t('profile.selectGender') }}</option>
+                      <option value="MALE">{{ t('profile.male') }}</option>
+                      <option value="FEMALE">{{ t('profile.female') }}</option>
+                      <option value="OTHER">{{ t('profile.other') }}</option>
                     </select>
                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                       <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -590,8 +604,8 @@ watch(() => Object.keys(form.errors).length, (errorCount, oldErrorCount) => {
                   </svg>
                 </div>
                 <div>
-                  <h2 class="text-lg font-semibold text-white">Location & Contact</h2>
-                  <p class="text-sm text-white/80">Where patients can reach you</p>
+                  <h2 class="text-lg font-semibold text-white">{{ t('profile.locationContact') }}</h2>
+                  <p class="text-sm text-white/80">{{ t('profile.locationContactDesc') }}</p>
                 </div>
               </div>
             </div>
@@ -599,14 +613,14 @@ watch(() => Object.keys(form.errors).length, (errorCount, oldErrorCount) => {
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div class="space-y-2">
                   <InputLabel class="text-sm font-medium text-gray-700">
-                    Country <span class="text-red-500">*</span>
+                    {{ t('profile.country') }} <span class="text-red-500">*</span>
                   </InputLabel>
                   <div class="relative">
                     <select
                       v-model="countryCode"
                       class="mt-1 block w-full pl-10 rounded-md border-gray-300 focus:border-[#5997ac] focus:ring-[#5997ac] shadow-sm"
                     >
-                      <option value="">Select country</option>
+                      <option value="">{{ t('profile.selectCountry') }}</option>
                       <option v-for="c in countriesList" :key="c.isoCode" :value="c.isoCode">{{ c.name }}</option>
                     </select>
                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -620,7 +634,7 @@ watch(() => Object.keys(form.errors).length, (errorCount, oldErrorCount) => {
 
                 <div class="space-y-2">
                   <InputLabel class="text-sm font-medium text-gray-700">
-                    City <span class="text-red-500">*</span>
+                    {{ t('profile.city') }} <span class="text-red-500">*</span>
                   </InputLabel>
                   <div class="relative">
                     <select
@@ -628,7 +642,7 @@ watch(() => Object.keys(form.errors).length, (errorCount, oldErrorCount) => {
                       :disabled="!form.country"
                       class="mt-1 block w-full pl-10 rounded-md border-gray-300 disabled:bg-gray-50 focus:border-[#5997ac] focus:ring-[#5997ac] shadow-sm"
                     >
-                      <option value="">{{ form.country ? 'Select city' : 'Select country first' }}</option>
+                      <option value="">{{ form.country ? t('profile.selectCity') : t('profile.selectCountryFirst') }}</option>
                       <option v-for="ct in cities" :key="ct" :value="ct">{{ ct }}</option>
                     </select>
                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -643,13 +657,13 @@ watch(() => Object.keys(form.errors).length, (errorCount, oldErrorCount) => {
               </div>
 
               <div class="mt-6 space-y-2">
-                <InputLabel value="Address" class="text-sm font-medium text-gray-700" />
+                <InputLabel :value="t('profile.address')" class="text-sm font-medium text-gray-700" />
                 <div class="relative">
                   <Textarea
                     v-model="form.address"
                     class="mt-1 block w-full pl-10"
                     rows="3"
-                    placeholder="Enter your full address"
+                    :placeholder="t('profile.addressPlaceholder')"
                   />
                   <div class="absolute top-3 left-3 pointer-events-none">
                     <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -662,7 +676,7 @@ watch(() => Object.keys(form.errors).length, (errorCount, oldErrorCount) => {
 
               <div class="mt-6 space-y-2">
                 <InputLabel class="text-sm font-medium text-gray-700">
-                  Phone Number <span class="text-red-500">*</span>
+                  {{ t('profile.phoneNumber') }} <span class="text-red-500">*</span>
                 </InputLabel>
                 <div class="relative">
                   <div class="mt-1 flex">
@@ -676,7 +690,7 @@ watch(() => Object.keys(form.errors).length, (errorCount, oldErrorCount) => {
                       v-model="nationalNumber"
                       inputmode="tel"
                       class="block w-full rounded-r-md border border-l-0 border-gray-300 px-3 py-2 text-sm focus:border-[#5997ac] focus:ring-[#5997ac] shadow-sm"
-                      placeholder="Enter phone number"
+                      :placeholder="t('profile.phonePlaceholder')"
                     />
                   </div>
                   <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -700,8 +714,8 @@ watch(() => Object.keys(form.errors).length, (errorCount, oldErrorCount) => {
                   </svg>
                 </div>
                 <div>
-                  <h2 class="text-lg font-semibold text-white">Languages</h2>
-                  <p class="text-sm text-white/80">Languages you speak with patients</p>
+                  <h2 class="text-lg font-semibold text-white">{{ t('profile.languages') }}</h2>
+                  <p class="text-sm text-white/80">{{ t('profile.languagesDesc') }}</p>
                 </div>
               </div>
             </div>
@@ -714,7 +728,7 @@ watch(() => Object.keys(form.errors).length, (errorCount, oldErrorCount) => {
                         v-model="selectedLanguage"
                         class="block w-full pl-10 rounded-lg border-gray-300 focus:border-[#5997ac] focus:ring-[#5997ac] shadow-sm"
                       >
-                        <option value="">Select a language</option>
+                        <option value="">{{ t('profile.selectLanguage') }}</option>
                         <option v-for="lang in availableLanguages" :key="lang" :value="lang">{{ lang }}</option>
                       </select>
                       <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -732,7 +746,7 @@ watch(() => Object.keys(form.errors).length, (errorCount, oldErrorCount) => {
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
                     </svg>
-                    Add
+                    {{ t('profile.add') }}
                   </PrimaryButton>
                 </div>
 
@@ -772,8 +786,8 @@ watch(() => Object.keys(form.errors).length, (errorCount, oldErrorCount) => {
                   </svg>
                 </div>
                 <div>
-                  <h2 class="text-lg font-semibold text-white">Specializations & Expertises</h2>
-                  <p class="text-sm text-white/80">Your areas of specialization and expertise</p>
+                  <h2 class="text-lg font-semibold text-white">{{ t('profile.specializationsExpertises') }}</h2>
+                  <p class="text-sm text-white/80">{{ t('profile.specializationsExpertisesDesc') }}</p>
                 </div>
               </div>
             </div>
@@ -787,8 +801,8 @@ watch(() => Object.keys(form.errors).length, (errorCount, oldErrorCount) => {
                       </svg>
                     </div>
                     <div>
-                      <h3 class="text-sm font-semibold text-gray-900">Specializations <span class="text-red-500">*</span></h3>
-                      <p class="text-xs text-gray-600">Main areas of focus</p>
+                      <h3 class="text-sm font-semibold text-gray-900">{{ t('profile.specializations') }} <span class="text-red-500">*</span></h3>
+                      <p class="text-xs text-gray-600">{{ t('profile.specializationsDesc') }}</p>
                     </div>
                   </div>
                   <div class="space-y-3">
@@ -798,7 +812,7 @@ watch(() => Object.keys(form.errors).length, (errorCount, oldErrorCount) => {
                       mode="tags"
                       :close-on-select="false"
                       :searchable="true"
-                      placeholder="Search and select specializations"
+                      :placeholder="t('profile.specializationsPlaceholder')"
                       class="multiselect-custom"
                     />
                     <InputError class="mt-2" :message="form.errors.specialisation_ids" />
@@ -813,8 +827,8 @@ watch(() => Object.keys(form.errors).length, (errorCount, oldErrorCount) => {
                       </svg>
                     </div>
                     <div>
-                      <h3 class="text-sm font-semibold text-gray-900">Expertises <span class="text-red-500">*</span></h3>
-                      <p class="text-xs text-gray-600">Specific skills and techniques</p>
+                      <h3 class="text-sm font-semibold text-gray-900">{{ t('profile.expertises') }} <span class="text-red-500">*</span></h3>
+                      <p class="text-xs text-gray-600">{{ t('profile.expertisesDesc') }}</p>
                     </div>
                   </div>
                   <div class="space-y-3">
@@ -824,7 +838,7 @@ watch(() => Object.keys(form.errors).length, (errorCount, oldErrorCount) => {
                       mode="tags"
                       :close-on-select="false"
                       :searchable="true"
-                      placeholder="Search and select expertises"
+                      :placeholder="t('profile.expertisesPlaceholder')"
                       class="multiselect-custom"
                     />
                     <InputError class="mt-2" :message="form.errors.expertise_ids" />
@@ -845,8 +859,8 @@ watch(() => Object.keys(form.errors).length, (errorCount, oldErrorCount) => {
                   </svg>
                 </div>
                 <div>
-                  <h2 class="text-lg font-semibold text-white">Professional Documents</h2>
-                  <p class="text-sm text-white/80">Your diplomas, certificates, and CV</p>
+                  <h2 class="text-lg font-semibold text-white">{{ t('profile.professionalDocuments') }}</h2>
+                  <p class="text-sm text-white/80">{{ t('profile.professionalDocumentsDesc') }}</p>
                 </div>
               </div>
             </div>
@@ -862,8 +876,8 @@ watch(() => Object.keys(form.errors).length, (errorCount, oldErrorCount) => {
                       </svg>
                     </div>
                     <div>
-                      <h3 class="text-sm font-semibold text-gray-900">Diplomas & Certificates <span v-if="diplomas_required" class="text-red-500">*</span></h3>
-                      <p class="text-xs text-gray-600">Upload your professional qualifications</p>
+                      <h3 class="text-sm font-semibold text-gray-900">{{ t('profile.diplomasCertificates') }} <span v-if="diplomas_required" class="text-red-500">*</span></h3>
+                      <p class="text-xs text-gray-600">{{ t('profile.diplomasDesc') }}</p>
                     </div>
                   </div>
 
@@ -874,14 +888,14 @@ watch(() => Object.keys(form.errors).length, (errorCount, oldErrorCount) => {
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
                         </svg>
-                        Add Diploma
+                        {{ t('profile.addDiploma') }}
                       </PrimaryButton>
                       <div v-if="form.diploma_files.length > 0" class="text-sm text-gray-600">
-                        {{ form.diploma_files.length }} file(s) selected
+                        {{ t('profile.filesSelected', { count: form.diploma_files.length }) }}
                       </div>
                     </div>
                     <div class="text-xs text-gray-500 bg-gray-50 p-2 rounded-lg">
-                      Accepted format: PDF. Maximum 1MB per file.
+                      {{ t('profile.diplomaFileNote') }}
                     </div>
                     <InputError class="mt-2" :message="form.errors.diploma_files" />
                   </div>
@@ -892,7 +906,7 @@ watch(() => Object.keys(form.errors).length, (errorCount, oldErrorCount) => {
                       <svg class="w-4 h-4 text-[#5997ac]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                       </svg>
-                      Current Diplomas
+                      {{ t('profile.currentDiplomas') }}
                     </h4>
                     <div class="space-y-2">
                       <div
@@ -914,7 +928,7 @@ watch(() => Object.keys(form.errors).length, (errorCount, oldErrorCount) => {
                             target="_blank"
                             rel="noopener"
                             class="p-1.5 text-[#5997ac] hover:text-white hover:bg-[#5997ac] rounded-lg transition-colors duration-200"
-                            title="View document"
+                            :title="t('profile.viewDocument')"
                           >
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
@@ -930,7 +944,7 @@ watch(() => Object.keys(form.errors).length, (errorCount, oldErrorCount) => {
                               }
                             }"
                             class="p-1.5 text-red-500 hover:text-white hover:bg-red-500 rounded-lg transition-colors duration-200"
-                            title="Remove document"
+                            :title="t('profile.removeDocument')"
                           >
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
@@ -951,8 +965,8 @@ watch(() => Object.keys(form.errors).length, (errorCount, oldErrorCount) => {
                       </svg>
                     </div>
                     <div>
-                      <h3 class="text-sm font-semibold text-gray-900">CV / Resume <span v-if="cv_required" class="text-red-500">*</span></h3>
-                      <p class="text-xs text-gray-600">Your professional resume</p>
+                      <h3 class="text-sm font-semibold text-gray-900">{{ t('profile.cvResume') }} <span v-if="cv_required" class="text-red-500">*</span></h3>
+                      <p class="text-xs text-gray-600">{{ t('profile.cvDesc') }}</p>
                     </div>
                   </div>
 
@@ -969,16 +983,16 @@ watch(() => Object.keys(form.errors).length, (errorCount, oldErrorCount) => {
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                         </svg>
-                        Choose CV
+                        {{ t('profile.chooseCv') }}
                       </PrimaryButton>
                       <div class="min-w-0 flex-1 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">
-                        <span class="block truncate text-sm text-gray-600" :title="form.cv ? getFileName(form.cv) : 'No file selected'">
-                          {{ form.cv ? getFileName(form.cv) : 'No file selected' }}
+                        <span class="block truncate text-sm text-gray-600" :title="form.cv ? getFileName(form.cv) : t('profile.noFileSelected')">
+                          {{ form.cv ? getFileName(form.cv) : t('profile.noFileSelected') }}
                         </span>
                       </div>
                     </div>
                     <div class="text-xs text-gray-500 bg-gray-50 p-2 rounded-lg">
-                      Accepted format: PDF. Maximum 1MB
+                      {{ t('profile.cvFileNote') }}
                     </div>
                     <InputError class="mt-2" :message="form.errors.cv" />
                   </div>
@@ -989,7 +1003,7 @@ watch(() => Object.keys(form.errors).length, (errorCount, oldErrorCount) => {
                       <svg class="w-4 h-4 text-[#5997ac]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                       </svg>
-                      Current CV
+                      {{ t('profile.currentCv') }}
                     </h4>
                     <div class="flex items-center justify-between p-3 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg border border-gray-200 hover:shadow-sm transition-shadow duration-200">
                       <div class="flex min-w-0 flex-1 items-center gap-3">
@@ -1006,7 +1020,7 @@ watch(() => Object.keys(form.errors).length, (errorCount, oldErrorCount) => {
                           target="_blank"
                           rel="noopener"
                           class="p-1.5 text-[#5997ac] hover:text-white hover:bg-[#5997ac] rounded-lg transition-colors duration-200"
-                          title="View document"
+                          :title="t('profile.viewDocument')"
                         >
                           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
@@ -1031,8 +1045,8 @@ watch(() => Object.keys(form.errors).length, (errorCount, oldErrorCount) => {
                   </svg>
                 </div>
                 <div>
-                  <h2 class="text-lg font-semibold text-white">Save Changes</h2>
-                  <p class="text-sm text-white/80">Update your profile information</p>
+                  <h2 class="text-lg font-semibold text-white">{{ t('profile.saveChanges') }}</h2>
+                  <p class="text-sm text-white/80">{{ t('profile.saveChangesDesc') }}</p>
                 </div>
               </div>
             </div>
@@ -1040,7 +1054,7 @@ watch(() => Object.keys(form.errors).length, (errorCount, oldErrorCount) => {
               <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div class="flex-1">
                   <p class="text-sm text-gray-600">
-                    Make sure all your information is accurate and up-to-date. Changes will be reflected immediately in your profile.
+                    {{ t('profile.saveChangesInfo') }}
                   </p>
                 </div>
                 <div class="flex items-center gap-3">
@@ -1051,7 +1065,7 @@ watch(() => Object.keys(form.errors).length, (errorCount, oldErrorCount) => {
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
                     </svg>
-                    Back to Home
+                    {{ t('profile.backToHome') }}
                   </Link>
                   <PrimaryButton
                     :disabled="form.processing"
@@ -1063,7 +1077,7 @@ watch(() => Object.keys(form.errors).length, (errorCount, oldErrorCount) => {
                     <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                     </svg>
-                    {{ form.processing ? 'Saving Changes...' : 'Save Changes' }}
+                    {{ form.processing ? t('profile.savingChanges') : t('profile.saveChanges') }}
                   </PrimaryButton>
                 </div>
               </div>
@@ -1074,3 +1088,20 @@ watch(() => Object.keys(form.errors).length, (errorCount, oldErrorCount) => {
     </div>
   </div>
 </template>
+
+<style scoped>
+[dir="rtl"] {
+  text-align: right;
+}
+
+.multiselect-custom {
+  --ms-radius: 0.5rem;
+  --ms-bg: #fff;
+  --ms-border-color: #d1d5db;
+  --ms-option-bg: #f3f4f6;
+  --ms-option-bg-selected: #5997ac;
+  --ms-option-color-selected: #fff;
+  --ms-tag-bg: #5997ac;
+  --ms-tag-color: #fff;
+}
+</style>

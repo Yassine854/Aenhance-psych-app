@@ -13,7 +13,7 @@ const props = defineProps({
   authUser: { type: Object },
 })
 
-const { locale } = useI18n()
+const { t, locale } = useI18n()
 
 function setLang(lang) {
   locale.value = lang
@@ -40,9 +40,17 @@ const remainingBlogs = computed(() => visibleBlogs.value.slice(1))
 const paginationLinks = computed(() => props.blogs?.links || [])
 
 function formatDate(value) {
-  if (!value) return 'Unscheduled'
+  if (!value) return t('blogs.unscheduled')
 
-  return new Intl.DateTimeFormat('en', {
+  const localeMap = {
+    'ar': 'ar',
+    'fr': 'fr',
+    'en': 'en'
+  }
+  
+  const currentLocale = localeMap[locale.value] || 'en'
+  
+  return new Intl.DateTimeFormat(currentLocale, {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
@@ -55,7 +63,7 @@ function articleAnchor(blogId) {
 </script>
 
 <template>
-  <Head title="Blogs - AEnhance" />
+  <Head :title="`${t('blogs.banner.title')} - AEnhance`" />
 
   <Navbar
     :canLogin="canLogin"
@@ -63,6 +71,7 @@ function articleAnchor(blogId) {
     :authUser="authUser"
   />
 
+  <!-- Banner -->
   <div class="relative h-[180px] w-full overflow-hidden">
     <div
       class="absolute inset-0 bg-cover bg-center"
@@ -72,29 +81,38 @@ function articleAnchor(blogId) {
     </div>
 
     <div class="relative container mx-auto flex h-full flex-col justify-center px-4 sm:px-6 lg:px-8">
-      <h1 class="mb-3 text-3xl font-bold text-white md:text-4xl">Blogs</h1>
+      <h1 class="mb-3 text-3xl font-bold text-white md:text-4xl">{{ t('blogs.banner.title') }}</h1>
       <div class="flex items-center gap-2 text-sm text-white">
-        <Link href="/" class="hover:underline">Home</Link>
+        <Link href="/" class="hover:underline">{{ t('blogs.banner.home') }}</Link>
         <span>»</span>
-        <span>Blog</span>
+        <span>{{ t('blogs.banner.current') }}</span>
       </div>
     </div>
   </div>
 
+  <!-- Main Content -->
   <div class="bg-gray-50 py-12 md:py-16">
     <div class="container mx-auto px-4 sm:px-6 lg:px-8">
       <div class="grid grid-cols-1 gap-8 lg:grid-cols-4">
+        <!-- Main Column -->
         <div class="space-y-8 lg:col-span-3">
-          
-
-          <section v-if="featuredBlog" :id="`article-${featuredBlog.id}`" class="overflow-hidden rounded-lg bg-white shadow-sm">
+          <!-- Featured Article -->
+          <section 
+            v-if="featuredBlog" 
+            :id="`article-${featuredBlog.id}`" 
+            class="overflow-hidden rounded-lg bg-white shadow-sm"
+          >
             <div class="border-b border-gray-100 px-6 py-5 md:px-8">
               <div class="flex flex-wrap items-center gap-3 text-xs font-semibold uppercase tracking-[0.18em] text-gray-500">
-                <span class="rounded-full bg-[#af5166]/10 px-3 py-1 text-[#af5166]">Featured article</span>
+                <span class="rounded-full bg-[#af5166]/10 px-3 py-1 text-[#af5166]">
+                  {{ t('blogs.featured') }}
+                </span>
                 <span>{{ formatDate(featuredBlog.published_at) }}</span>
                 <span v-if="featuredBlog.category">{{ featuredBlog.category }}</span>
               </div>
-              <h2 class="mt-4 text-3xl font-bold text-gray-900 md:text-4xl">{{ featuredBlog.title }}</h2>
+              <h2 class="mt-4 text-3xl font-bold text-gray-900 md:text-4xl">
+                {{ featuredBlog.title }}
+              </h2>
               <p class="mt-4 max-w-3xl text-base leading-8 text-gray-600 md:text-lg">
                 {{ featuredBlog.excerpt || featuredBlog.content_preview }}
               </p>
@@ -109,32 +127,46 @@ function articleAnchor(blogId) {
               />
 
               <div class="flex flex-wrap items-center gap-4 border-b border-gray-100 pb-5 text-sm text-gray-500">
-                <span class="font-medium text-gray-700">By {{ featuredBlog.author?.name || 'AEnhance Team' }}</span>
+                <span class="font-medium text-gray-700">
+                  {{ t('blogs.by') }} {{ featuredBlog.author?.name || t('blogs.team') }}
+                </span>
               </div>
 
               <div class="blog-content mt-8" v-html="featuredBlog.content"></div>
             </div>
           </section>
 
+          <!-- All Blogs List -->
           <section class="space-y-6">
             <div class="flex items-end justify-between gap-4">
               <div>
-                <h2 class="text-2xl font-bold text-[#5997ac] md:text-3xl">All published blogs</h2>
+                <h2 class="text-2xl font-bold text-[#5997ac] md:text-3xl">
+                  {{ t('blogs.allPublished') }}
+                </h2>
               </div>
             </div>
 
+            <!-- Empty State -->
             <div v-if="!visibleBlogs.length" class="rounded-lg bg-white p-10 text-center shadow-sm">
-              <h3 class="text-xl font-semibold text-gray-900">No blog articles are published yet.</h3>
-              <p class="mt-3 text-gray-600">Once articles are published from the admin dashboard, they will automatically appear here.</p>
+              <h3 class="text-xl font-semibold text-gray-900">
+                {{ t('blogs.noArticles') }}
+              </h3>
+              <p class="mt-3 text-gray-600">
+                {{ t('blogs.noArticlesDesc') }}
+              </p>
             </div>
 
+            <!-- Blog Articles -->
             <article
               v-for="blog in remainingBlogs"
               :id="`article-${blog.id}`"
               :key="blog.id"
               class="overflow-hidden rounded-lg bg-white shadow-sm ring-1 ring-gray-100"
             >
-              <div class="grid grid-cols-1 gap-0 lg:grid-cols-[minmax(0,280px)_minmax(0,1fr)]" :class="{ 'lg:grid-cols-1': !blog.featured_image }">
+              <div 
+                class="grid grid-cols-1 gap-0 lg:grid-cols-[minmax(0,280px)_minmax(0,1fr)]" 
+                :class="{ 'lg:grid-cols-1': !blog.featured_image }"
+              >
                 <div v-if="blog.featured_image" class="relative min-h-[220px] bg-gray-100 lg:min-h-full">
                   <img
                     :src="resolveStorageUrl(blog.featured_image)"
@@ -146,12 +178,24 @@ function articleAnchor(blogId) {
                 <div class="p-6 md:p-8">
                   <div class="flex flex-wrap items-center gap-3 text-xs font-semibold uppercase tracking-[0.18em] text-gray-500">
                     <span>{{ formatDate(blog.published_at) }}</span>
-                    <span v-if="blog.category" class="rounded-full bg-[#5997ac]/10 px-3 py-1 text-[#5997ac]">{{ blog.category }}</span>
+                    <span 
+                      v-if="blog.category" 
+                      class="rounded-full bg-[#5997ac]/10 px-3 py-1 text-[#5997ac]"
+                    >
+                      {{ blog.category }}
+                    </span>
                   </div>
 
-                  <h3 class="mt-4 text-2xl font-bold text-gray-900">{{ blog.title }}</h3>
-                  <p class="mt-3 text-sm text-gray-500">By {{ blog.author?.name || 'AEnhance Team' }}</p>
-                  <p v-if="blog.excerpt" class="mt-4 border-l-4 border-[#af5166] pl-4 text-base leading-7 text-gray-600">
+                  <h3 class="mt-4 text-2xl font-bold text-gray-900">
+                    {{ blog.title }}
+                  </h3>
+                  <p class="mt-3 text-sm text-gray-500">
+                    {{ t('blogs.by') }} {{ blog.author?.name || t('blogs.team') }}
+                  </p>
+                  <p 
+                    v-if="blog.excerpt" 
+                    class="mt-4 border-l-4 border-[#af5166] pl-4 text-base leading-7 text-gray-600"
+                  >
                     {{ blog.excerpt }}
                   </p>
 
@@ -160,9 +204,14 @@ function articleAnchor(blogId) {
               </div>
             </article>
 
-            <div v-if="paginationLinks.length > 3" class="flex flex-wrap items-center justify-between gap-4 rounded-lg bg-white px-6 py-4 shadow-sm">
+            <!-- Pagination -->
+            <div 
+              v-if="paginationLinks.length > 3" 
+              class="flex flex-wrap items-center justify-between gap-4 rounded-lg bg-white px-6 py-4 shadow-sm"
+            >
               <div class="text-sm text-gray-600">
-                Showing {{ blogs.from || 0 }}-{{ blogs.to || 0 }} of {{ blogs.total || 0 }} blogs
+                {{ t('blogs.showing') }} {{ blogs.from || 0 }}-{{ blogs.to || 0 }} 
+                {{ t('blogs.of') }} {{ blogs.total || 0 }} {{ t('blogs.blogs') }}
               </div>
               <div class="flex flex-wrap items-center gap-2">
                 <Link
@@ -186,66 +235,50 @@ function articleAnchor(blogId) {
           </section>
         </div>
 
+        <!-- Sidebar -->
         <aside class="space-y-6 lg:col-span-1">
+          <!-- Blog Overview -->
           <div class="rounded-lg bg-white p-6 shadow-sm">
-            <h3 class="mb-4 border-b-2 border-[#5997ac] pb-3 text-xl font-bold text-[#5997ac]">Blog overview</h3>
+            <h3 class="mb-4 border-b-2 border-[#5997ac] pb-3 text-xl font-bold text-[#5997ac]">
+              {{ t('blogs.sidebar.overview') }}
+            </h3>
             <div class="space-y-4 text-sm text-gray-700">
               <div class="rounded-2xl bg-gray-50 p-4">
-                <div class="text-xs uppercase tracking-[0.18em] text-gray-500">Latest publication</div>
-                <div class="mt-2 font-semibold text-gray-900">{{ featuredBlog?.title || 'No article yet' }}</div>
-                <div v-if="featuredBlog" class="mt-2 text-gray-500">{{ formatDate(featuredBlog.published_at) }}</div>
+                <div class="text-xs uppercase tracking-[0.18em] text-gray-500">
+                  {{ t('blogs.sidebar.latest') }}
+                </div>
+                <div class="mt-2 font-semibold text-gray-900">
+                  {{ featuredBlog?.title || t('blogs.noArticle') }}
+                </div>
+                <div v-if="featuredBlog" class="mt-2 text-gray-500">
+                  {{ formatDate(featuredBlog.published_at) }}
+                </div>
               </div>
             </div>
           </div>
 
+          <!-- Recent Articles -->
           <div class="rounded-lg bg-white p-6 shadow-sm">
-            <h3 class="mb-4 border-b-2 border-[#5997ac] pb-3 text-xl font-bold text-[#5997ac]">Main Navigation</h3>
-            <ul class="space-y-2">
-              <li>
-                <Link href="/telemental-health" class="flex items-center gap-2 py-2 text-gray-700 transition-colors hover:text-[#af5166]">
-                  <span class="text-[#af5166]">›</span>
-                  About
-                </Link>
-              </li>
-              <li>
-                <Link href="/services" class="flex items-center gap-2 py-2 text-gray-700 transition-colors hover:text-[#af5166]">
-                  <span class="text-[#af5166]">›</span>
-                  Our Services
-                </Link>
-              </li>
-              <li>
-                <Link href="/faq" class="flex items-center gap-2 py-2 text-gray-700 transition-colors hover:text-[#af5166]">
-                  <span class="text-[#af5166]">›</span>
-                  Support
-                </Link>
-              </li>
-              <li>
-                <Link href="/ressources" class="flex items-center gap-2 py-2 text-gray-700 transition-colors hover:text-[#af5166]">
-                  <span class="text-[#af5166]">›</span>
-                  Resources
-                </Link>
-              </li>
-              <li>
-                <Link href="/blogs" class="flex items-center gap-2 py-2 font-semibold text-[#af5166] transition-colors">
-                  <span class="text-[#af5166]">›</span>
-                  Blog
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          <div class="rounded-lg bg-white p-6 shadow-sm">
-            <h3 class="mb-4 border-b-2 border-[#5997ac] pb-3 text-xl font-bold text-[#5997ac]">Recent articles</h3>
+            <h3 class="mb-4 border-b-2 border-[#5997ac] pb-3 text-xl font-bold text-[#5997ac]">
+              {{ t('blogs.sidebar.recent') }}
+            </h3>
             <ul class="space-y-4">
-              <li v-for="blog in visibleBlogs.slice(0, 5)" :key="blog.id" class="border-b border-gray-100 pb-4 last:border-b-0 last:pb-0">
+              <li 
+                v-for="blog in visibleBlogs.slice(0, 5)" 
+                :key="blog.id" 
+                class="border-b border-gray-100 pb-4 last:border-b-0 last:pb-0"
+              >
                 <a :href="articleAnchor(blog.id)" class="block transition hover:opacity-80">
-                  <div class="text-sm font-semibold text-gray-900">{{ blog.title }}</div>
-                  <div class="mt-1 text-xs uppercase tracking-[0.18em] text-gray-500">{{ formatDate(blog.published_at) }}</div>
+                  <div class="text-sm font-semibold text-gray-900">
+                    {{ blog.title }}
+                  </div>
+                  <div class="mt-1 text-xs uppercase tracking-[0.18em] text-gray-500">
+                    {{ formatDate(blog.published_at) }}
+                  </div>
                 </a>
               </li>
             </ul>
           </div>
-
         </aside>
       </div>
     </div>

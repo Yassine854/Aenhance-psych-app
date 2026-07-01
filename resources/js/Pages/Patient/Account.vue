@@ -5,8 +5,11 @@ import TextInput from '@/Components/TextInput.vue'
 import InputError from '@/Components/InputError.vue'
 import PrimaryButton from '@/Components/PrimaryButton.vue'
 import { Head, useForm, usePage, Link } from '@inertiajs/vue3'
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import Swal from 'sweetalert2'
+
+const { t, locale } = useI18n()
 
 defineProps({
   canLogin: Boolean,
@@ -19,6 +22,25 @@ defineProps({
 const page = usePage()
 const user = computed(() => page.props?.auth?.user)
 const isAdmin = computed(() => user.value?.role === 'ADMIN')
+
+function setLang(lang) {
+  locale.value = lang
+  localStorage.setItem('locale', lang)
+
+  if (lang === 'ar') {
+    document.documentElement.setAttribute('dir', 'rtl')
+    document.documentElement.setAttribute('lang', 'ar')
+    return
+  }
+
+  document.documentElement.setAttribute('dir', 'ltr')
+  document.documentElement.setAttribute('lang', lang)
+}
+
+onMounted(() => {
+  const savedLang = localStorage.getItem('locale') || locale.value
+  setLang(savedLang)
+})
 
 const profileForm = useForm({
   name: user.value?.name || '',
@@ -35,7 +57,7 @@ const passwordInput = ref(null)
 const currentPasswordInput = ref(null)
 
 function submitProfile() {
-  profileForm.patch(route('profile.update'), {
+  profileForm.post(route('patient.account.update'), {
     preserveScroll: true,
     onSuccess: () => {
       // Update the shared props
@@ -46,7 +68,7 @@ function submitProfile() {
       Swal.fire({
         position: 'top-end',
         icon: 'success',
-        title: 'Profile updated successfully!',
+        title: t('account.profileUpdated'),
         showConfirmButton: false,
         timer: 3000,
         toast: true,
@@ -58,8 +80,8 @@ function submitProfile() {
       Swal.fire({
         position: 'top-end',
         icon: 'error',
-        title: 'Update failed',
-        text: 'Please check the form for errors.',
+        title: t('account.updateFailed'),
+        text: t('account.checkFormErrors'),
         showConfirmButton: false,
         timer: 3000,
         toast: true,
@@ -78,7 +100,7 @@ function updatePassword() {
       Swal.fire({
         position: 'top-end',
         icon: 'success',
-        title: 'Password updated successfully!',
+        title: t('account.passwordUpdated'),
         showConfirmButton: false,
         timer: 3000,
         toast: true,
@@ -98,8 +120,8 @@ function updatePassword() {
       Swal.fire({
         position: 'top-end',
         icon: 'error',
-        title: 'Password update failed',
-        text: 'Please check the form for errors.',
+        title: t('account.passwordUpdateFailed'),
+        text: t('account.checkFormErrors'),
         showConfirmButton: false,
         timer: 3000,
         toast: true,
@@ -117,7 +139,7 @@ watch(() => Object.keys(profileForm.errors).length, (errorCount, oldErrorCount) 
     Swal.fire({
       position: 'top-end',
       icon: 'error',
-      title: 'Validation Error',
+      title: t('account.validationError'),
       text: Array.isArray(firstError) ? firstError[0] : firstError,
       showConfirmButton: false,
       timer: 4000,
@@ -134,7 +156,7 @@ watch(() => Object.keys(passwordForm.errors).length, (errorCount, oldErrorCount)
     Swal.fire({
       position: 'top-end',
       icon: 'error',
-      title: 'Validation Error',
+      title: t('account.validationError'),
       text: Array.isArray(firstError) ? firstError[0] : firstError,
       showConfirmButton: false,
       timer: 4000,
@@ -147,7 +169,7 @@ watch(() => Object.keys(passwordForm.errors).length, (errorCount, oldErrorCount)
 </script>
 
 <template>
-  <Head title="Account" />
+  <Head :title="`${t('account.title')} - AEnhance`" />
 
   <Navbar
     :canLogin="canLogin"
@@ -158,8 +180,8 @@ watch(() => Object.keys(passwordForm.errors).length, (errorCount, oldErrorCount)
   <div class="min-h-[calc(100vh-112px)] bg-gray-50">
     <div class="bg-gradient-to-r from-[#af5166] to-[#5997ac]">
       <div class="mx-auto max-w-6xl px-4 py-8">
-        <h1 class="text-2xl sm:text-3xl font-semibold text-white">Account info</h1>
-        <p class="mt-1 text-sm text-white/90">Manage your profile, password, and security settings.</p>
+        <h1 class="text-2xl sm:text-3xl font-semibold text-white">{{ t('account.title') }}</h1>
+        <p class="mt-1 text-sm text-white/90">{{ t('account.subtitle') }}</p>
       </div>
     </div>
 
@@ -175,8 +197,8 @@ watch(() => Object.keys(passwordForm.errors).length, (errorCount, oldErrorCount)
                 </svg>
               </div>
               <div>
-                <h2 class="text-lg font-semibold text-white">Profile Information</h2>
-                <p class="text-sm text-white/80">Update your account's profile information</p>
+                <h2 class="text-lg font-semibold text-white">{{ t('account.profileInfo') }}</h2>
+                <p class="text-sm text-white/80">{{ t('account.profileInfoDesc') }}</p>
               </div>
             </div>
           </div>
@@ -185,14 +207,14 @@ watch(() => Object.keys(passwordForm.errors).length, (errorCount, oldErrorCount)
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div class="space-y-2">
                   <InputLabel class="text-sm font-medium text-gray-700">
-                    Name <span class="text-red-500">*</span>
+                    {{ t('account.name') }} <span class="text-red-500">*</span>
                   </InputLabel>
                   <div class="relative">
                     <TextInput
                       v-model="profileForm.name"
                       type="text"
                       class="mt-1 block w-full pl-10 rounded-lg border-gray-300 shadow-sm focus:border-[#5997ac] focus:ring-[#5997ac] sm:text-sm"
-                      placeholder="Enter your full name"
+                      :placeholder="t('account.namePlaceholder')"
                     />
                     <div class="absolute top-3 left-3 pointer-events-none">
                       <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -204,14 +226,14 @@ watch(() => Object.keys(passwordForm.errors).length, (errorCount, oldErrorCount)
                 </div>
                 <div class="space-y-2">
                   <InputLabel class="text-sm font-medium text-gray-700">
-                    Email <span class="text-red-500">*</span>
+                    {{ t('account.email') }} <span class="text-red-500">*</span>
                   </InputLabel>
                   <div class="relative">
                     <TextInput
                       v-model="profileForm.email"
                       type="email"
                       class="mt-1 block w-full pl-10 rounded-lg border-gray-300 shadow-sm focus:border-[#5997ac] focus:ring-[#5997ac] sm:text-sm"
-                      placeholder="Enter your email address"
+                      :placeholder="t('account.emailPlaceholder')"
                     />
                     <div class="absolute top-3 left-3 pointer-events-none">
                       <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -225,19 +247,19 @@ watch(() => Object.keys(passwordForm.errors).length, (errorCount, oldErrorCount)
 
               <div v-if="mustVerifyEmail && user.email_verified_at === null" class="mt-4">
                 <p class="text-sm text-gray-800">
-                  Your email address is unverified.
+                  {{ t('account.emailUnverified') }}
                   <Link
                     :href="route('verification.send')"
                     method="post"
                     as="button"
                     class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                   >
-                    Click here to re-send the verification email.
+                    {{ t('account.resendVerification') }}
                   </Link>
                 </p>
 
                 <div v-if="status === 'verification-link-sent'" class="mt-2 font-medium text-sm text-green-600">
-                  A new verification link has been sent to your email address.
+                  {{ t('account.verificationSent') }}
                 </div>
               </div>
 
@@ -252,7 +274,7 @@ watch(() => Object.keys(passwordForm.errors).length, (errorCount, oldErrorCount)
                   <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                   </svg>
-                  {{ profileForm.processing ? 'Saving Changes...' : 'Save Changes' }}
+                  {{ profileForm.processing ? t('account.saving') : t('account.saveChanges') }}
                 </PrimaryButton>
               </div>
             </form>
@@ -269,8 +291,8 @@ watch(() => Object.keys(passwordForm.errors).length, (errorCount, oldErrorCount)
                 </svg>
               </div>
               <div>
-                <h2 class="text-lg font-semibold text-white">Update Password</h2>
-                <p class="text-sm text-white/80">Ensure your account is using a long, random password to stay secure</p>
+                <h2 class="text-lg font-semibold text-white">{{ t('account.updatePassword') }}</h2>
+                <p class="text-sm text-white/80">{{ t('account.updatePasswordDesc') }}</p>
               </div>
             </div>
           </div>
@@ -278,7 +300,7 @@ watch(() => Object.keys(passwordForm.errors).length, (errorCount, oldErrorCount)
             <form @submit.prevent="updatePassword" class="space-y-6">
               <div class="space-y-2">
                 <InputLabel class="text-sm font-medium text-gray-700">
-                  Current Password <span class="text-red-500">*</span>
+                  {{ t('account.currentPassword') }} <span class="text-red-500">*</span>
                 </InputLabel>
                 <div class="relative">
                   <TextInput
@@ -286,7 +308,7 @@ watch(() => Object.keys(passwordForm.errors).length, (errorCount, oldErrorCount)
                     v-model="passwordForm.current_password"
                     type="password"
                     class="mt-1 block w-full pl-10 rounded-lg border-gray-300 shadow-sm focus:border-[#5997ac] focus:ring-[#5997ac] sm:text-sm"
-                    placeholder="Enter your current password"
+                    :placeholder="t('account.currentPasswordPlaceholder')"
                   />
                   <div class="absolute top-3 left-3 pointer-events-none">
                     <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -299,7 +321,7 @@ watch(() => Object.keys(passwordForm.errors).length, (errorCount, oldErrorCount)
 
               <div class="space-y-2">
                 <InputLabel class="text-sm font-medium text-gray-700">
-                  New Password <span class="text-red-500">*</span>
+                  {{ t('account.newPassword') }} <span class="text-red-500">*</span>
                 </InputLabel>
                 <div class="relative">
                   <TextInput
@@ -307,7 +329,7 @@ watch(() => Object.keys(passwordForm.errors).length, (errorCount, oldErrorCount)
                     v-model="passwordForm.password"
                     type="password"
                     class="mt-1 block w-full pl-10 rounded-lg border-gray-300 shadow-sm focus:border-[#5997ac] focus:ring-[#5997ac] sm:text-sm"
-                    placeholder="Enter your new password"
+                    :placeholder="t('account.newPasswordPlaceholder')"
                   />
                   <div class="absolute top-3 left-3 pointer-events-none">
                     <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -320,14 +342,14 @@ watch(() => Object.keys(passwordForm.errors).length, (errorCount, oldErrorCount)
 
               <div class="space-y-2">
                 <InputLabel class="text-sm font-medium text-gray-700">
-                  Confirm New Password <span class="text-red-500">*</span>
+                  {{ t('account.confirmPassword') }} <span class="text-red-500">*</span>
                 </InputLabel>
                 <div class="relative">
                   <TextInput
                     v-model="passwordForm.password_confirmation"
                     type="password"
                     class="mt-1 block w-full pl-10 rounded-lg border-gray-300 shadow-sm focus:border-[#5997ac] focus:ring-[#5997ac] sm:text-sm"
-                    placeholder="Confirm your new password"
+                    :placeholder="t('account.confirmPasswordPlaceholder')"
                   />
                   <div class="absolute top-3 left-3 pointer-events-none">
                     <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -349,7 +371,7 @@ watch(() => Object.keys(passwordForm.errors).length, (errorCount, oldErrorCount)
                   <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                   </svg>
-                  {{ passwordForm.processing ? 'Updating Password...' : 'Update Password' }}
+                  {{ passwordForm.processing ? t('account.updating') : t('account.updatePassword') }}
                 </PrimaryButton>
               </div>
             </form>
@@ -359,3 +381,9 @@ watch(() => Object.keys(passwordForm.errors).length, (errorCount, oldErrorCount)
     </div>
   </div>
 </template>
+
+<style scoped>
+[dir="rtl"] {
+  text-align: right;
+}
+</style>

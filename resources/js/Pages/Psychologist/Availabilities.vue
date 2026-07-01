@@ -1,21 +1,21 @@
 <template>
   <div>
-    <Head title="My Availabilities" />
+    <Head :title="t('availabilities.title')" />
     <Navbar :canLogin="routeHas('login')" :canRegister="routeHas('register')" :authUser="page.props.auth.user" />
 
     <div>
       <div class="bg-gradient-to-r from-[#af5166] to-[#5997ac]">
         <div class="mx-auto max-w-7xl px-4 py-8">
-          <h1 class="text-2xl sm:text-3xl font-semibold text-white">My Availabilities</h1>
-          <p class="mt-1 text-sm text-white/90">Manage your weekly availability slots — add, edit, and remove time ranges for each day.</p>
+          <h1 class="text-2xl sm:text-3xl font-semibold text-white">{{ t('availabilities.title') }}</h1>
+          <p class="mt-1 text-sm text-white/90">{{ t('availabilities.subtitle') }}</p>
         </div>
       </div>
 
       <div class="mx-auto max-w-7xl p-6">
         <div class="bg-white rounded-2xl shadow-lg border border-gray-100">
         <div class="bg-gradient-to-r from-[#5997ac] to-[#7ba8b7] px-6 py-4 rounded-t-2xl">
-          <h2 class="text-lg font-semibold text-white">My Availabilities</h2>
-          <p class="text-sm text-white/80">View and edit your weekly availability slots</p>
+          <h2 class="text-lg font-semibold text-white">{{ t('availabilities.myAvailabilities') }}</h2>
+          <p class="text-sm text-white/80">{{ t('availabilities.myAvailabilitiesDesc') }}</p>
         </div>
         <div class="p-6">
           <p v-if="error" class="text-sm text-red-600">{{ error }}</p>
@@ -24,12 +24,12 @@
             <div v-for="d in daysOfWeek" :key="d.value" class="rounded-2xl bg-white border border-gray-100 shadow-sm p-4 flex flex-col">
               <div class="flex items-start justify-between gap-3">
                 <div>
-                  <div class="text-sm font-semibold text-gray-900">{{ d.label }}</div>
-                  <div class="text-xs text-gray-500 mt-1">{{ (availabilityByDay[d.value] || []).length }} slot(s)</div>
+                  <div class="text-sm font-semibold text-gray-900">{{ t(`availabilities.days.${d.key}`) }}</div>
+                  <div class="text-xs text-gray-500 mt-1">{{ t('availabilities.slots', { count: (availabilityByDay[d.value] || []).length }) }}</div>
                 </div>
                 <button type="button" @click="addSlotForDay(d.value)" class="inline-flex items-center gap-2 px-3 py-1.5 text-sm bg-gradient-to-r from-[#5997ac] to-[#7ba8b7] text-white rounded-full shadow hover:opacity-95">
                   <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                  Add
+                  {{ t('availabilities.add') }}
                 </button>
               </div>
 
@@ -38,18 +38,17 @@
                   <div v-for="(slot, idx) in availabilityByDay[d.value]" :key="idx" class="flex items-center justify-between gap-3 bg-gray-50 rounded-lg px-3 py-2">
                     <div class="flex items-center gap-3">
                       <div class="text-sm font-medium text-gray-800">{{ slot.start_time }} — {{ slot.end_time }}</div>
-                      
                     </div>
                     <div class="flex items-center gap-2">
                       <input type="time" v-model="slot.start_time" @change="onSlotChanged(d.value)" class="text-xs px-2 py-1 rounded-md border border-gray-200 bg-white" />
                       <input type="time" v-model="slot.end_time" @change="onSlotChanged(d.value)" class="text-xs px-2 py-1 rounded-md border border-gray-200 bg-white" />
-                      <button type="button" @click="removeSlotForDay(d.value, idx)" class="text-sm text-red-600 hover:text-red-800">
+                      <button type="button" @click="removeSlotForDay(d.value, idx)" class="text-sm text-red-600 hover:text-red-800" :title="t('availabilities.removeSlot')">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                       </button>
                     </div>
                   </div>
                 </template>
-                <div v-else class="text-sm text-gray-500">No slots added.</div>
+                <div v-else class="text-sm text-gray-500">{{ t('availabilities.noSlots') }}</div>
               </div>
 
               <p v-if="availabilityErrorsByDay[d.value]" class="mt-3 text-sm text-red-600">{{ availabilityErrorsByDay[d.value] }}</p>
@@ -68,7 +67,7 @@
               <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
               </svg>
-              {{ saving ? 'Saving Changes...' : 'Save Changes' }}
+              {{ saving ? t('availabilities.savingChanges') : t('availabilities.saveChanges') }}
             </PrimaryButton>
 
             <transition name="fade">
@@ -86,20 +85,42 @@
 import Navbar from '@/Components/Navbar.vue'
 import PrimaryButton from '@/Components/PrimaryButton.vue'
 import { Head, usePage } from '@inertiajs/vue3'
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import Swal from 'sweetalert2'
+
+const { t, locale } = useI18n()
 
 const page = usePage()
 const props = defineProps({})
 
+function setLang(lang) {
+  locale.value = lang
+  localStorage.setItem('locale', lang)
+
+  if (lang === 'ar') {
+    document.documentElement.setAttribute('dir', 'rtl')
+    document.documentElement.setAttribute('lang', 'ar')
+    return
+  }
+
+  document.documentElement.setAttribute('dir', 'ltr')
+  document.documentElement.setAttribute('lang', lang)
+}
+
+onMounted(() => {
+  const savedLang = localStorage.getItem('locale') || locale.value
+  setLang(savedLang)
+})
+
 const daysOfWeek = [
-  { value: 0, label: 'Sunday' },
-  { value: 1, label: 'Monday' },
-  { value: 2, label: 'Tuesday' },
-  { value: 3, label: 'Wednesday' },
-  { value: 4, label: 'Thursday' },
-  { value: 5, label: 'Friday' },
-  { value: 6, label: 'Saturday' },
+  { value: 0, key: 'sunday', label: t('availabilities.days.sunday') },
+  { value: 1, key: 'monday', label: t('availabilities.days.monday') },
+  { value: 2, key: 'tuesday', label: t('availabilities.days.tuesday') },
+  { value: 3, key: 'wednesday', label: t('availabilities.days.wednesday') },
+  { value: 4, key: 'thursday', label: t('availabilities.days.thursday') },
+  { value: 5, key: 'friday', label: t('availabilities.days.friday') },
+  { value: 6, key: 'saturday', label: t('availabilities.days.saturday') },
 ]
 
 const emptyWeeklyAvailability = () => ({ 0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: [] })
@@ -145,11 +166,11 @@ function validateDaySlots(day) {
 
   for (const s of normalized) {
     if (s.start === null || s.end === null) {
-      availabilityErrorsByDay.value[day] = 'Please set start and end time for all slots.'
+      availabilityErrorsByDay.value[day] = t('availabilities.errors.setTimes')
       return false
     }
     if (s.end <= s.start) {
-      availabilityErrorsByDay.value[day] = 'End time must be after start time.'
+      availabilityErrorsByDay.value[day] = t('availabilities.errors.endAfterStart')
       return false
     }
   }
@@ -159,7 +180,7 @@ function validateDaySlots(day) {
     const prev = sorted[i - 1]
     const cur = sorted[i]
     if (cur.start < prev.end) {
-      availabilityErrorsByDay.value[day] = 'Slots overlap. Please adjust times.'
+      availabilityErrorsByDay.value[day] = t('availabilities.errors.overlap')
       return false
     }
   }
@@ -245,7 +266,7 @@ async function save() {
   }
   if (!ok) return
   if (!flattenedAvailabilities.value.length) {
-    availabilityRequiredError.value = 'Please add at least one availability slot.'
+    availabilityRequiredError.value = t('availabilities.errors.atLeastOneSlot')
     return
   }
 
@@ -292,15 +313,15 @@ async function save() {
           }
         }
         const combined = msgs.join(' ')
-        error.value = combined || 'Validation failed'
-        Swal.fire({ position: 'top-end', icon: 'error', title: 'Save failed', text: error.value, toast: true, timer: 4000, showConfirmButton: false, timerProgressBar: true })
+        error.value = combined || t('availabilities.errors.validationFailed')
+        Swal.fire({ position: 'top-end', icon: 'error', title: t('availabilities.errors.saveFailed'), text: error.value, toast: true, timer: 4000, showConfirmButton: false, timerProgressBar: true })
         return
       }
 
       // fallback: read text
       const txt = await res.text().catch(() => '')
-      try { const parsed = JSON.parse(txt); error.value = parsed.message || 'Failed to save' } catch { error.value = txt || 'Failed to save' }
-      Swal.fire({ position: 'top-end', icon: 'error', title: 'Save failed', text: error.value, toast: true, timer: 4000, showConfirmButton: false, timerProgressBar: true })
+      try { const parsed = JSON.parse(txt); error.value = parsed.message || t('availabilities.errors.saveFailed') } catch { error.value = txt || t('availabilities.errors.saveFailed') }
+      Swal.fire({ position: 'top-end', icon: 'error', title: t('availabilities.errors.saveFailed'), text: error.value, toast: true, timer: 4000, showConfirmButton: false, timerProgressBar: true })
       return
     }
 
@@ -309,12 +330,12 @@ async function save() {
     if (data && data.success) {
       // reflect saved data
       availabilityByDay.value = parsedAvailabilitiesByDay(data.availabilities || [])
-      savedMessage.value = 'Saved'
-      Swal.fire({ position: 'top-end', icon: 'success', title: 'Availabilities saved', toast: true, timer: 2500, showConfirmButton: false, timerProgressBar: true })
+      savedMessage.value = t('availabilities.saved')
+      Swal.fire({ position: 'top-end', icon: 'success', title: t('availabilities.savedSuccess'), toast: true, timer: 2500, showConfirmButton: false, timerProgressBar: true })
       setTimeout(() => { savedMessage.value = '' }, 2500)
     }
   } catch (e) {
-    error.value = e?.message || 'Error saving availabilities'
+    error.value = e?.message || t('availabilities.errors.saveError')
   } finally {
     saving.value = false
   }
@@ -332,4 +353,16 @@ function routeHas(name) {
 </script>
 
 <style scoped>
+[dir="rtl"] {
+  text-align: right;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
 </style>

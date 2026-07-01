@@ -346,6 +346,28 @@ Route::middleware(['auth'])->group(function () {
             ]);
         })->name('psychologist.account');
 
+        // Psychologist account update (update user name/email)
+        Route::post('/psychologist/account', function (Request $request) {
+            $user = $request->user();
+            if (! $user || ! method_exists($user, 'isPsychologist') || ! $user->isPsychologist()) {
+                return redirect()->route('dashboard');
+            }
+
+            $data = $request->validate([
+                'name' => ['required', 'string', 'max:255'],
+                'email' => ['required', 'string', 'email', 'max:255'],
+            ]);
+
+            $emailChanged = isset($data['email']) && $data['email'] !== $user->email;
+            $user->fill($data);
+            if ($emailChanged && $user instanceof MustVerifyEmail) {
+                $user->email_verified_at = null;
+            }
+            $user->save();
+
+            return redirect()->route('psychologist.account')->with('status', 'Profile updated successfully.');
+        })->name('psychologist.account.update');
+
         // Psychologist profile & availabilities
         Route::get('/psychologist/profile/edit', [PsychologistSelfProfileController::class, 'edit'])->name('psychologist.profile.self');
         Route::post('/psychologist/profile/edit', [PsychologistSelfProfileController::class, 'update'])->name('psychologist.profile.self.update');
@@ -395,6 +417,28 @@ Route::middleware(['auth'])->group(function () {
                 'status' => session('status'),
             ]);
         })->name('patient.account');
+
+        // Patient account update (update user name/email)
+        Route::post('/patient/account', function (Request $request) {
+            $user = $request->user();
+            if (! $user || ! method_exists($user, 'isPatient') || ! $user->isPatient()) {
+                return redirect()->route('dashboard');
+            }
+
+            $data = $request->validate([
+                'name' => ['required', 'string', 'max:255'],
+                'email' => ['required', 'string', 'email', 'max:255'],
+            ]);
+
+            $emailChanged = isset($data['email']) && $data['email'] !== $user->email;
+            $user->fill($data);
+            if ($emailChanged && $user instanceof MustVerifyEmail) {
+                $user->email_verified_at = null;
+            }
+            $user->save();
+
+            return redirect()->route('patient.account')->with('status', 'Profile updated successfully.');
+        })->name('patient.account.update');
 
         // Patient profile
         Route::get('/patient/profile', [PatientSelfProfileController::class, 'edit'])->name('patient.profile');

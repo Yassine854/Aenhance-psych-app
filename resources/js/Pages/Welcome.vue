@@ -80,8 +80,8 @@ function resetAutoPlay() {
 
 // Languages list
 const languages = [
-  { code: "en", label: "🇬🇧 English" },
   { code: "fr", label: "🇫🇷 Français" },
+  { code: "en", label: "🇬🇧 English" },
   { code: "ar", label: "🇸🇦 العربية" },
 ];
 

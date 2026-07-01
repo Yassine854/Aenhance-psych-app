@@ -3,7 +3,7 @@ import en from './en.json';
 import fr from './fr.json';
 import ar from './ar.json';
 
-const savedLocale = localStorage.getItem('locale') || 'en';
+const savedLocale = localStorage.getItem('locale') || 'fr';
 
 export const i18n = createI18n({
   locale: savedLocale,

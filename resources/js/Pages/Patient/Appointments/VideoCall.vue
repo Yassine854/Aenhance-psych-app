@@ -1,5 +1,5 @@
 <template>
-  <Head title="Video call" />
+  <Head :title="`${t('videoCall.title')} - AEnhance`" />
 
   <Navbar :canLogin="canLogin" :canRegister="canRegister" :authUser="authUser" />
 
@@ -22,6 +22,7 @@
 
 <script setup>
 import { Head } from '@inertiajs/vue3'
+import { useI18n } from 'vue-i18n'
 import Navbar from '@/Components/Navbar.vue'
 import Footer from '@/Components/Footer.vue'
 import VideoCallPanel from '@/Components/VideoCall/VideoCallPanel.vue'
@@ -36,4 +37,6 @@ const props = defineProps({
   signalingUrl: { type: String, default: '' },
   role: { type: String, default: 'patient' },
 })
+
+const { t } = useI18n()
 </script>

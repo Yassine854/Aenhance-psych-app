@@ -6,30 +6,30 @@
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-3">
             <div class="w-12 h-12 rounded-full overflow-hidden bg-white/10 flex items-center justify-center ring-2 ring-white/25">
-              <img v-if="avatarUrl" :src="avatarUrl" alt="avatar" class="w-full h-full object-cover" />
+              <img v-if="avatarUrl" :src="avatarUrl" :alt="t('notesBook.avatar')" class="w-full h-full object-cover" />
               <span v-else class="text-white font-semibold">{{ initials }}</span>
             </div>
             <div>
-              <div class="text-white text-lg font-semibold">{{ patient?.name || 'Patient' }}</div>
+              <div class="text-white text-lg font-semibold">{{ patient?.name || t('notesBook.patient') }}</div>
               <div class="text-sm text-white/90">
-                {{ noteCount }} sessions
-                <span v-if="patient?.age"> • {{ patient.age }} yrs</span>
+                {{ t('notesBook.sessions', { count: noteCount }) }}
+                <span v-if="patient?.age"> • {{ t('notesBook.yrs', { age: patient.age }) }}</span>
               </div>
             </div>
           </div>
           <div>
-            <button @click="$emit('close')" class="text-white/90 hover:text-white text-2xl leading-none">✕</button>
+            <button @click="$emit('close')" class="text-white/90 hover:text-white text-2xl leading-none" :aria-label="t('notesBook.close')">✕</button>
           </div>
         </div>
       </div>
 
       <!-- Side arrows (book-style) -->
-      <button v-if="currentIndex > 0" @click="prev" aria-label="Previous note" class="side-arrow left-3 lg:left-6">
+      <button v-if="currentIndex > 0" @click="prev" :aria-label="t('notesBook.previousNote')" class="side-arrow left-3 lg:left-6">
         <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
           <path d="M12 16L6 10l6-6" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       </button>
-      <button v-if="currentIndex < notes.length - 1" @click="next" aria-label="Next note" class="side-arrow right-3 lg:right-6">
+      <button v-if="currentIndex < notes.length - 1" @click="next" :aria-label="t('notesBook.nextNote')" class="side-arrow right-3 lg:right-6">
         <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
           <path d="M8 4l6 6-6 6" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
@@ -38,35 +38,33 @@
       <div class="bg-white p-6 max-h-[70vh] overflow-y-auto styled-scrollbar">
         <div class="grid grid-cols-1 gap-4 mb-4 md:grid-cols-3 md:items-center">
           <div class="md:col-span-2 text-sm text-gray-600">
-            <div>Session date: <span class="font-medium">{{ currentNote.session_date_display }}</span></div>
-            <div class="text-xs text-gray-500 mt-1">Duration: <span class="font-medium">{{ currentNote.session_duration ? (currentNote.session_duration + ' mins') : '—' }}</span></div>
+            <div>{{ t('notesBook.sessionDate') }}: <span class="font-medium">{{ currentNote.session_date_display }}</span></div>
+            <div class="text-xs text-gray-500 mt-1">{{ t('notesBook.duration') }}: <span class="font-medium">{{ currentNote.session_duration ? (currentNote.session_duration + ' ' + t('notesBook.mins')) : '—' }}</span></div>
           </div>
           <div class="flex items-center gap-3 justify-start md:justify-end">
             <div class="flex items-center gap-2">
-              <input v-model="startDate" type="date" class="rounded border-gray-300 px-3 py-2 bg-gray-50 text-sm" />
-              <input v-model="endDate" type="date" class="rounded border-gray-300 px-3 py-2 bg-gray-50 text-sm" />
-              <button @click="fetchNotes" :style="{ background: 'rgb(89 151 172 / var(--tw-bg-opacity, 1))' }" class="px-3 py-2 rounded text-white shadow-sm">Filter</button>
-              <button v-if="startDate || endDate" @click="clearFilters" class="px-2 py-2 rounded border text-gray-600 bg-white">Clear</button>
+              <input v-model="startDate" type="date" class="rounded border-gray-300 px-3 py-2 bg-gray-50 text-sm" :placeholder="t('notesBook.start')" />
+              <input v-model="endDate" type="date" class="rounded border-gray-300 px-3 py-2 bg-gray-50 text-sm" :placeholder="t('notesBook.end')" />
+              <button @click="fetchNotes" :style="{ background: 'rgb(89 151 172 / var(--tw-bg-opacity, 1))' }" class="px-3 py-2 rounded text-white shadow-sm">{{ t('notesBook.filter') }}</button>
+              <button v-if="startDate || endDate" @click="clearFilters" class="px-2 py-2 rounded border text-gray-600 bg-white">{{ t('notesBook.clear') }}</button>
             </div>
 
             <div class="flex items-center gap-2">
-              <span v-if="startDate" class="filter-tag">Start: {{ formatDate(startDate) }} <button @click="clearStart" class="tag-x">✕</button></span>
-              <span v-if="endDate" class="filter-tag">End: {{ formatDate(endDate) }} <button @click="clearEnd" class="tag-x">✕</button></span>
+              <span v-if="startDate" class="filter-tag">{{ t('notesBook.start') }}: {{ formatDate(startDate) }} <button @click="clearStart" class="tag-x">✕</button></span>
+              <span v-if="endDate" class="filter-tag">{{ t('notesBook.end') }}: {{ formatDate(endDate) }} <button @click="clearEnd" class="tag-x">✕</button></span>
             </div>
           </div>
         </div>
 
-        
-
-        <div v-if="notes.length === 0" class="text-center text-gray-600 py-12">No notes for selected filters.</div>
+        <div v-if="notes.length === 0" class="text-center text-gray-600 py-12">{{ t('notesBook.noNotes') }}</div>
 
         <div v-else class="notebook grid grid-cols-1 gap-6 md:grid-cols-2">
           <div class="book-page p-8 bg-[rgba(89,151,172,0.04)] rounded border border-[rgba(89,151,172,0.06)]">
             <div class="book-meta mb-4">
               <div class="flex items-center justify-between">
                 <div>
-                  <div class="text-[rgb(24,58,63)] font-semibold text-lg">Session Note #{{ totalNotes - currentIndex }}</div>
-                  <div class="text-xs text-gray-500 mt-1">Mode: <span class="ml-1 font-medium text-[rgb(24,58,63)]">{{ currentNote.session_mode || '-' }}</span></div>
+                  <div class="text-[rgb(24,58,63)] font-semibold text-lg">{{ t('notesBook.sessionNote') }} #{{ totalNotes - currentIndex }}</div>
+                  <div class="text-xs text-gray-500 mt-1">{{ t('notesBook.mode') }}: <span class="ml-1 font-medium text-[rgb(24,58,63)]">{{ currentNote.session_mode || '-' }}</span></div>
                 </div>
                 <div class="flex items-center gap-3">
                   <div class="text-sm text-gray-500">{{ currentNote.session_date_display }}</div>
@@ -76,7 +74,7 @@
 
             <div class="space-y-5 text-sm text-[rgb(24,58,63)]">
               <div class="book-section">
-                <div class="book-heading">Risk Level</div>
+                <div class="book-heading">{{ t('notesBook.riskLevel') }}</div>
                 <div class="mt-1">
                   <span v-if="currentNote.risk_level" :style="riskStyle(currentNote.risk_level)">{{ currentNote.risk_level }}</span>
                   <span v-else class="text-gray-500">-</span>
@@ -84,12 +82,12 @@
               </div>
 
               <div class="book-section">
-                <div class="book-heading">Subjective</div>
+                <div class="book-heading">{{ t('notesBook.subjective') }}</div>
                 <div class="mt-1">{{ currentNote.subjective || '-' }}</div>
               </div>
 
               <div class="book-section">
-                <div class="book-heading">Objective</div>
+                <div class="book-heading">{{ t('notesBook.objective') }}</div>
                 <div class="mt-1">{{ currentNote.objective || '-' }}</div>
               </div>
             </div>
@@ -98,41 +96,39 @@
           <div class="book-page p-8 bg-white rounded border border-[rgba(15,23,42,0.04)]">
             <div class="space-y-5 text-sm text-[rgb(24,58,63)]">
               <div class="book-section">
-                <div class="book-heading">Assessment</div>
+                <div class="book-heading">{{ t('notesBook.assessment') }}</div>
                 <div class="mt-1">{{ currentNote.assessment || '-' }}</div>
               </div>
 
               <div class="book-section">
-                <div class="book-heading">Intervention</div>
+                <div class="book-heading">{{ t('notesBook.intervention') }}</div>
                 <div class="mt-1">{{ currentNote.intervention || '-' }}</div>
               </div>
 
               <div class="book-section">
-                <div class="book-heading">Plan</div>
+                <div class="book-heading">{{ t('notesBook.plan') }}</div>
                 <div class="mt-1">{{ currentNote.plan || '-' }}</div>
               </div>
-
-              <!-- Additional Details removed as requested -->
             </div>
           </div>
         </div>
       </div>
 
       <div class="px-4 py-3 border-t flex items-center justify-between text-sm text-gray-600 bg-white">
-        <div>Note {{ currentIndex + 1 }} of {{ notes.length }}</div>
+        <div>{{ t('notesBook.noteOf', { current: currentIndex + 1, total: notes.length }) }}</div>
         <div class="flex items-center gap-3">
-          <button @click="goToFirst" class="first-last-btn" title="Go to first note">
+          <button @click="goToFirst" class="first-last-btn" :title="t('notesBook.firstNote')">
             <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
               <path d="M19 18L13 12l6-6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
               <path d="M11 18L5 12l6-6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
             </svg>
           </button>
 
-          <nav class="pagination flex items-center gap-2" aria-label="Notes pagination">
+          <nav class="pagination flex items-center gap-2" :aria-label="t('notesBook.pagination')">
             <button v-for="p in pages" :key="p.key" @click="goToPage(p.index)" :class="['page-btn', { active: p.index === currentIndex } ]" v-html="p.label"></button>
           </nav>
 
-          <button @click="goToLast" class="first-last-btn" title="Go to last note">
+          <button @click="goToLast" class="first-last-btn" :title="t('notesBook.lastNote')">
             <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
               <path d="M5 6l6 6-6 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
               <path d="M13 6l6 6-6 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
@@ -146,10 +142,30 @@
 
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import axios from 'axios'
+
+const { t, locale } = useI18n()
 
 const props = defineProps({ patient: Object })
 const emit = defineEmits(['close'])
+
+function setLang(lang) {
+  locale.value = lang
+  localStorage.setItem('locale', lang)
+  if (lang === 'ar') {
+    document.documentElement.setAttribute('dir', 'rtl')
+    document.documentElement.setAttribute('lang', 'ar')
+    return
+  }
+  document.documentElement.setAttribute('dir', 'ltr')
+  document.documentElement.setAttribute('lang', lang)
+}
+
+onMounted(() => {
+  const savedLang = localStorage.getItem('locale') || locale.value
+  setLang(savedLang)
+})
 
 const notes = ref([])
 const currentIndex = ref(0)
@@ -211,10 +227,10 @@ const currentNote = computed(() => {
   const n = notes.value[currentIndex.value] || {}
   return {
     ...n,
-    session_date_display: n.session_date ? new Date(n.session_date).toLocaleString() : (n.session_date ?? '-'),
+    session_date_display: n.session_date ? formatDateLocalized(n.session_date) : (n.session_date ?? '-'),
     session_duration: n.session_duration ?? n.session_duration,
-    created_at_display: n.created_at ? new Date(n.created_at).toLocaleString() : (n.created_at ?? '-'),
-    updated_at_display: n.updated_at ? new Date(n.updated_at).toLocaleString() : (n.updated_at ?? '-'),
+    created_at_display: n.created_at ? formatDateLocalized(n.created_at) : (n.created_at ?? '-'),
+    updated_at_display: n.updated_at ? formatDateLocalized(n.updated_at) : (n.updated_at ?? '-'),
     note_id: n.id ?? n.note_id ?? n.noteId ?? null,
     session_id: n.session_id ?? n.appointment_session_id ?? n.sessionId ?? null
   }
@@ -294,9 +310,7 @@ async function fetchNotes() {
     const res = await axios.get(`/psychologist/patients/${props.patient.id}/notes`, { params })
     notes.value = res.data || []
     currentIndex.value = 0
-    // debug: show fetched count and computed pages
     try {
-      // pages is a computed ref; access .value for debugging
       // eslint-disable-next-line no-console
       console.log('[NotesBook] fetched notes:', notes.value.length, 'pages:', pages.value)
     } catch (e) {
@@ -324,8 +338,25 @@ async function clearEnd() { endDate.value = ''; await fetchNotes(); }
 async function clearFilters() { startDate.value = ''; endDate.value = ''; await fetchNotes(); }
 
 function formatDate(d) {
-  try { return new Date(d).toLocaleDateString() }
-  catch { return d }
+  try {
+    const localeMap = { ar: 'ar', fr: 'fr', en: 'en' }
+    const currentLocale = localeMap[locale.value] || 'en'
+    return new Intl.DateTimeFormat(currentLocale, { year: 'numeric', month: 'short', day: '2-digit' }).format(new Date(d))
+  } catch { return d }
+}
+
+function formatDateLocalized(d) {
+  try {
+    const localeMap = { ar: 'ar', fr: 'fr', en: 'en' }
+    const currentLocale = localeMap[locale.value] || 'en'
+    return new Intl.DateTimeFormat(currentLocale, {
+      year: 'numeric',
+      month: 'short',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
+    }).format(new Date(d))
+  } catch { return d }
 }
 
 function formatExtra(v) {
@@ -374,6 +405,10 @@ window.addEventListener('keydown', (e) => {
 </script>
 
 <style scoped>
+[dir="rtl"] {
+  text-align: right;
+}
+
 .book-page { min-height: 300px; }
 .styled-scrollbar {
   scrollbar-width: thin;

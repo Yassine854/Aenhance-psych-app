@@ -437,8 +437,8 @@ function submit() {
               <div class="absolute bottom-3 left-4 right-4">
                 <h3 class="text-lg font-semibold text-white leading-snug line-clamp-2">{{ fullName(psychologistProfile) }}</h3>
               </div>
-              <!-- price badge at bottom-right of image -->
-              <div class="absolute bottom-3 right-2 translate-x-1">
+              <!-- price badge: flip sides for RTL via locale -->
+              <div :class="locale === 'ar' ? 'absolute bottom-3 left-2 -translate-x-1' : 'absolute bottom-3 right-2 translate-x-1'">
                 <div class="inline-flex items-baseline gap-2 px-3 py-1 rounded-full bg-white/95 text-right shadow-lg">
                   <span class="text-sm font-semibold text-[#5997ac]">{{ formatPrice(psychologistProfile.price_per_session).replace(' TND','') }}</span>
                   <span class="text-xs text-gray-500">TND</span>

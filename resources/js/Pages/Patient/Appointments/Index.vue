@@ -1,10 +1,13 @@
 <script setup>
 import { Head, Link, router, usePage } from '@inertiajs/vue3'
-import { computed, ref, watch, nextTick } from 'vue'
+import { computed, ref, watch, nextTick, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import Swal from 'sweetalert2'
 import Navbar from '@/Components/Navbar.vue'
 import Footer from '@/Components/Footer.vue'
 import ReportModal from '@/Components/ReportModal.vue'
+
+const { t, locale } = useI18n()
 
 const props = defineProps({
   canLogin: { type: Boolean },
@@ -15,6 +18,25 @@ const props = defineProps({
 })
 
 const page = usePage()
+
+function setLang(lang) {
+  locale.value = lang
+  localStorage.setItem('locale', lang)
+
+  if (lang === 'ar') {
+    document.documentElement.setAttribute('dir', 'rtl')
+    document.documentElement.setAttribute('lang', 'ar')
+    return
+  }
+
+  document.documentElement.setAttribute('dir', 'ltr')
+  document.documentElement.setAttribute('lang', lang)
+}
+
+onMounted(() => {
+  const savedLang = localStorage.getItem('locale') || locale.value
+  setLang(savedLang)
+})
 
 const flashStatus = computed(() => props.status || page.props?.flash?.status || '')
 const paymentError = computed(() => page.props?.errors?.payment || '')
@@ -129,7 +151,13 @@ function formatDateTime(value) {
   if (!value) return ''
   try {
     const dt = new Date(value)
-    return new Intl.DateTimeFormat(undefined, {
+    const localeMap = {
+      'ar': 'ar',
+      'fr': 'fr',
+      'en': 'en'
+    }
+    const currentLocale = localeMap[locale.value] || 'en'
+    return new Intl.DateTimeFormat(currentLocale, {
       weekday: 'short',
       year: 'numeric',
       month: 'short',
@@ -146,7 +174,13 @@ function formatDate(value) {
   if (!value) return ''
   try {
     const dt = new Date(value)
-    return new Intl.DateTimeFormat(undefined, {
+    const localeMap = {
+      'ar': 'ar',
+      'fr': 'fr',
+      'en': 'en'
+    }
+    const currentLocale = localeMap[locale.value] || 'en'
+    return new Intl.DateTimeFormat(currentLocale, {
       weekday: 'long',
       year: 'numeric',
       month: 'short',
@@ -161,7 +195,13 @@ function formatTime(value) {
   if (!value) return ''
   try {
     const dt = new Date(value)
-    return new Intl.DateTimeFormat(undefined, {
+    const localeMap = {
+      'ar': 'ar',
+      'fr': 'fr',
+      'en': 'en'
+    }
+    const currentLocale = localeMap[locale.value] || 'en'
+    return new Intl.DateTimeFormat(currentLocale, {
       hour: '2-digit',
       minute: '2-digit',
     }).format(dt)
@@ -184,7 +224,7 @@ function durationMinutes(startValue, endValue) {
 function formatDuration(startValue, endValue) {
   const mins = durationMinutes(startValue, endValue)
   if (!mins) return ''
-  if (mins < 60) return `${mins} min`
+  if (mins < 60) return `${mins} ${t('appointments.min')}`
   const h = Math.floor(mins / 60)
   const m = mins % 60
   return m ? `${h}h ${m}m` : `${h}h`
@@ -225,37 +265,41 @@ function statusBadgeClass(status) {
 
 function statusLabel(status) {
   const s = String(status || '').toLowerCase()
-  if (s === 'no_show') return 'Appointment missed'
+  if (s === 'no_show') return t('appointments.missed')
+  if (s === 'pending') return t('appointments.pending')
+  if (s === 'confirmed') return t('appointments.confirmed')
+  if (s === 'completed') return t('appointments.completed')
+  if (s === 'cancelled') return t('appointments.cancelled')
   return s ? s.charAt(0).toUpperCase() + s.slice(1) : '—'
 }
 
 function missedByLabel(value) {
   if (!value) return ''
   const v = String(value).toLowerCase()
-  if (v === 'patient') return 'Patient'
-  if (v === 'psychologist') return 'Psychologist'
+  if (v === 'patient') return t('appointments.patient')
+  if (v === 'psychologist') return t('appointments.psychologist')
   return String(value)
 }
 
 function appointmentForName(a) {
   const beneficiary = a?.beneficiary || null
   if (String(a?.booking_for || '').toLowerCase() === 'other' && beneficiary) {
-    return beneficiary.full_name || [beneficiary.first_name, beneficiary.last_name].filter(Boolean).join(' ') || 'Another person'
+    return beneficiary.full_name || [beneficiary.first_name, beneficiary.last_name].filter(Boolean).join(' ') || t('appointments.anotherPerson')
   }
 
-  return 'Myself'
+  return t('appointments.myself')
 }
 
 function appointmentForMeta(a) {
   const beneficiary = a?.beneficiary || null
   if (String(a?.booking_for || '').toLowerCase() !== 'other' || !beneficiary) {
-    return 'Booked for your own session'
+    return t('appointments.bookedForSelf')
   }
 
   const parts = []
   if (beneficiary.relationship_to_patient) parts.push(beneficiary.relationship_to_patient)
-  if (beneficiary.date_of_birth) parts.push(`Born ${beneficiary.date_of_birth}`)
-  return parts.join(' • ') || 'Booked for another person'
+  if (beneficiary.date_of_birth) parts.push(`${t('appointments.born')} ${beneficiary.date_of_birth}`)
+  return parts.join(' • ') || t('appointments.bookedForOther')
 }
 
 
@@ -307,12 +351,12 @@ async function cancelAppointment(a) {
   if (!a?.id || !canCancel(a)) return
 
   const res = await Swal.fire({
-    title: 'Cancel this appointment?',
-    text: 'This action cannot be undone.',
+    title: t('appointments.cancelConfirmTitle'),
+    text: t('appointments.cancelConfirmText'),
     icon: 'warning',
     showCancelButton: true,
-    confirmButtonText: 'Yes, cancel it',
-    cancelButtonText: 'Keep it',
+    confirmButtonText: t('appointments.cancelConfirm'),
+    cancelButtonText: t('appointments.cancelKeep'),
     reverseButtons: true,
     focusCancel: true,
   })
@@ -323,7 +367,7 @@ async function cancelAppointment(a) {
   router.delete(route('appointments.destroy', a.id), {
     preserveScroll: true,
     onSuccess: () => {
-      toast.fire({ icon: 'success', title: 'Appointment cancelled' })
+      toast.fire({ icon: 'success', title: t('appointments.cancelledSuccess') })
         // Refresh authoritative pending count from server and broadcast update
         try {
           fetch(route('appointments.pendingCount'))
@@ -336,7 +380,7 @@ async function cancelAppointment(a) {
         } catch (e) {}
     },
     onError: () => {
-      toast.fire({ icon: 'error', title: 'Could not cancel appointment' })
+      toast.fire({ icon: 'error', title: t('appointments.cancelError') })
     },
     onFinish: () => {
       cancelingId.value = null
@@ -346,7 +390,7 @@ async function cancelAppointment(a) {
 </script>
 
 <template>
-  <Head title="My appointments" />
+  <Head :title="`${t('appointments.title')} - AEnhance`" />
 
   <Navbar :canLogin="canLogin" :canRegister="canRegister" :authUser="authUser" />
 
@@ -355,9 +399,9 @@ async function cancelAppointment(a) {
       <div class="mb-8 rounded-2xl border border-gray-200 bg-white p-6 md:p-7 shadow-sm">
         <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
           <div>
-            <h1 class="text-2xl md:text-3xl font-bold text-gray-900">My appointments</h1>
+            <h1 class="text-2xl md:text-3xl font-bold text-gray-900">{{ t('appointments.title') }}</h1>
             <p class="mt-2 text-gray-700 max-w-3xl">
-              View your sessions, pay for pending bookings, and manage cancellations.
+              {{ t('appointments.subtitle') }}
             </p>
           </div>
 
@@ -365,29 +409,29 @@ async function cancelAppointment(a) {
             :href="route('services.consultation')"
             class="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-white border border-gray-200 text-gray-700 text-sm font-semibold hover:bg-gray-50 transition focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-300"
           >
-            Book a new one
+            {{ t('appointments.bookNew') }}
           </Link>
         </div>
 
         <div class="mt-5 grid grid-cols-1 sm:grid-cols-4 gap-3">
           <div class="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
-            <div class="text-xs font-semibold text-gray-500">Total</div>
+            <div class="text-xs font-semibold text-gray-500">{{ t('appointments.total') }}</div>
             <div class="mt-1 text-lg font-bold text-gray-900">{{ appointments.length }}</div>
           </div>
           <div class="rounded-xl border border-yellow-200 bg-yellow-50 px-4 py-3">
-            <div class="text-xs font-semibold text-yellow-700">Pending</div>
+            <div class="text-xs font-semibold text-yellow-700">{{ t('appointments.pending') }}</div>
             <div class="mt-1 text-lg font-bold text-yellow-900">
               {{ appointments.filter((a) => String(a?.status || '').toLowerCase() === 'pending').length }}
             </div>
           </div>
           <div class="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3">
-            <div class="text-xs font-semibold text-blue-700">Confirmed</div>
+            <div class="text-xs font-semibold text-blue-700">{{ t('appointments.confirmed') }}</div>
             <div class="mt-1 text-lg font-bold text-blue-900">
               {{ appointments.filter((a) => String(a?.status || '').toLowerCase() === 'confirmed').length }}
             </div>
           </div>
           <div class="rounded-xl border border-green-200 bg-green-50 px-4 py-3">
-            <div class="text-xs font-semibold text-green-700">Completed</div>
+            <div class="text-xs font-semibold text-green-700">{{ t('appointments.completed') }}</div>
             <div class="mt-1 text-lg font-bold text-green-900">
               {{ appointments.filter((a) => String(a?.status || '').toLowerCase() === 'completed').length }}
             </div>
@@ -397,14 +441,14 @@ async function cancelAppointment(a) {
       </div>
 
       <div v-if="!appointments.length" class="bg-white border border-gray-200 rounded-2xl shadow-sm p-8 text-gray-700">
-        <div class="text-lg font-semibold text-gray-900">No appointments yet</div>
-        <div class="mt-1 text-sm text-gray-600">When you book, your sessions will appear here.</div>
+        <div class="text-lg font-semibold text-gray-900">{{ t('appointments.noAppointments') }}</div>
+        <div class="mt-1 text-sm text-gray-600">{{ t('appointments.noAppointmentsDesc') }}</div>
         <div class="mt-6">
           <Link
             :href="route('services.consultation')"
             class="inline-flex items-center justify-center px-5 py-2.5 rounded-lg bg-[#5997ac] text-white text-sm font-semibold hover:opacity-90 transition focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#5997ac]/30"
           >
-            Find a psychologist
+            {{ t('appointments.findPsychologist') }}
           </Link>
         </div>
       </div>
@@ -427,19 +471,19 @@ async function cancelAppointment(a) {
                   <div class="flex items-center gap-2 flex-wrap">
                     <div class="text-lg font-semibold text-gray-900 truncate">
                         <div class="flex items-center gap-2">
-                          <span class="flex items-center gap-2">{{ a.psychologist_name || 'Psychologist' }}</span>
+                          <span class="flex items-center gap-2">{{ a.psychologist_name || t('appointments.psychologist') }}</span>
                         </div>
                       
                     </div>
                     <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold" :class="statusBadgeClass(a.status)">
                       {{ statusLabel(a.status) }}
                     </span>
-                    <span v-if="a.missed_by" class="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold text-red-700 bg-red-50 ring-1 ring-red-100">Missed by: {{ missedByLabel(a.missed_by) }}</span>
+                    <span v-if="a.missed_by" class="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold text-red-700 bg-red-50 ring-1 ring-red-100">{{ t('appointments.missedBy') }}: {{ missedByLabel(a.missed_by) }}</span>
                     <span
                       v-if="isUpcoming(a)"
                       class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-white text-gray-700 ring-1 ring-gray-200"
                     >
-                      Upcoming
+                      {{ t('appointments.upcoming') }}
                     </span>
                   </div>
 
@@ -453,7 +497,7 @@ async function cancelAppointment(a) {
                     style="box-shadow: 0 4px 18px rgba(89,151,172,0.13);"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M15 10l4.553-2.276A1 1 0 0 1 21 8.618v6.764a1 1 0 0 1-1.447.894L15 14M4 6h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2z"/></svg>
-                    Join call
+                    {{ t('appointments.joinCall') }}
                   </Link>
 
                   <button
@@ -464,7 +508,7 @@ async function cancelAppointment(a) {
                     aria-disabled="true"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M15 10l4.553-2.276A1 1 0 0 1 21 8.618v6.764a1 1 0 0 1-1.447.894L15 14M4 6h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2z"/></svg>
-                    Join call
+                    {{ t('appointments.joinCall') }}
                   </button>
 
                   <!-- Report icon moved to action area for clearer placement -->
@@ -472,8 +516,8 @@ async function cancelAppointment(a) {
                     v-if="authUser && String(authUser.role || '').toUpperCase() === 'PATIENT'"
                     @click.prevent="openReportFromAppointment(a)"
                     class="inline-flex items-center justify-center w-9 h-9 rounded-full bg-white text-red-600 shadow border border-gray-100 hover:scale-105 transition ml-2"
-                    title="Report psychologist"
-                    aria-label="Report psychologist"
+                    :title="t('appointments.reportPsychologist')"
+                    :aria-label="t('appointments.reportPsychologist')"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" aria-hidden="true">
                       <path class="fill-current" d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
@@ -489,7 +533,7 @@ async function cancelAppointment(a) {
                     class="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-[#af5166] text-white text-sm font-semibold hover:opacity-90 transition disabled:opacity-60 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#af5166]/30"
                     :disabled="confirmingId === a.id"
                   >
-                    {{ confirmingId === a.id ? 'Processing…' : 'Pay & confirm' }}
+                    {{ confirmingId === a.id ? t('appointments.processing') : t('appointments.payConfirm') }}
                   </button>
 
                   <button
@@ -499,7 +543,7 @@ async function cancelAppointment(a) {
                     class="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-white border border-red-200 text-red-700 text-sm font-semibold hover:bg-red-50 transition disabled:opacity-60 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-200"
                     :disabled="cancelingId === a.id"
                   >
-                    {{ cancelingId === a.id ? 'Cancelling…' : 'Cancel' }}
+                    {{ cancelingId === a.id ? t('appointments.cancelling') : t('appointments.cancel') }}
                   </button>
                 </div>
               </div>
@@ -508,33 +552,33 @@ async function cancelAppointment(a) {
                 <div class="mt-3 rounded-2xl border border-gray-200 bg-gray-50 -ml-1 -mr-3 md:-ml-2 md:-mr-4 px-4 md:px-5 py-4">
                   <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
                     <div>
-                      <div class="text-xs font-semibold text-gray-500">Date</div>
+                      <div class="text-xs font-semibold text-gray-500">{{ t('appointments.date') }}</div>
                       <div class="mt-1 text-sm font-semibold text-gray-900">{{ formatDate(a.scheduled_start) || '—' }}</div>
-                      <div class="mt-0.5 text-xs text-gray-500">{{ formatDateTime(a.scheduled_start) ? 'Starts ' + formatTime(a.scheduled_start) : '' }}</div>
+                      <div class="mt-0.5 text-xs text-gray-500">{{ formatDateTime(a.scheduled_start) ? t('appointments.starts') + ' ' + formatTime(a.scheduled_start) : '' }}</div>
                     </div>
 
                     <div>
-                      <div class="text-xs font-semibold text-gray-500">Time</div>
+                      <div class="text-xs font-semibold text-gray-500">{{ t('appointments.time') }}</div>
                       <div class="mt-1 inline-flex flex-wrap items-center gap-2">
                         <span class="inline-flex items-center rounded-full bg-white px-3 py-1 text-sm font-semibold text-gray-900 ring-1 ring-gray-200">{{ formatTime(a.scheduled_start) || '—' }} – {{ formatTime(a.scheduled_end) || '—' }}</span>
                             <!-- duration badge removed per design -->
                       </div>
-                      <div class="mt-1 text-xs text-gray-500">Local time</div>
+                      <div class="mt-1 text-xs text-gray-500">{{ t('appointments.localTime') }}</div>
                     </div>
 
                     <div>
-                      <div class="text-xs font-semibold text-gray-500">Price</div>
+                      <div class="text-xs font-semibold text-gray-500">{{ t('appointments.price') }}</div>
                       <div class="mt-1">
                         <span v-if="a.price != null" class="inline-flex items-center rounded-full bg-white px-3 py-1 text-sm font-bold text-gray-900 ring-1 ring-gray-200">{{ Number(a.price).toFixed(2) }} {{ a.currency || 'TND' }}</span>
                         <span v-else class="text-sm font-semibold text-gray-900">—</span>
                       </div>
-                      <div v-if="a.reference" class="mt-2 text-xs text-gray-500">Ref:
+                      <div v-if="a.reference" class="mt-2 text-xs text-gray-500">{{ t('appointments.ref') }}:
                         <span class="inline-flex items-center rounded-md bg-white px-2 py-0.5 font-mono text-[11px] text-gray-700 ring-1 ring-gray-200">{{ a.reference }}</span>
                       </div>
                     </div>
 
                     <div>
-                      <div class="text-xs font-semibold text-gray-500">Booked for</div>
+                      <div class="text-xs font-semibold text-gray-500">{{ t('appointments.bookedFor') }}</div>
                       <div class="mt-1 text-sm font-semibold text-gray-900">{{ appointmentForName(a) }}</div>
                       <div class="mt-0.5 text-xs text-gray-500">{{ appointmentForMeta(a) }}</div>
                     </div>
@@ -547,13 +591,13 @@ async function cancelAppointment(a) {
         </TransitionGroup>
         <!-- Pagination controls -->
         <div v-if="appointmentsList.length > pageSize" class="mt-6 flex items-center justify-between">
-          <div class="text-sm text-gray-600">Showing {{ (currentPage - 1) * pageSize + 1 }} - {{ Math.min(currentPage * pageSize, appointmentsList.length) }} of {{ appointmentsList.length }}</div>
+          <div class="text-sm text-gray-600">{{ t('appointments.showing') }} {{ (currentPage - 1) * pageSize + 1 }} - {{ Math.min(currentPage * pageSize, appointmentsList.length) }} {{ t('appointments.of') }} {{ appointmentsList.length }}</div>
           <div class="inline-flex items-center gap-2">
             <button
               @click="currentPage = Math.max(1, currentPage - 1)"
               :disabled="currentPage === 1"
               class="px-3 py-1 rounded-full bg-white border shadow-sm text-sm disabled:opacity-50"
-              aria-label="Previous page"
+              :aria-label="t('appointments.previousPage')"
             >
               ‹
             </button>
@@ -581,7 +625,7 @@ async function cancelAppointment(a) {
               @click="currentPage = Math.min(totalPages, currentPage + 1)"
               :disabled="currentPage === totalPages"
               class="px-3 py-1 rounded-full bg-white border shadow-sm text-sm disabled:opacity-50"
-              aria-label="Next page"
+              :aria-label="t('appointments.nextPage')"
             >
               ›
             </button>
@@ -594,7 +638,7 @@ async function cancelAppointment(a) {
           :href="route('services.consultation')"
           class="inline-flex items-center justify-center px-4 py-2 rounded-md bg-white border border-gray-200 text-gray-700 text-sm font-medium hover:bg-gray-100 transition"
         >
-          Book a new one
+          {{ t('appointments.bookNew') }}
         </Link>
       </div>
     </div>
@@ -605,6 +649,10 @@ async function cancelAppointment(a) {
 </template>
 
 <style scoped>
+[dir="rtl"] {
+  text-align: right;
+}
+
 .list-enter-active,
 .list-leave-active {
   transition: opacity 180ms ease, transform 180ms ease;

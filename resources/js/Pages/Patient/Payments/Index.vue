@@ -1,6 +1,7 @@
 <script setup>
 import { Head, Link, usePage } from '@inertiajs/vue3'
 import { computed, ref, watch, nextTick } from 'vue'
+import { useI18n } from 'vue-i18n'
 import Swal from 'sweetalert2'
 import Navbar from '@/Components/Navbar.vue'
 import Footer from '@/Components/Footer.vue'
@@ -14,6 +15,7 @@ const props = defineProps({
 })
 
 const page = usePage()
+const { t } = useI18n()
 const flashStatus = computed(() => props.status || page.props?.flash?.status || '')
 
 const pageSize = ref(5)
@@ -120,12 +122,16 @@ function paymentStatusBadgeClass(status) {
 function paymentStatusLabel(status) {
   const s = String(status || '').toLowerCase()
   if (!s) return '—'
+  if (s === 'paid') return t('payments.paid')
+  if (s === 'pending') return t('payments.pending')
+  if (s === 'failed') return t('payments.failed')
+  if (s === 'refunded') return t('payments.refunded')
   return s.charAt(0).toUpperCase() + s.slice(1)
 }
 </script>
 
 <template>
-  <Head title="Payment history" />
+  <Head :title="`${t('payments.title')} - AEnhance`" />
 
   <Navbar :canLogin="canLogin" :canRegister="canRegister" :authUser="authUser" />
 
@@ -134,39 +140,37 @@ function paymentStatusLabel(status) {
       <div class="mb-8 rounded-2xl border border-gray-200 bg-white p-6 md:p-7 shadow-sm">
         <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
           <div>
-            <h1 class="text-2xl md:text-3xl font-bold text-gray-900">Payment history</h1>
-            <p class="mt-2 text-gray-700 max-w-3xl">
-              Track all your appointment payments and their statuses.
-            </p>
+            <h1 class="text-2xl md:text-3xl font-bold text-gray-900">{{ t('payments.title') }}</h1>
+            <p class="mt-2 text-gray-700 max-w-3xl">{{ t('payments.subtitle') }}</p>
           </div>
 
           <Link
             :href="route('patient.appointments')"
             class="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-white border border-gray-200 text-gray-700 text-sm font-semibold hover:bg-gray-50 transition focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-300"
           >
-            Go to appointments
+            {{ t('payments.goToAppointments') }}
           </Link>
         </div>
 
         <div class="mt-5 grid grid-cols-1 sm:grid-cols-4 gap-3">
           <div class="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
-            <div class="text-xs font-semibold text-gray-500">Total payments</div>
+            <div class="text-xs font-semibold text-gray-500">{{ t('payments.totalPayments') }}</div>
             <div class="mt-1 text-lg font-bold text-gray-900">{{ paymentsList.length }}</div>
           </div>
           <div class="rounded-xl border border-green-200 bg-green-50 px-4 py-3">
-            <div class="text-xs font-semibold text-green-700">Paid</div>
+            <div class="text-xs font-semibold text-green-700">{{ t('payments.paid') }}</div>
             <div class="mt-1 text-lg font-bold text-green-900">
               {{ paymentsList.filter((p) => String(p?.status || '').toLowerCase() === 'paid').length }}
             </div>
           </div>
           <div class="rounded-xl border border-yellow-200 bg-yellow-50 px-4 py-3">
-            <div class="text-xs font-semibold text-yellow-700">Pending</div>
+            <div class="text-xs font-semibold text-yellow-700">{{ t('payments.pending') }}</div>
             <div class="mt-1 text-lg font-bold text-yellow-900">
               {{ paymentsList.filter((p) => String(p?.status || '').toLowerCase() === 'pending').length }}
             </div>
           </div>
           <div class="rounded-xl border border-red-200 bg-red-50 px-4 py-3">
-            <div class="text-xs font-semibold text-red-700">Failed</div>
+            <div class="text-xs font-semibold text-red-700">{{ t('payments.failed') }}</div>
             <div class="mt-1 text-lg font-bold text-red-900">
               {{ paymentsList.filter((p) => String(p?.status || '').toLowerCase() === 'failed').length }}
             </div>
@@ -175,14 +179,14 @@ function paymentStatusLabel(status) {
       </div>
 
       <div v-if="!paymentsList.length" class="bg-white border border-gray-200 rounded-2xl shadow-sm p-8 text-gray-700">
-        <div class="text-lg font-semibold text-gray-900">No payments yet</div>
-        <div class="mt-1 text-sm text-gray-600">Once you pay for appointments, your payment history will appear here.</div>
+      <div class="text-lg font-semibold text-gray-900">{{ t('payments.noPaymentsTitle') }}</div>
+      <div class="mt-1 text-sm text-gray-600">{{ t('payments.noPaymentsDesc') }}</div>
         <div class="mt-6">
-          <Link
+            <Link
             :href="route('services.consultation')"
             class="inline-flex items-center justify-center px-5 py-2.5 rounded-lg bg-[#5997ac] text-white text-sm font-semibold hover:opacity-90 transition focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#5997ac]/30"
           >
-            Book a session
+            {{ t('payments.bookSession') }}
           </Link>
         </div>
       </div>
@@ -199,7 +203,7 @@ function paymentStatusLabel(status) {
                 <div class="min-w-0">
                   <div class="flex items-center gap-2 flex-wrap">
                     <div class="text-lg font-semibold text-gray-900 truncate">
-                      {{ p.appointment?.psychologist_name || 'Psychologist' }}
+                      {{ p.appointment?.psychologist_name || t('payments.psychologist') }}
                     </div>
                     <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold" :class="paymentStatusBadgeClass(p.status)">
                       {{ paymentStatusLabel(p.status) }}
@@ -208,7 +212,7 @@ function paymentStatusLabel(status) {
                 </div>
 
                 <div class="text-right">
-                  <div class="text-xs font-semibold text-gray-500">Amount</div>
+                  <div class="text-xs font-semibold text-gray-500">{{ t('payments.amount') }}</div>
                   <div class="mt-1 text-lg font-bold text-gray-900">{{ formatMoney(p.amount, p.currency) }}</div>
                 </div>
               </div>
@@ -216,22 +220,22 @@ function paymentStatusLabel(status) {
               <div class="mt-3 rounded-2xl border border-gray-200 bg-gray-50 -ml-1 -mr-3 md:-ml-2 md:-mr-4 px-4 md:px-5 py-4">
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                   <div>
-                    <div class="text-xs font-semibold text-gray-500">Appointment date</div>
+                    <div class="text-xs font-semibold text-gray-500">{{ t('payments.appointmentDate') }}</div>
                     <div class="mt-1 text-sm font-semibold text-gray-900">{{ formatDateTime(p.appointment?.scheduled_start) || '—' }}</div>
                   </div>
 
                   <div>
-                    <div class="text-xs font-semibold text-gray-500">Paid at</div>
+                    <div class="text-xs font-semibold text-gray-500">{{ t('payments.paidAt') }}</div>
                     <div class="mt-1 text-sm font-semibold text-gray-900">{{ formatDateTime(p.paid_at) || '—' }}</div>
                   </div>
 
                   <div>
-                    <div class="text-xs font-semibold text-gray-500">Provider</div>
+                    <div class="text-xs font-semibold text-gray-500">{{ t('payments.provider') }}</div>
                     <div class="mt-1 text-sm font-semibold text-gray-900 uppercase">{{ p.provider || '—' }}</div>
                   </div>
 
                   <div>
-                    <div class="text-xs font-semibold text-gray-500">Transaction</div>
+                    <div class="text-xs font-semibold text-gray-500">{{ t('payments.transaction') }}</div>
                     <div class="mt-1">
                       <span v-if="p.transaction_id" class="inline-flex items-center rounded-md bg-white px-2 py-0.5 font-mono text-[11px] text-gray-700 ring-1 ring-gray-200">{{ p.transaction_id }}</span>
                       <span v-else class="text-sm font-semibold text-gray-900">—</span>
@@ -240,22 +244,22 @@ function paymentStatusLabel(status) {
                 </div>
 
                 <div v-if="p.failure_reason || p.refund_reason" class="mt-4 border-t border-gray-200 pt-3 text-xs text-gray-600">
-                  <div v-if="p.failure_reason">Failure reason: {{ p.failure_reason }}</div>
-                  <div v-if="p.refund_reason" class="mt-1">Refund reason: {{ p.refund_reason }}</div>
+                  <div v-if="p.failure_reason">{{ t('payments.failureReason') }}: {{ p.failure_reason }}</div>
+                  <div v-if="p.refund_reason" class="mt-1">{{ t('payments.refundReason') }}: {{ p.refund_reason }}</div>
                 </div>
               </div>
             </div>
           </div>
         </TransitionGroup>
 
-        <div v-if="paymentsList.length > pageSize" class="mt-6 flex items-center justify-between">
-          <div class="text-sm text-gray-600">Showing {{ (currentPage - 1) * pageSize + 1 }} - {{ Math.min(currentPage * pageSize, paymentsList.length) }} of {{ paymentsList.length }}</div>
+          <div v-if="paymentsList.length > pageSize" class="mt-6 flex items-center justify-between">
+          <div class="text-sm text-gray-600">{{ t('payments.showing', { start: (currentPage - 1) * pageSize + 1, end: Math.min(currentPage * pageSize, paymentsList.length), total: paymentsList.length }) }}</div>
           <div class="inline-flex items-center gap-2">
-            <button
+              <button
               @click="currentPage = Math.max(1, currentPage - 1)"
               :disabled="currentPage === 1"
               class="px-3 py-1 rounded-full bg-white border shadow-sm text-sm disabled:opacity-50"
-              aria-label="Previous page"
+              :aria-label="t('payments.previousPage')"
             >
               ‹
             </button>
@@ -283,7 +287,7 @@ function paymentStatusLabel(status) {
               @click="currentPage = Math.min(totalPages, currentPage + 1)"
               :disabled="currentPage === totalPages"
               class="px-3 py-1 rounded-full bg-white border shadow-sm text-sm disabled:opacity-50"
-              aria-label="Next page"
+              :aria-label="t('payments.nextPage')"
             >
               ›
             </button>

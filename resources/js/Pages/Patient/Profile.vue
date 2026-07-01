@@ -6,9 +6,10 @@ import InputError from '@/Components/InputError.vue'
 import PrimaryButton from '@/Components/PrimaryButton.vue'
 import { Head, useForm, usePage } from '@inertiajs/vue3'
 import { computed, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import Swal from 'sweetalert2'
 import { getCountries, getCitiesByCountryName, splitInternationalPhoneNumber } from '@/utils/geoData'
-import { resolveStorageUrl } from '@/utils/storage'
+import { resolveStorageUrl, resolveAvatarUrl } from '@/utils/storage'
 
 const props = defineProps({
   canLogin: Boolean,
@@ -19,6 +20,8 @@ const props = defineProps({
 })
 
 const page = usePage()
+
+const { t } = useI18n()
 
 // Show SweetAlert toast when there's a status flash message.
 // Watch both `page.props.flash.status` (Inertia flash) and the `status` prop,
@@ -35,7 +38,7 @@ watch(flashStatus, (val) => {
     Swal.fire({
       position: 'top-end',
       icon: 'success',
-      title: val,
+      title: t('profile.updated'),
       showConfirmButton: false,
       timer: 3000,
       toast: true,
@@ -138,7 +141,7 @@ function submit() {
 </script>
 
 <template>
-  <Head title="Profile" />
+  <Head :title="`${t('profile.title')} - AEnhance`" />
 
   <Navbar
     :canLogin="canLogin"
@@ -155,8 +158,8 @@ function submit() {
             <span v-else class="text-white font-semibold">{{ (authUser?.name || authUser?.email || 'A').slice(0, 1).toUpperCase() }}</span>
           </div>
           <div>
-            <h1 class="text-2xl sm:text-3xl font-semibold text-white">Profile Details</h1>
-            <p class="mt-1 text-sm text-white/90">Update your profile information.</p>
+            <h1 class="text-2xl sm:text-3xl font-semibold text-white">{{ t('profile.title') }}</h1>
+            <p class="mt-1 text-sm text-white/90">{{ t('profile.subtitle') }}</p>
           </div>
         </div>
 
@@ -177,8 +180,8 @@ function submit() {
                 </svg>
               </div>
               <div>
-                  <h2 class="text-lg font-semibold text-white">Personal Information</h2>
-                  <p class="text-sm text-white/80">Your basic personal details</p>
+                  <h2 class="text-lg font-semibold text-white">{{ t('profile.personalInfo.title') }}</h2>
+                  <p class="text-sm text-white/80">{{ t('profile.personalInfo.desc') }}</p>
               </div>
             </div>
           </div>
@@ -186,18 +189,18 @@ function submit() {
           <div class="p-6 sm:p-8">
             <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <InputLabel>First name <span class="text-red-500">*</span></InputLabel>
+              <InputLabel>{{ t('profile.firstName') }} <span class="text-red-500">*</span></InputLabel>
               <TextInput v-model="form.first_name" class="mt-1 block w-full" />
               <InputError class="mt-2" :message="form.errors.first_name" />
             </div>
             <div>
-              <InputLabel>Last name <span class="text-red-500">*</span></InputLabel>
+              <InputLabel>{{ t('profile.lastName') }} <span class="text-red-500">*</span></InputLabel>
               <TextInput v-model="form.last_name" class="mt-1 block w-full" />
               <InputError class="mt-2" :message="form.errors.last_name" />
             </div>
 
             <div>
-              <InputLabel>Date of birth <span class="text-red-500">*</span></InputLabel>
+              <InputLabel>{{ t('profile.dateOfBirth') }} <span class="text-red-500">*</span></InputLabel>
               <input
                 type="date"
                 v-model="form.date_of_birth"
@@ -207,15 +210,15 @@ function submit() {
             </div>
 
             <div>
-              <InputLabel value="Gender" />
+              <InputLabel :value="t('profile.gender')" />
               <select
                 v-model="form.gender"
                 class="mt-1 block w-full rounded-md border-gray-300 focus:border-[#5997ac] focus:ring-[#5997ac]"
               >
-                <option value="">Select gender</option>
-                <option value="MALE">Male</option>
-                <option value="FEMALE">Female</option>
-                <option value="OTHER">Other</option>
+                <option value="">{{ t('profile.selectGender') }}</option>
+                <option value="MALE">{{ t('profile.genderOptions.male') }}</option>
+                <option value="FEMALE">{{ t('profile.genderOptions.female') }}</option>
+                <option value="OTHER">{{ t('profile.genderOptions.other') }}</option>
               </select>
               <InputError class="mt-2" :message="form.errors.gender" />
             </div>
@@ -223,25 +226,25 @@ function submit() {
 
           <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <InputLabel value="Country" />
+              <InputLabel :value="t('profile.country')" />
               <select
                 v-model="countryCode"
                 class="mt-1 block w-full rounded-md border-gray-300 focus:border-[#5997ac] focus:ring-[#5997ac]"
               >
-                <option value="">Select country</option>
+                <option value="">{{ t('profile.selectCountry') }}</option>
                 <option v-for="c in countriesList" :key="c.isoCode" :value="c.isoCode">{{ c.name }}</option>
               </select>
               <InputError class="mt-2" :message="form.errors.country" />
             </div>
 
             <div>
-              <InputLabel value="City" />
+              <InputLabel :value="t('profile.selectCity')" />
               <select
                 v-model="form.city"
                 :disabled="!form.country"
                 class="mt-1 block w-full rounded-md border-gray-300 disabled:bg-gray-50 focus:border-[#5997ac] focus:ring-[#5997ac]"
               >
-                <option value="">{{ form.country ? 'Select city' : 'Select country first' }}</option>
+                <option value="">{{ form.country ? t('profile.selectCity') : t('profile.selectCountryFirst') }}</option>
                 <option v-for="ct in cities" :key="ct" :value="ct">{{ ct }}</option>
               </select>
               <InputError class="mt-2" :message="form.errors.city" />
@@ -249,7 +252,7 @@ function submit() {
           </div>
 
           <div class="mt-6">
-            <InputLabel value="Phone" />
+            <InputLabel :value="t('profile.phone')" />
             <div class="mt-1 flex">
               <input
                 v-model="dialCode"
@@ -261,7 +264,7 @@ function submit() {
                 v-model="nationalNumber"
                 inputmode="tel"
                 class="block w-full rounded-r-md border border-l-0 border-gray-300 px-3 py-2 text-sm focus:border-[#5997ac] focus:ring-[#5997ac]"
-                placeholder="Enter phone number"
+                :placeholder="t('profile.enterPhone')"
               />
             </div>
             <InputError class="mt-2" :message="form.errors.phone" />
@@ -277,17 +280,15 @@ function submit() {
                     </svg>
                   </div>
                   <div>
-                    <h2 class="text-lg font-semibold text-white">Save Changes</h2>
-                    <p class="text-sm text-white/80">Update your profile information</p>
+                    <h2 class="text-lg font-semibold text-white">{{ t('profile.saveSection.title') }}</h2>
+                    <p class="text-sm text-white/80">{{ t('profile.saveSection.desc') }}</p>
                   </div>
                 </div>
               </div>
               <div class="p-6 sm:p-8">
                 <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                   <div class="flex-1">
-                    <p class="text-sm text-gray-600">
-                      Make sure all your information is accurate and up-to-date. Changes will be reflected immediately in your profile.
-                    </p>
+                    <p class="text-sm text-gray-600">{{ t('profile.saveSection.tip') }}</p>
                   </div>
                   <div class="flex items-center gap-3">
                     <a
@@ -297,7 +298,7 @@ function submit() {
                       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
                       </svg>
-                      Back to Home
+                      {{ t('profile.saveSection.backToHome') }}
                     </a>
                     <PrimaryButton
                       :disabled="form.processing"
@@ -309,7 +310,7 @@ function submit() {
                       <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                       </svg>
-                      {{ form.processing ? 'Saving Changes...' : 'Save Changes' }}
+                      {{ form.processing ? t('profile.saveSection.saving') : t('profile.saveSection.save') }}
                     </PrimaryButton>
                   </div>
                 </div>
@@ -328,8 +329,8 @@ function submit() {
                   </svg>
                 </div>
                 <div>
-                  <h2 class="text-lg font-semibold text-white">Profile Image</h2>
-                  <p class="text-sm text-white/80">Your photo</p>
+                  <h2 class="text-lg font-semibold text-white">{{ t('profile.profileImage.title') }}</h2>
+                  <p class="text-sm text-white/80">{{ t('profile.profileImage.desc') }}</p>
                 </div>
               </div>
             </div>
@@ -339,10 +340,10 @@ function submit() {
               <div class="relative group">
                 <div class="relative h-32 w-32 rounded-2xl overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center ring-4 ring-[#5997ac]/20 group-hover:ring-[#5997ac]/40 transition-all duration-300">
                   <img v-if="headerImage" :src="headerImage" class="h-full w-full object-cover" />
-                  <div v-else class="flex flex-col items-center justify-center text-gray-400">No photo</div>
+                  <div v-else class="flex flex-col items-center justify-center text-gray-400">{{ t('profile.profileImage.noPhoto') }}</div>
 
                   <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center rounded-2xl">
-                    <div class="px-3 py-1.5 rounded-full bg-white/90 text-[12px] font-medium text-gray-900">Change</div>
+                    <div class="px-3 py-1.5 rounded-full bg-white/90 text-[12px] font-medium text-gray-900">{{ t('profile.profileImage.change') }}</div>
                   </div>
                 </div>
 
@@ -358,7 +359,7 @@ function submit() {
                   type="button"
                   @click="removePhoto"
                   class="absolute -top-2 -right-2 h-8 w-8 rounded-full bg-red-500 text-white shadow-lg flex items-center justify-center hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors duration-200"
-                  title="Remove photo"
+                  :title="t('profile.profileImage.remove')"
                 >
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
@@ -367,7 +368,7 @@ function submit() {
               </div>
 
               <InputError class="w-full" :message="form.errors.profile_image" />
-              <div class="w-full p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200">
+                <div class="w-full p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200">
                 <div class="flex items-start gap-3">
                   <div class="w-5 h-5 text-blue-600 mt-0.5">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -375,8 +376,8 @@ function submit() {
                     </svg>
                   </div>
                   <div>
-                    <p class="text-sm font-medium text-blue-900">Tip</p>
-                    <p class="text-xs text-blue-700 mt-1">Recommended photo size: 400x400px, max 1MB.</p>
+                    <p class="text-sm font-medium text-blue-900">{{ t('profile.tipLabel') }}</p>
+                    <p class="text-xs text-blue-700 mt-1">{{ t('profile.profileImage.recommended') }}</p>
                   </div>
                 </div>
               </div>

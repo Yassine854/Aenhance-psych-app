@@ -23,8 +23,8 @@
           type="button"
           @click.stop="togglePatientNotifications"
           class="inline-flex items-center justify-center p-2 bg-white/10 text-white rounded-full border border-white/20 hover:bg-white/20 transition"
-          aria-label="Notifications"
-          title="Notifications"
+          :aria-label="t('navbar.notifications')"
+          :title="t('navbar.notifications')"
         >
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V4a2 2 0 10-4 0v1.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5" />
@@ -47,14 +47,14 @@
           :class="['absolute top-full mt-1 bg-white dark:bg-gray-800 text-black dark:text-white rounded shadow-md w-80 z-50 overflow-hidden', isRtl ? 'left-0' : 'right-0']"
         >
           <div class="px-4 py-3 border-b border-gray-200 bg-gray-50 dark:bg-gray-700 flex items-center justify-between">
-            <div class="text-sm font-medium text-gray-900 dark:text-white">Notifications</div>
+            <div class="text-sm font-medium text-gray-900 dark:text-white">{{ t('navbar.notifications') }}</div>
             <button
               type="button"
               class="text-xs font-medium text-[#5997ac] disabled:opacity-50"
               @click="markAllPatientNotificationsAsRead"
               :disabled="patientUnreadCount === 0"
             >
-              Mark all as read
+              {{ t('navbar.markAllAsRead') }}
             </button>
           </div>
 
@@ -85,7 +85,7 @@
             </li>
 
             <li v-if="patientNotifications.length === 0" class="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
-              No notifications yet.
+              {{ t('navbar.noNotifications') }}
             </li>
           </ul>
 
@@ -94,7 +94,7 @@
             class="w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition"
             @click="viewAllPatientNotifications"
           >
-            View all notifications
+            {{ t('navbar.viewAll') }}
           </button>
         </div>
       </div>
@@ -104,8 +104,8 @@
         <Link
           :href="route('patient.appointments')"
           class="inline-flex items-center justify-center p-2 bg-white/10 text-white rounded-full border border-white/20 hover:bg-white/20 transition mr-2"
-          aria-label="Appointments"
-          title="Appointments"
+          :aria-label="t('navbar.appointments')"
+          :title="t('navbar.appointments')"
         >
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <rect x="3" y="4" width="18" height="18" rx="2" ry="2" stroke-width="1.5" />
@@ -173,7 +173,7 @@
                   {{ patientDisplayName }}
                 </div>
                 <div class="text-xs text-gray-500 dark:text-gray-400 truncate">
-                  Patient
+                  {{ t('navbar.patient') }}
                 </div>
               </div>
             </div>
@@ -184,28 +184,28 @@
             class="block w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition text-[13px]"
             @click="showPatientMenu = false"
           >
-            Edit Profile
+            {{ t('navbar.editProfile') }}
           </Link>
           <Link
             :href="route('patient.account')"
             class="block w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition text-[13px]"
             @click="showPatientMenu = false"
           >
-            Account details
+            {{ t('navbar.telementalHealth') }}
           </Link>
           <Link
             :href="route('patient.appointments')"
             class="block w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition text-[13px]"
             @click="showPatientMenu = false"
           >
-            Appointments
+            {{ t('navbar.appointments') }}
           </Link>
           <Link
             :href="route('patient.payments')"
             class="block w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition text-[13px]"
             @click="showPatientMenu = false"
           >
-            Payment history
+            {{ t('navbar.paymentHistory') }}
           </Link>
           <div class="border-t border-gray-200"></div>
           <button
@@ -213,7 +213,7 @@
             class="block w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition text-[13px]"
             @click.prevent="handlePatientLogout"
           >
-            Log out
+            {{ t('navbar.logout') }}
           </button>
         </div>
       </div>
@@ -224,8 +224,8 @@
           type="button"
           @click.stop="togglePsychologistNotifications"
           class="inline-flex items-center justify-center p-2 bg-white/10 text-white rounded-full border border-white/20 hover:bg-white/20 transition"
-          aria-label="Notifications"
-          title="Notifications"
+          :aria-label="t('navbar.notifications')"
+          :title="t('navbar.notifications')"
         >
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V4a2 2 0 10-4 0v1.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5" />
@@ -248,14 +248,14 @@
           :class="['absolute top-full mt-1 bg-white dark:bg-gray-800 text-black dark:text-white rounded shadow-md w-80 z-50 overflow-hidden', isRtl ? 'left-0' : 'right-0']"
         >
           <div class="px-4 py-3 border-b border-gray-200 bg-gray-50 dark:bg-gray-700 flex items-center justify-between">
-            <div class="text-sm font-medium text-gray-900 dark:text-white">Notifications</div>
+            <div class="text-sm font-medium text-gray-900 dark:text-white">{{ t('navbar.notifications') }}</div>
             <button
               type="button"
               class="text-xs font-medium text-[#5997ac] disabled:opacity-50"
               @click="markAllPsychologistNotificationsAsRead"
               :disabled="psychologistUnreadCount === 0"
             >
-              Mark all as read
+              {{ t('navbar.markAllAsRead') }}
             </button>
           </div>
 
@@ -286,7 +286,7 @@
             </li>
 
             <li v-if="psychologistNotifications.length === 0" class="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
-              No notifications yet.
+              {{ t('navbar.noNotifications') }}
             </li>
           </ul>
 
@@ -295,7 +295,7 @@
             class="w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition"
             @click="viewAllPsychologistNotifications"
           >
-            View all notifications
+            {{ t('navbar.viewAll') }}
           </button>
         </div>
       </div>
@@ -347,7 +347,7 @@
                   {{ psychologistDisplayName }}
                 </div>
                 <div class="text-xs text-gray-500 dark:text-gray-400 truncate">
-                  Psychologist
+                  {{ t('navbar.psychologist') }}
                 </div>
               </div>
             </div>
@@ -358,7 +358,7 @@
             class="block w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition text-[13px]"
             @click="showPsychologistMenu = false"
           >
-            Edit Profile
+            {{ t('navbar.editProfile') }}
           </Link>
 
           <Link
@@ -366,7 +366,7 @@
             class="block w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition text-[13px]"
             @click="showPsychologistMenu = false"
           >
-            Account Settings
+            {{ t('navbar.accountSettings') }}
           </Link>
 
           <Link
@@ -374,7 +374,7 @@
             class="block w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition text-[13px]"
             @click="showPsychologistMenu = false"
           >
-            Manage Availability
+            {{ t('navbar.manageAvailability') }}
           </Link>
 
           <Link
@@ -382,7 +382,7 @@
             class="block w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition text-[13px]"
             @click="showPsychologistMenu = false"
           >
-            Appointments
+            {{ t('navbar.appointments') }}
           </Link>
 
           <Link
@@ -390,7 +390,7 @@
             class="block w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition text-[13px]"
             @click="showPsychologistMenu = false"
           >
-            Patients
+            {{ t('navbar.patients') }}
           </Link>
 
           <Link
@@ -398,7 +398,7 @@
             class="block w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition text-[13px]"
             @click="showPsychologistMenu = false"
           >
-            Payouts
+            {{ t('navbar.payouts') }}
           </Link>
           <div class="border-t border-gray-200"></div>
           <button
@@ -406,7 +406,7 @@
             class="block w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition text-[13px]"
             @click.prevent="handlePsychologistLogout"
           >
-            Log out
+            {{ t('navbar.logout') }}
           </button>
         </div>
       </div>
@@ -1047,8 +1047,8 @@ const psychologistInitials = computed(() => {
 
 // Languages list
 const languages = [
-  { code: "en", label: "🇬🇧 English" },
   { code: "fr", label: "🇫🇷 Français" },
+  { code: "en", label: "🇬🇧 English" },
   { code: "ar", label: "🇸🇦 العربية" },
 ];
 

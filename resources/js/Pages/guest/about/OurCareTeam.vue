@@ -65,6 +65,7 @@ const aboutLinks = computed(() => ([
 	{ label: t("ourCareTeam.sidebar.about.items.telementalHealth"), href: route("telemental-health"), active: false },
 	{ label: t("ourCareTeam.sidebar.about.items.whoWeAre"), href: route("who-we-are"), active: false },
 	{ label: t("ourCareTeam.sidebar.about.items.ourCareTeam"), href: route("our-care-team"), active: true },
+	{ label: t("joinOurTeamPage.sidebar.about.items.joinOurTeam"), href: route("join-our-team"), active: false },
 	{ label: t("ourCareTeam.sidebar.about.items.termsAndConditions"), href: route("terms-conditions"), active: false },
 	{ label: t("ourCareTeam.sidebar.about.items.privacyProtection"), href: route("privacy-protection"), active: false },
 ]));
@@ -442,22 +443,7 @@ function iconPath(icon) {
 						</ul>
 					</div>
 
-					<div class="bg-white rounded-lg shadow-sm p-6">
-						<h3 class="text-xl font-bold text-[#5997ac] mb-4 pb-3 border-b-2 border-[#5997ac]">
-							{{ t('ourCareTeam.sidebar.navigation.title') }}
-						</h3>
-						<ul class="space-y-2">
-							<li v-for="item in navigationLinks" :key="item.label">
-								<Link
-									:href="item.href"
-									class="flex items-center gap-2 text-gray-700 hover:text-[#af5166] transition-colors py-2"
-								>
-									<span class="text-[#af5166]">›</span>
-									{{ item.label }}
-								</Link>
-							</li>
-						</ul>
-					</div>
+					
 				</div>
 			</div>
 		</div>

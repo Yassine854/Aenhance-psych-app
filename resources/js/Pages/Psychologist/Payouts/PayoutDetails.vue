@@ -5,27 +5,25 @@
       <div class="bg-gradient-to-r from-[rgb(141,61,79)] to-[rgb(89,151,172)] p-6">
         <div class="flex items-center justify-between">
           <div>
-            <div class="text-white text-lg font-semibold">Payout #{{ payout?.id ?? '—' }} details</div>
+            <div class="text-white text-lg font-semibold">{{ t('payoutDetails.title') }} #{{ payout?.id ?? '—' }}</div>
             <div class="text-sm text-white/90">{{ patient?.name || '' }}</div>
           </div>
           <div>
-            <button @click="$emit('close')" class="text-white/90 hover:text-white text-2xl leading-none">✕</button>
+            <button @click="$emit('close')" class="text-white/90 hover:text-white text-2xl leading-none" :aria-label="t('payoutDetails.close')">✕</button>
           </div>
         </div>
       </div>
 
       <div class="bg-white p-6 max-h-[70vh] overflow-y-auto styled-scrollbar">
-        <!-- header controls removed; appointment moved into body -->
-
         <div class="notebook grid grid-cols-1 gap-6 md:grid-cols-2">
           <div class="book-page p-8 bg-[rgba(89,151,172,0.04)] rounded border border-[rgba(89,151,172,0.06)]">
             <div class="book-meta mb-4">
               <div class="flex items-center justify-between">
                 <div>
-                  <div class="text-[rgb(24,58,63)] font-semibold text-lg">Payout #{{ payout?.id ?? '—' }}</div>
-                  <div class="text-xs text-gray-500 mt-1">Status:
+                  <div class="text-[rgb(24,58,63)] font-semibold text-lg">{{ t('payoutDetails.payout') }} #{{ payout?.id ?? '—' }}</div>
+                  <div class="text-xs text-gray-500 mt-1">{{ t('payoutDetails.status') }}:
                     <span :class="['ml-1 inline-flex items-center px-2 py-1 rounded text-xs font-medium', payoutBadge(payout?.status)]">
-                      {{ payout?.status || '—' }}
+                      {{ payoutStatusLabel(payout?.status) }}
                     </span>
                   </div>
                 </div>
@@ -37,17 +35,17 @@
 
             <div class="space-y-5 text-sm text-[rgb(24,58,63)]">
               <div class="book-section">
-                <div class="book-heading">Appointment</div>
-                <div class="mt-1">Date: <span class="font-medium">{{ formatDate(payout?.appointment?.scheduled_start) }}</span></div>
+                <div class="book-heading">{{ t('payoutDetails.appointment') }}</div>
+                <div class="mt-1">{{ t('payoutDetails.date') }}: <span class="font-medium">{{ formatDate(payout?.appointment?.scheduled_start) }}</span></div>
               </div>
               <div class="book-section">
-                <div class="book-heading">Payment</div>
-                <div class="mt-1">Gross: <span class="font-medium">{{ payout?.gross_amount || '—' }} {{ payout?.currency || '' }}</span></div>
-                <div class="mt-1">Platform fee: <span class="font-medium">{{ payout?.platform_fee || '—' }} {{ payout?.currency || '' }}</span></div>
+                <div class="book-heading">{{ t('payoutDetails.payment') }}</div>
+                <div class="mt-1">{{ t('payoutDetails.gross') }}: <span class="font-medium">{{ payout?.gross_amount || '—' }} {{ payout?.currency || '' }}</span></div>
+                <div class="mt-1">{{ t('payoutDetails.platformFee') }}: <span class="font-medium">{{ payout?.platform_fee || '—' }} {{ payout?.currency || '' }}</span></div>
               </div>
 
               <div class="book-section">
-                <div class="book-heading">Net</div>
+                <div class="book-heading">{{ t('payoutDetails.net') }}</div>
                 <div class="mt-1 text-lg font-semibold">{{ payout?.net_amount || '—' }} {{ payout?.currency || '' }}</div>
               </div>
             </div>
@@ -56,32 +54,51 @@
           <div class="book-page p-8 bg-white rounded border border-[rgba(15,23,42,0.04)]">
             <div class="space-y-5 text-sm text-[rgb(24,58,63)]">
               <div class="book-section">
-                <div class="book-heading">Estimated availability</div>
+                <div class="book-heading">{{ t('payoutDetails.estimatedAvailability') }}</div>
                 <div class="mt-1">{{ formatDateDateOnly(payout?.estimated_availability) }}</div>
               </div>
 
               <div class="book-section">
-                <div class="book-heading">Paid at</div>
+                <div class="book-heading">{{ t('payoutDetails.paidAt') }}</div>
                 <div class="mt-1">{{ formatDate(payout?.paid_at) }}</div>
               </div>
               <div class="book-section">
-                <div class="book-heading">Refunded at</div>
+                <div class="book-heading">{{ t('payoutDetails.refundedAt') }}</div>
                 <div class="mt-1">{{ formatDate(payout?.refund_at) }}</div>
               </div>
             </div>
           </div>
         </div>
-        
-        <!-- footer removed (close moved to top-right) -->
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
+
+const { t, locale } = useI18n()
+
+function setLang(lang) {
+  locale.value = lang
+  localStorage.setItem('locale', lang)
+  if (lang === 'ar') {
+    document.documentElement.setAttribute('dir', 'rtl')
+    document.documentElement.setAttribute('lang', 'ar')
+    return
+  }
+  document.documentElement.setAttribute('dir', 'ltr')
+  document.documentElement.setAttribute('lang', lang)
+}
+
+onMounted(() => {
+  const savedLang = localStorage.getItem('locale') || locale.value
+  setLang(savedLang)
+})
 
 const props = defineProps({ payout: Object })
+const emit = defineEmits(['close'])
 
 // use computed refs so changes to props.payout update the UI
 const payout = computed(() => props.payout || {})
@@ -89,22 +106,6 @@ const payout = computed(() => props.payout || {})
 const visible = computed(() => Boolean(payout.value && Object.keys(payout.value).length > 0))
 
 const patient = computed(() => payout.value?.appointment?.patient ?? null)
-
-const avatarUrl = computed(() => {
-  try {
-    const p = patient.value || {}
-    const cands = [p.profile_image_url, p.profileImageUrl, p.avatar_url, p.avatar]
-    for (const c of cands) if (c) return c
-    return null
-  } catch { return null }
-})
-
-const initials = computed(() => {
-  const name = (patient.value?.name || '').toString().trim()
-  if (!name) return 'P'
-  const parts = name.split(/\s+/).filter(Boolean)
-  return (parts.slice(0,2).map(p => p[0]).join('') || 'P').toUpperCase()
-})
 
 function payoutBadge(status) {
   const s = String(status || '').trim().toLowerCase()
@@ -115,14 +116,32 @@ function payoutBadge(status) {
   return 'bg-gray-100 text-gray-700 ring-1 ring-gray-200'
 }
 
+function payoutStatusLabel(status) {
+  const s = String(status || '').trim().toLowerCase()
+  if (!s) return '—'
+  if (s === 'pending') return t('payoutDetails.statusPending')
+  if (s === 'paid') return t('payoutDetails.statusPaid')
+  if (s === 'on_hold') return t('payoutDetails.statusOnHold')
+  if (s === 'refund') return t('payoutDetails.statusRefund')
+  return s.charAt(0).toUpperCase() + s.slice(1)
+}
+
 function formatDate(d) {
   if (!d) return '—'
-  try { return new Intl.DateTimeFormat(undefined, { year: 'numeric', month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit' }).format(new Date(d)) } catch { return String(d) }
+  try {
+    const localeMap = { ar: 'ar', fr: 'fr', en: 'en' }
+    const currentLocale = localeMap[locale.value] || 'en'
+    return new Intl.DateTimeFormat(currentLocale, { year: 'numeric', month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit' }).format(new Date(d))
+  } catch { return String(d) }
 }
 
 function formatDateDateOnly(d) {
   if (!d) return '—'
-  try { return new Intl.DateTimeFormat(undefined, { year: 'numeric', month: 'short', day: '2-digit' }).format(new Date(d)) } catch { return String(d) }
+  try {
+    const localeMap = { ar: 'ar', fr: 'fr', en: 'en' }
+    const currentLocale = localeMap[locale.value] || 'en'
+    return new Intl.DateTimeFormat(currentLocale, { year: 'numeric', month: 'short', day: '2-digit' }).format(new Date(d))
+  } catch { return String(d) }
 }
 </script>
 
@@ -135,4 +154,8 @@ function formatDateDateOnly(d) {
 .book-page { min-height: 300px; }
 .book-heading { font-weight: 600; color: rgb(89,151,172); margin-bottom: 6px; }
 .book-section { background: transparent; padding: 6px 0; border-bottom: 1px dashed rgba(15,23,42,0.04); }
+
+[dir="rtl"] {
+  text-align: right;
+}
 </style>

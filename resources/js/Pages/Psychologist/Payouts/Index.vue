@@ -1,13 +1,13 @@
 <template>
-  <Head title="Payouts" />
+  <Head :title="t('psychologistPayouts.title')" />
 
   <Navbar :canLogin="canLogin" :canRegister="canRegister" :authUser="authUser || page.props?.auth?.user" />
 
   <div class="min-h-[calc(100vh-112px)] bg-gray-50">
     <div class="bg-gradient-to-r from-[#af5166] to-[#5997ac]">
       <div class="mx-auto max-w-6xl px-4 py-8">
-        <h1 class="text-2xl sm:text-3xl font-semibold text-white">Payouts</h1>
-        <p class="mt-1 text-sm text-white/90">Manage your payouts. Click a row to see full details.</p>
+        <h1 class="text-2xl sm:text-3xl font-semibold text-white">{{ t('psychologistPayouts.title') }}</h1>
+        <p class="mt-1 text-sm text-white/90">{{ t('psychologistPayouts.subtitle') }}</p>
       </div>
     </div>
 
@@ -22,13 +22,13 @@
                     <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v4a1 1 0 00.293.707l2 2a1 1 0 001.414-1.414L11 10.586V7z" clip-rule="evenodd" />
                   </svg>
                   <div>
-                    <div class="text-sm font-semibold text-green-800">{{ flashMessage }}</div>
-                    <div class="text-xs text-green-700/80">&nbsp;</div>
+                    <div class="text-sm font-semibold text-green-800">{{ t('psychologistPayouts.success') }}</div>
+                    <div class="text-sm text-green-800">{{ flashMessage }}</div>
                   </div>
                 </div>
-                <button type="button" @click="clearFlash" class="text-green-700/70 hover:text-green-800" aria-label="Dismiss">
+                <button type="button" @click="clearFlash" class="text-green-700/70 hover:text-green-800" :aria-label="t('psychologistPayouts.dismiss')">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-5 w-5">
-                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 011.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
                   </svg>
                 </button>
               </div>
@@ -41,13 +41,13 @@
                     <path fill-rule="evenodd" d="M10.293 15.707a1 1 0 010-1.414L13.586 11 10.293 7.707a1 1 0 011.414-1.414L15 9.586l3.293-3.293a1 1 0 011.414 1.414L16.414 11l3.293 3.293a1 1 0 01-1.414 1.414L15 12.414l-3.293 3.293a1 1 0 01-1.414 0z" clip-rule="evenodd" />
                   </svg>
                   <div>
-                    <div class="text-sm font-semibold text-red-800">{{ flashError }}</div>
-                    <div class="text-xs text-red-700/80">&nbsp;</div>
+                    <div class="text-sm font-semibold text-red-800">{{ t('psychologistPayouts.error') }}</div>
+                    <div class="text-sm text-red-800">{{ flashError }}</div>
                   </div>
                 </div>
-                <button type="button" @click="clearError" class="text-red-700/70 hover:text-red-800" aria-label="Dismiss">
+                <button type="button" @click="clearError" class="text-red-700/70 hover:text-red-800" :aria-label="t('psychologistPayouts.dismiss')">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-5 w-5">
-                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 011.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
                   </svg>
                 </button>
               </div>
@@ -60,10 +60,10 @@
             <select
               v-model="searchField"
               class="h-10 w-40 md:w-48 shrink-0 rounded-lg border-gray-300 bg-white px-3 text-sm text-gray-700"
-              aria-label="Search filter"
+              :aria-label="t('psychologistPayouts.searchFilter')"
             >
-              <option value="patient">Patient</option>
-              <option value="date">Appointment Date</option>
+              <option value="patient">{{ t('psychologistPayouts.patient') }}</option>
+              <option value="date">{{ t('psychologistPayouts.appointmentDate') }}</option>
             </select>
 
             <div class="relative flex-1 md:w-80">
@@ -80,8 +80,8 @@
                   type="button"
                   @click="clearSearch"
                   class="absolute right-2 top-1/2 -translate-y-1/2 inline-flex items-center justify-center h-7 w-7 rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-700"
-                  aria-label="Clear text"
-                  title="Clear"
+                  :aria-label="t('psychologistPayouts.clearText')"
+                  :title="t('psychologistPayouts.clear')"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-4 w-4">
                     <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
@@ -94,7 +94,7 @@
                   v-model="searchDate"
                   type="date"
                   class="w-full rounded-lg border-gray-300 pl-10 pr-10 py-2"
-                  aria-label="Search date"
+                  :aria-label="t('psychologistPayouts.searchDate')"
                 />
 
                 <button
@@ -102,8 +102,8 @@
                   type="button"
                   @click="searchDate = ''"
                   class="absolute right-2 top-1/2 -translate-y-1/2 inline-flex items-center justify-center h-7 w-7 rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-700"
-                  aria-label="Clear date"
-                  title="Clear"
+                  :aria-label="t('psychologistPayouts.clearDate')"
+                  :title="t('psychologistPayouts.clear')"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-4 w-4">
                     <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
@@ -130,24 +130,24 @@
                   <tr>
                     <th class="px-4 py-3 text-left">
                       <button type="button" @click="toggleSort('patient')" class="group inline-flex items-center gap-1 text-xs font-medium text-gray-500 uppercase tracking-wider hover:text-gray-700">
-                        Patient
+                        {{ t('psychologistPayouts.patient') }}
                         <SortIcon :active="sortKey === 'patient'" :dir="sortDir" />
                       </button>
                     </th>
                     <th class="px-4 py-3 text-left">
                       <button type="button" @click="toggleSort('scheduled_start')" class="group inline-flex items-center gap-1 text-xs font-medium text-gray-500 uppercase tracking-wider hover:text-gray-700">
-                        Appointment Date
+                        {{ t('psychologistPayouts.appointmentDate') }}
                         <SortIcon :active="sortKey === 'scheduled_start'" :dir="sortDir" />
                       </button>
                     </th>
                     <th class="px-4 py-3 text-left">
                       <button type="button" @click="toggleSort('status')" class="group inline-flex items-center gap-1 text-xs font-medium text-gray-500 uppercase tracking-wider hover:text-gray-700">
-                        Status
+                        {{ t('psychologistPayouts.status') }}
                         <SortIcon :active="sortKey === 'status'" :dir="sortDir" />
                       </button>
                     </th>
-                    <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Net</th>
-                    <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">{{ t('psychologistPayouts.net') }}</th>
+                    <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">{{ t('psychologistPayouts.actions') }}</th>
                   </tr>
                 </thead>
 
@@ -174,7 +174,7 @@
                     </td>
                     <td class="px-4 py-3 text-right">
                       <div class="inline-flex items-center justify-end gap-2">
-                        <button @click="show(p)" title="View details" aria-label="View payout details" class="inline-flex items-center justify-center h-9 w-9 rounded-full bg-white text-indigo-600 shadow border border-gray-100 hover:scale-105 transition">
+                        <button @click="show(p)" :title="t('psychologistPayouts.viewDetails')" :aria-label="t('psychologistPayouts.viewDetails')" class="inline-flex items-center justify-center h-9 w-9 rounded-full bg-white text-indigo-600 shadow border border-gray-100 hover:scale-105 transition">
                           <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
                             <path d="M14 2v6h6" />
@@ -192,13 +192,13 @@
               <svg class="mx-auto h-10 w-10 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3M3 11h18M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
-              <div class="mt-4 text-lg font-medium">No payouts yet</div>
-              <div class="mt-1 text-sm">You don't have any payouts at the moment.</div>
+              <div class="mt-4 text-lg font-medium">{{ t('psychologistPayouts.noPayouts') }}</div>
+              <div class="mt-1 text-sm">{{ t('psychologistPayouts.noPayoutsDesc') }}</div>
             </div>
           </div>
 
           <div class="flex items-center justify-between px-4 py-3 border-t border-gray-200">
-            <div class="text-sm text-gray-600">Showing {{ payouts.from }}-{{ payouts.to }} of {{ payouts.total }}</div>
+            <div class="text-sm text-gray-600">{{ t('psychologistPayouts.showing') }} {{ payouts.from }}-{{ payouts.to }} {{ t('psychologistPayouts.of') }} {{ payouts.total }}</div>
             <div class="flex items-center gap-2">
               <Link v-for="(link, i) in payouts.links" :key="i" :href="link.url || '#'" :class="linkClasses(link)" :style="link.active ? { backgroundColor: brandColor, borderColor: brandColor, color: '#fff' } : null" preserve-scroll>
                 <span v-html="link.label"></span>
@@ -215,10 +215,30 @@
 
 <script setup>
 import { Head, Link, router, usePage } from '@inertiajs/vue3'
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import Navbar from '@/Components/Navbar.vue'
 import SortIcon from '@/Components/SortIcon.vue'
 import PayoutDetails from '@/Pages/Psychologist/Payouts/PayoutDetails.vue'
+
+const { t, locale } = useI18n()
+
+function setLang(lang) {
+  locale.value = lang
+  localStorage.setItem('locale', lang)
+  if (lang === 'ar') {
+    document.documentElement.setAttribute('dir', 'rtl')
+    document.documentElement.setAttribute('lang', 'ar')
+    return
+  }
+  document.documentElement.setAttribute('dir', 'ltr')
+  document.documentElement.setAttribute('lang', lang)
+}
+
+onMounted(() => {
+  const savedLang = localStorage.getItem('locale') || locale.value
+  setLang(savedLang)
+})
 
 const props = defineProps({
   payouts: Object,
@@ -392,9 +412,9 @@ watch(searchDate, () => {
 const searchPlaceholder = computed(() => {
   switch (searchField.value) {
     case 'patient':
-      return 'Search by patient name...'
+      return t('psychologistPayouts.searchPatientPlaceholder')
     default:
-      return 'Search...'
+      return t('psychologistPayouts.searchPlaceholder')
   }
 })
 
@@ -455,7 +475,11 @@ function close() { selected.value = null }
 
 function formatDate(value) {
   if (!value) return '—'
-  try { return new Intl.DateTimeFormat(undefined, { year: 'numeric', month: 'short', day: '2-digit' }).format(new Date(value)) } catch { return String(value) }
+  try {
+    const localeMap = { ar: 'ar', fr: 'fr', en: 'en' }
+    const currentLocale = localeMap[locale.value] || 'en'
+    return new Intl.DateTimeFormat(currentLocale, { year: 'numeric', month: 'short', day: '2-digit' }).format(new Date(value))
+  } catch { return String(value) }
 }
 
 function payoutLabel(status) {
@@ -482,3 +506,9 @@ function linkClasses(link) {
 
 const brandColor = 'rgb(89 151 172 / var(--tw-bg-opacity, 1))'
 </script>
+
+<style scoped>
+[dir="rtl"] {
+  text-align: right;
+}
+</style>

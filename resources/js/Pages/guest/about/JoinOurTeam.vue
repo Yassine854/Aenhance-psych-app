@@ -203,22 +203,7 @@ const ctaLabel = computed(() => {
 						</ul>
 					</div>
 
-					<div class="bg-white rounded-lg shadow-sm p-6 mb-6">
-						<h3 class="text-xl font-bold text-[#5997ac] mb-4 pb-3 border-b-2 border-[#5997ac]">
-							{{ t('joinOurTeamPage.sidebar.navigation.title') }}
-						</h3>
-						<ul class="space-y-2">
-							<li v-for="item in navigationLinks" :key="item.label">
-								<Link
-									:href="item.href"
-									class="flex items-center gap-2 text-gray-700 hover:text-[#af5166] transition-colors py-2"
-								>
-									<span class="text-[#af5166]">›</span>
-									{{ item.label }}
-								</Link>
-							</li>
-						</ul>
-					</div>
+					
 				</div>
 			</div>
 		</div>

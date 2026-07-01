@@ -548,9 +548,18 @@ onBeforeUnmount(() => {
   <!-- Content -->
   <div class="bg-gray-50 py-12 md:py-16">
     <div class="container mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="mb-8 flex items-start gap-4 w-full" :class="locale.value === 'ar' ? 'flex-row-reverse' : ''">
+      <div class="mb-8 flex items-start gap-4 w-full justify-between">
         <div class="flex-1 flex justify-start">
-          <!-- Filter button (left for LTR, right for RTL) -->
+          <Link
+            :href="route('services.index')"
+            class="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-white border border-gray-200 text-gray-700 text-sm font-semibold hover:bg-gray-50 transition focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-300"
+          >
+            {{ t("services.consultation.back") }}
+          </Link>
+        </div>
+
+        <div class="flex-1 flex justify-end">
+          <!-- Filter button on the right -->
           <button
             @click="toggleFilter"
             type="button"
@@ -561,15 +570,6 @@ onBeforeUnmount(() => {
             </svg>
             {{ t('services.consultation.filter') || 'Filter' }}
           </button>
-        </div>
-
-        <div class="flex-1 flex justify-end">
-          <Link
-            :href="route('services.index')"
-            class="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-white border border-gray-200 text-gray-700 text-sm font-semibold hover:bg-gray-50 transition focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-300"
-          >
-            {{ t("services.consultation.back") }}
-          </Link>
         </div>
       </div>
 
@@ -700,8 +700,8 @@ onBeforeUnmount(() => {
                   </div>
                 </div>
 
-              <!-- price badge at bottom-right of image -->
-              <div class="absolute bottom-3 right-2 translate-x-1">
+              <!-- price badge: flip sides for RTL via locale -->
+              <div :class="locale === 'ar' ? 'absolute bottom-3 left-2 -translate-x-1' : 'absolute bottom-3 right-2 translate-x-1'">
                 <div class="inline-flex items-baseline gap-2 px-3 py-1 rounded-full bg-white/95 text-right shadow-lg">
                   <span class="text-sm font-semibold text-[#5997ac]">{{ formatPrice(profile.price_per_session).replace(' TND','') }}</span>
                   <span class="text-xs text-gray-500">TND</span>
@@ -785,7 +785,7 @@ onBeforeUnmount(() => {
   <div v-if="filterOpen" class="fixed inset-0 z-30">
     <div @click="filterOpen=false" class="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity"></div>
 
-    <aside :class="['fixed top-0 h-full w-80 bg-white shadow-xl z-40 transform transition-transform p-0 flex flex-col', locale.value === 'ar' ? 'left-0' : 'right-0', drawerRounded]">
+    <aside :class="['fixed top-0 h-full w-80 bg-white shadow-xl z-40 transform transition-transform p-0 flex flex-col', locale === 'ar' ? 'left-0' : 'right-0', drawerRounded]">
       <div class="p-4 flex items-center justify-between border-b bg-white shrink-0">
         <div class="flex items-center gap-3">
           <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-[#5997ac]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">

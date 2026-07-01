@@ -1,13 +1,13 @@
 <template>
-  <Head title="Appointments" />
+  <Head :title="t('psychologistAppointments.title')" />
 
   <Navbar :canLogin="canLogin" :canRegister="canRegister" :authUser="authUser || page.props?.auth?.user" />
 
   <div class="min-h-[calc(100vh-112px)] bg-gray-50">
     <div class="bg-gradient-to-r from-[#af5166] to-[#5997ac]">
       <div class="mx-auto max-w-6xl px-4 py-8">
-        <h1 class="text-2xl sm:text-3xl font-semibold text-white">Appointments</h1>
-        <p class="mt-1 text-sm text-white/90">Manage your appointments. You can only cancel 24h+ before start time.</p>
+        <h1 class="text-2xl sm:text-3xl font-semibold text-white">{{ t('psychologistAppointments.title') }}</h1>
+        <p class="mt-1 text-sm text-white/90">{{ t('psychologistAppointments.subtitle') }}</p>
       </div>
     </div>
 
@@ -22,11 +22,11 @@
                     <path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12Zm13.61-1.814a.75.75 0 0 0-1.22-.872l-3.236 4.53-1.784-1.784a.75.75 0 1 0-1.06 1.06l2.4 2.4a.75.75 0 0 0 1.14-.094l3.76-5.24Z" clip-rule="evenodd" />
                   </svg>
                   <div>
-                    <div class="text-sm font-medium text-green-800">Success</div>
+                    <div class="text-sm font-medium text-green-800">{{ t('psychologistAppointments.success') }}</div>
                     <div class="text-sm text-green-800">{{ flashMessage }}</div>
                   </div>
                 </div>
-                <button type="button" @click="clearFlash" class="text-green-700/70 hover:text-green-800" aria-label="Dismiss">
+                <button type="button" @click="clearFlash" class="text-green-700/70 hover:text-green-800" :aria-label="t('psychologistAppointments.dismiss')">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-5 w-5">
                     <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
                   </svg>
@@ -41,11 +41,11 @@
                     <path fill-rule="evenodd" d="M12 2.25c5.385 0 9.75 4.365 9.75 9.75S17.385 21.75 12 21.75 2.25 17.385 2.25 12 6.615 2.25 12 2.25Zm.75 6a.75.75 0 0 0-1.5 0V12a.75.75 0 0 0 1.5 0V8.25ZM12 15.75a.75.75 0 1 0 0 1.5.75.75 0 0 0 0-1.5Z" clip-rule="evenodd" />
                   </svg>
                   <div>
-                    <div class="text-sm font-medium text-red-800">Not allowed</div>
+                    <div class="text-sm font-medium text-red-800">{{ t('psychologistAppointments.notAllowed') }}</div>
                     <div class="text-sm text-red-800">{{ flashError }}</div>
                   </div>
                 </div>
-                <button type="button" @click="clearError" class="text-red-700/70 hover:text-red-800" aria-label="Dismiss">
+                <button type="button" @click="clearError" class="text-red-700/70 hover:text-red-800" :aria-label="t('psychologistAppointments.dismiss')">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-5 w-5">
                     <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
                   </svg>
@@ -60,10 +60,10 @@
           <select
             v-model="searchField"
             class="h-10 w-40 md:w-48 shrink-0 rounded-lg border-gray-300 bg-white px-3 text-sm text-gray-700"
-            aria-label="Search filter"
+            :aria-label="t('psychologistAppointments.searchFilter')"
           >
-            <option value="patient">Patient</option>
-            <option value="date">Date</option>
+            <option value="patient">{{ t('psychologistAppointments.patient') }}</option>
+            <option value="date">{{ t('psychologistAppointments.date') }}</option>
           </select>
 
             <div class="relative flex-1 md:w-80">
@@ -80,8 +80,8 @@
                   type="button"
                   @click="clearSearch"
                   class="absolute right-2 top-1/2 -translate-y-1/2 inline-flex items-center justify-center h-7 w-7 rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-700"
-                  aria-label="Clear text"
-                  title="Clear"
+                  :aria-label="t('psychologistAppointments.clearText')"
+                  :title="t('psychologistAppointments.clear')"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-4 w-4">
                     <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
@@ -94,7 +94,7 @@
                   v-model="searchDate"
                   type="date"
                   class="w-full rounded-lg border-gray-300 pl-10 pr-10 py-2"
-                  aria-label="Search date"
+                  :aria-label="t('psychologistAppointments.searchDate')"
                 />
 
                 <button
@@ -102,8 +102,8 @@
                   type="button"
                   @click="searchDate = ''"
                   class="absolute right-2 top-1/2 -translate-y-1/2 inline-flex items-center justify-center h-7 w-7 rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-700"
-                  aria-label="Clear date"
-                  title="Clear"
+                  :aria-label="t('psychologistAppointments.clearDate')"
+                  :title="t('psychologistAppointments.clear')"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-4 w-4">
                     <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
@@ -129,29 +129,29 @@
                 <tr>
                   <th class="px-4 py-3 text-left">
                     <button type="button" @click="toggleSort('id')" class="group inline-flex items-center gap-1 text-xs font-medium text-gray-500 uppercase tracking-wider hover:text-gray-700">
-                      ID
+                      {{ t('psychologistAppointments.id') }}
                       <SortIcon :active="sortKey === 'id'" :dir="sortDir" />
                     </button>
                   </th>
                   <th class="px-4 py-3 text-left">
                     <button type="button" @click="toggleSort('patient')" class="group inline-flex items-center gap-1 text-xs font-medium text-gray-500 uppercase tracking-wider hover:text-gray-700">
-                      Appointment For
+                      {{ t('psychologistAppointments.appointmentFor') }}
                       <SortIcon :active="sortKey === 'patient'" :dir="sortDir" />
                     </button>
                   </th>
                   <th class="px-4 py-3 text-left">
                     <button type="button" @click="toggleSort('scheduled_start')" class="group inline-flex items-center gap-1 text-xs font-medium text-gray-500 uppercase tracking-wider hover:text-gray-700">
-                      Date
+                      {{ t('psychologistAppointments.date') }}
                       <SortIcon :active="sortKey === 'scheduled_start'" :dir="sortDir" />
                     </button>
                   </th>
                   <th class="px-4 py-3 text-left">
                     <button type="button" @click="toggleSort('status')" class="group inline-flex items-center gap-1 text-xs font-medium text-gray-500 uppercase tracking-wider hover:text-gray-700">
-                      Status
+                      {{ t('psychologistAppointments.status') }}
                       <SortIcon :active="sortKey === 'status'" :dir="sortDir" />
                     </button>
                   </th>
-                  <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                  <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">{{ t('psychologistAppointments.actions') }}</th>
                 </tr>
               </thead>
 
@@ -189,10 +189,10 @@
                       </span>
                     </div>
                     <div v-if="normalizeStatus(a.status) === 'cancelled'" class="mt-1 text-xs text-gray-500">
-                      Cancelled by: {{ a.canceled_by || '—' }}
+                      {{ t('psychologistAppointments.cancelledBy') }}: {{ a.canceled_by || '—' }}
                     </div>
                     <div v-if="normalizeStatus(a.status) === 'cancelled' && a.cancellation_reason" class="mt-1 text-xs text-gray-500">
-                      Reason: {{ a.cancellation_reason }}
+                      {{ t('psychologistAppointments.reason') }}: {{ a.cancellation_reason }}
                     </div>
                   </td>
                   <td class="px-4 py-3 text-right">
@@ -202,9 +202,9 @@
                           v-if="canJoinRoom(a)"
                           :href="route('appointments.video_call.show', a.id)"
                           class="inline-flex items-center justify-center h-8 px-2.5 rounded-lg border text-xs font-medium border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
-                          title="Join video call"
+                          :title="t('psychologistAppointments.joinVideoCall')"
                         >
-                          Join room
+                          {{ t('psychologistAppointments.joinRoom') }}
                         </Link>
 
                         <button
@@ -213,9 +213,9 @@
                           @click="startCall(a)"
                           :disabled="startingCallId === a.id"
                           class="inline-flex items-center justify-center h-8 px-2.5 rounded-lg border text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100"
-                          title="Start video call"
+                          :title="t('psychologistAppointments.startVideoCall')"
                         >
-                          {{ startingCallId === a.id ? 'Starting…' : 'Start call' }}
+                          {{ startingCallId === a.id ? t('psychologistAppointments.starting') : t('psychologistAppointments.startCall') }}
                         </button>
 
                         <button
@@ -224,9 +224,9 @@
                           @click="cancelWithReason(a)"
                           :disabled="savingId === a.id"
                           class="inline-flex items-center justify-center h-8 px-2.5 rounded-lg border text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed border-red-200 bg-red-50 text-red-700 hover:bg-red-100"
-                          title="Cancel appointment"
+                          :title="t('psychologistAppointments.cancelAppointment')"
                         >
-                          Cancel
+                          {{ t('psychologistAppointments.cancel') }}
                         </button>
 
                         <button
@@ -234,9 +234,9 @@
                           type="button"
                           disabled
                           class="inline-flex items-center justify-center h-8 px-2.5 rounded-lg border text-xs font-medium opacity-60 cursor-not-allowed border-gray-200 bg-gray-50 text-gray-600"
-                          title="You can only cancel at least 24 hours before start"
+                          :title="t('psychologistAppointments.cancelDisabled')"
                         >
-                          Cancel
+                          {{ t('psychologistAppointments.cancel') }}
                         </button>
                         <button
                           v-if="normalizeStatus(a.status) === 'completed'"
@@ -244,20 +244,20 @@
                           @click="onNotesClick(a, $event)"
                           class="notes-btn inline-flex items-center gap-2 h-9 px-3 rounded-lg text-xs font-medium border shadow-sm transition duration-150 hover:shadow-md"
                           style="border-color: rgb(89 151 172 / var(--tw-bg-opacity, 1)); color: rgb(89 151 172 / var(--tw-bg-opacity, 1));"
-                          title="Edit session notes"
+                          :title="t('psychologistAppointments.editNotes')"
                           >
                           <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" :style="{ color: 'inherit' }">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5M18.5 2.5l3 3L12 15l-4 1 1-4 9.5-9.5z" />
                           </svg>
-                          Notes
+                          {{ t('psychologistAppointments.notes') }}
                         </button>
                         <!-- Psychologist report patient button -->
                         <button
                           v-if="currentUser && String(currentUser.role || '').toUpperCase() === 'PSYCHOLOGIST'"
                           @click.prevent="openReportForPatient(a)"
                           class="inline-flex items-center justify-center h-9 w-9 rounded-full bg-white text-red-600 shadow border border-gray-100 hover:scale-105 transition ml-2"
-                          title="Report patient"
-                          aria-label="Report patient"
+                          :title="t('psychologistAppointments.reportPatient')"
+                          :aria-label="t('psychologistAppointments.reportPatient')"
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" aria-hidden="true">
                             <path class="fill-current" d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
@@ -278,13 +278,13 @@
                 <svg class="mx-auto h-10 w-10 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3M3 11h18M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
-                <div class="mt-4 text-lg font-medium">No appointments yet</div>
-                <div class="mt-1 text-sm">You don't have any appointments scheduled at the moment.</div>
+                <div class="mt-4 text-lg font-medium">{{ t('psychologistAppointments.noAppointments') }}</div>
+                <div class="mt-1 text-sm">{{ t('psychologistAppointments.noAppointmentsDesc') }}</div>
               </div>
           </div>
 
           <div class="flex items-center justify-between px-4 py-3 border-t border-gray-200">
-            <div class="text-sm text-gray-600">Showing {{ appointments.from }}-{{ appointments.to }} of {{ appointments.total }}</div>
+            <div class="text-sm text-gray-600">{{ t('psychologistAppointments.showing') }} {{ appointments.from }}-{{ appointments.to }} {{ t('psychologistAppointments.of') }} {{ appointments.total }}</div>
             <div class="flex items-center gap-2">
               <Link v-for="(link, i) in appointments.links" :key="i" :href="link.url || '#'" :class="linkClasses(link)" :style="link.active ? { backgroundColor: brandColor, borderColor: brandColor, color: '#fff' } : null" preserve-scroll>
                 <span v-html="link.label"></span>
@@ -301,12 +301,32 @@
 
 <script setup>
 import { Head, Link, router, usePage } from '@inertiajs/vue3'
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import Navbar from '@/Components/Navbar.vue'
 import SortIcon from '@/Components/SortIcon.vue'
 import Swal from 'sweetalert2'
 import VideoCallSessionNotes from '@/Components/VideoCall/VideoCallSessionNotes.vue'
 import ReportModal from '@/Components/ReportModal.vue'
+
+const { t, locale } = useI18n()
+
+function setLang(lang) {
+  locale.value = lang
+  localStorage.setItem('locale', lang)
+  if (lang === 'ar') {
+    document.documentElement.setAttribute('dir', 'rtl')
+    document.documentElement.setAttribute('lang', 'ar')
+    return
+  }
+  document.documentElement.setAttribute('dir', 'ltr')
+  document.documentElement.setAttribute('lang', lang)
+}
+
+onMounted(() => {
+  const savedLang = localStorage.getItem('locale') || locale.value
+  setLang(savedLang)
+})
 
 const props = defineProps({
   appointments: Object,
@@ -485,32 +505,32 @@ watch(searchDate, () => {
 const searchPlaceholder = computed(() => {
   switch (searchField.value) {
     case 'patient':
-      return 'Search by patient or beneficiary name...'
+      return t('psychologistAppointments.searchPatientPlaceholder')
     default:
-      return 'Search...'
+      return t('psychologistAppointments.searchPlaceholder')
   }
 })
 
 function bookedForName(a) {
   const beneficiary = a?.beneficiary || null
   if (String(a?.booking_for || '').toLowerCase() === 'other' && beneficiary) {
-    return beneficiary.full_name || [beneficiary.first_name, beneficiary.last_name].filter(Boolean).join(' ') || 'Another person'
+    return beneficiary.full_name || [beneficiary.first_name, beneficiary.last_name].filter(Boolean).join(' ') || t('psychologistAppointments.anotherPerson')
   }
 
-  return a?.patient?.name || 'Patient'
+  return a?.patient?.name || t('psychologistAppointments.patient')
 }
 
 function bookedForBadge(a) {
-  return String(a?.booking_for || '').toLowerCase() === 'other' ? 'Another person' : 'Patient account owner'
+  return String(a?.booking_for || '').toLowerCase() === 'other' ? t('psychologistAppointments.anotherPerson') : t('psychologistAppointments.patientAccountOwner')
 }
 
 function bookedForMeta(a) {
   const beneficiary = a?.beneficiary || null
   if (String(a?.booking_for || '').toLowerCase() !== 'other' || !beneficiary) {
-    return 'Account owner: ' + (a?.patient?.name || 'patient')
+    return t('psychologistAppointments.accountOwner') + ': ' + (a?.patient?.name || 'patient')
   }
 
-  const parts = ['Booked by ' + (a?.patient?.name || 'patient')]
+  const parts = [t('psychologistAppointments.bookedBy') + ' ' + (a?.patient?.name || 'patient')]
   if (beneficiary.relationship_to_patient) parts.push(beneficiary.relationship_to_patient)
   return parts.join(' • ')
 }
@@ -523,7 +543,7 @@ function bookedForDetails(a) {
 
   const parts = []
   const age = calculateAge(beneficiary.date_of_birth)
-  if (age !== null) parts.push('Age: ' + age)
+  if (age !== null) parts.push(t('psychologistAppointments.age') + ': ' + age)
   return parts.join(' • ')
 }
 
@@ -623,7 +643,9 @@ function openReportForPatient(a) {
 function formatDate(value) {
   if (!value) return '—'
   try {
-    return new Intl.DateTimeFormat(undefined, { year: 'numeric', month: 'short', day: '2-digit' }).format(new Date(value))
+    const localeMap = { ar: 'ar', fr: 'fr', en: 'en' }
+    const currentLocale = localeMap[locale.value] || 'en'
+    return new Intl.DateTimeFormat(currentLocale, { year: 'numeric', month: 'short', day: '2-digit' }).format(new Date(value))
   } catch {
     return String(value)
   }
@@ -632,7 +654,9 @@ function formatDate(value) {
 function formatTime(value) {
   if (!value) return '—'
   try {
-    return new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit' }).format(new Date(value))
+    const localeMap = { ar: 'ar', fr: 'fr', en: 'en' }
+    const currentLocale = localeMap[locale.value] || 'en'
+    return new Intl.DateTimeFormat(currentLocale, { hour: '2-digit', minute: '2-digit' }).format(new Date(value))
   } catch {
     return '—'
   }
@@ -645,7 +669,11 @@ function normalizeStatus(value) {
 function appointmentLabel(status) {
   const s = normalizeStatus(status)
   if (!s) return '—'
-  if (s === 'no_show') return 'missed'
+  if (s === 'no_show') return t('psychologistAppointments.missed')
+  if (s === 'pending') return t('psychologistAppointments.pending')
+  if (s === 'confirmed') return t('psychologistAppointments.confirmed')
+  if (s === 'completed') return t('psychologistAppointments.completed')
+  if (s === 'cancelled') return t('psychologistAppointments.cancelled')
   return s.charAt(0).toUpperCase() + s.slice(1)
 }
 
@@ -713,7 +741,6 @@ async function fetchJson(url, options = {}) {
     const cookieToken = getXsrfCookieToken()
     if (isWrite && meta) headers['X-CSRF-TOKEN'] = meta
     if (isWrite && cookieToken) headers['X-XSRF-TOKEN'] = cookieToken
-    // Ensure JSON bodies are correctly parsed by Laravel
     if (isWrite && options.body && !headers['Content-Type']) headers['Content-Type'] = 'application/json'
 
     return fetch(url, { credentials: 'include', headers, ...options })
@@ -748,15 +775,13 @@ async function fetchJson(url, options = {}) {
 async function openEditNotes(a) {
   if (!a?.id) return
   try {
-    // Always fetch the latest session for the appointment
     const sessionResp = await fetchJson(`/appointments/${a.id}/session`, { method: 'GET' })
     const session = sessionResp?.session || null
     if (!session) {
-      Swal.fire({ toast: true, position: 'top-end', icon: 'error', title: 'No session found for this appointment.', showConfirmButton: false, timer: 3000 })
+      Swal.fire({ toast: true, position: 'top-end', icon: 'error', title: t('psychologistAppointments.noSessionFound'), showConfirmButton: false, timer: 3000 })
       return
     }
 
-    // Try to fetch an existing note; if not found proceed to create
     let note = null
     try {
       const data = await fetchJson(`/appointments/${a.id}/session-note`, { method: 'GET' })
@@ -782,23 +807,22 @@ async function openEditNotes(a) {
 
     if (!payload) return
 
-    // If a note exists, PATCH; otherwise create with POST
     if (note && note.id) {
       await fetchJson(`/appointment-session-notes/${note.id}`, {
         method: 'PATCH',
         body: JSON.stringify(payload),
       })
-      Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Session notes updated', showConfirmButton: false, timer: 3000 })
+      Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: t('psychologistAppointments.notesUpdated'), showConfirmButton: false, timer: 3000 })
     } else {
       await fetchJson(`/appointment-session-notes`, {
         method: 'POST',
         body: JSON.stringify(payload),
       })
-      Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Session notes created', showConfirmButton: false, timer: 3000 })
+      Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: t('psychologistAppointments.notesCreated'), showConfirmButton: false, timer: 3000 })
     }
   } catch (e) {
     console.error('Failed opening/updating notes', e)
-    const msg = e?.message || 'Failed to load or save session note'
+    const msg = e?.message || t('psychologistAppointments.notesError')
     Swal.fire({ toast: true, position: 'top-end', icon: 'error', title: msg, showConfirmButton: false, timer: 4000 })
   }
 }
@@ -814,18 +838,18 @@ async function cancelWithReason(a) {
   if (!a || savingId.value === a.id) return
 
   const presetReasons = [
-    { value: 'schedule_conflict', label: 'Schedule conflict' },
-    { value: 'personal_emergency', label: 'Personal emergency' },
-    { value: 'technical_issue', label: 'Technical issue' },
-    { value: 'other', label: 'Other' },
+    { value: 'schedule_conflict', label: t('psychologistAppointments.reasons.scheduleConflict') },
+    { value: 'personal_emergency', label: t('psychologistAppointments.reasons.personalEmergency') },
+    { value: 'technical_issue', label: t('psychologistAppointments.reasons.technicalIssue') },
+    { value: 'other', label: t('psychologistAppointments.reasons.other') },
   ]
 
   const result = await Swal.fire({
-    title: 'Cancel appointment?',
+    title: t('psychologistAppointments.cancelConfirmTitle'),
     html: `
       <div style="text-align:left;max-width:520px;margin:0 auto">
-        <div style="margin-bottom:8px">Appointment #${a?.id ?? ''} for patient ${a?.patient?.name || 'patient'}</div>
-        <label for="swal-reason" style="display:block;margin:10px 0 6px;font-weight:600">Cancellation reason</label>
+        <div style="margin-bottom:8px">${t('psychologistAppointments.cancelConfirmAppointment')} #${a?.id ?? ''} ${t('psychologistAppointments.cancelConfirmFor')} ${a?.patient?.name || 'patient'}</div>
+        <label for="swal-reason" style="display:block;margin:10px 0 6px;font-weight:600">${t('psychologistAppointments.cancelConfirmReason')}</label>
         <select id="swal-reason" class="swal2-input" style="margin:0 auto;width:100%;max-width:520px">
           ${presetReasons
             .map((r) => `<option value="${r.value}">${r.label}</option>`)
@@ -833,15 +857,15 @@ async function cancelWithReason(a) {
         </select>
 
         <div id="swal-other-wrap" style="display:none">
-          <label for="swal-other" style="display:block;margin:10px 0 6px;font-weight:600">Other reason</label>
-          <textarea id="swal-other" class="swal2-textarea" style="margin:0 auto;width:100%;max-width:520px" maxlength="255" placeholder="Write the reason..."></textarea>
+          <label for="swal-other" style="display:block;margin:10px 0 6px;font-weight:600">${t('psychologistAppointments.cancelConfirmOtherReason')}</label>
+          <textarea id="swal-other" class="swal2-textarea" style="margin:0 auto;width:100%;max-width:520px" maxlength="255" placeholder="${t('psychologistAppointments.cancelConfirmWriteReason')}"></textarea>
         </div>
       </div>
     `,
     icon: 'warning',
     showCancelButton: true,
-    confirmButtonText: 'Yes, cancel',
-    cancelButtonText: 'Keep',
+    confirmButtonText: t('psychologistAppointments.cancelConfirmYes'),
+    cancelButtonText: t('psychologistAppointments.cancelConfirmKeep'),
     reverseButtons: true,
     focusCancel: true,
     confirmButtonColor: 'rgb(141,61,79)',
@@ -863,14 +887,14 @@ async function cancelWithReason(a) {
 
       const selected = String(select?.value || '').trim()
       if (!selected) {
-        Swal.showValidationMessage('Please select a cancellation reason.')
+        Swal.showValidationMessage(t('psychologistAppointments.cancelConfirmSelectReason'))
         return false
       }
 
       if (selected === 'other') {
         const v = String(other?.value || '').trim()
         if (!v) {
-          Swal.showValidationMessage('Please write the cancellation reason.')
+          Swal.showValidationMessage(t('psychologistAppointments.cancelConfirmWriteReason'))
           return false
         }
         return v
@@ -915,8 +939,6 @@ function onNotesClick(a, ev) {
     const btn = ev?.currentTarget || ev?.target
     if (btn && btn.classList) {
       btn.classList.remove('btn-click-anim')
-      // force reflow to restart animation
-      // eslint-disable-next-line no-unused-expressions
       void btn.offsetWidth
       btn.classList.add('btn-click-anim')
       const cleanup = () => {
@@ -929,12 +951,15 @@ function onNotesClick(a, ev) {
     // ignore animation errors
   }
 
-  // still perform the original action
   openEditNotes(a)
 }
 </script>
 
 <style scoped>
+[dir="rtl"] {
+  text-align: right;
+}
+
 .notes-btn { will-change: background-color, color, border-color; }
 .notes-btn:hover { background-color: rgb(89 151 172 / var(--tw-bg-opacity, 1)); border-color: rgb(89 151 172 / var(--tw-bg-opacity, 1)); color: white !important; }
 .notes-btn:hover svg { color: white !important; }

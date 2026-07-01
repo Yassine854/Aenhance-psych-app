@@ -1,6 +1,7 @@
 <script setup>
 import { Head, Link, router } from '@inertiajs/vue3'
 import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import Navbar from '@/Components/Navbar.vue'
 import Footer from '@/Components/Footer.vue'
 
@@ -16,6 +17,8 @@ const props = defineProps({
 })
 
 const markingAll = ref(false)
+
+const { t } = useI18n()
 
 const linkClasses = (link) => {
   const base = 'inline-flex min-w-[36px] items-center justify-center rounded-md border px-3 py-1.5 text-sm transition'
@@ -56,7 +59,7 @@ const markAllAsRead = async () => {
 </script>
 
 <template>
-  <Head title="My notifications" />
+  <Head :title="t('notifications.title')" />
 
   <Navbar :canLogin="canLogin" :canRegister="canRegister" :authUser="authUser" />
 
@@ -65,8 +68,8 @@ const markAllAsRead = async () => {
       <div class="rounded-2xl border border-gray-200 bg-white p-6 md:p-7 shadow-sm">
         <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
           <div>
-            <h1 class="text-2xl md:text-3xl font-bold text-gray-900">My notifications</h1>
-            <p class="mt-2 text-gray-700">Follow updates related to your account and reports.</p>
+            <h1 class="text-2xl md:text-3xl font-bold text-gray-900">{{ t('notifications.title') }}</h1>
+            <p class="mt-2 text-gray-700">{{ t('notifications.subtitle') }}</p>
           </div>
 
           <div class="flex items-center gap-2">
@@ -74,7 +77,7 @@ const markAllAsRead = async () => {
               :href="route('patient.appointments')"
               class="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-white border border-gray-200 text-gray-700 text-sm font-semibold hover:bg-gray-50 transition"
             >
-              Go to appointments
+              {{ t('notifications.goToAppointments') }}
             </Link>
             <button
               type="button"
@@ -82,26 +85,26 @@ const markAllAsRead = async () => {
               :disabled="stats.unread_count === 0 || markingAll"
               @click="markAllAsRead"
             >
-              {{ markingAll ? 'Processing...' : 'Mark all as read' }}
+              {{ markingAll ? t('notifications.processing') : t('notifications.markAllAsRead') }}
             </button>
           </div>
         </div>
 
         <div class="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div class="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
-            <div class="text-xs font-semibold text-gray-500">Total notifications</div>
+            <div class="text-xs font-semibold text-gray-500">{{ t('notifications.totalNotifications') }}</div>
             <div class="mt-1 text-lg font-bold text-gray-900">{{ stats.total_count || 0 }}</div>
           </div>
           <div class="rounded-xl border border-green-200 bg-green-50 px-4 py-3">
-            <div class="text-xs font-semibold text-green-700">Unread</div>
+            <div class="text-xs font-semibold text-green-700">{{ t('notifications.unread') }}</div>
             <div class="mt-1 text-lg font-bold text-green-900">{{ stats.unread_count || 0 }}</div>
           </div>
         </div>
       </div>
 
       <div v-if="(notifications.data || []).length === 0" class="bg-white border border-gray-200 rounded-2xl shadow-sm p-8 text-gray-700">
-        <div class="text-lg font-semibold text-gray-900">No notifications found</div>
-        <div class="mt-1 text-sm text-gray-600">You will see new account and report updates here.</div>
+        <div class="text-lg font-semibold text-gray-900">{{ t('notifications.noNotificationsFound') }}</div>
+        <div class="mt-1 text-sm text-gray-600">{{ t('notifications.noNotificationsDesc') }}</div>
       </div>
 
       <div v-else class="space-y-4">
@@ -118,7 +121,7 @@ const markAllAsRead = async () => {
                   class="inline-flex rounded-full px-2.5 py-1 text-xs font-semibold"
                   :class="notification.is_read ? 'bg-gray-100 text-gray-700' : 'bg-green-100 text-green-700'"
                 >
-                  {{ notification.is_read ? 'Read' : 'Unread' }}
+                  {{ notification.is_read ? t('notifications.read') : t('notifications.unread') }}
                 </span>
               </div>
 
@@ -141,7 +144,7 @@ const markAllAsRead = async () => {
                 class="inline-flex items-center justify-center rounded-lg bg-[#5997ac] px-3 py-1.5 text-xs font-medium text-white hover:opacity-90"
                 @click="markAsRead(notification.id)"
               >
-                Mark read
+                {{ t('notifications.markRead') }}
               </button>
             </div>
           </div>
@@ -149,7 +152,7 @@ const markAllAsRead = async () => {
 
         <div class="flex items-center justify-between border border-gray-200 rounded-2xl bg-white px-4 py-3">
           <div class="text-sm text-gray-600">
-            Showing {{ notifications.from || 0 }}-{{ notifications.to || 0 }} of {{ notifications.total || 0 }}
+            {{ t('notifications.showing', { start: notifications.from || 0, end: notifications.to || 0, total: notifications.total || 0 }) }}
           </div>
 
           <div class="flex items-center gap-2">

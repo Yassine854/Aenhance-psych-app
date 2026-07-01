@@ -12,13 +12,13 @@
           <h2 class="text-base sm:text-lg font-semibold text-gray-900 truncate">
             {{ remoteDisplayName }}
           </h2>
-          <span v-if="statusLabel === 'Connected' && isRemoteSpeaking" class="inline-flex" title="Speaking">
+          <span v-if="connectionState === 'connected' && isRemoteSpeaking" class="inline-flex" :title="t('videoCall.speaking')">
             <span class="speaking-dots">
               <span></span><span></span><span></span>
             </span>
           </span>
-          <div v-if="statusLabel === 'Connected'" class="inline-flex items-center gap-1 text-gray-500">
-            <span v-if="remoteAudioEnabled === false" class="inline-flex" title="Muted">
+          <div v-if="connectionState === 'connected'" class="inline-flex items-center gap-1 text-gray-500">
+            <span v-if="remoteAudioEnabled === false" class="inline-flex" :title="t('videoCall.muted')">
               <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M12 1a3 3 0 0 0-3 3v6" />
                 <path d="M19 10v2a7 7 0 0 1-11.2 5.6" />
@@ -26,7 +26,7 @@
                 <path d="M23 1 1 23" />
               </svg>
             </span>
-            <span v-if="remoteVideoEnabled === false" class="inline-flex" title="Camera off">
+            <span v-if="remoteVideoEnabled === false" class="inline-flex" :title="t('videoCall.cameraOff')">
               <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M23 7l-7 5 7 5V7z" />
                 <path d="M1 1l22 22" />
@@ -45,7 +45,7 @@
           </span>
         </div>
         <p class="text-xs text-gray-500 truncate">
-          Room: <span class="font-mono">{{ roomId }}</span>
+          {{ t('videoCall.room') }}: <span class="font-mono">{{ roomId }}</span>
         </p>
       </div>
 
@@ -59,7 +59,7 @@
             <path d="M9 9h10v10H9z" />
             <path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1" />
           </svg>
-          Copy room
+          {{ t('videoCall.copyRoom') }}
         </button>
 
         <Link
@@ -67,7 +67,7 @@
           class="inline-flex items-center justify-center h-9 px-3 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50"
           @click.prevent="hangUpAndLeave"
         >
-          Back
+          {{ t('videoCall.back') }}
         </Link>
       </div>
     </div>
@@ -94,22 +94,22 @@
             <p class="text-lg sm:text-xl font-semibold">{{ remoteDisplayName }}</p>
             <div class="mt-1 flex items-center justify-center gap-2 text-sm text-white/75">
               <span v-if="remoteRoleLabel">{{ remoteRoleLabel }}</span>
-              <span v-if="statusLabel === 'Connected' && remoteAudioEnabled === false" class="inline-flex items-center gap-1">
+              <span v-if="connectionState === 'connected' && remoteAudioEnabled === false" class="inline-flex items-center gap-1">
                 <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M12 1a3 3 0 0 0-3 3v6" />
                   <path d="M19 10v2a7 7 0 0 1-11.2 5.6" />
                   <path d="M12 19v4" />
                   <path d="M23 1 1 23" />
                 </svg>
-                <span class="text-xs">Muted</span>
+                <span class="text-xs">{{ t('videoCall.muted') }}</span>
               </span>
-              <span v-if="statusLabel === 'Connected' && remoteVideoEnabled === false" class="inline-flex items-center gap-1">
+              <span v-if="connectionState === 'connected' && remoteVideoEnabled === false" class="inline-flex items-center gap-1">
                 <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M23 7l-7 5 7 5V7z" />
                   <path d="M1 1l22 22" />
                   <path d="M14 8H6a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-2" />
                 </svg>
-                <span class="text-xs">Camera off</span>
+                <span class="text-xs">{{ t('videoCall.cameraOff') }}</span>
               </span>
             </div>
           </div>
@@ -125,7 +125,7 @@
         >
           <span class="font-semibold truncate max-w-[220px]">{{ remoteDisplayName }}</span>
           <span v-if="remoteRoleLabel" class="text-white/70 text-xs">({{ remoteRoleLabel }})</span>
-          <span v-if="statusLabel === 'Connected' && remoteAudioEnabled === false" class="ml-1" title="Muted">
+          <span v-if="connectionState === 'connected' && remoteAudioEnabled === false" class="ml-1" :title="t('videoCall.muted')">
             <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M12 1a3 3 0 0 0-3 3v6" />
               <path d="M19 10v2a7 7 0 0 1-11.2 5.6" />
@@ -133,7 +133,7 @@
               <path d="M23 1 1 23" />
             </svg>
           </span>
-          <span v-if="statusLabel === 'Connected' && remoteVideoEnabled === false" class="ml-0.5" title="Camera off">
+          <span v-if="connectionState === 'connected' && remoteVideoEnabled === false" class="ml-0.5" :title="t('videoCall.cameraOff')">
             <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M23 7l-7 5 7 5V7z" />
               <path d="M1 1l22 22" />
@@ -169,21 +169,21 @@
         <div class="absolute bottom-2 left-2 right-2 flex items-center justify-between gap-2 pointer-events-none">
           <div class="inline-flex items-center gap-2 px-2.5 py-1 rounded-lg bg-black/45 text-white text-xs backdrop-blur min-w-0">
             <span class="font-semibold truncate">{{ localUiName }}</span>
-            <span v-if="isLocalSpeaking" class="inline-flex" title="Speaking">
+            <span v-if="isLocalSpeaking" class="inline-flex" :title="t('videoCall.speaking')">
               <span class="speaking-dots">
                 <span></span><span></span><span></span>
               </span>
             </span>
           </div>
           <div class="flex items-center gap-1 text-white/90">
-            <span v-if="isMuted" title="Muted">
+            <span v-if="isMuted" :title="t('videoCall.muted')">
               <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 5.3 2" />
                 <path d="M19 10v2a7 7 0 0 1-11.2 5.6" />
                 <path d="M23 1 1 23" />
               </svg>
             </span>
-            <span v-if="isVideoOff" title="Camera off">
+            <span v-if="isVideoOff" :title="t('videoCall.cameraOff')">
               <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M23 7l-7 5 7 5V7z" />
                 <path d="M1 1l22 22" />
@@ -200,7 +200,7 @@
             type="button"
             class="control-btn"
             :class="isMuted ? 'bg-red-600/90 hover:bg-red-600 text-white border-red-500/40' : 'bg-white/10 hover:bg-white/15 text-white border-white/15'"
-            :title="isMuted ? 'Unmute' : 'Mute'"
+            :title="isMuted ? t('videoCall.unmute') : t('videoCall.mute')"
             @click="toggleMute"
           >
             <svg v-if="!isMuted" viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2">
@@ -220,7 +220,7 @@
             type="button"
             class="control-btn"
             :class="isVideoOff ? 'bg-red-600/90 hover:bg-red-600 text-white border-red-500/40' : 'bg-white/10 hover:bg-white/15 text-white border-white/15'"
-            :title="isVideoOff ? 'Turn camera on' : 'Turn camera off'"
+            :title="isVideoOff ? t('videoCall.cameraOn') : t('videoCall.cameraOffControl')"
             @click="toggleVideo"
           >
             <svg v-if="!isVideoOff" viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2">
@@ -237,7 +237,7 @@
           <button
             type="button"
             class="control-btn bg-white/10 hover:bg-white/15 text-white border-white/15"
-            :title="isFullscreen ? 'Minimize (exit fullscreen)' : 'Fullscreen'"
+            :title="isFullscreen ? t('videoCall.minimize') : t('videoCall.fullscreen')"
             @click="toggleFullscreen"
           >
             <svg v-if="!isFullscreen" viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2">
@@ -329,6 +329,7 @@
 </template>
 
 <script setup>
+import { useI18n } from 'vue-i18n'
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import VideoCallChat from './VideoCallChat.vue'
 import VideoCallRating from './VideoCallRating.vue'
@@ -366,6 +367,8 @@ const props = defineProps({
   backHref: { type: String, required: true },
   heightOffset: { type: Number, default: 190 },
 })
+
+const { t } = useI18n()
 
 const stageEl = ref(null)
 const localVideo = ref(null)
@@ -441,14 +444,14 @@ const localBaseName = computed(() => {
   return ''
 })
 
-const localDisplayName = computed(() => localBaseName.value || (props.role === 'psychologist' ? 'You (Psychologist)' : 'You (Patient)'))
+const localDisplayName = computed(() => localBaseName.value || (props.role === 'psychologist' ? t('videoCall.youPsychologist') : t('videoCall.youPatient')))
 
-const localUiName = computed(() => 'You')
+const localUiName = computed(() => t('videoCall.you'))
 
 const localSignalingName = computed(() => {
   const clean = String(localBaseName.value || '').trim()
   if (clean) return clean
-  return props.role === 'psychologist' ? 'Psychologist' : 'Patient'
+  return props.role === 'psychologist' ? t('videoCall.psychologist') : t('videoCall.patient')
 })
 
 function initialsFromName(name) {
@@ -465,22 +468,22 @@ const remoteInitials = computed(() => initialsFromName(remoteDisplayName.value))
 const remoteRoleLabel = computed(() => {
   const r = String(remoteRole.value || '').trim()
   if (!r) return ''
-  return r === 'psychologist' ? 'Psychologist' : r === 'patient' ? 'Patient' : r
+  return r === 'psychologist' ? t('videoCall.psychologist') : r === 'patient' ? t('videoCall.patient') : r
 })
 
 const remoteDisplayName = computed(() => {
   if (remoteName.value) return remoteName.value
-  if (connectionState.value === 'waiting') return 'Waiting…'
+  if (connectionState.value === 'waiting') return t('videoCall.waitingShort')
   // Never show "Participant"; fall back to role label.
   if (remoteRoleLabel.value) return remoteRoleLabel.value
-  return props.role === 'patient' ? 'Psychologist' : 'Patient'
+  return props.role === 'patient' ? t('videoCall.psychologist') : t('videoCall.patient')
 })
 
 const statusLabel = computed(() => {
-  if (connectionState.value === 'connected') return 'Connected'
-  if (connectionState.value === 'waiting') return 'Waiting'
-  if (connectionState.value === 'failed') return 'Failed'
-  return 'Connecting'
+  if (connectionState.value === 'connected') return t('videoCall.status.connected')
+  if (connectionState.value === 'waiting') return t('videoCall.status.waiting')
+  if (connectionState.value === 'failed') return t('videoCall.status.failed')
+  return t('videoCall.status.connecting')
 })
 
 const showLocalPlaceholder = computed(() => {
@@ -1254,12 +1257,12 @@ async function endSession() {
   if (isEndingSession.value) return
 
   const res = await Swal.fire({
-    title: 'End session?',
-    text: 'This will mark the session as completed and end the call for both participants.',
+    title: t('videoCall.endSessionConfirmTitle'),
+    text: t('videoCall.endSessionConfirmText'),
     icon: 'warning',
     showCancelButton: true,
-    confirmButtonText: 'End session',
-    cancelButtonText: 'Cancel',
+    confirmButtonText: t('videoCall.endSessionConfirm'),
+    cancelButtonText: t('videoCall.cancel'),
     reverseButtons: true,
     focusCancel: true,
   })
@@ -1298,10 +1301,10 @@ async function endSession() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(noteValues),
               })
-              Swal.fire({ icon: 'success', title: 'Notes saved', text: 'Session notes saved to the patient file.', confirmButtonColor: 'rgb(175 81 102 / var(--tw-bg-opacity, 1))' })
+              Swal.fire({ icon: 'success', title: t('videoCall.notesSaved'), text: t('videoCall.notesSavedText'), confirmButtonColor: 'rgb(175 81 102 / var(--tw-bg-opacity, 1))' })
             } catch (e) {
               console.error('Failed to save session notes', e)
-              Swal.fire({ icon: 'error', title: 'Could not save notes', confirmButtonColor: 'rgb(175 81 102 / var(--tw-bg-opacity, 1))' })
+              Swal.fire({ icon: 'error', title: t('videoCall.couldNotSaveNotes'), confirmButtonColor: 'rgb(175 81 102 / var(--tw-bg-opacity, 1))' })
             }
           }
         } catch (e) {
@@ -1311,7 +1314,7 @@ async function endSession() {
 
       hangUpAndLeave()
   } catch (e) {
-    error.value = e?.message ? String(e.message) : 'Failed to end session.'
+    error.value = e?.message ? String(e.message) : t('videoCall.error.endFailed')
   } finally {
     isEndingSession.value = false
   }
