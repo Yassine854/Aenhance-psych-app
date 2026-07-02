@@ -1265,11 +1265,12 @@ async function endSession() {
     cancelButtonText: t('videoCall.cancel'),
     reverseButtons: true,
     focusCancel: true,
+    confirmButtonColor: 'rgb(89, 151, 172)', // <-- CHANGE THIS LINE
   })
 
   if (!res.isConfirmed) return
 
-    isEndingSession.value = true
+  isEndingSession.value = true
   try {
     const data = await fetchJson(`/appointments/${props.appointmentId}/session/end`, {
       method: 'POST',
@@ -1278,41 +1279,48 @@ async function endSession() {
     })
     if (data?.session) applySession(data.session)
 
-    // Notify the other participant via signaling (best-effort).
     try {
       wsSend({ type: 'session-ended', endedAt: data?.session?.ended_at || null })
     } catch {
       // ignore
     }
 
-      // If we're the psychologist, open the session notes modal and submit notes.
-      if (props.role === 'psychologist') {
-        try {
-          const noteValues = notesRef.value ? await notesRef.value.open({
-            appointment_session_id: sessionId.value,
-            session_date: data?.session?.started_at || new Date().toISOString(),
-            session_duration: data?.session?.duration_minutes || 0,
-          }) : null
+    if (props.role === 'psychologist') {
+      try {
+        const noteValues = notesRef.value ? await notesRef.value.open({
+          appointment_session_id: sessionId.value,
+          session_date: data?.session?.started_at || new Date().toISOString(),
+          session_duration: data?.session?.duration_minutes || 0,
+        }) : null
 
-          if (noteValues) {
-            try {
-              await fetchJson('/appointment-session-notes', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(noteValues),
-              })
-              Swal.fire({ icon: 'success', title: t('videoCall.notesSaved'), text: t('videoCall.notesSavedText'), confirmButtonColor: 'rgb(175 81 102 / var(--tw-bg-opacity, 1))' })
-            } catch (e) {
-              console.error('Failed to save session notes', e)
-              Swal.fire({ icon: 'error', title: t('videoCall.couldNotSaveNotes'), confirmButtonColor: 'rgb(175 81 102 / var(--tw-bg-opacity, 1))' })
-            }
+        if (noteValues) {
+          try {
+            await fetchJson('/appointment-session-notes', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(noteValues),
+            })
+            Swal.fire({ 
+              icon: 'success', 
+              title: t('videoCall.notesSaved'), 
+              text: t('videoCall.notesSavedText'), 
+              confirmButtonColor: 'rgb(89, 151, 172)' // <-- CHANGE THIS LINE
+            })
+          } catch (e) {
+            console.error('Failed to save session notes', e)
+            Swal.fire({ 
+              icon: 'error', 
+              title: t('videoCall.couldNotSaveNotes'), 
+              confirmButtonColor: 'rgb(89, 151, 172)' // <-- CHANGE THIS LINE
+            })
           }
-        } catch (e) {
-          // ignore modal errors
         }
+      } catch (e) {
+        // ignore modal errors
       }
+    }
 
-      hangUpAndLeave()
+    hangUpAndLeave()
   } catch (e) {
     error.value = e?.message ? String(e.message) : t('videoCall.error.endFailed')
   } finally {
@@ -1449,51 +1457,57 @@ onMounted(async () => {
         error.value = 'Session ended by the psychologist.'
 
         // If we're the patient, prompt the rating component; parent will submit.
-        if (props.role === 'patient') {
-          try {
-            const formValues = ratingRef.value ? await ratingRef.value.open() : null
+        // Inside the session-ended handler for patient
+// Inside the session-ended handler for patient
+if (props.role === 'patient') {
+  try {
+    const formValues = ratingRef.value ? await ratingRef.value.open() : null
 
-            if (formValues && formValues.rating) {
-              try {
-                try {
-                  await fetchJson('/sanctum/csrf-cookie', { method: 'GET' })
-                } catch {
-                  // ignore
-                }
-
-                await fetchJson('/session-ratings', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    session_id: sessionId.value,
-                    appointment_id: props.appointmentId,
-                    patient_id: authUser.value?.id || null,
-                    psychologist_id: sessionPsychologistId.value || null,
-                    rating: formValues.rating,
-                    comment: formValues.comment || '',
-                  }),
-                })
-                Swal.fire({
-                  icon: 'success',
-                  title: 'Thank you!',
-                  text: 'Thanks for sharing your feedback — we really appreciate it 😊',
-                  confirmButtonColor: 'rgb(175 81 102 / var(--tw-bg-opacity, 1))',
-                })
-              } catch (e) {
-                console.error('Failed to submit session rating', e)
-                Swal.fire({ icon: 'error', title: 'Could not submit rating', confirmButtonColor: 'rgb(175 81 102 / var(--tw-bg-opacity, 1))' })
-              }
-            }
-          } catch {
-            // ignore
-          } finally {
-            setTimeout(() => {
-              try { hangUpAndLeave() } catch {}
-            }, 600)
-          }
-        } else {
-          setTimeout(() => { try { hangUpAndLeave() } catch {} }, 1200)
+    if (formValues && formValues.rating) {
+      try {
+        try {
+          await fetchJson('/sanctum/csrf-cookie', { method: 'GET' })
+        } catch {
+          // ignore
         }
+
+        await fetchJson('/session-ratings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            session_id: sessionId.value,
+            appointment_id: props.appointmentId,
+            patient_id: authUser.value?.id || null,
+            psychologist_id: sessionPsychologistId.value || null,
+            rating: formValues.rating,
+            comment: formValues.comment || '',
+          }),
+        })
+        Swal.fire({
+          icon: 'success',
+          title: t('videoCall.feedback.thankYou'),
+          text: t('videoCall.feedback.thankYouText'),
+          confirmButtonColor: 'rgb(89, 151, 172)',
+        })
+      } catch (e) {
+        console.error('Failed to submit session rating', e)
+        Swal.fire({ 
+          icon: 'error', 
+          title: t('videoCall.feedback.submitError'),
+          confirmButtonColor: 'rgb(89, 151, 172)'
+        })
+      }
+    }
+  } catch {
+    // ignore
+  } finally {
+    setTimeout(() => {
+      try { hangUpAndLeave() } catch {}
+    }, 600)
+  }
+} else {
+  setTimeout(() => { try { hangUpAndLeave() } catch {} }, 1200)
+}
       }
 
       if (msg.type === 'error') {

@@ -161,7 +161,7 @@
   },
    "footer": {
     "about": "À PROPOS",
-    "resources": "RESSOURCES",
+    "support": "SUPPORT",
     "contactUs": "CONTACTEZ-NOUS",
     "paymentMethods": "MÉTHODES DE PAIEMENT",
     "copyright": "© 2025 AENHANCE",
@@ -176,13 +176,9 @@
       "termsConditions": "Termes et Conditions",
       "privacyProtection": "Protection de la Vie Privée"
     },
-    "resourcesMenu": {
-      "anxietyDisorders": "Troubles Anxieux",
-      "moodDisorders": "Troubles de l'Humeur",
-      "sleepDisorders": "Troubles du Sommeil",
-      "eatingDisorders": "Troubles Alimentaires",
-      "adjustmentDisorders": "Troubles d'Adaptation",
-      "personalityDisorders": "Troubles de la Personnalité"
+    "supportMenu": {
+      "faq": "FAQ",
+      "howItWorks": "Comment ça marche"
     },
     "contact": {
       "phone": "+216 26 223 193",
@@ -1113,6 +1109,11 @@
       "failed": "Échoué",
       "connecting": "Connexion…"
     },
+    "feedback": {
+    "thankYou": "Merci !",
+    "thankYouText": "Merci d'avoir partagé votre avis — nous l'apprécions vraiment 😊",
+    "submitError": "Impossible d'envoyer le retour"
+  },
     "speaking": "Parle",
     "muted": "Muet",
     "cameraOff": "Caméra éteinte",
@@ -1616,4 +1617,112 @@
     "unableToSend": "Impossible d'envoyer le signalement"
   }
 }
+
+  ,"pwa": {
+    "download": "Télécharger l'application",
+    "install": "Installer",
+    "installed": "Installé"
+  },
+  "videoCallNotes": {
+  "title": "Notes de séance",
+  "subtitle": "Ajoutez des notes cliniques pour cette séance. Elles sont privées et sauvegardées dans le dossier du patient.",
+  "close": "Fermer",
+  "sessionMode": "Mode de séance",
+  "riskLevel": "Niveau de risque",
+  "sessionDate": "Date de la séance",
+  "durationMinutes": "Durée (minutes)",
+  "subjective": "Subjectif",
+  "subjectivePlaceholder": "Ce que le patient a rapporté...",
+  "objective": "Objectif",
+  "objectivePlaceholder": "Ce que vous avez observé pendant la séance...",
+  "assessment": "Évaluation",
+  "assessmentPlaceholder": "Votre évaluation clinique de l'état du patient...",
+  "intervention": "Intervention",
+  "interventionPlaceholder": "Quelles interventions ont été utilisées pendant la séance...",
+  "plan": "Plan",
+  "planPlaceholder": "Quelles sont les prochaines étapes pour le patient...",
+  "cancel": "Annuler",
+  "saving": "Enregistrement...",
+  "saveNotes": "Enregistrer les notes",
+  "modes": {
+    "videoAudio": "Vidéo + Audio",
+    "audio": "Audio",
+    "video": "Vidéo"
+  },
+  "risks": {
+    "none": "Aucun",
+    "low": "Faible",
+    "medium": "Moyen",
+    "high": "Élevé",
+    "veryHigh": "Très élevé"
+  }
+},
+"ratingModal": {
+  "title": "Évaluer cette séance",
+  "submitRating": "Soumettre l'évaluation",
+  "skip": "Passer",
+  "feedbackPlaceholder": "Commentaire facultatif (ce qui s'est bien passé, suggestions, problèmes)",
+  "validationMessage": "Veuillez sélectionner une note (1–5) ou appuyer sur Passer"
+},
+"appointment": {
+  "title": "Choisir un rendez-vous",
+  "subtitle": "Sélectionnez une date et une heure. Durée de la séance :",
+  "minutes": "minutes",
+  "backToPsychologists": "Retour aux psychologues",
+  "verified": "Vérifié",
+  "psychologist": "Psychologue",
+  "you": "Vous",
+  "noBio": "Aucune biographie fournie.",
+  "pickDate": "Choisir une date",
+  "pickTime": "Choisir une heure",
+  "available": "disponible(s)",
+  "noSlots": "Ce psychologue n'a pas de créneaux disponibles pour le moment.",
+  "noTimes": "Aucun horaire disponible pour cette date.",
+  "highlightedDays": "Seuls les jours mis en évidence sont disponibles.",
+  "prevMonth": "Mois précédent",
+  "nextMonth": "Mois suivant",
+  "whomFor": "Pour qui est ce rendez-vous ?",
+  "whomForDesc": "La réservation reste sous votre compte, mais vous pouvez définir qui assistera à la séance.",
+  "myself": "Moi-même",
+  "myselfDesc": "Vous êtes la personne qui participe à ce rendez-vous.",
+  "anotherPerson": "Une autre personne",
+  "anotherPersonDesc": "Utilisez cette option lorsque la séance est pour un enfant ou un autre membre de la famille.",
+  "previousPeople": "Personnes pour lesquelles vous avez déjà réservé",
+  "previousPeopleDesc": "Sélectionnez-en une pour remplir le formulaire automatiquement.",
+  "relationshipNotProvided": "Relation non précisée",
+  "firstName": "Prénom",
+  "firstNamePlaceholder": "Prénom",
+  "lastName": "Nom",
+  "lastNamePlaceholder": "Nom",
+  "dateOfBirth": "Date de naissance",
+  "relationship": "Lien avec vous",
+  "relationshipPlaceholder": "Enfant, conjoint, frère/soeur, parent...",
+  "gender": "Genre",
+  "preferNotSay": "Préfère ne pas dire",
+  "female": "Femme",
+  "male": "Homme",
+  "other": "Autre",
+  "selected": "Sélectionné",
+  "chooseDateTime": "Choisissez une date et une heure.",
+  "for": "Pour",
+  "booking": "Réservation…",
+  "bookAppointment": "Réserver le rendez-vous",
+  "pendingNote": "Votre rendez-vous sera créé comme",
+  "pending": "en attente",
+  "calendar": {
+    "sun": "Dim",
+    "mon": "Lun",
+    "tue": "Mar",
+    "wed": "Mer",
+    "thu": "Jeu",
+    "fri": "Ven",
+    "sat": "Sam"
+  },
+  "languages": {
+    "english": "Anglais",
+    "french": "Français",
+    "arabic": "Arabe"
+  }
+}
+
 }

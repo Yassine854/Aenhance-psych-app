@@ -159,7 +159,7 @@
   },
   "footer": {
     "about": "ABOUT",
-    "resources": "RESOURCES",
+    "support": "SUPPORT",
     "contactUs": "CONTACT US",
     "paymentMethods": "PAYMENT METHODS",
     "copyright": "© 2025 AENHANCE",
@@ -174,13 +174,9 @@
       "termsConditions": "Terms and Conditions",
       "privacyProtection": "Privacy Protection"
     },
-    "resourcesMenu": {
-      "anxietyDisorders": "Anxiety Disorders",
-      "moodDisorders": "Mood Disorders",
-      "sleepDisorders": "Sleep Disorders",
-      "eatingDisorders": "Eating Disorders",
-      "adjustmentDisorders": "Adjustment Disorders",
-      "personalityDisorders": "Personality Disorders"
+    "supportMenu": {
+      "faq": "FAQ",
+      "howItWorks": "How It Works"
     },
     "contact": {
       "phone": "+216 26 223 193",
@@ -1245,6 +1241,11 @@
     "failed": "Failed",
     "connecting": "Connecting"
   },
+  "feedback": {
+    "thankYou": "Thank you!",
+    "thankYouText": "Thanks for sharing your feedback — we really appreciate it 😊",
+    "submitError": "Could not submit feedback"
+  },
   "speaking": "Speaking",
   "muted": "Muted",
   "cameraOff": "Camera off",
@@ -1616,6 +1617,113 @@
     "specifyReason": "Please specify the other reason.",
     "failedTitle": "Report failed",
     "unableToSend": "Unable to send report"
+  }
+}
+
+  ,"pwa": {
+    "download": "Download App",
+    "install": "Install",
+    "installed": "Installed"
+  },
+  "videoCallNotes": {
+  "title": "Session Notes",
+  "subtitle": "Add clinical notes for this session. These are private and saved to the patient's file.",
+  "close": "Close",
+  "sessionMode": "Session mode",
+  "riskLevel": "Risk level",
+  "sessionDate": "Session date",
+  "durationMinutes": "Duration (minutes)",
+  "subjective": "Subjective",
+  "subjectivePlaceholder": "What the patient reported...",
+  "objective": "Objective",
+  "objectivePlaceholder": "What you observed during the session...",
+  "assessment": "Assessment",
+  "assessmentPlaceholder": "Your clinical assessment of the patient's state...",
+  "intervention": "Intervention",
+  "interventionPlaceholder": "What interventions were used during the session...",
+  "plan": "Plan",
+  "planPlaceholder": "What are the next steps for the patient...",
+  "cancel": "Cancel",
+  "saving": "Saving...",
+  "saveNotes": "Save notes",
+  "modes": {
+    "videoAudio": "Video + Audio",
+    "audio": "Audio",
+    "video": "Video"
+  },
+  "risks": {
+    "none": "None",
+    "low": "Low",
+    "medium": "Medium",
+    "high": "High",
+    "veryHigh": "Very high"
+  }
+},
+"ratingModal": {
+  "title": "Rate this session",
+  "submitRating": "Submit rating",
+  "skip": "Skip",
+  "feedbackPlaceholder": "Optional feedback (what went well, suggestions, issues)",
+  "validationMessage": "Please select a rating (1–5) or press Skip"
+},
+"appointment": {
+  "title": "Choose an appointment",
+  "subtitle": "Select a date and time. Session duration:",
+  "minutes": "minutes",
+  "backToPsychologists": "Back to psychologists",
+  "verified": "Verified",
+  "psychologist": "Psychologist",
+  "you": "You",
+  "noBio": "No bio provided.",
+  "pickDate": "Pick a date",
+  "pickTime": "Pick a time",
+  "available": "available",
+  "noSlots": "This psychologist has no available slots right now.",
+  "noTimes": "No available times for this date.",
+  "highlightedDays": "Only highlighted days are available.",
+  "prevMonth": "Previous month",
+  "nextMonth": "Next month",
+  "whomFor": "Who is this appointment for?",
+  "whomForDesc": "The booking remains under your account, but you can set who will attend the session.",
+  "myself": "Myself",
+  "myselfDesc": "You are the person attending this appointment.",
+  "anotherPerson": "Another person",
+  "anotherPersonDesc": "Use this when the session is for a child or another family member.",
+  "previousPeople": "Previous people you booked for",
+  "previousPeopleDesc": "Select one to fill the form automatically.",
+  "relationshipNotProvided": "Relationship not provided",
+  "firstName": "First name",
+  "firstNamePlaceholder": "First name",
+  "lastName": "Last name",
+  "lastNamePlaceholder": "Last name",
+  "dateOfBirth": "Date of birth",
+  "relationship": "Relationship to you",
+  "relationshipPlaceholder": "Child, spouse, sibling, parent...",
+  "gender": "Gender",
+  "preferNotSay": "Prefer not to say",
+  "female": "Female",
+  "male": "Male",
+  "other": "Other",
+  "selected": "Selected",
+  "chooseDateTime": "Choose a date and time.",
+  "for": "For",
+  "booking": "Booking…",
+  "bookAppointment": "Book appointment",
+  "pendingNote": "Your appointment will be created as",
+  "pending": "pending",
+  "calendar": {
+    "sun": "Sun",
+    "mon": "Mon",
+    "tue": "Tue",
+    "wed": "Wed",
+    "thu": "Thu",
+    "fri": "Fri",
+    "sat": "Sat"
+  },
+  "languages": {
+    "english": "English",
+    "french": "French",
+    "arabic": "Arabic"
   }
 }
 }

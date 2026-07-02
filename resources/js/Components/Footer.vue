@@ -20,85 +20,61 @@
           </h3>
           <ul class="space-y-2">
             <li>
-              <a href="#" class="text-gray-700 hover:text-[#5997ac] transition-colors flex items-center gap-2 text-sm">
+              <Link :href="route('telemental-health')" class="text-gray-700 hover:text-[#5997ac] transition-colors flex items-center gap-2 text-sm">
                 <span :class="['text-[#C55A76]', isRTL ? 'rotate-180' : '']">›</span>
                 {{ $t('footer.aboutMenu.telementalHealth') }}
-              </a>
+              </Link>
             </li>
             <li>
-              <a href="#" class="text-gray-700 hover:text-[#5997ac] transition-colors flex items-center gap-2 text-sm">
+              <Link :href="route('who-we-are')" class="text-gray-700 hover:text-[#5997ac] transition-colors flex items-center gap-2 text-sm">
                 <span :class="['text-[#C55A76]', isRTL ? 'rotate-180' : '']">›</span>
                 {{ $t('footer.aboutMenu.whoWeAre') }}
-              </a>
+              </Link>
             </li>
             <li>
-              <a href="#" class="text-gray-700 hover:text-[#5997ac] transition-colors flex items-center gap-2 text-sm">
+              <Link :href="route('our-care-team')" class="text-gray-700 hover:text-[#5997ac] transition-colors flex items-center gap-2 text-sm">
                 <span :class="['text-[#C55A76]', isRTL ? 'rotate-180' : '']">›</span>
                 {{ $t('footer.aboutMenu.ourCareTeam') }}
-              </a>
+              </Link>
             </li>
             <li>
-              <a href="#" class="text-gray-700 hover:text-[#5997ac] transition-colors flex items-center gap-2 text-sm">
+              <Link :href="route('join-our-team')" class="text-gray-700 hover:text-[#5997ac] transition-colors flex items-center gap-2 text-sm">
                 <span :class="['text-[#C55A76]', isRTL ? 'rotate-180' : '']">›</span>
                 {{ $t('footer.aboutMenu.joinOurTeam') }}
-              </a>
+              </Link>
             </li>
             <li>
-              <a href="#" class="text-gray-700 hover:text-[#5997ac] transition-colors flex items-center gap-2 text-sm">
+              <Link :href="route('terms-conditions')" class="text-gray-700 hover:text-[#5997ac] transition-colors flex items-center gap-2 text-sm">
                 <span :class="['text-[#C55A76]', isRTL ? 'rotate-180' : '']">›</span>
                 {{ $t('footer.aboutMenu.termsConditions') }}
-              </a>
+              </Link>
             </li>
             <li>
-              <a href="#" class="text-gray-700 hover:text-[#5997ac] transition-colors flex items-center gap-2 text-sm">
+              <Link :href="route('privacy-protection')" class="text-gray-700 hover:text-[#5997ac] transition-colors flex items-center gap-2 text-sm">
                 <span :class="['text-[#C55A76]', isRTL ? 'rotate-180' : '']">›</span>
                 {{ $t('footer.aboutMenu.privacyProtection') }}
-              </a>
+              </Link>
             </li>
           </ul>
         </div>
 
-        <!-- Resources Section -->
+        <!-- Support Section (replaces Resources) -->
         <div>
           <h3 class="text-[#5997ac] font-bold text-lg mb-4">
-            {{ $t('footer.resources') }}
+            {{ $t('footer.support') }}
           </h3>
           <ul class="space-y-2">
             <li>
-              <a href="#" class="text-gray-700 hover:text-[#5997ac] transition-colors flex items-center gap-2 text-sm">
+              <Link :href="route('faq')" class="text-gray-700 hover:text-[#5997ac] transition-colors flex items-center gap-2 text-sm">
                 <span :class="['text-[#C55A76]', isRTL ? 'rotate-180' : '']">›</span>
-                {{ $t('footer.resourcesMenu.anxietyDisorders') }}
-              </a>
+                {{ $t('footer.supportMenu.faq') }}
+              </Link>
             </li>
             <li>
-              <a href="#" class="text-gray-700 hover:text-[#5997ac] transition-colors flex items-center gap-2 text-sm">
+              <Link :href="route('how-it-works')" class="text-gray-700 hover:text-[#5997ac] transition-colors flex items-center gap-2 text-sm">
                 <span :class="['text-[#C55A76]', isRTL ? 'rotate-180' : '']">›</span>
-                {{ $t('footer.resourcesMenu.moodDisorders') }}
-              </a>
-            </li>
-            <li>
-              <a href="#" class="text-gray-700 hover:text-[#5997ac] transition-colors flex items-center gap-2 text-sm">
-                <span :class="['text-[#C55A76]', isRTL ? 'rotate-180' : '']">›</span>
-                {{ $t('footer.resourcesMenu.sleepDisorders') }}
-              </a>
-            </li>
-            <li>
-              <a href="#" class="text-gray-700 hover:text-[#5997ac] transition-colors flex items-center gap-2 text-sm">
-                <span :class="['text-[#C55A76]', isRTL ? 'rotate-180' : '']">›</span>
-                {{ $t('footer.resourcesMenu.eatingDisorders') }}
-              </a>
-            </li>
-            <li>
-              <a href="#" class="text-gray-700 hover:text-[#5997ac] transition-colors flex items-center gap-2 text-sm">
-                <span :class="['text-[#C55A76]', isRTL ? 'rotate-180' : '']">›</span>
-                {{ $t('footer.resourcesMenu.adjustmentDisorders') }}
-              </a>
-            </li>
-            <li>
-              <a href="#" class="text-gray-700 hover:text-[#5997ac] transition-colors flex items-center gap-2 text-sm">
-                <span :class="['text-[#C55A76]', isRTL ? 'rotate-180' : '']">›</span>
-                {{ $t('footer.resourcesMenu.personalityDisorders') }}
-              </a>
+                {{ $t('footer.supportMenu.howItWorks') }}
+              </Link>
             </li>
           </ul>
         </div>
@@ -162,8 +138,11 @@
 </template>
 
 <script>
+import { Link } from '@inertiajs/vue3';
+
 export default {
   name: 'Footer',
+  components: { Link },
   computed: {
     isRTL() {
       return this.$i18n.locale === 'ar';

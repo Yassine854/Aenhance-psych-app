@@ -1,192 +1,9 @@
-<script setup>
-import { Head, Link } from "@inertiajs/vue3";
-import { useI18n } from "vue-i18n";
-import { ref, onMounted, computed, onUnmounted } from "vue";
-import Navbar from '@/Components/Navbar.vue';
-import Footer from '@/Components/Footer.vue';
-
-
-
-defineProps({
-  canLogin: { type: Boolean },
-  canRegister: { type: Boolean },
-  authUser: { type: Object },
-});
-
-const showDropdown = ref(false);
-const showAboutDropdown = ref(false);
-const showMobileMenu = ref(false);
-const { t, locale } = useI18n();
-const currentLang = ref("");
-const autoPlayInterval = ref(null);
-
-// Carousel state
-const currentSlide = ref(0);
-
-// Carousel slides data
-const slides = [
-  {
-    image: '/storage/home/aenhance-accessibility-13.jpg',
-    titleKey: 'carousel.slide1.title',
-    descriptionKey: 'carousel.slide1.description',
-    buttonKey: 'carousel.slide1.button'
-  },
-  {
-    image: '/storage/home/aenhance-privacy-31.jpg',
-    titleKey: 'carousel.slide2.title',
-    descriptionKey: 'carousel.slide2.description',
-    buttonKey: 'carousel.slide2.button'
-  },
-  {
-    image: '/storage/home/aenhance-quality-19.jpg',
-    titleKey: 'carousel.slide3.title',
-    descriptionKey: 'carousel.slide3.description',
-    buttonKey: 'carousel.slide3.button'
-  }
-];
-
-// Carousel functions
-function nextSlide() {
-  currentSlide.value = (currentSlide.value + 1) % slides.length;
-}
-
-function prevSlide() {
-  currentSlide.value = (currentSlide.value - 1 + slides.length) % slides.length;
-}
-
-function goToSlide(index) {
-  currentSlide.value = index;
-  resetAutoPlay(); // Add this line
-}
-
-// Auto-play functions
-function startAutoPlay() {
-  autoPlayInterval.value = setInterval(() => {
-    nextSlide();
-  }, 5000); // Change to 3000 for 3 seconds, 7000 for 7 seconds, etc.
-}
-
-function stopAutoPlay() {
-  if (autoPlayInterval.value) {
-    clearInterval(autoPlayInterval.value);
-    autoPlayInterval.value = null;
-  }
-}
-
-function resetAutoPlay() {
-  stopAutoPlay();
-  startAutoPlay();
-}
-
-// Languages list
-const languages = [
-  { code: "fr", label: "🇫🇷 Français" },
-  { code: "en", label: "🇬🇧 English" },
-  { code: "ar", label: "🇸🇦 العربية" },
-];
-
-// Set language
-function setLang(lang) {
-  locale.value = lang;
-  currentLang.value = languages.find((l) => l.code === lang).label;
-  localStorage.setItem("locale", lang);
-  showDropdown.value = false;
-  
-  // Set document direction based on language
-  if (lang === 'ar') {
-    document.documentElement.setAttribute('dir', 'rtl');
-    document.documentElement.setAttribute('lang', 'ar');
-  } else {
-    document.documentElement.setAttribute('dir', 'ltr');
-    document.documentElement.setAttribute('lang', lang);
-  }
-}
-
-// Load saved language
-onMounted(() => {
-  const savedLang = localStorage.getItem("locale") || locale.value;
-  setLang(savedLang);
-  startAutoPlay();
-});
-
-onUnmounted(() => {
-  stopAutoPlay();
-});
-
-// About dropdown items reactive to language
-const aboutItems = computed(() => [
-  t("nav.aboutItems.0"),
-  t("nav.aboutItems.1"),
-  t("nav.aboutItems.2"),
-  t("nav.aboutItems.3"),
-  t("nav.aboutItems.4"),
-  t("nav.aboutItems.5")
-])
-
-// Intersection Observer for animations
-const telehealthSection = ref(null);
-const valuesSection = ref(null);
-const howItWorksSection = ref(null);
-const supportSection = ref(null);
-const joinTeamSection = ref(null);
-const telehealthVisible = ref(false);
-const valuesVisible = ref(false);
-const howItWorksVisible = ref(false);
-const supportVisible = ref(false);
-const joinTeamVisible = ref(false);
-
-onMounted(() => {
-  const savedLang = localStorage.getItem("locale") || locale.value;
-  setLang(savedLang);
-
-  // Setup Intersection Observer with a slight delay to ensure DOM is ready
-  setTimeout(() => {
-    const observerOptions = {
-      threshold: 0.2,
-      rootMargin: '0px 0px -50px 0px'
-    };
-
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          if (entry.target === telehealthSection.value) {
-            telehealthVisible.value = true;
-          } else if (entry.target === valuesSection.value) {
-            valuesVisible.value = true;
-          } else if (entry.target === howItWorksSection.value) {
-            howItWorksVisible.value = true;
-          } else if (entry.target === supportSection.value) {
-            supportVisible.value = true;
-          } else if (entry.target === joinTeamSection.value) {
-            joinTeamVisible.value = true;
-          }
-        }
-      });
-    }, observerOptions);
-
-    if (telehealthSection.value) {
-      observer.observe(telehealthSection.value);
-    }
-    if (valuesSection.value) {
-      observer.observe(valuesSection.value);
-    }
-    if (howItWorksSection.value) {
-      observer.observe(howItWorksSection.value);
-    }
-    if (supportSection.value) {
-      observer.observe(supportSection.value);
-    }
-    if (joinTeamSection.value) {
-      observer.observe(joinTeamSection.value);
-    }
-  }, 100);
-});
-</script>
-
 <template>
-  <Head title="Telemental Health - AEfhance" />
+  <Head title="Telemental Health - AEfhance">
+    <link rel="manifest" href="/manifest.json" />
+  </Head>
 
-    <Navbar 
+  <Navbar 
     :canLogin="canLogin" 
     :canRegister="canRegister" 
     :authUser="authUser" 
@@ -194,10 +11,10 @@ onMounted(() => {
 
   <!-- Hero Carousel Section -->
   <div 
-  class="relative w-full h-[350px] sm:h-[400px] md:h-[450px] lg:h-[480px] overflow-hidden bg-white"
-  @mouseenter="stopAutoPlay"
-  @mouseleave="startAutoPlay"
->
+    class="relative w-full h-[350px] sm:h-[400px] md:h-[450px] lg:h-[480px] overflow-hidden bg-white"
+    @mouseenter="stopAutoPlay"
+    @mouseleave="startAutoPlay"
+  >
     <!-- Slides -->
     <div
       v-for="(slide, index) in slides"
@@ -224,12 +41,7 @@ onMounted(() => {
           <div class="max-w-xl lg:max-w-2xl text-white" :class="locale === 'ar' ? 'text-right' : ''">
             <h1 class="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-2 md:mb-3 drop-shadow-lg">{{ t(slide.titleKey) }}</h1>
             <p class="text-xs sm:text-sm md:text-base mb-3 md:mb-4 leading-relaxed drop-shadow-md">{{ t(slide.descriptionKey) }}</p>
-            <button class="px-3 py-2 md:px-5 md:py-2.5 bg-[#af5166] hover:bg-[#8d3d4f] text-white text-xs md:text-sm rounded-lg transition flex items-center gap-2 shadow-lg" :class="locale === 'ar' ? 'flex-row-reverse' : ''">
-              <svg class="w-3 h-3 md:w-4 md:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
-              </svg>
-              {{ t(slide.buttonKey) }}
-            </button>
+            
           </div>
         </div>
       </div>
@@ -294,7 +106,8 @@ onMounted(() => {
               {{ t('sections.mentalTelehealth.paragraph2') }}
             </p>
             <div class="flex justify-center">
-              <button 
+              <Link
+                :href="route('telemental-health')"
                 class="px-5 py-2.5 bg-[#af5166] hover:bg-[#8d3d4f] text-white text-sm rounded-lg transition-all duration-1000 delay-500 flex items-center gap-2 hover:scale-105 hover:shadow-lg"
                 :class="telehealthVisible ? 'animate-pop-in opacity-100' : 'opacity-0 scale-75'"
               >
@@ -302,7 +115,7 @@ onMounted(() => {
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
                 </svg>
                 {{ t('sections.mentalTelehealth.button') }}
-              </button>
+              </Link>
             </div>
           </div>
         </div>
@@ -318,6 +131,14 @@ onMounted(() => {
       </div>
     </div>
   </section>
+
+  <!-- PWA Install Button (shows when beforeinstallprompt fires) -->
+  <div v-if="showInstallButton" class="fixed bottom-6 right-6 z-50">
+    <button @click="promptInstall" class="inline-flex items-center gap-2 px-4 py-2 bg-[#af5166] hover:bg-[#964559] text-white rounded-full shadow-lg">
+      <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v14m7-7H5"/></svg>
+      {{ t('pwa.download') }}
+    </button>
+  </div>
 
   <!-- AEnhance Values Section -->
   <section ref="valuesSection" class="bg-white py-12 md:py-16 lg:py-20">
@@ -365,16 +186,17 @@ onMounted(() => {
                 <strong class="text-gray-800 font-bold">{{ t('sections.aenhanceValues.privacy.title') }}:</strong> {{ t('sections.aenhanceValues.privacy.description') }}
               </p>
             </div>
-            <div class="flex justify-center pt-2">
-              <button 
-                class="px-5 py-2.5 bg-[#af5166] hover:bg-[#8d3d4f] text-white text-sm rounded-lg transition-all duration-1000 delay-600 flex items-center gap-2 hover:scale-105 hover:shadow-lg"
+            <div class="flex justify-center pt-2 relative z-10">
+              <Link
+                :href="route('who-we-are')"
+                class="relative z-20 pointer-events-auto px-5 py-2.5 bg-[#af5166] hover:bg-[#8d3d4f] text-white text-sm rounded-lg transition-all duration-1000 delay-600 flex items-center gap-2 hover:scale-105 hover:shadow-lg"
                 :class="valuesVisible ? 'animate-pop-in opacity-100' : 'opacity-0 scale-75'"
               >
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
                 </svg>
                 {{ t('sections.aenhanceValues.button') }}
-              </button>
+              </Link>
             </div>
           </div>
         </div>
@@ -384,11 +206,9 @@ onMounted(() => {
   </section>
 
   <!-- How Does It Work Section -->
-   <section ref="howItWorksSection" class="relative bg-gradient-to-b from-gray-50 to-white py-12 md:py-16 lg:py-20 overflow-hidden">
+  <section ref="howItWorksSection" class="relative bg-gradient-to-b from-gray-50 to-white py-12 md:py-16 lg:py-20 overflow-hidden">
     <!-- Background Image -->
     <div class="absolute inset-0 opacity-90" style="background-image: url('/storage/home/question_marks.jpg'); background-size: cover; background-position: center; background-repeat: no-repeat;"></div>
-    
-    <!-- Content Overlay -->
     
     <div class="container mx-auto px-4 sm:px-6 lg:px-8">
       <!-- Title -->
@@ -421,9 +241,12 @@ onMounted(() => {
             <p class="text-gray-600 text-xs md:text-sm leading-relaxed flex-grow">
               {{ t('sections.howItWorks.steps.createAccount.description') }}
             </p>
-            <button class="mt-4 px-4 py-2 bg-[#5997ac] hover:bg-[#af5166] text-white text-xs rounded transition-colors duration-300">
+            <Link
+              :href="route('register')"
+              class="mt-4 px-4 py-2 bg-[#5997ac] hover:bg-[#af5166] text-white text-xs rounded transition-colors duration-300"
+            >
               {{ t('sections.howItWorks.steps.createAccount.button') }}
-            </button>
+            </Link>
           </div>
         </div>
 
@@ -546,7 +369,8 @@ onMounted(() => {
               {{ t('sections.youNeedSupport.paragraph2') }}
             </p>
             <div class="flex justify-center">
-              <button 
+              <Link
+                :href="route('register')"
                 class="px-5 py-2.5 bg-[#af5166] hover:bg-[#8d3d4f] text-white text-sm rounded-lg transition-all duration-1000 delay-500 flex items-center gap-2 hover:scale-105 hover:shadow-lg"
                 :class="supportVisible ? 'animate-pop-in opacity-100' : 'opacity-0 scale-75'"
               >
@@ -554,7 +378,7 @@ onMounted(() => {
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
                 </svg>
                 {{ t('sections.youNeedSupport.button') }}
-              </button>
+              </Link>
             </div>
           </div>
         </div>
@@ -606,7 +430,8 @@ onMounted(() => {
               {{ t('sections.joinOurTeam.paragraph2') }}
             </p>
             <div class="flex justify-center">
-              <button 
+              <Link
+                :href="route('join-our-team')"
                 class="px-5 py-2.5 bg-[#af5166] hover:bg-[#8d3d4f] text-white text-sm rounded-lg transition-all duration-1000 delay-500 flex items-center gap-2 hover:scale-105 hover:shadow-lg"
                 :class="joinTeamVisible ? 'animate-pop-in opacity-100' : 'opacity-0 scale-75'"
               >
@@ -614,7 +439,7 @@ onMounted(() => {
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
                 </svg>
                 {{ t('sections.joinOurTeam.button') }}
-              </button>
+              </Link>
             </div>
           </div>
         </div>
@@ -622,8 +447,229 @@ onMounted(() => {
       </div>
     </div>
   </section>
+  
   <Footer />
 </template>
+
+<script setup>
+import { Head, Link } from "@inertiajs/vue3";
+import { useI18n } from "vue-i18n";
+import { ref, onMounted, computed, onUnmounted } from "vue";
+import Navbar from '@/Components/Navbar.vue';
+import Footer from '@/Components/Footer.vue';
+
+defineProps({
+  canLogin: { type: Boolean },
+  canRegister: { type: Boolean },
+  authUser: { type: Object },
+});
+
+const showDropdown = ref(false);
+const showAboutDropdown = ref(false);
+const showMobileMenu = ref(false);
+const { t, locale } = useI18n();
+const currentLang = ref("");
+const autoPlayInterval = ref(null);
+
+// Carousel state
+const currentSlide = ref(0);
+
+// Carousel slides data
+const slides = [
+  {
+    image: '/storage/home/aenhance-accessibility-13.jpg',
+    titleKey: 'carousel.slide1.title',
+    descriptionKey: 'carousel.slide1.description',
+    buttonKey: 'carousel.slide1.button'
+  },
+  {
+    image: '/storage/home/aenhance-privacy-31.jpg',
+    titleKey: 'carousel.slide2.title',
+    descriptionKey: 'carousel.slide2.description',
+    buttonKey: 'carousel.slide2.button'
+  },
+  {
+    image: '/storage/home/aenhance-quality-19.jpg',
+    titleKey: 'carousel.slide3.title',
+    descriptionKey: 'carousel.slide3.description',
+    buttonKey: 'carousel.slide3.button'
+  }
+];
+
+// Carousel functions
+function nextSlide() {
+  currentSlide.value = (currentSlide.value + 1) % slides.length;
+}
+
+function prevSlide() {
+  currentSlide.value = (currentSlide.value - 1 + slides.length) % slides.length;
+}
+
+function goToSlide(index) {
+  currentSlide.value = index;
+  resetAutoPlay();
+}
+
+// Auto-play functions
+function startAutoPlay() {
+  autoPlayInterval.value = setInterval(() => {
+    nextSlide();
+  }, 5000);
+}
+
+function stopAutoPlay() {
+  if (autoPlayInterval.value) {
+    clearInterval(autoPlayInterval.value);
+    autoPlayInterval.value = null;
+  }
+}
+
+function resetAutoPlay() {
+  stopAutoPlay();
+  startAutoPlay();
+}
+
+// Languages list
+const languages = [
+  { code: "fr", label: "🇫🇷 Français" },
+  { code: "en", label: "🇬🇧 English" },
+  { code: "ar", label: "🇸🇦 العربية" },
+];
+
+// Set language
+function setLang(lang) {
+  locale.value = lang;
+  currentLang.value = languages.find((l) => l.code === lang).label;
+  localStorage.setItem("locale", lang);
+  showDropdown.value = false;
+  
+  // Set document direction based on language
+  if (lang === 'ar') {
+    document.documentElement.setAttribute('dir', 'rtl');
+    document.documentElement.setAttribute('lang', 'ar');
+  } else {
+    document.documentElement.setAttribute('dir', 'ltr');
+    document.documentElement.setAttribute('lang', lang);
+  }
+}
+
+// Load saved language
+onMounted(() => {
+  const savedLang = localStorage.getItem("locale") || locale.value;
+  setLang(savedLang);
+  startAutoPlay();
+  // Listen for beforeinstallprompt to show install/download button
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    installPromptEvent.value = e;
+    showInstallButton.value = true;
+  });
+
+  // If app.js already captured the event earlier, use it
+  if (window.__INSTALL_PROMPT) {
+    installPromptEvent.value = window.__INSTALL_PROMPT;
+    showInstallButton.value = true;
+  }
+  // Listen for custom dispatched event from app.js
+  const handler = () => {
+    if (window.__INSTALL_PROMPT) {
+      installPromptEvent.value = window.__INSTALL_PROMPT;
+      showInstallButton.value = true;
+    }
+  };
+  window.addEventListener('aenhance-beforeinstallprompt', handler);
+  // save handler for cleanup
+  window.__AE_INSTALL_HANDLER = handler;
+});
+
+onUnmounted(() => {
+  stopAutoPlay();
+  // cleanup install prompt handler if any
+  if (window.__AE_INSTALL_HANDLER) {
+    window.removeEventListener('aenhance-beforeinstallprompt', window.__AE_INSTALL_HANDLER);
+    window.__AE_INSTALL_HANDLER = null;
+  }
+});
+
+// About dropdown items reactive to language
+const aboutItems = computed(() => [
+  t("nav.aboutItems.0"),
+  t("nav.aboutItems.1"),
+  t("nav.aboutItems.2"),
+  t("nav.aboutItems.3"),
+  t("nav.aboutItems.4"),
+  t("nav.aboutItems.5")
+])
+
+// Intersection Observer for animations
+const telehealthSection = ref(null);
+const valuesSection = ref(null);
+const howItWorksSection = ref(null);
+const supportSection = ref(null);
+const joinTeamSection = ref(null);
+const telehealthVisible = ref(false);
+const valuesVisible = ref(false);
+const howItWorksVisible = ref(false);
+const supportVisible = ref(false);
+const joinTeamVisible = ref(false);
+
+// PWA install prompt handling
+const installPromptEvent = ref(null);
+const showInstallButton = ref(false);
+
+function promptInstall() {
+  if (!installPromptEvent.value) return;
+  installPromptEvent.value.prompt();
+  installPromptEvent.value.userChoice.then((choice) => {
+    installPromptEvent.value = null;
+    showInstallButton.value = false;
+  });
+}
+
+// Setup Intersection Observer
+onMounted(() => {
+  setTimeout(() => {
+    const observerOptions = {
+      threshold: 0.2,
+      rootMargin: '0px 0px -50px 0px'
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          if (entry.target === telehealthSection.value) {
+            telehealthVisible.value = true;
+          } else if (entry.target === valuesSection.value) {
+            valuesVisible.value = true;
+          } else if (entry.target === howItWorksSection.value) {
+            howItWorksVisible.value = true;
+          } else if (entry.target === supportSection.value) {
+            supportVisible.value = true;
+          } else if (entry.target === joinTeamSection.value) {
+            joinTeamVisible.value = true;
+          }
+        }
+      });
+    }, observerOptions);
+
+    if (telehealthSection.value) {
+      observer.observe(telehealthSection.value);
+    }
+    if (valuesSection.value) {
+      observer.observe(valuesSection.value);
+    }
+    if (howItWorksSection.value) {
+      observer.observe(howItWorksSection.value);
+    }
+    if (supportSection.value) {
+      observer.observe(supportSection.value);
+    }
+    if (joinTeamSection.value) {
+      observer.observe(joinTeamSection.value);
+    }
+  }, 100);
+});
+</script>
 
 <style>
 .gradient-header {

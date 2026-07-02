@@ -1,0 +1,17 @@
+{
+  "name": "AEnhance",
+  "short_name": "AEnhance",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#af5166",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/aenhance.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

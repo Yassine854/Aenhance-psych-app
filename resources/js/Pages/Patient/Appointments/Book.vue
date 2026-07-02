@@ -46,14 +46,14 @@ watch(flashStatus, (val) => {
 function languageLabel(lang) {
   const v = String(lang || '').toLowerCase();
   if (locale.value === 'fr') {
-    if (v === 'english') return 'Anglais';
-    if (v === 'french') return 'Français';
-    if (v === 'arabic') return 'Arabe';
+    if (v === 'english') return t('appointment.languages.english');
+    if (v === 'french') return t('appointment.languages.french');
+    if (v === 'arabic') return t('appointment.languages.arabic');
   }
   if (locale.value === 'ar') {
-    if (v === 'english') return 'الإنجليزية';
-    if (v === 'french') return 'الفرنسية';
-    if (v === 'arabic') return 'العربية';
+    if (v === 'english') return t('appointment.languages.english');
+    if (v === 'french') return t('appointment.languages.french');
+    if (v === 'arabic') return t('appointment.languages.arabic');
   }
   if (v === 'english') return 'English';
   if (v === 'french') return 'French';
@@ -69,17 +69,17 @@ function languagesFor(profile) {
 function fullName(p) {
   const first = (p?.first_name || '').trim()
   const last = (p?.last_name || '').trim()
-  return `${first} ${last}`.trim() || p?.user?.name || 'Psychologist'
+  return `${first} ${last}`.trim() || p?.user?.name || t('appointment.psychologist')
 }
 
 function patientDisplayName() {
   const first = (props.patientProfile?.first_name || '').trim()
   const last = (props.patientProfile?.last_name || '').trim()
-  return `${first} ${last}`.trim() || props.authUser?.name || 'You'
+  return `${first} ${last}`.trim() || props.authUser?.name || t('appointment.you')
 }
 
 function bookingForLabel(value) {
-  return value === 'other' ? 'Another person' : 'Myself'
+  return value === 'other' ? t('appointment.anotherPerson') : t('appointment.myself')
 }
 
 function beneficiarySignature(beneficiary) {
@@ -173,7 +173,15 @@ watch(
 )
 
 // Calendar
-const weekdayHeaders = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+const weekdayHeaders = computed(() => [
+  t('appointment.calendar.sun'),
+  t('appointment.calendar.mon'),
+  t('appointment.calendar.tue'),
+  t('appointment.calendar.wed'),
+  t('appointment.calendar.thu'),
+  t('appointment.calendar.fri'),
+  t('appointment.calendar.sat')
+])
 
 const monthOptions = computed(() => {
   const keys = []
@@ -230,7 +238,6 @@ watch(
   }
 )
 
-// Keep displayed month in sync with selected date (if needed).
 watch(
   () => selectedDate.value,
   (date) => {
@@ -259,7 +266,7 @@ const currentMonthLabel = computed(() => {
 
 const calendarCells = computed(() => {
   const first = startOfMonth(currentMonthDate.value)
-  const firstDow = first.getDay() // 0..6
+  const firstDow = first.getDay()
   const start = new Date(first)
   start.setDate(first.getDate() - firstDow)
 
@@ -326,7 +333,7 @@ watch(
 
 function selectedBeneficiaryName() {
   if (form.booking_for !== 'other') return patientDisplayName()
-  return `${String(form.beneficiary_first_name || '').trim()} ${String(form.beneficiary_last_name || '').trim()}`.trim() || 'Another person'
+  return `${String(form.beneficiary_first_name || '').trim()} ${String(form.beneficiary_last_name || '').trim()}`.trim() || t('appointment.anotherPerson')
 }
 
 function applyPreviousBeneficiary(beneficiary) {
@@ -372,7 +379,6 @@ function submit() {
   form.post(route('appointments.store'), {
     preserveScroll: true,
     onSuccess: () => {
-      // Refresh authoritative pending count from server and broadcast update
       try {
         fetch(route('appointments.pendingCount'))
           .then((r) => r.json())
@@ -388,7 +394,7 @@ function submit() {
 </script>
 
 <template>
-  <Head title="Choose appointment" />
+  <Head :title="t('appointment.title')" />
 
   <Navbar :canLogin="canLogin" :canRegister="canRegister" :authUser="authUser" />
 
@@ -396,9 +402,9 @@ function submit() {
     <div class="container mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex items-start justify-between gap-4 mb-8">
         <div>
-          <h1 class="text-2xl md:text-3xl font-bold text-gray-900">Choose an appointment</h1>
+          <h1 class="text-2xl md:text-3xl font-bold text-gray-900">{{ t('appointment.title') }}</h1>
           <p class="mt-2 text-gray-700 max-w-3xl">
-            Select a date and time. Session duration: <span class="font-semibold">{{ sessionMinutes }} minutes</span>.
+            {{ t('appointment.subtitle') }} <span class="font-semibold">{{ sessionMinutes }} {{ t('appointment.minutes') }}</span>.
           </p>
         </div>
 
@@ -406,20 +412,17 @@ function submit() {
           :href="route('services.consultation')"
           class="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-white border border-gray-200 text-gray-700 text-sm font-semibold hover:bg-gray-50 transition focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-300"
         >
-          Back to psychologists
+          {{ t('appointment.backToPsychologists') }}
         </Link>
       </div>
 
-      
-
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <!-- Psychologist card (styled like Consultation) -->
+        <!-- Psychologist card -->
         <div class="lg:col-span-1">
           <div class="group bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col h-full">
             <div class="relative h-64 bg-gray-100 overflow-hidden">
-              <!-- verified badge -->
               <div class="absolute top-3 left-3 flex items-center gap-2">
-                <span v-if="psychologistProfile.is_approved" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-white/95 text-[#5997ac] ring-1 ring-[#5997ac]/25 backdrop-blur">Verified</span>
+                <span v-if="psychologistProfile.is_approved" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-white/95 text-[#5997ac] ring-1 ring-[#5997ac]/25 backdrop-blur">{{ t('appointment.verified') }}</span>
               </div>
 
               <img
@@ -437,7 +440,6 @@ function submit() {
               <div class="absolute bottom-3 left-4 right-4">
                 <h3 class="text-lg font-semibold text-white leading-snug line-clamp-2">{{ fullName(psychologistProfile) }}</h3>
               </div>
-              <!-- price badge: flip sides for RTL via locale -->
               <div :class="locale === 'ar' ? 'absolute bottom-3 left-2 -translate-x-1' : 'absolute bottom-3 right-2 translate-x-1'">
                 <div class="inline-flex items-baseline gap-2 px-3 py-1 rounded-full bg-white/95 text-right shadow-lg">
                   <span class="text-sm font-semibold text-[#5997ac]">{{ formatPrice(psychologistProfile.price_per_session).replace(' TND','') }}</span>
@@ -478,10 +480,8 @@ function submit() {
               </div>
 
               <p class="mt-3 text-sm text-gray-700 leading-relaxed line-clamp-3">
-                {{ psychologistProfile.bio || 'No bio provided.' }}
+                {{ psychologistProfile.bio || t('appointment.noBio') }}
               </p>
-
-             
             </div>
           </div>
         </div>
@@ -491,7 +491,7 @@ function submit() {
           <div class="bg-white border border-gray-200 rounded-lg shadow-sm">
             <div class="p-5 border-b border-gray-100">
               <div class="flex items-center justify-between gap-3">
-                <div class="text-sm font-semibold text-gray-900">Pick a date</div>
+                <div class="text-sm font-semibold text-gray-900">{{ t('appointment.pickDate') }}</div>
 
                 <div class="flex items-center gap-2" v-if="monthOptions.length">
                   <button
@@ -499,7 +499,7 @@ function submit() {
                     class="h-9 w-9 inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
                     @click="goPrevMonth"
                     :disabled="currentMonthIndex <= 0"
-                    aria-label="Previous month"
+                    :aria-label="t('appointment.prevMonth')"
                   >
                     ‹
                   </button>
@@ -513,7 +513,7 @@ function submit() {
                     class="h-9 w-9 inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
                     @click="goNextMonth"
                     :disabled="currentMonthIndex >= monthOptions.length - 1"
-                    aria-label="Next month"
+                    :aria-label="t('appointment.nextMonth')"
                   >
                     ›
                   </button>
@@ -521,7 +521,7 @@ function submit() {
               </div>
 
               <div v-if="!availableDays.length" class="mt-4 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-700">
-                This psychologist has no available slots right now.
+                {{ t('appointment.noSlots') }}
               </div>
 
               <div v-else class="mt-4">
@@ -554,7 +554,7 @@ function submit() {
                 </Transition>
 
                 <div class="mt-3 text-xs text-gray-500">
-                  Only highlighted days are available.
+                  {{ t('appointment.highlightedDays') }}
                 </div>
               </div>
             </div>
@@ -563,12 +563,12 @@ function submit() {
               <Transition name="panel-fade" mode="out-in">
                 <div :key="selectedDate">
                   <div class="flex items-center justify-between gap-3">
-                    <div class="text-sm font-semibold text-gray-900">Pick a time</div>
-                    <div class="text-xs text-gray-500" v-if="selectedDay">{{ (selectedDay.slots || []).length }} available</div>
+                    <div class="text-sm font-semibold text-gray-900">{{ t('appointment.pickTime') }}</div>
+                    <div class="text-xs text-gray-500" v-if="selectedDay">{{ (selectedDay.slots || []).length }} {{ t('appointment.available') }}</div>
                   </div>
 
                   <div v-if="!selectedDay || !(selectedDay.slots || []).length" class="mt-4 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-700">
-                    No available times for this date.
+                    {{ t('appointment.noTimes') }}
                   </div>
 
                   <div v-else class="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
@@ -592,8 +592,8 @@ function submit() {
 
               <div class="mt-6 rounded-2xl border border-gray-200 bg-gray-50 p-4 sm:p-5">
                 <div>
-                  <div class="text-sm font-semibold text-gray-900">Who is this appointment for?</div>
-                  <div class="mt-1 text-xs text-gray-500">The booking remains under your account, but you can set who will attend the session.</div>
+                  <div class="text-sm font-semibold text-gray-900">{{ t('appointment.whomFor') }}</div>
+                  <div class="mt-1 text-xs text-gray-500">{{ t('appointment.whomForDesc') }}</div>
                 </div>
 
                 <div class="mt-4 grid gap-3 md:grid-cols-2">
@@ -605,8 +605,8 @@ function submit() {
                   >
                     <div class="flex items-start justify-between gap-3">
                       <div>
-                        <div class="text-sm font-semibold text-gray-900">Myself</div>
-                        <div class="mt-1 text-sm text-gray-600">You are the person attending this appointment.</div>
+                        <div class="text-sm font-semibold text-gray-900">{{ t('appointment.myself') }}</div>
+                        <div class="mt-1 text-sm text-gray-600">{{ t('appointment.myselfDesc') }}</div>
                       </div>
                       <span class="inline-flex h-5 w-5 items-center justify-center rounded-full border" :class="form.booking_for === 'self' ? 'border-[#5997ac] bg-[#5997ac] text-white' : 'border-gray-300 bg-white text-transparent'">•</span>
                     </div>
@@ -621,8 +621,8 @@ function submit() {
                   >
                     <div class="flex items-start justify-between gap-3">
                       <div>
-                        <div class="text-sm font-semibold text-gray-900">Another person</div>
-                        <div class="mt-1 text-sm text-gray-600">Use this when the session is for a child or another family member.</div>
+                        <div class="text-sm font-semibold text-gray-900">{{ t('appointment.anotherPerson') }}</div>
+                        <div class="mt-1 text-sm text-gray-600">{{ t('appointment.anotherPersonDesc') }}</div>
                       </div>
                       <span class="inline-flex h-5 w-5 items-center justify-center rounded-full border" :class="form.booking_for === 'other' ? 'border-[#5997ac] bg-[#5997ac] text-white' : 'border-gray-300 bg-white text-transparent'">•</span>
                     </div>
@@ -633,8 +633,8 @@ function submit() {
 
                 <div v-if="form.booking_for === 'other'" class="mt-5 space-y-5">
                   <div v-if="previousBeneficiaries.length" class="rounded-2xl border border-[#5997ac]/15 bg-white p-4">
-                    <div class="text-sm font-semibold text-gray-900">Previous people you booked for</div>
-                    <div class="mt-1 text-xs text-gray-500">Select one to fill the form automatically.</div>
+                    <div class="text-sm font-semibold text-gray-900">{{ t('appointment.previousPeople') }}</div>
+                    <div class="mt-1 text-xs text-gray-500">{{ t('appointment.previousPeopleDesc') }}</div>
 
                     <div class="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-2">
                       <button
@@ -645,9 +645,9 @@ function submit() {
                         class="rounded-2xl border px-4 py-3 text-left transition focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#5997ac]/30"
                         :class="selectedBeneficiarySignature === beneficiarySignature(beneficiary) ? 'border-[#5997ac] bg-[#5997ac]/5 ring-1 ring-[#5997ac]/20' : 'border-gray-200 bg-white hover:border-gray-300'"
                       >
-                        <div class="text-sm font-semibold text-gray-900">{{ beneficiary.full_name || 'Another person' }}</div>
+                        <div class="text-sm font-semibold text-gray-900">{{ beneficiary.full_name || t('appointment.anotherPerson') }}</div>
                         <div class="mt-1 text-xs text-gray-500">
-                          {{ beneficiary.relationship_to_patient || 'Relationship not provided' }}
+                          {{ beneficiary.relationship_to_patient || t('appointment.relationshipNotProvided') }}
                           <span v-if="beneficiary.date_of_birth"> · {{ beneficiary.date_of_birth }}</span>
                         </div>
                       </button>
@@ -656,36 +656,36 @@ function submit() {
 
                   <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                     <div>
-                      <label class="block text-sm font-medium text-gray-700">First name</label>
-                      <input v-model="form.beneficiary_first_name" type="text" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-[#5997ac] focus:ring-[#5997ac]" placeholder="First name" />
+                      <label class="block text-sm font-medium text-gray-700">{{ t('appointment.firstName') }}</label>
+                      <input v-model="form.beneficiary_first_name" type="text" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-[#5997ac] focus:ring-[#5997ac]" :placeholder="t('appointment.firstNamePlaceholder')" />
                       <div v-if="form.errors.beneficiary_first_name" class="mt-1 text-sm text-red-600">{{ form.errors.beneficiary_first_name }}</div>
                     </div>
 
                     <div>
-                      <label class="block text-sm font-medium text-gray-700">Last name</label>
-                      <input v-model="form.beneficiary_last_name" type="text" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-[#5997ac] focus:ring-[#5997ac]" placeholder="Last name" />
+                      <label class="block text-sm font-medium text-gray-700">{{ t('appointment.lastName') }}</label>
+                      <input v-model="form.beneficiary_last_name" type="text" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-[#5997ac] focus:ring-[#5997ac]" :placeholder="t('appointment.lastNamePlaceholder')" />
                       <div v-if="form.errors.beneficiary_last_name" class="mt-1 text-sm text-red-600">{{ form.errors.beneficiary_last_name }}</div>
                     </div>
 
                     <div>
-                      <label class="block text-sm font-medium text-gray-700">Date of birth</label>
+                      <label class="block text-sm font-medium text-gray-700">{{ t('appointment.dateOfBirth') }}</label>
                       <input v-model="form.beneficiary_date_of_birth" type="date" :max="maxBeneficiaryDateOfBirth" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-[#5997ac] focus:ring-[#5997ac]" />
                       <div v-if="form.errors.beneficiary_date_of_birth" class="mt-1 text-sm text-red-600">{{ form.errors.beneficiary_date_of_birth }}</div>
                     </div>
 
                     <div>
-                      <label class="block text-sm font-medium text-gray-700">Relationship to you</label>
-                      <input v-model="form.beneficiary_relationship" type="text" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-[#5997ac] focus:ring-[#5997ac]" placeholder="Child, spouse, sibling, parent..." />
+                      <label class="block text-sm font-medium text-gray-700">{{ t('appointment.relationship') }}</label>
+                      <input v-model="form.beneficiary_relationship" type="text" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-[#5997ac] focus:ring-[#5997ac]" :placeholder="t('appointment.relationshipPlaceholder')" />
                       <div v-if="form.errors.beneficiary_relationship" class="mt-1 text-sm text-red-600">{{ form.errors.beneficiary_relationship }}</div>
                     </div>
 
                     <div class="md:col-span-2">
-                      <label class="block text-sm font-medium text-gray-700">Gender</label>
+                      <label class="block text-sm font-medium text-gray-700">{{ t('appointment.gender') }}</label>
                       <select v-model="form.beneficiary_gender" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-[#5997ac] focus:ring-[#5997ac]">
-                        <option value="">Prefer not to say</option>
-                        <option value="female">Female</option>
-                        <option value="male">Male</option>
-                        <option value="other">Other</option>
+                        <option value="">{{ t('appointment.preferNotSay') }}</option>
+                        <option value="female">{{ t('appointment.female') }}</option>
+                        <option value="male">{{ t('appointment.male') }}</option>
+                        <option value="other">{{ t('appointment.other') }}</option>
                       </select>
                       <div v-if="form.errors.beneficiary_gender" class="mt-1 text-sm text-red-600">{{ form.errors.beneficiary_gender }}</div>
                     </div>
@@ -695,14 +695,14 @@ function submit() {
 
               <div class="mt-6 flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
                 <div class="text-sm text-gray-700">
-                  <div class="font-medium text-gray-900">Selected</div>
+                  <div class="font-medium text-gray-900">{{ t('appointment.selected') }}</div>
                   <div v-if="selectedDay && selectedSlot" class="text-gray-700">
                     {{ selectedDay.date }} · {{ selectedSlot.start_time }} – {{ selectedSlot.end_time }}
                   </div>
-                  <div v-else class="text-gray-500">Choose a date and time.</div>
+                  <div v-else class="text-gray-500">{{ t('appointment.chooseDateTime') }}</div>
 
                   <div class="mt-2 text-gray-700">
-                    For: <span class="font-medium text-gray-900">{{ selectedBeneficiaryName() }}</span>
+                    {{ t('appointment.for') }}: <span class="font-medium text-gray-900">{{ selectedBeneficiaryName() }}</span>
                     <span class="text-gray-500">({{ bookingForLabel(form.booking_for) }})</span>
                   </div>
 
@@ -716,12 +716,12 @@ function submit() {
                   class="inline-flex items-center justify-center px-5 py-2.5 rounded-md text-sm font-semibold transition"
                   :class="canSubmit ? 'bg-[#5997ac] text-white hover:opacity-90' : 'bg-gray-200 text-gray-500 cursor-not-allowed'"
                 >
-                  {{ form.processing ? 'Booking…' : 'Book appointment' }}
+                  {{ form.processing ? t('appointment.booking') : t('appointment.bookAppointment') }}
                 </button>
               </div>
 
               <div class="mt-4 text-xs text-gray-500">
-                Your appointment will be created as <span class="font-medium">pending</span> until confirmed.
+                {{ t('appointment.pendingNote') }} <span class="font-medium">{{ t('appointment.pending') }}</span>.
               </div>
             </div>
           </div>
@@ -731,7 +731,7 @@ function submit() {
               :href="route('services.consultation')"
               class="inline-flex items-center justify-center px-4 py-2 rounded-md bg-white border border-gray-200 text-gray-700 text-sm font-medium hover:bg-gray-100 transition"
             >
-              Back to psychologists
+              {{ t('appointment.backToPsychologists') }}
             </Link>
           </div>
         </div>
@@ -743,6 +743,10 @@ function submit() {
 </template>
 
 <style scoped>
+[dir="rtl"] {
+  text-align: right;
+}
+
 .cal-fade-enter-active,
 .cal-fade-leave-active,
 .panel-fade-enter-active,

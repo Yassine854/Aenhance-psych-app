@@ -160,7 +160,7 @@
   },
   "footer": {
     "about": "من نحن",
-    "resources": "الموارد",
+    "support": "الدعم",
     "contactUs": "اتصل بنا",
     "paymentMethods": "طرق الدفع",
     "copyright": "© 2025 AENHANCE",
@@ -175,13 +175,9 @@
       "termsConditions": "الشروط والأحكام",
       "privacyProtection": "حماية الخصوصية"
     },
-    "resourcesMenu": {
-      "anxietyDisorders": "اضطرابات القلق",
-      "moodDisorders": "اضطرابات المزاج",
-      "sleepDisorders": "اضطرابات النوم",
-      "eatingDisorders": "اضطرابات الأكل",
-      "adjustmentDisorders": "اضطرابات التكيف",
-      "personalityDisorders": "اضطرابات الشخصية"
+    "supportMenu": {
+      "faq": "الأسئلة الشائعة",
+      "howItWorks": "كيف يعمل"
     },
     "contact": {
       "phone": "+216 26 223 193",
@@ -1112,6 +1108,11 @@
       "failed": "فشل",
       "connecting": "جارٍ الاتصال"
     },
+    "feedback": {
+    "thankYou": "شكراً لك!",
+    "thankYouText": "شكراً لمشاركتك ملاحظاتك — نحن نقدر ذلك حقاً 😊",
+    "submitError": "تعذر إرسال الملاحظات"
+  },
     "speaking": "يتكلم",
     "muted": "كتم الصوت",
     "cameraOff": "الكاميرا متوقفة",
@@ -1247,6 +1248,12 @@
   "previousPage": "الصفحة السابقة",
   "nextPage": "الصفحة التالية"
 }
+
+  ,"pwa": {
+    "download": "تحميل التطبيق",
+    "install": "تثبيت",
+    "installed": "تم التثبيت"
+  }
 ,
   "profile": {
     "title": "تفاصيل الملف الشخصي",
@@ -1614,6 +1621,107 @@
     "specifyReason": "يرجى تحديد السبب الآخر.",
     "failedTitle": "فشل التقرير",
     "unableToSend": "تعذر إرسال التقرير"
+  }
+},
+"videoCallNotes": {
+  "title": "ملاحظات الجلسة",
+  "subtitle": "أضف ملاحظات سريرية لهذه الجلسة. هذه الملاحظات خاصة ويتم حفظها في ملف المريض.",
+  "close": "إغلاق",
+  "sessionMode": "وضع الجلسة",
+  "riskLevel": "مستوى المخاطر",
+  "sessionDate": "تاريخ الجلسة",
+  "durationMinutes": "المدة (دقائق)",
+  "subjective": "الذاتي",
+  "subjectivePlaceholder": "ما أبلغ عنه المريض...",
+  "objective": "الموضوعي",
+  "objectivePlaceholder": "ما لاحظته خلال الجلسة...",
+  "assessment": "التقييم",
+  "assessmentPlaceholder": "تقييمك السريري لحالة المريض...",
+  "intervention": "التدخل",
+  "interventionPlaceholder": "ما هي التدخلات المستخدمة خلال الجلسة...",
+  "plan": "الخطة",
+  "planPlaceholder": "ما هي الخطوات التالية للمريض...",
+  "cancel": "إلغاء",
+  "saving": "جاري الحفظ...",
+  "saveNotes": "حفظ الملاحظات",
+  "modes": {
+    "videoAudio": "فيديو + صوت",
+    "audio": "صوت",
+    "video": "فيديو"
+  },
+  "risks": {
+    "none": "لا شيء",
+    "low": "منخفض",
+    "medium": "متوسط",
+    "high": "مرتفع",
+    "veryHigh": "مرتفع جداً"
+  }
+},
+"ratingModal": {
+  "title": "تقييم هذه الجلسة",
+  "submitRating": "إرسال التقييم",
+  "skip": "تخطي",
+  "feedbackPlaceholder": "ملاحظات اختيارية (ما سار بشكل جيد، اقتراحات، مشاكل)",
+  "validationMessage": "يرجى اختيار تقييم (1–5) أو الضغط على تخطي"
+},
+"appointment": {
+  "title": "اختر موعداً",
+  "subtitle": "اختر التاريخ والوقت. مدة الجلسة:",
+  "minutes": "دقائق",
+  "backToPsychologists": "العودة إلى الأخصائيين",
+  "verified": "موثّق",
+  "psychologist": "أخصائي نفسي",
+  "you": "أنت",
+  "noBio": "لا توجد سيرة ذاتية.",
+  "pickDate": "اختر تاريخاً",
+  "pickTime": "اختر وقتاً",
+  "available": "متاح",
+  "noSlots": "لا يوجد مواعيد متاحة لهذا الأخصائي حالياً.",
+  "noTimes": "لا توجد أوقات متاحة لهذا التاريخ.",
+  "highlightedDays": "الأيام المظللة فقط هي المتاحة.",
+  "prevMonth": "الشهر السابق",
+  "nextMonth": "الشهر التالي",
+  "whomFor": "لمن هذا الموعد؟",
+  "whomForDesc": "الحجز يبقى تحت حسابك، ولكن يمكنك تحديد من سيحضر الجلسة.",
+  "myself": "نفسي",
+  "myselfDesc": "أنت الشخص الذي سيحضر هذا الموعد.",
+  "anotherPerson": "شخص آخر",
+  "anotherPersonDesc": "استخدم هذا عندما تكون الجلسة لطفل أو أحد أفراد العائلة.",
+  "previousPeople": "الأشخاص السابقون الذين حجزت لهم",
+  "previousPeopleDesc": "اختر واحداً لملء النموذج تلقائياً.",
+  "relationshipNotProvided": "العلاقة غير محددة",
+  "firstName": "الاسم الأول",
+  "firstNamePlaceholder": "الاسم الأول",
+  "lastName": "اسم العائلة",
+  "lastNamePlaceholder": "اسم العائلة",
+  "dateOfBirth": "تاريخ الميلاد",
+  "relationship": "العلاقة بك",
+  "relationshipPlaceholder": "طفل، زوج، أخ، والد...",
+  "gender": "الجنس",
+  "preferNotSay": "أفضل عدم الإفصاح",
+  "female": "أنثى",
+  "male": "ذكر",
+  "other": "آخر",
+  "selected": "المحدد",
+  "chooseDateTime": "اختر التاريخ والوقت.",
+  "for": "لـ",
+  "booking": "جاري الحجز…",
+  "bookAppointment": "حجز الموعد",
+  "pendingNote": "سيتم إنشاء موعدك كـ",
+  "pending": "معلق",
+  "calendar": {
+    "sun": "أحد",
+    "mon": "إثنين",
+    "tue": "ثلاثاء",
+    "wed": "أربعاء",
+    "thu": "خميس",
+    "fri": "جمعة",
+    "sat": "سبت"
+  },
+  "languages": {
+    "english": "الإنجليزية",
+    "french": "الفرنسية",
+    "arabic": "العربية"
   }
 }
 }

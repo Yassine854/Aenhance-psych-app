@@ -35,3 +35,33 @@ createInertiaApp({
         color: '#4B5563',
     },
 });
+
+// Register service worker for PWA (public/service-worker.js)
+if ('serviceWorker' in navigator) {
+    window.__INSTALL_PROMPT = null;
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        window.__INSTALL_PROMPT = e;
+        window.dispatchEvent(new CustomEvent('aenhance-beforeinstallprompt'));
+    });
+
+    window.addEventListener('load', () => {
+        if (import.meta.env.DEV) {
+            navigator.serviceWorker.getRegistrations().then((registrations) => {
+                registrations.forEach((registration) => registration.unregister())
+            })
+
+            if ('caches' in window) {
+                window.caches.keys().then((cacheKeys) => {
+                    cacheKeys.forEach((cacheKey) => window.caches.delete(cacheKey))
+                })
+            }
+
+            return
+        }
+
+        navigator.serviceWorker.register('/service-worker.js', { updateViaCache: 'none' }).catch((err) => {
+            console.warn('Service Worker registration failed:', err);
+        });
+    });
+}

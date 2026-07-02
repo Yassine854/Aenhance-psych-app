@@ -412,11 +412,11 @@
       </div>
 
       <!-- Guest auth buttons -->
-      <Link v-if="!resolvedAuthUser && canLogin" :href="route('login')"
+      <Link v-if="!activeAuthUser && canLogin" :href="route('login')"
         class="px-3.5 py-1.5 bg-[#5997ac] text-white text-[12px] rounded flex items-center gap-1.5 justify-center hover:bg-[#467891] transition">
         🔓 {{ t("login") }}
       </Link>
-      <Link v-if="!resolvedAuthUser && canRegister" :href="route('register')"
+      <Link v-if="!activeAuthUser && canRegister" :href="route('register')"
         class="px-3.5 py-1.5 bg-[#f6aec2] text-white text-[12px] rounded flex items-center gap-1.5 justify-center hover:bg-[#e190b0] transition">
         👤 {{ t("register") }}
       </Link>
@@ -619,6 +619,8 @@ const props = defineProps({
 });
 
 const page = usePage()
+const authSessionInvalidated = ref(false)
+const authRedirectIssued = ref(false)
 
 const resolvedAuthUser = computed(() => {
   const fromPage = page.props?.auth?.user || null
@@ -631,6 +633,11 @@ const resolvedAuthUser = computed(() => {
     ...fromProp,
     profile_image_url: fromProp.profile_image_url ?? fromPage.profile_image_url ?? null,
   }
+})
+
+const activeAuthUser = computed(() => {
+  if (authSessionInvalidated.value) return null
+  return resolvedAuthUser.value
 })
 
 const showDropdown = ref(false);
@@ -665,28 +672,28 @@ const isRtl = computed(() => {
 })
 
 const isPatient = computed(() => {
-  const role = (resolvedAuthUser.value?.role ?? '').toString().trim().toUpperCase()
-  return !!resolvedAuthUser.value && role === 'PATIENT'
+  const role = (activeAuthUser.value?.role ?? '').toString().trim().toUpperCase()
+  return !!activeAuthUser.value && role === 'PATIENT'
 })
 
 const patientDisplayName = computed(() => {
-  return resolvedAuthUser.value?.name || resolvedAuthUser.value?.email || 'Account'
+  return activeAuthUser.value?.name || activeAuthUser.value?.email || 'Account'
 })
 
 const patientAvatarUrl = computed(() => {
-  return resolveStorageUrl(resolvedAuthUser.value?.profile_image_url) || null
+  return resolveStorageUrl(activeAuthUser.value?.profile_image_url) || null
 })
 
 const patientInitials = computed(() => {
-  const source = (resolvedAuthUser.value?.name || resolvedAuthUser.value?.email || 'A').trim()
+  const source = (activeAuthUser.value?.name || activeAuthUser.value?.email || 'A').trim()
   const parts = source.split(/\s+/).filter(Boolean)
   const initials = parts.slice(0, 2).map((p) => p[0]).join('')
   return (initials || 'A').toUpperCase()
 })
 
 const isPsychologist = computed(() => {
-  const role = (resolvedAuthUser.value?.role ?? '').toString().trim().toUpperCase()
-  return !!resolvedAuthUser.value && role === 'PSYCHOLOGIST'
+  const role = (activeAuthUser.value?.role ?? '').toString().trim().toUpperCase()
+  return !!activeAuthUser.value && role === 'PSYCHOLOGIST'
 })
 
 // Pending appointments count (cart) - read from common props with fallbacks
@@ -789,6 +796,80 @@ function applyPsychologistNotificationFeed(payload) {
   psychologistLatestNotificationId.value = Number(payload?.latest_id || 0)
 }
 
+function clearPendingAppointmentsStorage() {
+  patientCartLocal.value = 0
+  try { localStorage.removeItem('pendingAppointmentsCount') } catch (e) {}
+}
+
+function resetPatientNotificationState() {
+  patientNotifications.value = []
+  patientUnreadCount.value = 0
+  patientLatestNotificationId.value = 0
+  showPatientNotifications.value = false
+}
+
+function resetPsychologistNotificationState() {
+  psychologistNotifications.value = []
+  psychologistUnreadCount.value = 0
+  psychologistLatestNotificationId.value = 0
+  showPsychologistNotifications.value = false
+}
+
+function stopAllNotificationPolling() {
+  stopPatientNotificationPolling()
+  stopPsychologistNotificationPolling()
+}
+
+function redirectToGuestPage() {
+  if (authRedirectIssued.value || typeof window === 'undefined') return
+  authRedirectIssued.value = true
+  window.location.replace('/')
+}
+
+function invalidateNavbarSession(options = {}) {
+  const { redirect = false } = options
+
+  authSessionInvalidated.value = true
+  showPatientMenu.value = false
+  showPsychologistMenu.value = false
+  showPatientNotifications.value = false
+  showPsychologistNotifications.value = false
+  showMobileMenu.value = false
+  stopAllNotificationPolling()
+  resetPatientNotificationState()
+  resetPsychologistNotificationState()
+  clearPendingAppointmentsStorage()
+
+  if (redirect) {
+    redirectToGuestPage()
+  }
+}
+
+function isUnauthorizedNavbarError(error) {
+  const status = Number(error?.response?.status || 0)
+  return status === 401 || status === 419
+}
+
+function handleNavbarRequestError(error, message) {
+  if (isUnauthorizedNavbarError(error)) {
+    invalidateNavbarSession({ redirect: true })
+    return
+  }
+
+  console.error(message, error)
+}
+
+async function clearClientSessionArtifacts() {
+  clearPendingAppointmentsStorage()
+
+  if (typeof window === 'undefined' || !('caches' in window)) return
+
+  try {
+    const cacheKeys = await window.caches.keys()
+    await Promise.all(cacheKeys.map((cacheKey) => window.caches.delete(cacheKey)))
+  } catch (e) {}
+}
+
 async function fetchPatientNotificationFeed() {
   if (!isPatient.value) return
 
@@ -796,7 +877,7 @@ async function fetchPatientNotificationFeed() {
     const { data } = await window.axios.get('/notifications/feed')
     applyPatientNotificationFeed(data)
   } catch (error) {
-    console.error('Failed to fetch patient notifications feed', error)
+    handleNavbarRequestError(error, 'Failed to fetch patient notifications feed')
   }
 }
 
@@ -807,7 +888,7 @@ async function fetchPsychologistNotificationFeed() {
     const { data } = await window.axios.get('/notifications/feed')
     applyPsychologistNotificationFeed(data)
   } catch (error) {
-    console.error('Failed to fetch psychologist notifications feed', error)
+    handleNavbarRequestError(error, 'Failed to fetch psychologist notifications feed')
   }
 }
 
@@ -826,7 +907,7 @@ async function fetchPatientNotificationLite() {
       await fetchPatientNotificationFeed()
     }
   } catch (error) {
-    console.error('Failed to fetch patient notifications lite feed', error)
+    handleNavbarRequestError(error, 'Failed to fetch patient notifications lite feed')
   }
 }
 
@@ -845,7 +926,7 @@ async function fetchPsychologistNotificationLite() {
       await fetchPsychologistNotificationFeed()
     }
   } catch (error) {
-    console.error('Failed to fetch psychologist notifications lite feed', error)
+    handleNavbarRequestError(error, 'Failed to fetch psychologist notifications lite feed')
   }
 }
 
@@ -952,7 +1033,7 @@ async function openPatientNotification(notification) {
       const { data } = await window.axios.post(`/notifications/${notification.id}/read`)
       applyPatientNotificationFeed(data)
     } catch (error) {
-      console.error('Failed to mark patient notification as read', error)
+      handleNavbarRequestError(error, 'Failed to mark patient notification as read')
     }
   }
 }
@@ -964,7 +1045,7 @@ async function markAllPatientNotificationsAsRead() {
     const { data } = await window.axios.post('/notifications/read-all')
     applyPatientNotificationFeed(data)
   } catch (error) {
-    console.error('Failed to mark all patient notifications as read', error)
+    handleNavbarRequestError(error, 'Failed to mark all patient notifications as read')
   }
 }
 
@@ -976,7 +1057,7 @@ async function openPsychologistNotification(notification) {
       const { data } = await window.axios.post(`/notifications/${notification.id}/read`)
       applyPsychologistNotificationFeed(data)
     } catch (error) {
-      console.error('Failed to mark psychologist notification as read', error)
+      handleNavbarRequestError(error, 'Failed to mark psychologist notification as read')
     }
   }
 }
@@ -988,7 +1069,7 @@ async function markAllPsychologistNotificationsAsRead() {
     const { data } = await window.axios.post('/notifications/read-all')
     applyPsychologistNotificationFeed(data)
   } catch (error) {
-    console.error('Failed to mark all psychologist notifications as read', error)
+    handleNavbarRequestError(error, 'Failed to mark all psychologist notifications as read')
   }
 }
 
@@ -1031,15 +1112,15 @@ onBeforeUnmount(() => {
 })
 
 const psychologistDisplayName = computed(() => {
-  return resolvedAuthUser.value?.name || resolvedAuthUser.value?.email || 'Account'
+  return activeAuthUser.value?.name || activeAuthUser.value?.email || 'Account'
 })
 
 const psychologistAvatarUrl = computed(() => {
-  return resolveStorageUrl(resolvedAuthUser.value?.profile_image_url) || null
+  return resolveStorageUrl(activeAuthUser.value?.profile_image_url) || null
 })
 
 const psychologistInitials = computed(() => {
-  const source = (resolvedAuthUser.value?.name || resolvedAuthUser.value?.email || 'A').trim()
+  const source = (activeAuthUser.value?.name || activeAuthUser.value?.email || 'A').trim()
   const parts = source.split(/\s+/).filter(Boolean)
   const initials = parts.slice(0, 2).map((p) => p[0]).join('')
   return (initials || 'A').toUpperCase()
@@ -1097,8 +1178,16 @@ const supportItems = computed(() => [
 
 async function handlePatientLogout(e) {
   try {
-    try { localStorage.removeItem('pendingAppointmentsCount') } catch (e) {}
-    await router.post(route('logout'))
+    invalidateNavbarSession()
+    await clearClientSessionArtifacts()
+    router.post(route('logout'), {}, {
+      preserveScroll: false,
+      preserveState: false,
+      replace: true,
+      onSuccess: () => redirectToGuestPage(),
+      onError: () => redirectToGuestPage(),
+      onCancel: () => redirectToGuestPage(),
+    })
   } finally {
     // hide menu after request starts/completes
     showPatientMenu.value = false
@@ -1107,8 +1196,16 @@ async function handlePatientLogout(e) {
 
 async function handlePsychologistLogout(e) {
   try {
-    try { localStorage.removeItem('pendingAppointmentsCount') } catch (e) {}
-    await router.post(route('logout'))
+    invalidateNavbarSession()
+    await clearClientSessionArtifacts()
+    router.post(route('logout'), {}, {
+      preserveScroll: false,
+      preserveState: false,
+      replace: true,
+      onSuccess: () => redirectToGuestPage(),
+      onError: () => redirectToGuestPage(),
+      onCancel: () => redirectToGuestPage(),
+    })
   } finally {
     showPsychologistMenu.value = false
   }
