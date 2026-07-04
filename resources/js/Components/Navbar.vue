@@ -736,19 +736,24 @@ const patientCartCount = computed(() => {
 })
 
 // Local badge that can be updated instantly when appointments are added/removed.
-// Initialize from server-provided prop when available, otherwise from localStorage.
+// Initialize from server-provided prop when available (including zero), otherwise from localStorage.
 const stored = (() => {
   try { return Number(localStorage.getItem('pendingAppointmentsCount') || 0) } catch (e) { return 0 }
 })()
-const patientCartLocal = ref(Number(patientCartCount.value || stored || 0))
+const initialPatientCart = (() => {
+  const v = Number(patientCartCount.value)
+  if (!Number.isNaN(v)) return v
+  return stored || 0
+})()
+const patientCartLocal = ref(initialPatientCart)
 const _pulse = ref(false)
 
 // If server provided a count on initial render, persist it to localStorage so
 // it remains available on subsequent pages and logins.
 try {
-  const initialServer = Number(patientCartCount.value || 0)
-  if (initialServer > 0) {
-    try { localStorage.setItem('pendingAppointmentsCount', String(initialServer)) } catch (e) {}
+  const initialServer = Number(patientCartCount.value)
+  if (!Number.isNaN(initialServer)) {
+    try { localStorage.setItem('pendingAppointmentsCount', String(Math.max(0, initialServer))) } catch (e) {}
   }
 } catch (e) {}
 

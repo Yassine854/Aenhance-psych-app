@@ -526,6 +526,12 @@ class AppointmentController extends Controller
                 'currency' => $client->currencyToIso4217Numeric($currency),
                 'returnUrl' => $returnUrl,
                 'failUrl' => $failUrl,
+                    // Pass short two-letter language codes (en/fr/ar) which ClickToPay accepts.
+                    'language' => (function () {
+                        $l = (string) (app()->getLocale() ?: config('services.clictopay.language', 'en'));
+                        $normalized = strtolower(substr(str_replace('-', '_', trim($l)), 0, 2));
+                        return in_array($normalized, ['en', 'fr', 'ar']) ? $normalized : 'en';
+                    })(),
                 'description' => 'Appointment '.$appointment->id,
                 'pageView' => $pageView,
             ]);
@@ -839,9 +845,26 @@ class AppointmentController extends Controller
             // Safety: don't overwrite a different transaction_id.
             $matches = $orderId === '' || ! $pendingPayment->transaction_id || (string) $pendingPayment->transaction_id === $orderId;
             if ($matches) {
+                // Try to fetch gateway status for better failure diagnostics.
+                $gatewayInfo = null;
+                if ($orderId !== '') {
+                    try {
+                        $client = $this->clickToPayClient();
+                        $gatewayInfo = $client->getOrderStatusExtended($orderId);
+                        \Illuminate\Support\Facades\Log::info('ClickToPay fail callback - gateway status', ['appointment_id' => $appointment->id, 'orderId' => $orderId, 'status' => $gatewayInfo]);
+                    } catch (\Throwable $e) {
+                        \Illuminate\Support\Facades\Log::warning('ClickToPay fail callback - failed to fetch order status', ['appointment_id' => $appointment->id, 'orderId' => $orderId, 'error' => $e->getMessage()]);
+                    }
+                }
+
+                $reason = 'Gateway redirected to failUrl'.($orderId !== '' ? (' (orderId: '.$orderId.')') : '');
+                if (is_array($gatewayInfo) && ($gatewayInfo['ErrorMessage'] ?? $gatewayInfo['errorMessage'] ?? null)) {
+                    $reason .= ' - gateway: '.($gatewayInfo['ErrorMessage'] ?? $gatewayInfo['errorMessage'] ?? '');
+                }
+
                 $pendingPayment->update([
                     'status' => 'failed',
-                    'failure_reason' => 'Gateway redirected to failUrl'.($orderId !== '' ? (' (orderId: '.$orderId.')') : ''),
+                    'failure_reason' => $reason,
                 ]);
             }
         }

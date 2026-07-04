@@ -1,0 +1,115 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    container_name: aenhance_app
+    restart: unless-stopped
+    working_dir: /var/www/html
+    volumes:
+      - ./:/var/www/html
+      - ./node_modules:/var/www/html/node_modules
+      - storagedata:/var/www/html/storage
+    env_file:
+      - .env.example
+    depends_on:
+      - db
+      - redis
+      - signaling
+    networks:
+      - aenhance-network
+
+  nginx:
+    image: nginx:stable-alpine
+    container_name: aenhance_nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./:/var/www/html:ro
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - storagedata:/var/www/html/storage:ro
+    depends_on:
+      - app
+    networks:
+      - aenhance-network
+
+  db:
+    image: mysql:8.0
+    container_name: aenhance_db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: rootsecret
+      MYSQL_DATABASE: aenhance
+      MYSQL_USER: aenhance
+      MYSQL_PASSWORD: aenhancepwd
+    volumes:
+      - dbdata:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-u", "root", "-prootsecret"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - aenhance-network
+
+  redis:
+    image: redis:6-alpine
+    container_name: aenhance_redis
+    restart: unless-stopped
+    networks:
+      - aenhance-network
+
+  signaling:
+    build:
+      context: ./signaling
+      dockerfile: Dockerfile
+    container_name: aenhance_signaling
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    networks:
+      - aenhance-network
+
+  # One-shot initializer: copy host storage into the named volume so nginx can serve default images
+  storage_init:
+    image: alpine:3.18
+    container_name: aenhance_storage_init
+    command: ["/bin/sh", "-c", "cp -a /host_storage/. /dest/ || true; exit 0"]
+    volumes:
+      - ./storage:/host_storage:ro
+      - storagedata:/dest
+    restart: 'no'
+    networks:
+      - aenhance-network
+
+  # Scheduler: runs Laravel schedule:work permanently
+  scheduler:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    container_name: aenhance_scheduler
+    restart: unless-stopped
+    command: ["php", "/var/www/html/artisan", "schedule:work", "--no-interaction"]
+    working_dir: /var/www/html
+    volumes:
+      - ./:/var/www/html
+      - ./node_modules:/var/www/html/node_modules
+      - storagedata:/var/www/html/storage
+    env_file:
+      - .env.example
+    depends_on:
+      - db
+      - storage_init
+    networks:
+      - aenhance-network
+
+volumes:
+  dbdata:
+  storagedata:
+
+networks:
+  aenhance-network:
+    driver: bridge

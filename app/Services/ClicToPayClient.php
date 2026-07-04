@@ -4,6 +4,7 @@ namespace App\Services;
 
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class ClicToPayClient
@@ -42,6 +43,15 @@ class ClicToPayClient
             'password' => $this->password,
             'language' => $this->language,
         ], $this->normalizeRegisterParams($params));
+
+        // Log the outgoing payload for diagnostics (exclude credentials)
+        try {
+            $logPayload = $payload;
+            unset($logPayload['userName'], $logPayload['password']);
+            Log::debug('ClickToPay register payload', $logPayload);
+        } catch (\Throwable $e) {
+            // ignore logging errors
+        }
 
         // ClickToPay supports GET and POST; we use POST form-encoded.
         $response = Http::asForm()
