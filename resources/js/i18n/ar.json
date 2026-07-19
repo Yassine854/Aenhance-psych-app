@@ -2,6 +2,115 @@
   "login": "تسجيل الدخول",
   "register": "إنشاء حساب",
   "dashboard": "لوحة التحكم",
+  "auth": {
+    "status": {
+      "verificationLinkSent": "تم إرسال رابط تحقق جديد إلى عنوان البريد الإلكتروني الذي أدخلته أثناء التسجيل.",
+      "passwords": {
+        "sent": "لقد أرسلنا رابط إعادة تعيين كلمة المرور عبر البريد الإلكتروني!",
+        "reset": "تمت إعادة تعيين كلمة المرور الخاصة بك!"
+      }
+    },
+    "login": {
+      "title": "مرحبًا بعودتك",
+      "subtitle": "سجّل الدخول للمتابعة.",
+      "rememberMe": "تذكرني",
+      "forgotPassword": "نسيت؟",
+      "submit": "تسجيل الدخول",
+      "newHere": "جديد هنا؟",
+      "createAccount": "إنشاء حساب",
+      "footer": "بالمتابعة، فإنك توافق على الشروط وسياسة الخصوصية الخاصة بنا."
+    },
+    "forgotPassword": {
+      "title": "هل نسيت كلمة المرور؟",
+      "subtitle": "أدخل عنوان بريدك الإلكتروني وسنرسل لك رابطًا لإعادة تعيين كلمة المرور.",
+      "submit": "إرسال رابط إعادة التعيين",
+      "rememberPassword": "هل تتذكر كلمة المرور؟",
+      "backToLogin": "العودة إلى تسجيل الدخول",
+      "footer": "سنرسل رابطًا آمنًا لإعادة التعيين إذا كان العنوان موجودًا في نظامنا."
+    },
+    "confirmPassword": {
+      "title": "تأكيد كلمة المرور",
+      "subtitle": "هذه منطقة آمنة في التطبيق. يرجى تأكيد كلمة المرور قبل المتابعة.",
+      "submit": "تأكيد"
+    },
+    "resetPassword": {
+      "title": "تعيين كلمة مرور جديدة",
+      "subtitle": "أنشئ كلمة مرور جديدة وآمنة لحسابك.",
+      "submit": "إعادة تعيين كلمة المرور",
+      "needToReturn": "هل تريد العودة؟",
+      "backToLogin": "العودة إلى تسجيل الدخول",
+      "footer": "استخدم كلمة مرور قوية تحتوي على مزيج من الحروف والأرقام والرموز."
+    },
+    "verifyEmail": {
+      "title": "تأكيد البريد الإلكتروني",
+      "subtitle": "شكرًا لتسجيلك! قبل البدء، يرجى تأكيد عنوان بريدك الإلكتروني بالنقر على الرابط الذي أرسلناه إليك الآن. إذا لم يصلك البريد، يسعدنا إرسال رابط آخر.",
+      "linkSent": "تم إرسال رابط تحقق جديد إلى عنوان البريد الإلكتروني الذي أدخلته أثناء التسجيل.",
+      "resend": "إعادة إرسال رسالة التحقق",
+      "logout": "تسجيل الخروج"
+    },
+    "register": {
+      "title": "إنشاء حسابك",
+      "subtitle": "اختر دورك وأكمل ملفك الشخصي.",
+      "patientRole": "مريض",
+      "psychologistRole": "أخصائي نفسي",
+      "accountTitle": "الحساب",
+      "accountSubtitle": "بيانات تسجيل الدخول.",
+      "username": "اسم المستخدم",
+      "email": "البريد الإلكتروني",
+      "password": "كلمة المرور",
+      "confirmPassword": "تأكيد كلمة المرور",
+      "alreadyRegistered": "هل لديك حساب بالفعل؟",
+      "next": "التالي",
+      "previous": "السابق",
+      "createAccount": "إنشاء الحساب",
+      "patientProfileTitle": "ملف المريض",
+      "patientProfileSubtitle": "معلومات أساسية.",
+      "psychologistProfileTitle": "ملف الأخصائي النفسي",
+      "psychologistProfileSubtitle": "تفاصيل مهنية ومستندات.",
+      "firstName": "الاسم الأول",
+      "lastName": "اسم العائلة",
+      "dateOfBirth": "تاريخ الميلاد",
+      "genderOptional": "الجنس (اختياري)",
+      "selectGender": "اختر الجنس",
+      "countryOptional": "البلد (اختياري)",
+      "selectCountry": "اختر البلد",
+      "cityOptional": "المدينة (اختياري)",
+      "selectCity": "اختر المدينة",
+      "phoneOptional": "الهاتف (اختياري)",
+      "profileImageOptional": "صورة الملف الشخصي (اختياري)",
+      "dragDropOrClick": "اسحب وأفلت أو انقر",
+      "specialisations": "التخصصات",
+      "searchAndSelect": "ابحث واختر",
+      "expertisesOptional": "الخبرات (اختياري)",
+      "searchAndSelectOptional": "ابحث واختر (اختياري)",
+      "languages": "اللغات",
+      "selectOneOrMore": "اختر واحدًا أو أكثر",
+      "country": "البلد",
+      "city": "المدينة",
+      "phone": "الهاتف",
+      "pricePerSession": "السعر لكل جلسة",
+      "addressOptional": "العنوان (اختياري)",
+      "bioOptional": "نبذة (اختياري)",
+      "diplomaPdf": "الشهادة (PDF)",
+      "cvPdf": "السيرة الذاتية (PDF)",
+      "reviewNote": "سيتم مراجعة حساب الأخصائي النفسي قبل الموافقة عليه.",
+      "availabilityTitle": "التوفر",
+      "availabilitySubtitle": "أوقات أسبوعية (اليوم + الوقت).",
+      "footer": "انقر على الشعار في أي وقت للعودة إلى الصفحة الرئيسية.",
+      "languageEnglish": "الإنجليزية",
+      "languageFrench": "الفرنسية",
+      "languageArabic": "العربية",
+      "days": {
+        "sunday": "الأحد",
+        "monday": "الاثنين",
+        "tuesday": "الثلاثاء",
+        "wednesday": "الأربعاء",
+        "thursday": "الخميس",
+        "friday": "الجمعة",
+        "saturday": "السبت"
+      }
+    }
+  },
   "heroTitle": "الصحة النفسية عن بعد",
   "aboutTitle": "حول الصحة النفسية عن بعد",
   "aboutDesc": "تشير الصحة النفسية عن بعد، المعروفة أيضاً...",
@@ -1241,6 +1350,17 @@
   "cancelConfirmText": "لا يمكن التراجع عن هذا الإجراء.",
   "cancelConfirm": "نعم، إلغاء",
   "cancelKeep": "احتفظ به",
+  "cancelConfirmAppointment": "الموعد",
+  "cancelConfirmReason": "سبب الإلغاء",
+  "cancelConfirmSelectReason": "اختر سبباً",
+  "cancelConfirmOtherReason": "سبب آخر",
+  "cancelConfirmWriteReason": "اكتب السبب...",
+  "reasons": {
+    "scheduleConflict": "تضارب في الجدول",
+    "personalEmergency": "حالة طارئة شخصية",
+    "technicalIssue": "مشكلة تقنية",
+    "other": "أخرى"
+  },
   "cancelledSuccess": "تم إلغاء الموعد",
   "cancelError": "تعذر إلغاء الموعد",
   "showing": "عرض",
@@ -1331,7 +1451,7 @@
   "checkFormErrors": "يرجى التحقق من النموذج بحثاً عن الأخطاء.",
   "validationError": "خطأ في التحقق",
   "underReview": "الملف الشخصي قيد المراجعة",
-  "underReviewDesc": "ملفك الشخصي قيد الانتظار للموافقة. يمكنك still تحديث معلوماتك، لكنها لن تكون مرئية للمرضى حتى تتم الموافقة.",
+  "underReviewDesc": "ملفك الشخصي قيد الانتظار للموافقة. يمكنك تحديث معلوماتك، لكنها لن تكون مرئية للمرضى حتى تتم الموافقة.",
   "approved": "تمت الموافقة على الملف الشخصي",
   "approvedDesc": "تهانينا! تمت الموافقة على ملفك الشخصي وهو الآن مرئي للمرضى. يمكنك الاستمرار في تحديث معلوماتك حسب الحاجة.",
   "verificationRejected": "تم رفض التحقق",
@@ -1722,6 +1842,13 @@
     "english": "الإنجليزية",
     "french": "الفرنسية",
     "arabic": "العربية"
-  }
+  },
+  "requested_success": "تم طلب الموعد بنجاح.",
+  "cannot_pay_not_pending": "لا يمكن دفع هذا الموعد (ليس معلقًا).",
+  "payment_success_confirmed": "تم الدفع. تم تأكيد الموعد.",
+  "updated_success": "تم تحديث الموعد بنجاح.",
+  "cancelled_success": "تم إلغاء الموعد بنجاح.",
+  "time_unavailable": "هذا الوقت لم يعد متاحًا. يرجى اختيار موعد آخر.",
+  "booking_failed": "تعذر حجز الموعد. يرجى المحاولة مرة أخرى."
 }
 }

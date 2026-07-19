@@ -1,20 +1,20 @@
 <template>
-  <Head title="Telemental Health - AEfhance">
-    <link rel="manifest" href="/manifest.json" />
-  </Head>
+  <div class="overflow-x-hidden">
+    <Head title="Telemental Health - AEfhance">
+      <link rel="manifest" href="/manifest.json" />
+    </Head>
 
-  <Navbar 
-    :canLogin="canLogin" 
-    :canRegister="canRegister" 
-    :authUser="authUser" 
-  />
+    <Navbar 
+      :canLogin="canLogin" 
+      :canRegister="canRegister" 
+      :authUser="authUser" 
+    />
 
-  <!-- Hero Carousel Section -->
-  <div 
-    class="relative w-full h-[350px] sm:h-[400px] md:h-[450px] lg:h-[480px] overflow-hidden bg-white"
-    @mouseenter="stopAutoPlay"
-    @mouseleave="startAutoPlay"
-  >
+    <!-- Hero Carousel Section -->
+    <div class="relative w-full h-[450px] sm:h-[500px] md:h-[550px] lg:h-[580px] overflow-hidden bg-white"
+      @mouseenter="stopAutoPlay"
+      @mouseleave="startAutoPlay"
+    >
     <!-- Slides -->
     <div
       v-for="(slide, index) in slides"
@@ -24,20 +24,19 @@
     >
       <!-- Background Image with improved responsiveness -->
       <div
-        class="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        class="absolute inset-0 hero-slide-bg"
         :style="{ 
           backgroundImage: `url(${slide.image})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center center'
+          backgroundPosition: slide.position,
         }"
       >
         <!-- Dark overlay for better text readability -->
-        <div class="absolute inset-0 bg-black bg-opacity-40"></div>
+        <div class="absolute inset-0 bg-black bg-opacity-20"></div>
       </div>
 
       <!-- Content -->
-      <div class="relative h-full flex items-center hero-carousel-content">
-        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="relative h-full min-h-full flex items-center justify-center py-6 sm:py-8 md:py-0 hero-carousel-content">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center pl-10 sm:pl-14 md:pl-16 lg:pl-20">
           <div class="max-w-xl lg:max-w-2xl text-white" :class="locale === 'ar' ? 'text-right' : ''">
             <h1 class="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-2 md:mb-3 drop-shadow-lg">{{ t(slide.titleKey) }}</h1>
             <p class="text-xs sm:text-sm md:text-base mb-3 md:mb-4 leading-relaxed drop-shadow-md">{{ t(slide.descriptionKey) }}</p>
@@ -50,7 +49,7 @@
     <!-- Left Arrow -->
     <button
       @click="prevSlide"
-      class="absolute left-2 sm:left-4 md:left-6 top-1/2 -translate-y-1/2 z-10 text-white opacity-70 hover:opacity-100 transition-opacity"
+      class="absolute left-1 sm:left-2 md:left-4 lg:left-6 top-1/2 -translate-y-1/2 z-10 text-white opacity-70 hover:opacity-100 transition-opacity"
     >
       <svg class="w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
         <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
@@ -77,9 +76,9 @@
         :class="currentSlide === index ? 'w-10 md:w-12 bg-white' : 'w-6 md:w-8 bg-white bg-opacity-50'"
       ></button>
     </div>
-  </div>
+    </div>
 
-  <!-- Mental Telehealth Section -->
+    <!-- Mental Telehealth Section -->
   <section ref="telehealthSection" class="bg-gray-50 py-12 md:py-16 lg:py-20">
     <div class="container mx-auto px-4 sm:px-6 lg:px-8">
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
@@ -448,7 +447,8 @@
     </div>
   </section>
   
-  <Footer />
+    <Footer />
+  </div>
 </template>
 
 <script setup>
@@ -477,19 +477,22 @@ const currentSlide = ref(0);
 // Carousel slides data
 const slides = [
   {
-    image: '/storage/home/aenhance-accessibility-13.jpg',
+    image: '/storage/home/aenhance-accessibility-13.png',
+    position: 'right center',
     titleKey: 'carousel.slide1.title',
     descriptionKey: 'carousel.slide1.description',
     buttonKey: 'carousel.slide1.button'
   },
   {
-    image: '/storage/home/aenhance-privacy-31.jpg',
+    image: '/storage/home/aenhance-privacy-31.png',
+    position: 'right center',
     titleKey: 'carousel.slide2.title',
     descriptionKey: 'carousel.slide2.description',
     buttonKey: 'carousel.slide2.button'
   },
   {
-    image: '/storage/home/aenhance-quality-19.jpg',
+    image: '/storage/home/aenhance-quality-19.png',
+    position: 'right center',
     titleKey: 'carousel.slide3.title',
     descriptionKey: 'carousel.slide3.description',
     buttonKey: 'carousel.slide3.button'
@@ -711,6 +714,28 @@ nav ul li:hover > a::before {
 
 [dir="rtl"] [lang="ar"] {
   text-align: right;
+}
+
+.hero-slide-bg {
+  background-size: cover;
+  background-position: center 45%;
+  background-repeat: no-repeat;
+  filter: brightness(1.12) saturate(1.05) contrast(0.95);
+}
+
+@media (max-width: 1024px) {
+  .hero-slide-bg {
+    background-size: cover;
+    background-position: center 40%;
+  }
+}
+
+@media (max-width: 640px) {
+  .hero-slide-bg {
+    background-size: cover;
+    background-position: center 35%;
+    filter: brightness(1.08) saturate(1.03) contrast(0.98);
+  }
 }
 
 /* Animation Keyframes */

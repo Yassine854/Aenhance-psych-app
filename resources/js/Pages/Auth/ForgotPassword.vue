@@ -5,11 +5,30 @@ import InputLabel from '@/Components/InputLabel.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
+import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 
 const props = defineProps({
     status: {
         type: String,
     },
+});
+
+const { t } = useI18n();
+
+const statusMessage = computed(() => {
+    if (!props.status) {
+        return '';
+    }
+
+    const statusMap = {
+        'passwords.sent': 'auth.status.passwords.sent',
+        'passwords.reset': 'auth.status.passwords.reset',
+        'verification-link-sent': 'auth.status.verificationLinkSent',
+    };
+
+    const key = statusMap[props.status];
+    return key ? t(key) : props.status;
 });
 
 const isStatusVisible = ref(Boolean(props.status));
@@ -53,7 +72,7 @@ const submit = () => {
 </script>
 
 <template>
-    <Head title="Forgot Password" />
+    <Head :title="t('auth.forgotPassword.title')" />
 
     <div class="min-h-screen bg-gradient-to-br from-[#af5166] via-[#af5166] to-[#5997ac] flex items-center justify-center px-4 py-10">
         <div class="w-full max-w-md">
@@ -70,18 +89,18 @@ const submit = () => {
 
             <div class="bg-white/95 backdrop-blur rounded-2xl shadow-2xl border border-white/30 overflow-hidden">
                 <div class="px-6 py-6">
-                    <h1 class="text-2xl font-semibold text-gray-900">Forgot password?</h1>
+                    <h1 class="text-2xl font-semibold text-gray-900">{{ t('auth.forgotPassword.title') }}</h1>
                     <p class="mt-1 text-sm text-gray-600">
-                        Enter your email address and we will send you a password reset link.
+                        {{ t('auth.forgotPassword.subtitle') }}
                     </p>
 
-                    <div v-if="status && isStatusVisible" class="mt-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
-                        {{ status }}
+                    <div v-if="statusMessage && isStatusVisible" class="mt-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+                        {{ statusMessage }}
                     </div>
 
                     <form @submit.prevent="submit" class="mt-6 space-y-4">
                         <div>
-                            <InputLabel for="email" value="Email" />
+                            <InputLabel for="email" :value="t('auth.register.email')" />
                             <TextInput
                                 id="email"
                                 type="email"
@@ -100,19 +119,19 @@ const submit = () => {
                                 :class="{ 'opacity-25': form.processing }"
                                 :disabled="form.processing"
                             >
-                                Send reset link
+                                {{ t('auth.forgotPassword.submit') }}
                             </PrimaryButton>
                         </div>
 
                         <div class="pt-2 text-center text-sm text-gray-600">
-                            <span>Remember your password?</span>
-                            <Link :href="route('login')" class="text-[#af5166] font-medium hover:underline">Back to login</Link>
+                            <span>{{ t('auth.forgotPassword.rememberPassword') }}</span>
+                            <Link :href="route('login')" class="text-[#af5166] font-medium hover:underline">{{ t('auth.forgotPassword.backToLogin') }}</Link>
                         </div>
                     </form>
                 </div>
 
                 <div class="px-6 py-4 bg-gradient-to-r from-[#af5166]/10 to-[#5997ac]/10 border-t border-gray-100">
-                    <div class="text-xs text-gray-600">We will email a secure reset link if the address exists in our system.</div>
+                    <div class="text-xs text-gray-600">{{ t('auth.forgotPassword.footer') }}</div>
                 </div>
             </div>
         </div>

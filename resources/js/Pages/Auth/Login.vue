@@ -5,14 +5,33 @@ import InputLabel from '@/Components/InputLabel.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
+import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 
-defineProps({
+const props = defineProps({
     canResetPassword: {
         type: Boolean,
     },
     status: {
         type: String,
     },
+});
+
+const { t } = useI18n();
+
+const statusMessage = computed(() => {
+    if (!props.status) {
+        return '';
+    }
+
+    const statusMap = {
+        'passwords.sent': 'auth.status.passwords.sent',
+        'passwords.reset': 'auth.status.passwords.reset',
+        'verification-link-sent': 'auth.status.verificationLinkSent',
+    };
+
+    const key = statusMap[props.status];
+    return key ? t(key) : props.status;
 });
 
 const form = useForm({
@@ -40,7 +59,7 @@ const submit = () => {
 </script>
 
 <template>
-    <Head title="Log in" />
+    <Head :title="t('login')" />
 
     <div class="min-h-screen bg-gradient-to-br from-[#af5166] via-[#af5166] to-[#5997ac] flex items-center justify-center px-4 py-10">
         <div class="w-full max-w-md">
@@ -57,16 +76,16 @@ const submit = () => {
 
             <div class="bg-white/95 backdrop-blur rounded-2xl shadow-2xl border border-white/30 overflow-hidden">
                 <div class="px-6 py-6">
-                    <h1 class="text-2xl font-semibold text-gray-900">Welcome back</h1>
-                    <p class="mt-1 text-sm text-gray-600">Log in to continue.</p>
+                    <h1 class="text-2xl font-semibold text-gray-900">{{ t('auth.login.title') }}</h1>
+                    <p class="mt-1 text-sm text-gray-600">{{ t('auth.login.subtitle') }}</p>
 
-                    <div v-if="status" class="mt-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
-                        {{ status }}
+                    <div v-if="statusMessage" class="mt-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+                        {{ statusMessage }}
                     </div>
 
                     <form @submit.prevent="submit" class="mt-6 space-y-4">
                         <div>
-                            <InputLabel for="email" value="Email" />
+                            <InputLabel for="email" :value="t('auth.register.email')" />
                             <TextInput
                                 id="email"
                                 type="email"
@@ -80,7 +99,7 @@ const submit = () => {
                         </div>
 
                         <div>
-                            <InputLabel for="password" value="Password" />
+                            <InputLabel for="password" :value="t('auth.register.password')" />
                             <TextInput
                                 id="password"
                                 type="password"
@@ -96,7 +115,7 @@ const submit = () => {
                             <label class="flex items-start gap-2">
                                 <Checkbox name="remember" v-model:checked="form.remember" class="mt-0.5" />
                                 <span>
-                                    <span class="block text-sm text-gray-600">Remember me</span>
+                                    <span class="block text-sm text-gray-600">{{ t('auth.login.rememberMe') }}</span>
                                 </span>
                             </label>
 
@@ -105,7 +124,7 @@ const submit = () => {
                                 :href="route('password.request')"
                                 class="text-sm text-[#5997ac] hover:underline"
                             >
-                                Forgot?
+                                {{ t('auth.login.forgotPassword') }}
                             </Link>
                         </div>
 
@@ -115,19 +134,19 @@ const submit = () => {
                                 :class="{ 'opacity-25': form.processing }"
                                 :disabled="form.processing"
                             >
-                                Log in
+                                {{ t('auth.login.submit') }}
                             </PrimaryButton>
                         </div>
 
                         <div class="pt-2 text-center text-sm text-gray-600">
-                            <span>New here?</span>
-                            <Link :href="route('register')" class="text-[#af5166] font-medium hover:underline">Create an account</Link>
+                            <span>{{ t('auth.login.newHere') }}</span>
+                            <Link :href="route('register')" class="text-[#af5166] font-medium hover:underline">{{ t('auth.login.createAccount') }}</Link>
                         </div>
                     </form>
                 </div>
 
                 <div class="px-6 py-4 bg-gradient-to-r from-[#af5166]/10 to-[#5997ac]/10 border-t border-gray-100">
-                    <div class="text-xs text-gray-600">By continuing, you agree to our Terms & Privacy Policy.</div>
+                    <div class="text-xs text-gray-600">{{ t('auth.login.footer') }}</div>
                 </div>
             </div>
         </div>

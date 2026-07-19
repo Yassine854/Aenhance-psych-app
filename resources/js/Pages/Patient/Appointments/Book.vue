@@ -22,26 +22,35 @@ const props = defineProps({
 const { t, locale } = useI18n()
 const page = usePage()
 
-const flashStatus = computed(() => {
-  return page.props?.flash?.status || props.status || page.props?.status || null
-})
+function showFlashToast(flash) {
+  const statusKey = flash?.status_key || flash?.statusKey || null
+  const errorKey = flash?.error_key || flash?.errorKey || null
+  const key = errorKey || statusKey || null
+  const icon = errorKey ? 'error' : 'success'
+  const raw = flash?.error || flash?.status || props.status || page.props?.status || null
+  const text = key ? t(key) : raw
 
-const _shownStatus = ref(null)
-watch(flashStatus, (val) => {
-  if (val && val !== _shownStatus.value) {
-    _shownStatus.value = val
-    Swal.fire({
-      position: 'top-end',
-      icon: 'success',
-      title: val,
-      showConfirmButton: false,
-      timer: 3000,
-      toast: true,
-      timerProgressBar: true,
-      showCloseButton: true,
-    })
-  }
-}, { immediate: true })
+  if (!text) return
+
+  Swal.fire({
+    position: 'top-end',
+    icon,
+    title: text,
+    showConfirmButton: false,
+    timer: 3000,
+    toast: true,
+    timerProgressBar: true,
+    showCloseButton: true,
+  })
+}
+
+watch(
+  () => page.props?.flash,
+  (flash) => {
+    showFlashToast(flash)
+  },
+  { immediate: true }
+)
 
 function languageLabel(lang) {
   const v = String(lang || '').toLowerCase();
@@ -378,6 +387,18 @@ function submit() {
   if (!canSubmit.value) return
   form.post(route('appointments.store'), {
     preserveScroll: true,
+    onError: () => {
+      Swal.fire({
+        position: 'top-end',
+        icon: 'error',
+        title: t('appointment.booking_failed'),
+        showConfirmButton: false,
+        timer: 3000,
+        toast: true,
+        timerProgressBar: true,
+        showCloseButton: true,
+      })
+    },
     onSuccess: () => {
       try {
         fetch(route('appointments.pendingCount'))

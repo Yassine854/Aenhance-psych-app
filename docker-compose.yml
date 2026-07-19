@@ -10,8 +10,9 @@ services:
       - ./:/var/www/html
       - ./node_modules:/var/www/html/node_modules
       - storagedata:/var/www/html/storage
+      - ./.env.docker:/var/www/html/.env.docker:ro
     env_file:
-      - .env.example
+      - .env.docker
     depends_on:
       - db
       - redis
@@ -62,6 +63,22 @@ services:
     networks:
       - aenhance-network
 
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    container_name: aenhance_phpmyadmin
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    environment:
+      PMA_HOST: db
+      PMA_PORT: 3306
+      PMA_USER: aenhance
+      PMA_PASSWORD: aenhancepwd
+    depends_on:
+      - db
+    networks:
+      - aenhance-network
+
   signaling:
     build:
       context: ./signaling
@@ -98,8 +115,9 @@ services:
       - ./:/var/www/html
       - ./node_modules:/var/www/html/node_modules
       - storagedata:/var/www/html/storage
+      - ./.env.docker:/var/www/html/.env.docker:ro
     env_file:
-      - .env.example
+      - .env.docker
     depends_on:
       - db
       - storage_init

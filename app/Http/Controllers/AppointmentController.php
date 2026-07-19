@@ -442,7 +442,7 @@ class AppointmentController extends Controller
         if ($overlap) {
             return back()->withErrors([
                 'scheduled_start' => 'This time is no longer available. Please choose another slot.',
-            ]);
+            ])->with('error_key', 'appointment.time_unavailable');
         }
 
         $appointment = DB::transaction(function () use ($user, $validated, $start, $end, $price) {
@@ -472,7 +472,11 @@ class AppointmentController extends Controller
 
         ActivityLogger::log($user->id, $user->role ?? null, 'created_appointment', 'Appointment', $appointment->id, 'Appointment requested');
 
-        return redirect()->back()->with('status', 'Appointment requested successfully.');
+        if (method_exists($user, 'isPatient') && $user->isPatient()) {
+            return redirect()->route('patient.appointments')->with('status_key', 'appointment.requested_success');
+        }
+
+        return redirect()->route('appointments.index')->with('status_key', 'appointment.requested_success');
     }
 
     /**
@@ -490,7 +494,7 @@ class AppointmentController extends Controller
         }
 
         if (strtolower((string) $appointment->status) !== 'pending') {
-            return redirect()->back()->with('status', 'This appointment cannot be paid (not pending).');
+            return redirect()->back()->with('status', __('appointments.cannot_pay_not_pending'));
         }
 
         $client = $this->clickToPayClient();
@@ -814,7 +818,7 @@ class AppointmentController extends Controller
 
         ActivityLogger::log($user->id, $user->role ?? null, 'confirmed_appointment', 'Appointment', $appointment->id, 'Appointment confirmed after ClickToPay payment');
 
-        return redirect()->route('patient.appointments')->with('status', 'Payment successful. Appointment confirmed.');
+        return redirect()->route('patient.appointments')->with('status', __('appointments.payment_success_confirmed'));
     }
 
     /**
@@ -958,7 +962,7 @@ class AppointmentController extends Controller
 
             ActivityLogger::log($user->id, $user->role ?? null, 'confirmed_appointment', 'Appointment', $appointment->id, 'Appointment status changed from '.$prevStatus.' to confirmed (patient confirmed and paid)');
 
-            return redirect()->back()->with('status', 'Payment successful. Appointment confirmed.');
+            return redirect()->back()->with('status', __('appointments.payment_success_confirmed'));
         }
 
         // Psychologist/Admin can update statuses (existing behavior).
@@ -1011,7 +1015,7 @@ class AppointmentController extends Controller
             return $appointment;
         }
 
-        return redirect()->back()->with('status', 'Appointment updated successfully.');
+        return redirect()->back()->with('status', __('appointments.updated_success'));
     }
 
     // Cancel appointment (Patient/Admin)
@@ -1071,7 +1075,7 @@ class AppointmentController extends Controller
             return response()->json(['message' => 'Appointment cancelled']);
         }
 
-        return redirect()->back()->with('status', 'Appointment cancelled successfully.');
+        return redirect()->back()->with('status', __('appointments.cancelled_success'));
     }
 
     /**

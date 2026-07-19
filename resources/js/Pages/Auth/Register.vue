@@ -5,6 +5,7 @@ import PrimaryButton from '@/Components/PrimaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { computed, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { getCountries, getCitiesByCountryName } from '@/utils/geoData'
 import Multiselect from '@vueform/multiselect'
 
@@ -19,6 +20,8 @@ const props = defineProps({
     },
 })
 
+const { t } = useI18n()
+
 const specialisationOptions = computed(() =>
     (props.specialisations || []).map((s) => ({ value: s.id, label: s.name }))
 )
@@ -27,11 +30,11 @@ const expertiseOptions = computed(() =>
     (props.expertises || []).map((s) => ({ value: s.id, label: s.name }))
 )
 
-const psychologistLanguageOptions = [
-    { value: 'english', label: 'English' },
-    { value: 'french', label: 'French' },
-    { value: 'arabic', label: 'Arabic' },
-]
+const psychologistLanguageOptions = computed(() => [
+    { value: 'english', label: t('auth.register.languageEnglish') },
+    { value: 'french', label: t('auth.register.languageFrench') },
+    { value: 'arabic', label: t('auth.register.languageArabic') },
+])
 
 const form = useForm({
     role: 'PATIENT',
@@ -127,15 +130,15 @@ const cities = computed(() => {
     return getCitiesByCountryName(form.country).map(c => c.name)
 })
 
-const daysOfWeek = [
-    { value: 0, label: 'Sunday' },
-    { value: 1, label: 'Monday' },
-    { value: 2, label: 'Tuesday' },
-    { value: 3, label: 'Wednesday' },
-    { value: 4, label: 'Thursday' },
-    { value: 5, label: 'Friday' },
-    { value: 6, label: 'Saturday' },
-]
+const daysOfWeek = computed(() => [
+    { value: 0, label: t('auth.register.days.sunday') },
+    { value: 1, label: t('auth.register.days.monday') },
+    { value: 2, label: t('auth.register.days.tuesday') },
+    { value: 3, label: t('auth.register.days.wednesday') },
+    { value: 4, label: t('auth.register.days.thursday') },
+    { value: 5, label: t('auth.register.days.friday') },
+    { value: 6, label: t('auth.register.days.saturday') },
+])
 
 const emptyWeeklyAvailability = () => ({
     0: [],
@@ -228,7 +231,7 @@ function removeSlotForDay(day, index) {
 
 const flattenedAvailabilities = computed(() => {
     const out = []
-    for (const d of daysOfWeek) {
+    for (const d of daysOfWeek.value) {
         for (const slot of availabilityByDay.value[d.value] || []) {
             out.push({
                 day_of_week: d.value,
@@ -413,7 +416,7 @@ const submit = () => {
         }
 
         let availabilityOk = true
-        for (const d of daysOfWeek) {
+        for (const d of daysOfWeek.value) {
             if ((availabilityByDay.value[d.value] || []).length) {
                 if (!validateDaySlots(d.value)) availabilityOk = false
             }
@@ -436,7 +439,7 @@ const submit = () => {
 </script>
 
 <template>
-    <Head title="Register" />
+    <Head :title="t('register')" />
 
     <div class="min-h-screen bg-gradient-to-br from-[#af5166] via-[#af5166] to-[#5997ac] flex items-center justify-center px-4 py-10">
         <div class="w-full max-w-3xl">
@@ -453,8 +456,8 @@ const submit = () => {
 
             <div class="bg-white/95 backdrop-blur rounded-2xl shadow-2xl border border-white/30 overflow-hidden">
                 <div class="px-6 py-6 sm:px-8">
-                    <h1 class="text-2xl font-semibold text-gray-900">Create your account</h1>
-                    <p class="mt-1 text-sm text-gray-600">Choose your role and complete your profile.</p>
+                    <h1 class="text-2xl font-semibold text-gray-900">{{ t('auth.register.title') }}</h1>
+                    <p class="mt-1 text-sm text-gray-600">{{ t('auth.register.subtitle') }}</p>
 
                     <form @submit.prevent="submit" class="mt-6 space-y-6">
                         <!-- Step 1: Account -->
@@ -468,7 +471,7 @@ const submit = () => {
                                         class="px-4 py-2 text-sm font-semibold rounded-lg transition"
                                         :class="isPatient ? 'bg-white text-[#af5166] shadow' : 'text-gray-600 hover:text-gray-800'"
                                     >
-                                        Patient
+                                        {{ t('auth.register.patientRole') }}
                                     </button>
                                     <button
                                         type="button"
@@ -476,7 +479,7 @@ const submit = () => {
                                         class="px-4 py-2 text-sm font-semibold rounded-lg transition"
                                         :class="isPsychologist ? 'bg-white text-[#5997ac] shadow' : 'text-gray-600 hover:text-gray-800'"
                                     >
-                                        Psychologist
+                                        {{ t('auth.register.psychologistRole') }}
                                     </button>
                                 </div>
 
@@ -490,8 +493,8 @@ const submit = () => {
                             <div class="rounded-xl border border-gray-200 bg-white p-5">
                                 <div class="flex items-center justify-between">
                                     <div>
-                                        <div class="text-sm font-semibold text-gray-900">Account</div>
-                                        <div class="text-xs text-gray-500">Login details.</div>
+                                        <div class="text-sm font-semibold text-gray-900">{{ t('auth.register.accountTitle') }}</div>
+                                        <div class="text-xs text-gray-500">{{ t('auth.register.accountSubtitle') }}</div>
                                     </div>
                                     <div class="h-9 w-9 rounded-lg bg-gradient-to-br from-[#af5166]/15 to-[#5997ac]/15 flex items-center justify-center text-xs font-semibold text-gray-700">
                                         I
@@ -500,7 +503,7 @@ const submit = () => {
 
                                 <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
-                                        <InputLabel for="name" value="Username" />
+                                        <InputLabel for="name" :value="t('auth.register.username')" />
                                         <TextInput
                                             id="name"
                                             type="text"
@@ -514,7 +517,7 @@ const submit = () => {
                                     </div>
 
                                     <div>
-                                        <InputLabel for="email" value="Email" />
+                                        <InputLabel for="email" :value="t('auth.register.email')" />
                                         <TextInput
                                             id="email"
                                             type="email"
@@ -527,7 +530,7 @@ const submit = () => {
                                     </div>
 
                                     <div>
-                                        <InputLabel for="password" value="Password" />
+                                        <InputLabel for="password" :value="t('auth.register.password')" />
                                         <TextInput
                                             id="password"
                                             type="password"
@@ -540,7 +543,7 @@ const submit = () => {
                                     </div>
 
                                     <div>
-                                        <InputLabel for="password_confirmation" value="Confirm password" />
+                                        <InputLabel for="password_confirmation" :value="t('auth.register.confirmPassword')" />
                                         <TextInput
                                             id="password_confirmation"
                                             type="password"
@@ -555,8 +558,8 @@ const submit = () => {
                             </div>
 
                             <div class="flex items-center justify-between">
-                                <Link :href="route('login')" class="text-sm text-[#af5166] font-medium hover:underline">Already registered?</Link>
-                                <PrimaryButton type="button" @click="goNext">Next</PrimaryButton>
+                                <Link :href="route('login')" class="text-sm text-[#af5166] font-medium hover:underline">{{ t('auth.register.alreadyRegistered') }}</Link>
+                                <PrimaryButton type="button" @click="goNext">{{ t('auth.register.next') }}</PrimaryButton>
                             </div>
                         </div>
 
@@ -566,8 +569,8 @@ const submit = () => {
                             <div v-if="isPatient" class="rounded-xl border border-gray-200 bg-white p-5">
                             <div class="flex items-center justify-between">
                                 <div>
-                                    <div class="text-sm font-semibold text-gray-900">Patient profile</div>
-                                    <div class="text-xs text-gray-500">Basic information.</div>
+                                    <div class="text-sm font-semibold text-gray-900">{{ t('auth.register.patientProfileTitle') }}</div>
+                                    <div class="text-xs text-gray-500">{{ t('auth.register.patientProfileSubtitle') }}</div>
                                 </div>
                                 <div class="h-9 w-9 rounded-lg bg-[#af5166]/10 flex items-center justify-center text-xs font-semibold text-gray-700">
                                     II
@@ -576,31 +579,31 @@ const submit = () => {
 
                             <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <InputLabel for="patient_first_name" value="First name" />
+                                    <InputLabel for="patient_first_name" :value="t('auth.register.firstName')" />
                                     <TextInput id="patient_first_name" type="text" class="mt-1 block w-full" v-model="form.patient_first_name" required />
                                     <InputError class="mt-2" :message="form.errors.patient_first_name" />
                                 </div>
 
                                 <div>
-                                    <InputLabel for="patient_last_name" value="Last name" />
+                                    <InputLabel for="patient_last_name" :value="t('auth.register.lastName')" />
                                     <TextInput id="patient_last_name" type="text" class="mt-1 block w-full" v-model="form.patient_last_name" required />
                                     <InputError class="mt-2" :message="form.errors.patient_last_name" />
                                 </div>
 
                                 <div>
-                                    <InputLabel for="patient_date_of_birth" value="Date of birth" />
+                                    <InputLabel for="patient_date_of_birth" :value="t('auth.register.dateOfBirth')" />
                                     <TextInput id="patient_date_of_birth" type="date" class="mt-1 block w-full" v-model="form.patient_date_of_birth" required />
                                     <InputError class="mt-2" :message="form.errors.patient_date_of_birth" />
                                 </div>
 
                                 <div>
-                                    <InputLabel for="patient_gender" value="Gender (optional)" />
+                                    <InputLabel for="patient_gender" :value="t('auth.register.genderOptional')" />
                                     <select
                                         id="patient_gender"
                                         v-model="form.patient_gender"
                                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#5997ac] focus:ring-[#5997ac]"
                                     >
-                                        <option value="">Select gender</option>
+                                        <option value="">{{ t('auth.register.selectGender') }}</option>
                                         <option value="MALE">Male</option>
                                         <option value="FEMALE">Female</option>
                                         <option value="OTHER">Other</option>
@@ -609,34 +612,34 @@ const submit = () => {
                                 </div>
 
                                 <div>
-                                    <InputLabel for="patient_country" value="Country (optional)" />
+                                    <InputLabel for="patient_country" :value="t('auth.register.countryOptional')" />
                                     <select
                                         id="patient_country"
                                         v-model="patientCountryCode"
                                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#5997ac] focus:ring-[#5997ac]"
                                     >
-                                        <option value="">Select country</option>
+                                        <option value="">{{ t('auth.register.selectCountry') }}</option>
                                         <option v-for="c in countriesList" :key="c.isoCode" :value="c.isoCode">{{ c.name }}</option>
                                     </select>
                                     <InputError class="mt-2" :message="form.errors.patient_country" />
                                 </div>
 
                                 <div>
-                                    <InputLabel for="patient_city" value="City (optional)" />
+                                    <InputLabel for="patient_city" :value="t('auth.register.cityOptional')" />
                                     <select
                                         id="patient_city"
                                         v-model="form.patient_city"
                                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#5997ac] focus:ring-[#5997ac]"
                                         :disabled="!form.patient_country"
                                     >
-                                        <option value="">Select city</option>
+                                        <option value="">{{ t('auth.register.selectCity') }}</option>
                                         <option v-for="ct in patientCities" :key="ct" :value="ct">{{ ct }}</option>
                                     </select>
                                     <InputError class="mt-2" :message="form.errors.patient_city" />
                                 </div>
 
                                 <div>
-                                    <InputLabel for="patient_country_code" value="Phone (optional)" />
+                                    <InputLabel for="patient_country_code" :value="t('auth.register.phoneOptional')" />
                                     <div class="mt-1 flex">
                                         <input
                                             v-model="patientDialCode"
@@ -656,7 +659,7 @@ const submit = () => {
                                 </div>
 
                                 <div class="md:col-span-2">
-                                    <InputLabel for="patient_profile_image" value="Profile image (optional)" />
+                                    <InputLabel for="patient_profile_image" :value="t('auth.register.profileImageOptional')" />
                                     <div
                                         @click="patientProfileInput?.click()"
                                         @drop.prevent="onDrop('patient_profile_image', $event)"
@@ -664,7 +667,7 @@ const submit = () => {
                                         class="mt-1 border-2 border-dashed border-gray-300 rounded-lg p-3 flex items-center justify-center hover:border-[rgb(89,151,172)] hover:bg-gray-50 transition cursor-pointer"
                                     >
                                         <img v-if="patientImagePreview" :src="patientImagePreview" class="h-16 w-16 rounded-full object-cover" />
-                                        <span v-else class="text-sm text-gray-600">Drag & drop or click</span>
+                                        <span v-else class="text-sm text-gray-600">{{ t('auth.register.dragDropOrClick') }}</span>
                                     </div>
                                     <input ref="patientProfileInput" id="patient_profile_image" type="file" accept="image/*" class="hidden" @change="(e) => onFileChange('patient_profile_image', e)" />
                                     <InputError class="mt-2" :message="form.errors.patient_profile_image" />
@@ -676,8 +679,8 @@ const submit = () => {
                             <div v-if="isPsychologist" class="rounded-xl border border-gray-200 bg-white p-5">
                             <div class="flex items-center justify-between">
                                 <div>
-                                    <div class="text-sm font-semibold text-gray-900">Psychologist profile</div>
-                                    <div class="text-xs text-gray-500">Professional details and documents.</div>
+                                    <div class="text-sm font-semibold text-gray-900">{{ t('auth.register.psychologistProfileTitle') }}</div>
+                                    <div class="text-xs text-gray-500">{{ t('auth.register.psychologistProfileSubtitle') }}</div>
                                 </div>
                                 <div class="h-9 w-9 rounded-lg bg-[#5997ac]/10 flex items-center justify-center text-xs font-semibold text-gray-700">
                                     III
@@ -686,19 +689,19 @@ const submit = () => {
 
                             <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <InputLabel for="first_name" value="First name" />
+                                    <InputLabel for="first_name" :value="t('auth.register.firstName')" />
                                     <TextInput id="first_name" type="text" class="mt-1 block w-full" v-model="form.first_name" required />
                                     <InputError class="mt-2" :message="form.errors.first_name" />
                                 </div>
 
                                 <div>
-                                    <InputLabel for="last_name" value="Last name" />
+                                    <InputLabel for="last_name" :value="t('auth.register.lastName')" />
                                     <TextInput id="last_name" type="text" class="mt-1 block w-full" v-model="form.last_name" required />
                                     <InputError class="mt-2" :message="form.errors.last_name" />
                                 </div>
 
                                 <div class="md:col-span-2">
-                                    <InputLabel for="specialisation_ids" value="Specialisations" />
+                                    <InputLabel for="specialisation_ids" :value="t('auth.register.specialisations')" />
                                     <div class="mt-1">
                                         <Multiselect
                                             id="specialisation_ids"
@@ -707,14 +710,14 @@ const submit = () => {
                                             mode="tags"
                                             :close-on-select="false"
                                             :searchable="true"
-                                            placeholder="Search and select"
+                                            :placeholder="t('auth.register.searchAndSelect')"
                                         />
                                     </div>
                                     <InputError class="mt-2" :message="form.errors.specialisation_ids" />
                                 </div>
 
                                     <div class="md:col-span-2">
-                                        <InputLabel for="expertise_ids" value="Expertises (optional)" />
+                                        <InputLabel for="expertise_ids" :value="t('auth.register.expertisesOptional')" />
                                         <div class="mt-1">
                                             <Multiselect
                                                 id="expertise_ids"
@@ -723,14 +726,14 @@ const submit = () => {
                                                 mode="tags"
                                                 :close-on-select="false"
                                                 :searchable="true"
-                                                placeholder="Search and select (optional)"
+                                                :placeholder="t('auth.register.searchAndSelectOptional')"
                                             />
                                         </div>
                                         <InputError class="mt-2" :message="form.errors.expertise_ids" />
                                     </div>
 
                                 <div class="md:col-span-2">
-                                    <InputLabel for="languages" value="Languages" />
+                                    <InputLabel for="languages" :value="t('auth.register.languages')" />
                                     <div class="mt-1">
                                         <Multiselect
                                             id="languages"
@@ -739,26 +742,26 @@ const submit = () => {
                                             mode="tags"
                                             :close-on-select="false"
                                             :searchable="true"
-                                            placeholder="Select one or more"
+                                            :placeholder="t('auth.register.selectOneOrMore')"
                                         />
                                     </div>
                                     <InputError class="mt-2" :message="form.errors.languages" />
                                 </div>
 
                                 <div>
-                                    <InputLabel for="date_of_birth" value="Date of birth" />
+                                    <InputLabel for="date_of_birth" :value="t('auth.register.dateOfBirth')" />
                                     <TextInput id="date_of_birth" type="date" class="mt-1 block w-full" v-model="form.date_of_birth" required />
                                     <InputError class="mt-2" :message="form.errors.date_of_birth" />
                                 </div>
 
                                 <div>
-                                    <InputLabel for="gender" value="Gender (optional)" />
+                                    <InputLabel for="gender" :value="t('auth.register.genderOptional')" />
                                     <select
                                         id="gender"
                                         v-model="form.gender"
                                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#5997ac] focus:ring-[#5997ac]"
                                     >
-                                        <option value="">Select gender</option>
+                                        <option value="">{{ t('auth.register.selectGender') }}</option>
                                         <option value="MALE">Male</option>
                                         <option value="FEMALE">Female</option>
                                         <option value="OTHER">Other</option>
@@ -767,21 +770,21 @@ const submit = () => {
                                 </div>
 
                                 <div>
-                                    <InputLabel for="country" value="Country" />
+                                    <InputLabel for="country" :value="t('auth.register.country')" />
                                     <select
                                         id="country"
                                         v-model="countryCode"
                                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#5997ac] focus:ring-[#5997ac]"
                                         required
                                     >
-                                        <option value="">Select country</option>
+                                        <option value="">{{ t('auth.register.selectCountry') }}</option>
                                         <option v-for="c in countriesList" :key="c.isoCode" :value="c.isoCode">{{ c.name }}</option>
                                     </select>
                                     <InputError class="mt-2" :message="form.errors.country" />
                                 </div>
 
                                 <div>
-                                    <InputLabel for="city" value="City" />
+                                    <InputLabel for="city" :value="t('auth.register.city')" />
                                     <select
                                         id="city"
                                         v-model="form.city"
@@ -789,14 +792,14 @@ const submit = () => {
                                         :disabled="!form.country"
                                         required
                                     >
-                                        <option value="">Select city</option>
+                                        <option value="">{{ t('auth.register.selectCity') }}</option>
                                         <option v-for="ct in cities" :key="ct" :value="ct">{{ ct }}</option>
                                     </select>
                                     <InputError class="mt-2" :message="form.errors.city" />
                                 </div>
 
                                 <div>
-                                    <InputLabel for="country_code" value="Phone" />
+                                    <InputLabel for="country_code" :value="t('auth.register.phone')" />
                                     <div class="mt-1 flex">
                                         <input
                                             v-model="dialCode"
@@ -817,7 +820,7 @@ const submit = () => {
                                 </div>
 
                                 <div>
-                                    <InputLabel for="price_per_session" value="Price per session" />
+                                    <InputLabel for="price_per_session" :value="t('auth.register.pricePerSession')" />
                                     <div class="mt-1 flex">
                                         <TextInput id="price_per_session" type="number" class="block w-full rounded-r-none" v-model="form.price_per_session" required min="0" step="0.01" />
                                         <span class="inline-flex items-center px-3 rounded-r-md border border-l-0 border-gray-300 bg-gray-50 text-sm text-gray-700">Dt</span>
@@ -826,19 +829,19 @@ const submit = () => {
                                 </div>
 
                                 <div class="md:col-span-2">
-                                    <InputLabel for="address" value="Address (optional)" />
+                                    <InputLabel for="address" :value="t('auth.register.addressOptional')" />
                                     <TextInput id="address" type="text" class="mt-1 block w-full" v-model="form.address" />
                                     <InputError class="mt-2" :message="form.errors.address" />
                                 </div>
 
                                 <div class="md:col-span-2">
-                                    <InputLabel for="bio" value="Bio (optional)" />
+                                    <InputLabel for="bio" :value="t('auth.register.bioOptional')" />
                                     <textarea id="bio" v-model="form.bio" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#5997ac] focus:ring-[#5997ac]"></textarea>
                                     <InputError class="mt-2" :message="form.errors.bio" />
                                 </div>
 
                                 <div class="md:col-span-2">
-                                    <InputLabel for="profile_image" value="Profile image (optional)" />
+                                    <InputLabel for="profile_image" :value="t('auth.register.profileImageOptional')" />
                                     <div
                                         @click="profileInput?.click()"
                                         @drop.prevent="onDrop('profile_image', $event)"
@@ -846,14 +849,14 @@ const submit = () => {
                                         class="mt-1 border-2 border-dashed border-gray-300 rounded-lg p-3 flex items-center justify-center hover:border-[rgb(89,151,172)] hover:bg-gray-50 transition cursor-pointer"
                                     >
                                         <img v-if="imagePreview" :src="imagePreview" class="h-16 w-16 rounded-full object-cover" />
-                                        <span v-else class="text-sm text-gray-600">Drag & drop or click</span>
+                                        <span v-else class="text-sm text-gray-600">{{ t('auth.register.dragDropOrClick') }}</span>
                                     </div>
                                     <input ref="profileInput" id="profile_image" type="file" accept="image/*" class="hidden" @change="(e) => onFileChange('profile_image', e)" />
                                     <InputError class="mt-2" :message="form.errors.profile_image" />
                                 </div>
 
                                 <div>
-                                    <InputLabel for="diploma_files" value="Diploma (PDF)" />
+                                    <InputLabel for="diploma_files" :value="t('auth.register.diplomaPdf')" />
                                     <div
                                         @click="diplomaInput?.click()"
                                         @drop.prevent="onDrop('diploma_files', $event)"
@@ -869,7 +872,7 @@ const submit = () => {
                                 <!-- CIN removed -->
 
                                 <div>
-                                    <InputLabel for="cv_file" value="CV (PDF)" />
+                                    <InputLabel for="cv_file" :value="t('auth.register.cvPdf')" />
                                     <div
                                         @click="cvInput?.click()"
                                         @drop.prevent="onDrop('cv_file', $event)"
@@ -884,7 +887,7 @@ const submit = () => {
                             </div>
 
                             <div class="mt-4 rounded-lg border border-[#5997ac]/30 bg-[#5997ac]/10 px-4 py-3 text-sm text-gray-700">
-                                Your psychologist account will be reviewed before approval.
+                                {{ t('auth.register.reviewNote') }}
                             </div>
                             </div>
 
@@ -893,14 +896,14 @@ const submit = () => {
                             </div>
 
                             <div class="flex items-center justify-between">
-                                <button type="button" class="text-sm text-[#5997ac] hover:underline" @click="goPrevious">Previous</button>
+                                <button type="button" class="text-sm text-[#5997ac] hover:underline" @click="goPrevious">{{ t('auth.register.previous') }}</button>
 
                                 <PrimaryButton
                                     v-if="isPatient"
                                     :class="{ 'opacity-25': form.processing }"
                                     :disabled="form.processing"
                                 >
-                                    Create account
+                                    {{ t('auth.register.createAccount') }}
                                 </PrimaryButton>
 
                                 <PrimaryButton
@@ -908,7 +911,7 @@ const submit = () => {
                                     type="button"
                                     @click="goNextFromProfile"
                                 >
-                                    Next
+                                    {{ t('auth.register.next') }}
                                 </PrimaryButton>
                             </div>
                         </div>
@@ -918,8 +921,8 @@ const submit = () => {
                             <div class="rounded-xl border border-gray-200 bg-white p-5">
                                 <div class="flex items-center justify-between">
                                     <div>
-                                        <div class="text-sm font-semibold text-gray-900">Availability</div>
-                                        <div class="text-xs text-gray-500">Weekly slots (day + time).</div>
+                                        <div class="text-sm font-semibold text-gray-900">{{ t('auth.register.availabilityTitle') }}</div>
+                                        <div class="text-xs text-gray-500">{{ t('auth.register.availabilitySubtitle') }}</div>
                                     </div>
                                     <div class="h-9 w-9 rounded-lg bg-[#5997ac]/10 flex items-center justify-center text-xs font-semibold text-gray-700">
                                         3
@@ -988,9 +991,9 @@ const submit = () => {
                             </div>
 
                             <div class="flex items-center justify-between">
-                                <button type="button" class="text-sm text-[#5997ac] hover:underline" @click="goPreviousFromAvailability">Previous</button>
+                                <button type="button" class="text-sm text-[#5997ac] hover:underline" @click="goPreviousFromAvailability">{{ t('auth.register.previous') }}</button>
                                 <PrimaryButton :class="{ 'opacity-25': form.processing }" :disabled="form.processing">
-                                    Create account
+                                    {{ t('auth.register.createAccount') }}
                                 </PrimaryButton>
                             </div>
                         </div>
@@ -998,7 +1001,7 @@ const submit = () => {
                 </div>
 
                 <div class="px-6 py-4 bg-gradient-to-r from-[#af5166]/10 to-[#5997ac]/10 border-t border-gray-100">
-                    <div class="text-xs text-gray-600">Click the logo anytime to return home.</div>
+                    <div class="text-xs text-gray-600">{{ t('auth.register.footer') }}</div>
                 </div>
             </div>
         </div>

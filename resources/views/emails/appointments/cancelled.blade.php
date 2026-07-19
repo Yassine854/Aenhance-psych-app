@@ -43,7 +43,7 @@
       </div>
 
       <p>If this cancellation was a mistake or you'd like to reschedule, please visit the appointment page or contact support.</p>
-      <p><a class="button" href="{{ config('app.url') }}">Open Psych App</a></p>
+      <p><a class="button" href="{{ config('app.url') }}">Open App</a></p>
     </div>
     <div class="footer">
       <p>Thanks,<br>{{ config('app.name') }} team</p>

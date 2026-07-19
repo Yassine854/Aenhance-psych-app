@@ -4,6 +4,7 @@ import InputLabel from '@/Components/InputLabel.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
+import { useI18n } from 'vue-i18n';
 
 const props = defineProps({
     email: {
@@ -28,10 +29,12 @@ const submit = () => {
         onFinish: () => form.reset('password', 'password_confirmation'),
     });
 };
+
+const { t } = useI18n();
 </script>
 
 <template>
-    <Head title="Reset Password" />
+    <Head :title="t('auth.resetPassword.title')" />
 
     <div class="min-h-screen bg-gradient-to-br from-[#af5166] via-[#af5166] to-[#5997ac] flex items-center justify-center px-4 py-10">
         <div class="w-full max-w-md">
@@ -48,14 +51,14 @@ const submit = () => {
 
             <div class="bg-white/95 backdrop-blur rounded-2xl shadow-2xl border border-white/30 overflow-hidden">
                 <div class="px-6 py-6">
-                    <h1 class="text-2xl font-semibold text-gray-900">Set a new password</h1>
+                    <h1 class="text-2xl font-semibold text-gray-900">{{ t('auth.resetPassword.title') }}</h1>
                     <p class="mt-1 text-sm text-gray-600">
-                        Create a new secure password for your account.
+                        {{ t('auth.resetPassword.subtitle') }}
                     </p>
 
                     <form @submit.prevent="submit" class="mt-6 space-y-4">
                         <div>
-                            <InputLabel for="email" value="Email" />
+                            <InputLabel for="email" :value="t('auth.register.email')" />
                             <TextInput
                                 id="email"
                                 type="email"
@@ -69,7 +72,7 @@ const submit = () => {
                         </div>
 
                         <div>
-                            <InputLabel for="password" value="Password" />
+                            <InputLabel for="password" :value="t('auth.register.password')" />
                             <TextInput
                                 id="password"
                                 type="password"
@@ -82,7 +85,7 @@ const submit = () => {
                         </div>
 
                         <div>
-                            <InputLabel for="password_confirmation" value="Confirm Password" />
+                            <InputLabel for="password_confirmation" :value="t('auth.register.confirmPassword')" />
                             <TextInput
                                 id="password_confirmation"
                                 type="password"
@@ -100,19 +103,19 @@ const submit = () => {
                                 :class="{ 'opacity-25': form.processing }"
                                 :disabled="form.processing"
                             >
-                                Reset password
+                                {{ t('auth.resetPassword.submit') }}
                             </PrimaryButton>
                         </div>
 
                         <div class="pt-2 text-center text-sm text-gray-600">
-                            <span>Need to return?</span>
-                            <Link :href="route('login')" class="text-[#af5166] font-medium hover:underline">Back to login</Link>
+                            <span>{{ t('auth.resetPassword.needToReturn') }}</span>
+                            <Link :href="route('login')" class="text-[#af5166] font-medium hover:underline">{{ t('auth.resetPassword.backToLogin') }}</Link>
                         </div>
                     </form>
                 </div>
 
                 <div class="px-6 py-4 bg-gradient-to-r from-[#af5166]/10 to-[#5997ac]/10 border-t border-gray-100">
-                    <div class="text-xs text-gray-600">Use a strong password with a mix of letters, numbers, and symbols.</div>
+                    <div class="text-xs text-gray-600">{{ t('auth.resetPassword.footer') }}</div>
                 </div>
             </div>
         </div>

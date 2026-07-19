@@ -4,6 +4,11 @@ set -e
 # Ensure storage and cache directories exist
 mkdir -p /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/storage/app/public
 
+# Copy the Docker-specific env file into the standard Laravel .env path.
+if [ -f /var/www/html/.env.docker ]; then
+  cp -f /var/www/html/.env.docker /var/www/html/.env || true
+fi
+
 # Fix permissions for runtime
 chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/public || true
 chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/public || true

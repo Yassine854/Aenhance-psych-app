@@ -1,0 +1,9 @@
+{
+  "appointments": {
+    "requested_success": "Rendez-vous demandé avec succès.",
+    "cannot_pay_not_pending": "Ce rendez-vous ne peut pas être payé (pas en attente).",
+    "payment_success_confirmed": "Paiement réussi. Rendez-vous confirmé.",
+    "updated_success": "Rendez-vous mis à jour avec succès.",
+    "cancelled_success": "Rendez-vous annulé avec succès."
+  }
+}

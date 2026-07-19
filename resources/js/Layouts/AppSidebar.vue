@@ -138,7 +138,7 @@ import {
   TableIcon,
   ListIcon,
   PlugInIcon,
-} from "../../../vue-tailwind-admin-dashboard-main/src/icons";
+} from "@/icons";
 import BoxCubeIcon from "@/icons/BoxCubeIcon.vue";
 import { useSidebar } from "@/composables/useSidebar";
 import { ref as vueRef } from "vue";

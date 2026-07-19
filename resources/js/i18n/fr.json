@@ -2,6 +2,115 @@
   "login": "Connexion",
   "register": "Créer un compte",
   "dashboard": "Tableau de bord",
+  "auth": {
+    "status": {
+      "verificationLinkSent": "Un nouveau lien de vérification a été envoyé à l'adresse e-mail fournie lors de l'inscription.",
+      "passwords": {
+        "sent": "Nous avons envoyé votre lien de réinitialisation de mot de passe !",
+        "reset": "Votre mot de passe a été réinitialisé !"
+      }
+    },
+    "login": {
+      "title": "Bon retour",
+      "subtitle": "Connectez-vous pour continuer.",
+      "rememberMe": "Se souvenir de moi",
+      "forgotPassword": "Mot de passe oublié ?",
+      "submit": "Se connecter",
+      "newHere": "Nouveau ici ?",
+      "createAccount": "Créer un compte",
+      "footer": "En continuant, vous acceptez nos conditions et notre politique de confidentialité."
+    },
+    "forgotPassword": {
+      "title": "Mot de passe oublié ?",
+      "subtitle": "Saisissez votre adresse e-mail et nous vous enverrons un lien de réinitialisation.",
+      "submit": "Envoyer le lien",
+      "rememberPassword": "Vous souvenez-vous de votre mot de passe ?",
+      "backToLogin": "Retour à la connexion",
+      "footer": "Nous enverrons un lien sécurisé de réinitialisation si l'adresse existe dans notre système."
+    },
+    "confirmPassword": {
+      "title": "Confirmer le mot de passe",
+      "subtitle": "Il s'agit d'une zone sécurisée de l'application. Veuillez confirmer votre mot de passe avant de continuer.",
+      "submit": "Confirmer"
+    },
+    "resetPassword": {
+      "title": "Définir un nouveau mot de passe",
+      "subtitle": "Créez un nouveau mot de passe sécurisé pour votre compte.",
+      "submit": "Réinitialiser le mot de passe",
+      "needToReturn": "Besoin de revenir ?",
+      "backToLogin": "Retour à la connexion",
+      "footer": "Utilisez un mot de passe fort avec un mélange de lettres, de chiffres et de symboles."
+    },
+    "verifyEmail": {
+      "title": "Vérification de l'e-mail",
+      "subtitle": "Merci pour votre inscription ! Avant de commencer, veuillez vérifier votre adresse e-mail en cliquant sur le lien que nous venons de vous envoyer. Si vous ne l'avez pas reçu, nous vous en renverrons un autre.",
+      "linkSent": "Un nouveau lien de vérification a été envoyé à l'adresse e-mail fournie lors de l'inscription.",
+      "resend": "Renvoyer l'e-mail de vérification",
+      "logout": "Se déconnecter"
+    },
+    "register": {
+      "title": "Créer votre compte",
+      "subtitle": "Choisissez votre rôle et complétez votre profil.",
+      "patientRole": "Patient",
+      "psychologistRole": "Psychologue",
+      "accountTitle": "Compte",
+      "accountSubtitle": "Informations de connexion.",
+      "username": "Nom d'utilisateur",
+      "email": "E-mail",
+      "password": "Mot de passe",
+      "confirmPassword": "Confirmer le mot de passe",
+      "alreadyRegistered": "Déjà inscrit ?",
+      "next": "Suivant",
+      "previous": "Précédent",
+      "createAccount": "Créer un compte",
+      "patientProfileTitle": "Profil du patient",
+      "patientProfileSubtitle": "Informations de base.",
+      "psychologistProfileTitle": "Profil du psychologue",
+      "psychologistProfileSubtitle": "Détails professionnels et documents.",
+      "firstName": "Prénom",
+      "lastName": "Nom",
+      "dateOfBirth": "Date de naissance",
+      "genderOptional": "Genre (facultatif)",
+      "selectGender": "Sélectionnez le genre",
+      "countryOptional": "Pays (facultatif)",
+      "selectCountry": "Sélectionnez un pays",
+      "cityOptional": "Ville (facultatif)",
+      "selectCity": "Sélectionnez une ville",
+      "phoneOptional": "Téléphone (facultatif)",
+      "profileImageOptional": "Photo de profil (facultatif)",
+      "dragDropOrClick": "Glissez-déposez ou cliquez",
+      "specialisations": "Spécialisations",
+      "searchAndSelect": "Rechercher et sélectionner",
+      "expertisesOptional": "Expertises (facultatif)",
+      "searchAndSelectOptional": "Rechercher et sélectionner (facultatif)",
+      "languages": "Langues",
+      "selectOneOrMore": "Sélectionnez une ou plusieurs options",
+      "country": "Pays",
+      "city": "Ville",
+      "phone": "Téléphone",
+      "pricePerSession": "Prix par séance",
+      "addressOptional": "Adresse (facultatif)",
+      "bioOptional": "Bio (facultatif)",
+      "diplomaPdf": "Diplôme (PDF)",
+      "cvPdf": "CV (PDF)",
+      "reviewNote": "Votre compte psychologue sera examiné avant approbation.",
+      "availabilityTitle": "Disponibilité",
+      "availabilitySubtitle": "Créneaux hebdomadaires (jour + heure).",
+      "footer": "Cliquez sur le logo à tout moment pour revenir à l'accueil.",
+      "languageEnglish": "Anglais",
+      "languageFrench": "Français",
+      "languageArabic": "Arabe",
+      "days": {
+        "sunday": "Dimanche",
+        "monday": "Lundi",
+        "tuesday": "Mardi",
+        "wednesday": "Mercredi",
+        "thursday": "Jeudi",
+        "friday": "Vendredi",
+        "saturday": "Samedi"
+      }
+    }
+  },
   "heroTitle": "Télésanté Mentale",
   "aboutTitle": "À propos de la télésanté Mentale",
   "aboutDesc": "La télésanté Mentale, également appelée...",
@@ -1303,7 +1412,7 @@
     "saveSection": {
       "title": "Enregistrer les modifications",
       "desc": "Mettez à jour les informations de votre profil",
-      "tip": "Assurez-vous que toutes vos informations sont exactes et à jour. Les modifications seront reflétées immédiatement dans votre profil.",
+      "tip": "Gardez vos informations à jour. Les modifications sont appliquées immédiatement.",
       "backToHome": "Retour à l'accueil",
       "save": "Enregistrer les modifications",
       "saving": "Enregistrement en cours..."
@@ -1372,6 +1481,17 @@
   "cancelConfirmText": "Cette action est irréversible.",
   "cancelConfirm": "Oui, annuler",
   "cancelKeep": "Garder",
+  "cancelConfirmAppointment": "Rendez-vous",
+  "cancelConfirmReason": "Raison de l'annulation",
+  "cancelConfirmSelectReason": "Sélectionnez une raison",
+  "cancelConfirmOtherReason": "Autre raison",
+  "cancelConfirmWriteReason": "Écrivez la raison...",
+  "reasons": {
+    "scheduleConflict": "Conflit d'emploi du temps",
+    "personalEmergency": "Urgence personnelle",
+    "technicalIssue": "Problème technique",
+    "other": "Autre"
+  },
   "cancelledSuccess": "Rendez-vous annulé",
   "cancelError": "Impossible d'annuler le rendez-vous",
   "showing": "Affichage de",
@@ -1722,7 +1842,14 @@
     "english": "Anglais",
     "french": "Français",
     "arabic": "Arabe"
-  }
+  },
+  "requested_success": "Rendez-vous demandé avec succès.",
+  "cannot_pay_not_pending": "Ce rendez-vous ne peut pas être payé (pas en attente).",
+  "payment_success_confirmed": "Paiement réussi. Rendez-vous confirmé.",
+  "updated_success": "Rendez-vous mis à jour avec succès.",
+  "cancelled_success": "Rendez-vous annulé avec succès.",
+  "time_unavailable": "Ce créneau n’est plus disponible. Veuillez choisir un autre horaire.",
+  "booking_failed": "Impossible de réserver le rendez-vous. Veuillez réessayer."
 }
 
 }

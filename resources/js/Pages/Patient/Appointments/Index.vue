@@ -38,7 +38,18 @@ onMounted(() => {
   setLang(savedLang)
 })
 
-const flashStatus = computed(() => props.status || page.props?.flash?.status || '')
+const flashStatus = computed(() => {
+  const key = page.props?.flash?.status_key || page.props?.flash?.statusKey
+  const raw = props.status || page.props?.flash?.status || ''
+  if (key) {
+    try {
+      return t(key)
+    } catch (e) {
+      return raw || key
+    }
+  }
+  return raw
+})
 const paymentError = computed(() => page.props?.errors?.payment || '')
 const confirmingId = ref(null)
 const cancelingId = ref(null)
@@ -131,17 +142,28 @@ const toast = Swal.mixin({
 // Show payment result as a toast (instead of a persistent banner)
 const paymentToastShown = ref(false)
 watch(
-  [flashStatus, paymentError],
-  ([status, error]) => {
-    if (paymentToastShown.value) return
+  () => page.props?.flash,
+  (flash) => {
+    const error = page.props?.errors?.payment || ''
     if (error) {
-      paymentToastShown.value = true
       toast.fire({ icon: 'error', title: String(error) })
       return
     }
-    if (status) {
+
+    const key = flash?.status_key || flash?.statusKey
+    const raw = props.status || flash?.status || ''
+    if (key) {
+      try {
+        toast.fire({ icon: 'success', title: t(key) })
+      } catch (e) {
+        toast.fire({ icon: 'success', title: String(raw || key) })
+      }
+      return
+    }
+
+    if (raw && !paymentToastShown.value) {
       paymentToastShown.value = true
-      toast.fire({ icon: 'success', title: String(status) })
+      toast.fire({ icon: 'success', title: String(raw) })
     }
   },
   { immediate: true }
@@ -350,21 +372,84 @@ function canJoinCall(a) {
 async function cancelAppointment(a) {
   if (!a?.id || !canCancel(a)) return
 
+  const presetReasons = [
+    { value: 'schedule_conflict', label: t('appointments.reasons.scheduleConflict') },
+    { value: 'personal_emergency', label: t('appointments.reasons.personalEmergency') },
+    { value: 'technical_issue', label: t('appointments.reasons.technicalIssue') },
+    { value: 'other', label: t('appointments.reasons.other') },
+  ]
+
   const res = await Swal.fire({
     title: t('appointments.cancelConfirmTitle'),
-    text: t('appointments.cancelConfirmText'),
     icon: 'warning',
     showCancelButton: true,
+    html: `
+      <div style="text-align:left;max-width:520px;margin:0 auto">
+        <div style="margin-bottom:8px">${t('appointments.cancelConfirmText')}</div>
+        <div style="margin-bottom:8px;font-weight:600">${t('appointments.cancelConfirmAppointment')} #${a?.id ?? ''}</div>
+        <label for="swal-reason" style="display:block;margin:10px 0 6px;font-weight:600">${t('appointments.cancelConfirmReason')}</label>
+        <select id="swal-reason" class="swal2-input" style="margin:0 auto;width:100%;max-width:520px">
+          <option value="">${t('appointments.cancelConfirmSelectReason')}</option>
+          ${presetReasons
+            .map((reason) => `<option value="${reason.value}">${reason.label}</option>`)
+            .join('')}
+        </select>
+
+        <div id="swal-other-wrap" style="display:none">
+          <label for="swal-other" style="display:block;margin:10px 0 6px;font-weight:600">${t('appointments.cancelConfirmOtherReason')}</label>
+          <textarea id="swal-other" class="swal2-textarea" style="margin:0 auto;width:100%;max-width:520px" maxlength="255" placeholder="${t('appointments.cancelConfirmWriteReason')}"></textarea>
+        </div>
+      </div>
+    `,
     confirmButtonText: t('appointments.cancelConfirm'),
     cancelButtonText: t('appointments.cancelKeep'),
     reverseButtons: true,
     focusCancel: true,
+    confirmButtonColor: 'rgb(141,61,79)',
+    didOpen: () => {
+      const select = document.getElementById('swal-reason')
+      const wrap = document.getElementById('swal-other-wrap')
+      const other = document.getElementById('swal-other')
+
+      const toggle = () => {
+        const isOther = select?.value === 'other'
+        if (wrap) wrap.style.display = isOther ? 'block' : 'none'
+        if (!isOther && other) other.value = ''
+      }
+
+      if (select) select.addEventListener('change', toggle)
+      toggle()
+    },
+    preConfirm: () => {
+      const select = document.getElementById('swal-reason')
+      const other = document.getElementById('swal-other')
+
+      const selected = String(select?.value || '').trim()
+      if (!selected) {
+        return ''
+      }
+
+      if (selected === 'other') {
+        const value = String(other?.value || '').trim()
+        if (!value) {
+          Swal.showValidationMessage(t('appointments.cancelConfirmWriteReason'))
+          return false
+        }
+        return value
+      }
+
+      const match = presetReasons.find((reason) => reason.value === selected)
+      return match?.label || selected
+    },
   })
 
   if (!res.isConfirmed) return
 
   cancelingId.value = a.id
+  const payload = String(res.value || '').trim() ? { cancellation_reason: String(res.value).trim() } : {}
+
   router.delete(route('appointments.destroy', a.id), {
+    data: payload,
     preserveScroll: true,
     onSuccess: () => {
       toast.fire({ icon: 'success', title: t('appointments.cancelledSuccess') })

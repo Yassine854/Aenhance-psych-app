@@ -2,6 +2,115 @@
   "login": "Login",
   "register": "Create an Account",
   "dashboard": "Dashboard",
+  "auth": {
+    "status": {
+      "verificationLinkSent": "A new verification link has been sent to the email address you provided during registration.",
+      "passwords": {
+        "sent": "We have emailed your password reset link!",
+        "reset": "Your password has been reset!"
+      }
+    },
+    "login": {
+      "title": "Welcome back",
+      "subtitle": "Log in to continue.",
+      "rememberMe": "Remember me",
+      "forgotPassword": "Forgot?",
+      "submit": "Log in",
+      "newHere": "New here?",
+      "createAccount": "Create an account",
+      "footer": "By continuing, you agree to our Terms & Privacy Policy."
+    },
+    "forgotPassword": {
+      "title": "Forgot password?",
+      "subtitle": "Enter your email address and we will send you a password reset link.",
+      "submit": "Send reset link",
+      "rememberPassword": "Remember your password?",
+      "backToLogin": "Back to login",
+      "footer": "We will email a secure reset link if the address exists in our system."
+    },
+    "confirmPassword": {
+      "title": "Confirm Password",
+      "subtitle": "This is a secure area of the application. Please confirm your password before continuing.",
+      "submit": "Confirm"
+    },
+    "resetPassword": {
+      "title": "Set a new password",
+      "subtitle": "Create a new secure password for your account.",
+      "submit": "Reset password",
+      "needToReturn": "Need to return?",
+      "backToLogin": "Back to login",
+      "footer": "Use a strong password with a mix of letters, numbers, and symbols."
+    },
+    "verifyEmail": {
+      "title": "Email Verification",
+      "subtitle": "Thanks for signing up! Before getting started, could you verify your email address by clicking on the link we just emailed to you? If you didn't receive the email, we will gladly send you another.",
+      "linkSent": "A new verification link has been sent to the email address you provided during registration.",
+      "resend": "Resend Verification Email",
+      "logout": "Log Out"
+    },
+    "register": {
+      "title": "Create your account",
+      "subtitle": "Choose your role and complete your profile.",
+      "patientRole": "Patient",
+      "psychologistRole": "Psychologist",
+      "accountTitle": "Account",
+      "accountSubtitle": "Login details.",
+      "username": "Username",
+      "email": "Email",
+      "password": "Password",
+      "confirmPassword": "Confirm password",
+      "alreadyRegistered": "Already registered?",
+      "next": "Next",
+      "previous": "Previous",
+      "createAccount": "Create account",
+      "patientProfileTitle": "Patient profile",
+      "patientProfileSubtitle": "Basic information.",
+      "psychologistProfileTitle": "Psychologist profile",
+      "psychologistProfileSubtitle": "Professional details and documents.",
+      "firstName": "First name",
+      "lastName": "Last name",
+      "dateOfBirth": "Date of birth",
+      "genderOptional": "Gender (optional)",
+      "selectGender": "Select gender",
+      "countryOptional": "Country (optional)",
+      "selectCountry": "Select country",
+      "cityOptional": "City (optional)",
+      "selectCity": "Select city",
+      "phoneOptional": "Phone (optional)",
+      "profileImageOptional": "Profile image (optional)",
+      "dragDropOrClick": "Drag & drop or click",
+      "specialisations": "Specialisations",
+      "searchAndSelect": "Search and select",
+      "expertisesOptional": "Expertises (optional)",
+      "searchAndSelectOptional": "Search and select (optional)",
+      "languages": "Languages",
+      "selectOneOrMore": "Select one or more",
+      "country": "Country",
+      "city": "City",
+      "phone": "Phone",
+      "pricePerSession": "Price per session",
+      "addressOptional": "Address (optional)",
+      "bioOptional": "Bio (optional)",
+      "diplomaPdf": "Diploma (PDF)",
+      "cvPdf": "CV (PDF)",
+      "reviewNote": "Your psychologist account will be reviewed before approval.",
+      "availabilityTitle": "Availability",
+      "availabilitySubtitle": "Weekly slots (day + time).",
+      "footer": "Click the logo anytime to return home.",
+      "languageEnglish": "English",
+      "languageFrench": "French",
+      "languageArabic": "Arabic",
+      "days": {
+        "sunday": "Sunday",
+        "monday": "Monday",
+        "tuesday": "Tuesday",
+        "wednesday": "Wednesday",
+        "thursday": "Thursday",
+        "friday": "Friday",
+        "saturday": "Saturday"
+      }
+    }
+  },
   "heroTitle": "Telemental Health",
   "aboutTitle": "About Telemental Health",
   "aboutDesc": "Telemental health, also known as online therapy...",
@@ -1374,6 +1483,17 @@
   "cancelConfirmText": "This action cannot be undone.",
   "cancelConfirm": "Yes, cancel it",
   "cancelKeep": "Keep it",
+  "cancelConfirmAppointment": "Appointment",
+  "cancelConfirmReason": "Cancellation reason",
+  "cancelConfirmSelectReason": "Select a reason",
+  "cancelConfirmOtherReason": "Other reason",
+  "cancelConfirmWriteReason": "Write the reason...",
+  "reasons": {
+    "scheduleConflict": "Schedule conflict",
+    "personalEmergency": "Personal emergency",
+    "technicalIssue": "Technical issue",
+    "other": "Other"
+  },
   "cancelledSuccess": "Appointment cancelled",
   "cancelError": "Could not cancel appointment",
   "showing": "Showing",
@@ -1725,5 +1845,13 @@
     "french": "French",
     "arabic": "Arabic"
   }
+  ,
+  "requested_success": "Appointment requested successfully.",
+  "cannot_pay_not_pending": "This appointment cannot be paid (not pending).",
+  "payment_success_confirmed": "Payment successful. Appointment confirmed.",
+  "updated_success": "Appointment updated successfully.",
+  "cancelled_success": "Appointment cancelled successfully.",
+  "time_unavailable": "This time is no longer available. Please choose another slot.",
+  "booking_failed": "Unable to book the appointment. Please try again."
 }
 }
