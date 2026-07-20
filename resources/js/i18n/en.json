@@ -1495,6 +1495,13 @@
     "other": "Other"
   },
   "cancelledSuccess": "Appointment cancelled",
+  "requested_success": "Appointment requested successfully.",
+  "cannot_pay_not_pending": "This appointment cannot be paid (not pending).",
+  "payment_success_confirmed": "Payment successful. Appointment confirmed.",
+  "updated_success": "Appointment updated successfully.",
+  "cancelled_success": "Appointment cancelled successfully.",
+  "time_unavailable": "This time is no longer available. Please choose another slot.",
+  "booking_failed": "Unable to book the appointment. Please try again.",
   "cancelError": "Could not cancel appointment",
   "showing": "Showing",
   "of": "of",

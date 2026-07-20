@@ -56,13 +56,53 @@ class HandleInertiaRequests extends Middleware
             }
         }
 
+        // Normalize flash payload: if the server stored a translation-like string
+        // (e.g. 'appointments.payment_success_confirmed' or a wrapped '## key'),
+        // expose it as `status_key` so the client i18n can translate it reliably.
+        $status = $request->session()->get('status');
+        $statusKey = $request->session()->get('status_key');
+        $error = $request->session()->get('error');
+        $errorKey = $request->session()->get('error_key');
+
+        $normalizePossibleKey = function ($value) {
+            if (! is_string($value) || $value === '') return [null, $value];
+
+            // Trim common wrapper like '## key'
+            if (str_starts_with($value, '## ')) {
+                $value = trim(substr($value, 3));
+            }
+
+            // Very small heuristic: looks like namespace.key or namespace.sub.key
+            if (preg_match('/^[a-z0-9_]+\.[a-z0-9_\.]+$/i', $value)) {
+                return [$value, null];
+            }
+
+            return [null, $value];
+        };
+
+        if (! $statusKey) {
+            [$maybeKey, $fallback] = $normalizePossibleKey($status);
+            if ($maybeKey) {
+                $statusKey = $maybeKey;
+                $status = $fallback;
+            }
+        }
+
+        if (! $errorKey) {
+            [$maybeKey, $fallbackErr] = $normalizePossibleKey($error);
+            if ($maybeKey) {
+                $errorKey = $maybeKey;
+                $error = $fallbackErr;
+            }
+        }
+
         return [
             ...parent::share($request),
             'flash' => [
-                'status' => $request->session()->get('status'),
-                'status_key' => $request->session()->get('status_key'),
-                'error' => $request->session()->get('error'),
-                'error_key' => $request->session()->get('error_key'),
+                'status' => $status,
+                'status_key' => $statusKey,
+                'error' => $error,
+                'error_key' => $errorKey,
             ],
             'auth' => [
                 'user' => $user ? [

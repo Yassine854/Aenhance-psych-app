@@ -1493,6 +1493,13 @@
     "other": "Autre"
   },
   "cancelledSuccess": "Rendez-vous annulé",
+  "requested_success": "Rendez-vous demandé avec succès.",
+  "cannot_pay_not_pending": "Ce rendez-vous ne peut pas être payé (pas en attente).",
+  "payment_success_confirmed": "Paiement réussi. Rendez-vous confirmé.",
+  "updated_success": "Rendez-vous mis à jour avec succès.",
+  "cancelled_success": "Rendez-vous annulé avec succès.",
+  "time_unavailable": "Ce créneau n'est plus disponible. Veuillez choisir un autre.",
+  "booking_failed": "Impossible de réserver le rendez-vous. Veuillez réessayer.",
   "cancelError": "Impossible d'annuler le rendez-vous",
   "showing": "Affichage de",
   "of": "sur",

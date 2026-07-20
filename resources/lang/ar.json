@@ -1,6 +1,7 @@
 {
   "appointments": {
     "requested_success": "تم طلب الموعد بنجاح.",
+    "time_unavailable": "هذا التوقيت لم يعد متاحًا. الرجاء اختيار توقيت آخر.",
     "cannot_pay_not_pending": "لا يمكن دفع هذا الموعد (ليس في الحالة المعلقة).",
     "payment_success_confirmed": "تم الدفع بنجاح. تم تأكيد الموعد.",
     "updated_success": "تم تحديث الموعد بنجاح.",

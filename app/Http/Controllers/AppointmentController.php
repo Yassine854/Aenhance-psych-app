@@ -442,7 +442,7 @@ class AppointmentController extends Controller
         if ($overlap) {
             return back()->withErrors([
                 'scheduled_start' => 'This time is no longer available. Please choose another slot.',
-            ])->with('error_key', 'appointment.time_unavailable');
+            ])->with('error_key', 'appointments.time_unavailable');
         }
 
         $appointment = DB::transaction(function () use ($user, $validated, $start, $end, $price) {
@@ -473,10 +473,10 @@ class AppointmentController extends Controller
         ActivityLogger::log($user->id, $user->role ?? null, 'created_appointment', 'Appointment', $appointment->id, 'Appointment requested');
 
         if (method_exists($user, 'isPatient') && $user->isPatient()) {
-            return redirect()->route('patient.appointments')->with('status_key', 'appointment.requested_success');
+            return redirect()->route('patient.appointments')->with('status_key', 'appointments.requested_success');
         }
 
-        return redirect()->route('appointments.index')->with('status_key', 'appointment.requested_success');
+        return redirect()->route('appointments.index')->with('status_key', 'appointments.requested_success');
     }
 
     /**

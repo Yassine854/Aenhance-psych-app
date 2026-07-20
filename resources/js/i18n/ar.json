@@ -1362,6 +1362,13 @@
     "other": "أخرى"
   },
   "cancelledSuccess": "تم إلغاء الموعد",
+  "requested_success": "تم طلب الموعد بنجاح.",
+  "cannot_pay_not_pending": "لا يمكن دفع هذا الموعد (ليس في الحالة المعلقة).",
+  "payment_success_confirmed": "تم الدفع. تم تأكيد الموعد.",
+  "updated_success": "تم تحديث الموعد بنجاح.",
+  "cancelled_success": "تم إلغاء الموعد بنجاح.",
+  "time_unavailable": "هذا التوقيت لم يعد متاحًا. الرجاء اختيار توقيت آخر.",
+  "booking_failed": "تعذر حجز الموعد. الرجاء المحاولة مرة أخرى.",
   "cancelError": "تعذر إلغاء الموعد",
   "showing": "عرض",
   "of": "من",

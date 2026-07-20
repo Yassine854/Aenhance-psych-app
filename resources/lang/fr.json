@@ -1,6 +1,7 @@
 {
   "appointments": {
     "requested_success": "Rendez-vous demandé avec succès.",
+    "time_unavailable": "Ce créneau n'est plus disponible. Veuillez choisir un autre.",
     "cannot_pay_not_pending": "Ce rendez-vous ne peut pas être payé (pas en attente).",
     "payment_success_confirmed": "Paiement réussi. Rendez-vous confirmé.",
     "updated_success": "Rendez-vous mis à jour avec succès.",
