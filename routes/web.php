@@ -33,6 +33,7 @@ use App\Http\Controllers\Admin\RessourceController;
 use App\Http\Controllers\Admin\PaymentsController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\NotificationController;
+use App\Http\Controllers\SitemapController;
 
 /*
 |--------------------------------------------------------------------------
@@ -132,6 +133,9 @@ Route::get('/blogs', [GuestBlogController::class, 'index'])->name('blogs.index')
 
 // Ressources (public)
 Route::get('/ressources', [GuestRessourceController::class, 'index'])->name('ressources.index');
+
+// Sitemap (public)
+Route::get('/sitemap.xml', [SitemapController::class, 'index'])->name('sitemap');
 
 
 Route::get('/test-cloudinary', function () {

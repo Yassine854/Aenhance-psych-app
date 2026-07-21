@@ -98,7 +98,7 @@ class PatientSelfProfileController extends Controller
             array_merge($data, ['user_id' => $user->id])
         );
 
-        ActivityLogger::log($user->id, $user->role ?? null, 'updated_profile', 'PatientProfile', $user->patientProfile?->id ?? null, 'Patient updated own profile');
+        // ActivityLogger::log($user->id, $user->role ?? null, 'updated_profile', 'PatientProfile', $user->patientProfile?->id ?? null, 'Patient updated own profile');
 
         return redirect()->route('patient.profile')->with('status', 'Profile updated successfully.');
     }

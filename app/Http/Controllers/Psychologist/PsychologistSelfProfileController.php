@@ -295,7 +295,7 @@ class PsychologistSelfProfileController extends Controller
             }
         }
 
-        ActivityLogger::log($user->id ?? null, $user?->role ?? null, 'updated_profile', 'PsychologistProfile', $profile->id ?? null, 'Updated own profile');
+        // ActivityLogger::log($user->id ?? null, $user?->role ?? null, 'updated_profile', 'PsychologistProfile', $profile->id ?? null, 'Updated own profile');
 
         return redirect()->route('psychologist.profile.self')->with('status', 'Profile updated successfully.');
     }
