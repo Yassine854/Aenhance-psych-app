@@ -66,7 +66,21 @@ async function networkFirst(request) {
   } catch (error) {
     const cached = await caches.match(request);
     if (cached) return cached;
-    throw error;
+
+    // Return a safe fallback Response instead of throwing, so the
+    // promise returned to event.respondWith always resolves.
+    // For navigation/html requests, return a small offline HTML page.
+    try {
+      const accept = request.headers.get('Accept') || '';
+      if (request.mode === 'navigate' || accept.includes('text/html')) {
+        const body = '<!doctype html><html><head><meta charset="utf-8"><title>Offline</title></head><body><h1>Offline</h1><p>Unable to reach network.</p></body></html>';
+        return new Response(body, { status: 503, statusText: 'Service Unavailable', headers: { 'Content-Type': 'text/html' } });
+      }
+    } catch (e) {
+      // fall through to generic response
+    }
+
+    return new Response(null, { status: 503, statusText: 'Service Unavailable' });
   }
 }
 

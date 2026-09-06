@@ -764,7 +764,8 @@ async function flushPendingIce() {
 
 async function getRtcConfig() {
   try {
-    // Use multiple public STUN servers (STUN-only configuration, no TURN)
+    // Use multiple public STUN servers. Also include a TURN server as a
+    // fallback relay in case STUN-based peer-to-peer fails to establish.
     const iceServers = [
       { urls: 'stun:stun.l.google.com:19302' },
       { urls: 'stun:stun1.l.google.com:19302' },
@@ -773,8 +774,14 @@ async function getRtcConfig() {
       { urls: 'stun:stun4.l.google.com:19302' },
       { urls: 'stun:stun.stunprotocol.org:3478' },
       { urls: 'stun:stun.voipbuster.com:3478' },
+      // Provided TURN server (used only if STUN can't complete connectivity)
+      {
+        urls: 'turn:free.expressturn.com:3478',
+        username: '000000002104068558',
+        credential: '79ncE0c2EJ1KFNKcaQ0CUJhOL3k=',
+      },
     ]
-    try { console.debug('[webrtc] using STUN-only iceServers', iceServers) } catch {}
+    try { console.debug('[webrtc] using iceServers (STUN + TURN fallback)', iceServers) } catch {}
     return { iceServers }
   } catch (e) {
     return { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] }
