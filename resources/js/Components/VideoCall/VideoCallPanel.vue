@@ -59,7 +59,7 @@
             <path d="M9 9h10v10H9z" />
             <path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1" />
           </svg>
-          {{ t('videoCall.copyRoom') }}
+          {{ t('videoCall.copyRoom') }}tfverfdvc
         </button>
 
         <Link
@@ -283,7 +283,7 @@
         </div>
       </div>
 
-      <div v-if="statusLabel === 'Waiting'" class="absolute inset-0 flex items-center justify-center px-6 pointer-events-none">
+      <div v-if="connectionState === 'waiting'" class="absolute inset-0 flex items-center justify-center px-6 pointer-events-none">
         <div class="max-w-md w-full rounded-2xl bg-black/55 border border-white/10 backdrop-blur p-6 text-center text-white">
           <div class="mx-auto h-10 w-10 rounded-full bg-white/10 flex items-center justify-center mb-3">
             <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2">
@@ -493,7 +493,7 @@ const showLocalPlaceholder = computed(() => {
 
 const showRemotePlaceholder = computed(() => {
   // Connected: show placeholder if remote camera is off OR we are not rendering frames.
-  if (statusLabel.value === 'Connected') {
+  if (connectionState.value === 'connected') {
     return remoteVideoEnabled.value === false || remoteVideoAvailable.value === false || remoteVideoRenderable.value === false
   }
   // Waiting/Connecting/Failed: always show a pleasant placeholder instead of black.
@@ -501,12 +501,12 @@ const showRemotePlaceholder = computed(() => {
 })
 
 const statusDotClass = computed(() => {
-  switch (statusLabel.value) {
-    case 'Connected':
+  switch (connectionState.value) {
+    case 'connected':
       return 'bg-emerald-500'
-    case 'Waiting':
+    case 'waiting':
       return 'bg-amber-400'
-    case 'Failed':
+    case 'failed':
       return 'bg-red-500'
     default:
       return 'bg-blue-500 animate-pulse'
@@ -514,12 +514,12 @@ const statusDotClass = computed(() => {
 })
 
 const statusPillClass = computed(() => {
-  switch (statusLabel.value) {
-    case 'Connected':
+  switch (connectionState.value) {
+    case 'connected':
       return 'bg-emerald-50 text-emerald-700 border-emerald-200'
-    case 'Waiting':
+    case 'waiting':
       return 'bg-amber-50 text-amber-700 border-amber-200'
-    case 'Failed':
+    case 'failed':
       return 'bg-red-50 text-red-700 border-red-200'
     default:
       return 'bg-blue-50 text-blue-700 border-blue-200'
@@ -762,9 +762,22 @@ async function flushPendingIce() {
   }
 }
 
-function getRtcConfig() {
-  return {
-    iceServers: [{ urls: ['stun:stun.l.google.com:19302'] }],
+async function getRtcConfig() {
+  try {
+    // Use multiple public STUN servers (STUN-only configuration, no TURN)
+    const iceServers = [
+      { urls: 'stun:stun.l.google.com:19302' },
+      { urls: 'stun:stun1.l.google.com:19302' },
+      { urls: 'stun:stun2.l.google.com:19302' },
+      { urls: 'stun:stun3.l.google.com:19302' },
+      { urls: 'stun:stun4.l.google.com:19302' },
+      { urls: 'stun:stun.stunprotocol.org:3478' },
+      { urls: 'stun:stun.voipbuster.com:3478' },
+    ]
+    try { console.debug('[webrtc] using STUN-only iceServers', iceServers) } catch {}
+    return { iceServers }
+  } catch (e) {
+    return { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] }
   }
 }
 
@@ -955,7 +968,18 @@ function setConnectionState(next) {
 
 async function createPeerConnection() {
   if (pc) return pc
-  pc = new RTCPeerConnection(getRtcConfig())
+  let rtcConfig = await getRtcConfig()
+  try { console.debug('[webrtc] rtcConfig before createPeerConnection:', rtcConfig) } catch {}
+
+  // Optional test: force TURN relay-only (set VITE_FORCE_RELAY=1 in build env)
+  try {
+    if (import.meta && import.meta.env && import.meta.env.VITE_FORCE_RELAY === '1') {
+      rtcConfig = { ...rtcConfig, iceTransportPolicy: 'relay' }
+      try { console.debug('[webrtc] forcing iceTransportPolicy=relay for diagnostic testing') } catch {}
+    }
+  } catch {}
+
+  pc = new RTCPeerConnection(rtcConfig)
 
   pc.ontrack = (event) => {
     const [stream] = event.streams
@@ -999,6 +1023,7 @@ async function createPeerConnection() {
   }
 
   pc.onicecandidate = (event) => {
+    try { console.debug('[webrtc] onicecandidate', event.candidate) } catch {}
     if (event.candidate) {
       wsSend({ type: 'ice', candidate: event.candidate })
     }
@@ -1006,6 +1031,7 @@ async function createPeerConnection() {
 
   pc.onconnectionstatechange = () => {
     const st = pc?.connectionState
+    try { console.debug('[webrtc] connectionState changed', st) } catch {}
     if (st === 'connected') setConnectionState('connected')
     else if (st === 'failed' || st === 'disconnected') setConnectionState('failed')
     else setConnectionState('connecting')
