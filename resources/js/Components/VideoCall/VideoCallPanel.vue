@@ -59,7 +59,7 @@
             <path d="M9 9h10v10H9z" />
             <path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1" />
           </svg>
-          {{ t('videoCall.copyRoom') }}tfverfdvc
+          {{ t('videoCall.copyRoom') }}
         </button>
 
         <Link
@@ -762,11 +762,10 @@ async function flushPendingIce() {
   }
 }
 
-async function getRtcConfig() {
+async function getRtcConfig(mode = 'default') {
   try {
-    // Use multiple public STUN servers. Also include a TURN server as a
-    // fallback relay in case STUN-based peer-to-peer fails to establish.
-    const iceServers = [
+    // Base STUN servers (multiple for reliability)
+    const stunServers = [
       { urls: 'stun:stun.l.google.com:19302' },
       { urls: 'stun:stun1.l.google.com:19302' },
       { urls: 'stun:stun2.l.google.com:19302' },
@@ -774,13 +773,41 @@ async function getRtcConfig() {
       { urls: 'stun:stun4.l.google.com:19302' },
       { urls: 'stun:stun.stunprotocol.org:3478' },
       { urls: 'stun:stun.voipbuster.com:3478' },
-      // Provided TURN server (used only if STUN can't complete connectivity)
+    ]
+
+    // TURN server(s) — prefer providing these via environment at build time.
+    const turnServers = [
       {
         urls: 'turn:free.expressturn.com:3478',
         username: '000000002104068558',
         credential: '79ncE0c2EJ1KFNKcaQ0CUJhOL3k=',
       },
     ]
+
+    // Allow overriding TURN via build env vars (recommended)
+    try {
+      const tUrl = import.meta?.env?.VITE_TURN_URL
+      const tUser = import.meta?.env?.VITE_TURN_USERNAME
+      const tPass = import.meta?.env?.VITE_TURN_CREDENTIAL
+      if (tUrl && tUser && tPass) {
+        turnServers.unshift({ urls: tUrl, username: tUser, credential: tPass })
+      }
+    } catch {
+      // ignore
+    }
+
+    if (mode === 'stunOnly') {
+      try { console.debug('[webrtc] using STUN-only iceServers', stunServers) } catch {}
+      return { iceServers: stunServers }
+    }
+
+    if (mode === 'relayOnly') {
+      try { console.debug('[webrtc] using TURN (relay-only) iceServers', turnServers) } catch {}
+      return { iceServers: turnServers, iceTransportPolicy: 'relay' }
+    }
+
+    // default: include STUN servers and TURN as fallback in the same config.
+    const iceServers = [...stunServers, ...turnServers]
     try { console.debug('[webrtc] using iceServers (STUN + TURN fallback)', iceServers) } catch {}
     return { iceServers }
   } catch (e) {
@@ -975,97 +1002,147 @@ function setConnectionState(next) {
 
 async function createPeerConnection() {
   if (pc) return pc
-  let rtcConfig = await getRtcConfig()
-  try { console.debug('[webrtc] rtcConfig before createPeerConnection:', rtcConfig) } catch {}
 
-  // Optional test: force TURN relay-only (set VITE_FORCE_RELAY=1 in build env)
+  // Start with STUN-only attempt for fastest peer-to-peer path. If that
+  // fails to connect within a short timeout, recreate the connection forcing
+  // TURN (relay) to maximize chance of success.
+  let startedWithRelay = false
   try {
+    // Honor explicit diagnostic override at build time.
     if (import.meta && import.meta.env && import.meta.env.VITE_FORCE_RELAY === '1') {
-      rtcConfig = { ...rtcConfig, iceTransportPolicy: 'relay' }
-      try { console.debug('[webrtc] forcing iceTransportPolicy=relay for diagnostic testing') } catch {}
+      startedWithRelay = true
     }
   } catch {}
 
-  pc = new RTCPeerConnection(rtcConfig)
+  const initialMode = startedWithRelay ? 'relayOnly' : 'stunOnly'
+  let rtcConfig = await getRtcConfig(initialMode)
+  try { console.debug('[webrtc] rtcConfig before createPeerConnection:', rtcConfig) } catch {}
 
-  pc.ontrack = (event) => {
-    const [stream] = event.streams
-    if (remoteVideo.value && stream) {
-      remoteVideo.value.srcObject = stream
-    }
+  // Helper to attach the standard handlers to a peer connection.
+  const attachHandlers = (peer) => {
+    peer.ontrack = (event) => {
+      const [stream] = event.streams
+      if (remoteVideo.value && stream) remoteVideo.value.srcObject = stream
 
-    // Remote speaking indicator (if audio track exists)
-    try {
-      ensureAudioContext().then(() => {
-        setupRemoteSpeakingAnalyser(stream)
-        startSpeakingDetectionLoop()
-      })
-    } catch {
-      // ignore
-    }
+      try {
+        ensureAudioContext().then(() => {
+          setupRemoteSpeakingAnalyser(stream)
+          startSpeakingDetectionLoop()
+        })
+      } catch {}
 
-    // Update element-based rendering state.
-    updateRemoteVideoRenderable()
+      updateRemoteVideoRenderable()
 
-    // Track remote video availability so we can show initials/name when camera is off.
-    try {
-      const [videoTrack] = stream?.getVideoTracks?.() || []
-      if (videoTrack) {
-        const update = () => {
-          remoteVideoAvailable.value = Boolean(videoTrack.enabled && !videoTrack.muted && videoTrack.readyState === 'live')
+      try {
+        const [videoTrack] = stream?.getVideoTracks?.() || []
+        if (videoTrack) {
+          const update = () => {
+            remoteVideoAvailable.value = Boolean(videoTrack.enabled && !videoTrack.muted && videoTrack.readyState === 'live')
+            updateRemoteVideoRenderable()
+          }
+          videoTrack.onmute = update
+          videoTrack.onunmute = update
+          videoTrack.onended = update
+          update()
+        } else {
+          remoteVideoAvailable.value = false
           updateRemoteVideoRenderable()
         }
-        videoTrack.onmute = update
-        videoTrack.onunmute = update
-        videoTrack.onended = update
-        update()
-      } else {
+      } catch {
         remoteVideoAvailable.value = false
         updateRemoteVideoRenderable()
       }
-    } catch {
-      remoteVideoAvailable.value = false
-      updateRemoteVideoRenderable()
+    }
+
+    peer.onicecandidate = (event) => {
+      try { console.debug('[webrtc] onicecandidate', event.candidate) } catch {}
+      if (event.candidate) wsSend({ type: 'ice', candidate: event.candidate })
+    }
+
+    peer.onconnectionstatechange = () => {
+      const st = peer?.connectionState
+      try { console.debug('[webrtc] connectionState changed', st) } catch {}
+      if (st === 'connected') setConnectionState('connected')
+      else if (st === 'failed' || st === 'disconnected') setConnectionState('failed')
+      else setConnectionState('connecting')
+    }
+
+    peer.onnegotiationneeded = async () => {
+      if (props.role !== 'psychologist') return
+      if (!ws || ws.readyState !== WebSocket.OPEN) return
+      if (!peer || peer.signalingState !== 'stable') return
+      if (makingOffer) return
+
+      makingOffer = true
+      try { await makeOffer() } catch {} finally { makingOffer = false }
     }
   }
 
-  pc.onicecandidate = (event) => {
-    try { console.debug('[webrtc] onicecandidate', event.candidate) } catch {}
-    if (event.candidate) {
-      wsSend({ type: 'ice', candidate: event.candidate })
-    }
-  }
+  // Create initial peer connection.
+  pc = new RTCPeerConnection(rtcConfig)
+  attachHandlers(pc)
 
-  pc.onconnectionstatechange = () => {
-    const st = pc?.connectionState
-    try { console.debug('[webrtc] connectionState changed', st) } catch {}
-    if (st === 'connected') setConnectionState('connected')
-    else if (st === 'failed' || st === 'disconnected') setConnectionState('failed')
-    else setConnectionState('connecting')
-  }
-
-  pc.onnegotiationneeded = async () => {
-    // We keep the "psychologist offers" rule to avoid offer glare.
-    if (props.role !== 'psychologist') return
-    if (!ws || ws.readyState !== WebSocket.OPEN) return
-    if (!pc || pc.signalingState !== 'stable') return
-    if (makingOffer) return
-
-    makingOffer = true
-    try {
-      await makeOffer()
-    } catch {
-      // ignore
-    } finally {
-      makingOffer = false
-    }
-  }
-
+  // Add existing local tracks if any.
   if (localStream) {
     for (const track of localStream.getTracks()) {
       const sender = pc.addTrack(track, localStream)
       if (track.kind === 'video') localVideoSender = sender
     }
+  }
+
+  // If we started with STUN-only, set a quick fallback to TURN (relay) so
+  // that environments blocking direct p2p can still connect. This timeout
+  // is conservative: short enough for responsiveness, long enough for ICE.
+  let fallbackTimer = null
+  try {
+    if (initialMode === 'stunOnly') {
+      const FALLBACK_MS = Number(import.meta?.env?.VITE_ICE_FALLBACK_MS || 8000)
+      fallbackTimer = setTimeout(async () => {
+        try {
+          if (!pc) return
+          const st = pc.connectionState
+          if (st === 'connected') return
+
+          try { pc.close() } catch {}
+          pc = null
+
+          // Recreate forcing TURN (relay-only).
+          const relayConfig = await getRtcConfig('relayOnly')
+          try { console.debug('[webrtc] falling back to TURN (relay-only) after timeout') } catch {}
+          pc = new RTCPeerConnection(relayConfig)
+          attachHandlers(pc)
+
+          // Re-add local tracks and trigger negotiation where appropriate.
+          if (localStream) {
+            for (const track of localStream.getTracks()) {
+              const sender = pc.addTrack(track, localStream)
+              if (track.kind === 'video') localVideoSender = sender
+            }
+          }
+
+          // If we're the psychologist, start offer sequence again.
+          if (props.role === 'psychologist' && ws && ws.readyState === WebSocket.OPEN) {
+            try { await makeOffer() } catch {}
+          }
+        } catch {
+          // ignore fallback errors
+        }
+      }, FALLBACK_MS)
+    }
+  } catch {
+    // ignore
+  }
+
+  // Clear fallback timer when connection succeeds or fails definitively.
+  const clearFallback = () => {
+    try { if (fallbackTimer) clearTimeout(fallbackTimer) } catch {}
+    fallbackTimer = null
+  }
+
+  const origOnConnectionStateChange = pc.onconnectionstatechange
+  pc.onconnectionstatechange = () => {
+    try { if (pc && pc.connectionState === 'connected') clearFallback() } catch {}
+    try { if (typeof origOnConnectionStateChange === 'function') origOnConnectionStateChange() } catch {}
   }
 
   return pc
