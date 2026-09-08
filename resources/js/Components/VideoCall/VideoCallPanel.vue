@@ -49,26 +49,38 @@
         </p>
       </div>
 
-      <div class="flex items-center gap-2">
-        <button
-          type="button"
-          class="hidden sm:inline-flex items-center gap-2 h-9 px-3 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50"
-          @click="copyRoomId"
-        >
-          <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M9 9h10v10H9z" />
-            <path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1" />
-          </svg>
-          {{ t('videoCall.copyRoom') }}
-        </button>
+  
 
-        <Link
-          :href="backHref"
-          class="inline-flex items-center justify-center h-9 px-3 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50"
-          @click.prevent="hangUpAndLeave"
-        >
-          {{ t('videoCall.back') }}
-        </Link>
+      <div class="flex items-center gap-2">
+            <button
+              type="button"
+              class="hidden sm:inline-flex items-center gap-2 h-9 px-3 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50"
+              @click="copyRoomId"
+            >
+              <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 9h10v10H9z" />
+                <path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1" />
+              </svg>
+              {{ t('videoCall.copyRoom') }}
+            </button>
+
+            <button
+              type="button"
+              class="hidden sm:inline-flex items-center gap-2 h-9 px-3 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50"
+              :title="remoteViewMode === 'cover' ? t('videoCall.viewMode.cover') : t('videoCall.viewMode.fit')"
+              @click="toggleRemoteViewMode"
+            >
+              <svg v-if="remoteViewMode === 'cover'" viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 7h10v10H7z"/></svg>
+              <svg v-else viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 12h18M12 3v18"/></svg>
+            </button>
+
+            <Link
+              :href="backHref"
+              class="inline-flex items-center justify-center h-9 px-3 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50"
+              @click.prevent="hangUpAndLeave"
+            >
+              {{ t('videoCall.back') }}
+            </Link>
       </div>
     </div>
 
@@ -79,8 +91,12 @@
 
       <video
         ref="remoteVideo"
-        class="absolute inset-0 w-full h-full object-cover transition-opacity duration-200"
-        :class="showRemotePlaceholder ? 'opacity-0' : 'opacity-100'"
+        :class="[
+          'absolute inset-0 w-full h-full transition-opacity duration-200 bg-black',
+          remoteViewMode === 'cover' ? 'object-cover' : 'object-contain',
+          showRemotePlaceholder ? 'opacity-0' : 'opacity-100'
+        ]"
+        :style="remoteViewMode === 'cover' ? { objectPosition: 'center' } : {}"
         autoplay
         playsinline
       ></video>
@@ -144,7 +160,7 @@
       </div>
 
       <div
-        class="absolute top-3 right-3 w-44 sm:w-56 aspect-video rounded-xl overflow-hidden border border-white/15 shadow-lg"
+        class="absolute top-3 right-3 rounded-xl overflow-hidden border border-white/15 shadow-lg local-preview"
         :class="isLocalSpeaking ? 'speaking-pulse' : ''"
       >
         <video
@@ -194,7 +210,7 @@
         </div>
       </div>
 
-      <div class="absolute bottom-4 left-0 right-0 flex items-center justify-center px-4">
+      <div class="absolute left-0 right-0 flex items-center justify-center px-4 bottom-24 sm:bottom-4">
         <div class="pointer-events-auto inline-flex items-center gap-2 sm:gap-3 px-3 py-2 rounded-2xl bg-white/10 backdrop-blur border border-white/15 shadow-xl">
           <button
             type="button"
@@ -302,8 +318,8 @@
     <!-- Floating chat toggle -->
     <button
       @click="toggleChat"
-      class="chat-toggle absolute right-4 bottom-4 z-40 inline-flex items-center justify-center h-12 w-12 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg focus:outline-none"
-      :title="showChat ? 'Close chat' : 'Open chat'"
+      class="chat-toggle absolute right-4 bottom-4 sm:bottom-4 z-40 inline-flex items-center justify-center h-12 w-12 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg focus:outline-none"
+      :title="showChat ? t('videoCall.chat.close') : t('videoCall.chat.open')"
     >
       <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
       <span v-if="unreadCount > 0" class="chat-badge absolute -top-1 -right-1 inline-flex items-center justify-center h-5 min-w-[20px] px-1 rounded-full bg-red-600 text-white text-xs font-semibold">{{ unreadCount }}</span>
@@ -373,6 +389,7 @@ const { t } = useI18n()
 const stageEl = ref(null)
 const localVideo = ref(null)
 const remoteVideo = ref(null)
+const remoteViewMode = ref('cover') // 'cover' = fill/crop (like Meet/Zoom), 'contain' = fit (no crop)
 
 const error = ref('')
 const isMuted = ref(false)
@@ -557,6 +574,10 @@ function resetPeerConnection() {
   remoteVideoEnabled.value = true
   remoteAudioEnabled.value = true
   remoteVideoRenderable.value = false
+}
+
+function toggleRemoteViewMode() {
+  try { remoteViewMode.value = remoteViewMode.value === 'cover' ? 'contain' : 'cover' } catch {}
 }
 
 function stopSpeakingDetection() {
@@ -1744,4 +1765,66 @@ onBeforeUnmount(() => {
   opacity: 1;
 }
 .chat-badge { box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
+</style>
+
+<style scoped>
+/* Mobile/touch improvements */
+@media (max-width: 640px) {
+  .control-btn {
+    height: 56px;
+    width: 56px;
+    border-radius: 14px;
+  }
+
+  .chat-toggle {
+    height: 56px;
+    width: 56px;
+  }
+
+  /* Make the local preview larger on small screens and inset a bit */
+  .local-preview {
+    right: 12px !important;
+    top: 12px !important;
+    width: calc(34vw) !important;
+  }
+
+  /* Ensure the control bar is reachable and not overlapped */
+  .control-bar-spacer {
+    height: 88px;
+  }
+}
+</style>
+
+<style scoped>
+/* Local preview (portrait) default sizes */
+.local-preview {
+  width: 156px; /* reduced width */
+  height: 198px; /* reduced height, keep portrait */
+  right: 12px;
+  top: 12px;
+}
+
+@media (min-width: 640px) {
+  .local-preview {
+    width: 178px; /* slightly reduced on larger screens */
+    height: 232px;
+    right: 12px;
+    top: 12px;
+  }
+}
+
+@media (max-width: 640px) {
+  .local-preview {
+    width: calc(24vw);
+    height: calc(30vw);
+    right: 10px !important;
+    top: 10px !important;
+  }
+}
+
+.local-preview video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
 </style>

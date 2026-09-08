@@ -7,4 +7,18 @@
     "updated_success": "Appointment updated successfully.",
     "cancelled_success": "Appointment cancelled successfully."
   }
+  ,
+  "videoCall": {
+    "chat": {
+      "title": "Session Chat",
+      "subtitle": "Private session messages",
+      "close": "Close chat",
+      "you": "You",
+      "placeholder": "Type a message...",
+        "attach": "Attach file",
+        "open": "Open chat",
+      "download": "Download",
+      "send": "Send"
+    }
+  }
 }

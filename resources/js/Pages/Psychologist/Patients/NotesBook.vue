@@ -144,6 +144,7 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import axios from 'axios'
+import { resolveStorageUrl } from '@/utils/storage'
 
 const { t, locale } = useI18n()
 
@@ -195,18 +196,19 @@ const avatarUrl = computed(() => {
     for (const c of candidates) {
       if (!c) continue
       if (typeof c === 'string') {
-        if (c.startsWith('http://') || c.startsWith('https://') || c.startsWith('/')) return c
-        return `/${c}`
+        const resolved = resolveStorageUrl(c)
+        if (resolved) return resolved
+        continue
       }
       if (typeof c === 'object') {
         const url = c.secure_url || c.secureUrl || c.url || c.src || null
-        if (url && typeof url === 'string') return url
+        if (url && typeof url === 'string') return resolveStorageUrl(url)
       }
     }
 
     if (p.cloudinary && typeof p.cloudinary === 'object') {
       const url = p.cloudinary.secure_url || p.cloudinary.url || null
-      if (url) return url
+      if (url) return resolveStorageUrl(url)
     }
 
     return null

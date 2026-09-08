@@ -122,165 +122,63 @@
           </div>
         </div>
         <div class="bg-white rounded-lg shadow overflow-hidden">
-          <div class="overflow-x-auto">
+          <div class="p-4">
             <template v-if="data.length">
-              <table class="min-w-full divide-y divide-gray-200">
-              <thead class="bg-gray-50">
-                <tr>
-                  <th class="px-4 py-3 text-left">
-                    <button type="button" @click="toggleSort('id')" class="group inline-flex items-center gap-1 text-xs font-medium text-gray-500 uppercase tracking-wider hover:text-gray-700">
-                      {{ t('psychologistAppointments.id') }}
-                      <SortIcon :active="sortKey === 'id'" :dir="sortDir" />
-                    </button>
-                  </th>
-                  <th class="px-4 py-3 text-left">
-                    <button type="button" @click="toggleSort('patient')" class="group inline-flex items-center gap-1 text-xs font-medium text-gray-500 uppercase tracking-wider hover:text-gray-700">
-                      {{ t('psychologistAppointments.appointmentFor') }}
-                      <SortIcon :active="sortKey === 'patient'" :dir="sortDir" />
-                    </button>
-                  </th>
-                  <th class="px-4 py-3 text-left">
-                    <button type="button" @click="toggleSort('scheduled_start')" class="group inline-flex items-center gap-1 text-xs font-medium text-gray-500 uppercase tracking-wider hover:text-gray-700">
-                      {{ t('psychologistAppointments.date') }}
-                      <SortIcon :active="sortKey === 'scheduled_start'" :dir="sortDir" />
-                    </button>
-                  </th>
-                  <th class="px-4 py-3 text-left">
-                    <button type="button" @click="toggleSort('status')" class="group inline-flex items-center gap-1 text-xs font-medium text-gray-500 uppercase tracking-wider hover:text-gray-700">
-                      {{ t('psychologistAppointments.status') }}
-                      <SortIcon :active="sortKey === 'status'" :dir="sortDir" />
-                    </button>
-                  </th>
-                  <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">{{ t('psychologistAppointments.actions') }}</th>
-                </tr>
-              </thead>
-
-              <tbody class="bg-white divide-y divide-gray-200">
-                <tr
-                  v-for="a in sorted"
-                  :key="a.id"
-                  class="hover:bg-gray-50"
-                  :class="normalizeStatus(a.status) === 'cancelled' ? 'bg-red-50/30' : ''"
-                >
-                  <td class="px-4 py-3">
-                    <div class="text-sm font-medium text-gray-900">{{ a.id }}</div>
-                  </td>
-                  <td class="px-4 py-3">
-                    <div class="flex items-center gap-2 flex-wrap">
-                      <div class="text-sm font-medium text-gray-900">{{ bookedForName(a) }}</div>
-                      <span
-                        class="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold"
-                        :class="String(a.booking_for || '').toLowerCase() === 'other' ? 'bg-yellow-100 text-yellow-800' : 'bg-[#5997ac]/10 text-[#5997ac]'"
-                      >
-                        {{ bookedForBadge(a) }}
-                      </span>
-                    </div>
-                    <div class="mt-1 text-xs text-gray-500">{{ bookedForMeta(a) }}</div>
-                    <div v-if="bookedForDetails(a)" class="mt-1 text-xs text-gray-500">{{ bookedForDetails(a) }}</div>
-                  </td>
-                  <td class="px-4 py-3">
-                    <div class="text-sm font-medium text-gray-900">{{ formatDate(a.scheduled_start) }}</div>
-                    <div class="text-xs text-gray-500">{{ formatTime(a.scheduled_start) }} – {{ formatTime(a.scheduled_end) }}</div>
-                  </td>
-                  <td class="px-4 py-3">
-                    <div class="flex items-center gap-2 flex-wrap">
-                      <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium" :class="appointmentBadge(a.status)">
-                        {{ appointmentLabel(a.status) }}
-                      </span>
-                    </div>
-                    <div v-if="normalizeStatus(a.status) === 'cancelled'" class="mt-1 text-xs text-gray-500">
-                      {{ t('psychologistAppointments.cancelledBy') }}: {{ a.canceled_by || '—' }}
-                    </div>
-                    <div v-if="normalizeStatus(a.status) === 'cancelled' && a.cancellation_reason" class="mt-1 text-xs text-gray-500">
-                      {{ t('psychologistAppointments.reason') }}: {{ a.cancellation_reason }}
-                    </div>
-                  </td>
-                  <td class="px-4 py-3 text-right">
-                    <div class="flex flex-col items-end gap-2">
-                      <div class="inline-flex flex-wrap items-center justify-end gap-2">
-                        <Link
-                          v-if="canJoinRoom(a)"
-                          :href="route('appointments.video_call.show', a.id)"
-                          class="inline-flex items-center justify-center h-8 px-2.5 rounded-lg border text-xs font-medium border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
-                          :title="t('psychologistAppointments.joinVideoCall')"
-                        >
-                          {{ t('psychologistAppointments.joinRoom') }}
-                        </Link>
-
-                        <button
-                          v-else-if="canStartCall(a)"
-                          type="button"
-                          @click="startCall(a)"
-                          :disabled="startingCallId === a.id"
-                          class="inline-flex items-center justify-center h-8 px-2.5 rounded-lg border text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100"
-                          :title="t('psychologistAppointments.startVideoCall')"
-                        >
-                          {{ startingCallId === a.id ? t('psychologistAppointments.starting') : t('psychologistAppointments.startCall') }}
-                        </button>
-
-                        <button
-                          v-if="canCancelAppointment(a)"
-                          type="button"
-                          @click="cancelWithReason(a)"
-                          :disabled="savingId === a.id"
-                          class="inline-flex items-center justify-center h-8 px-2.5 rounded-lg border text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed border-red-200 bg-red-50 text-red-700 hover:bg-red-100"
-                          :title="t('psychologistAppointments.cancelAppointment')"
-                        >
-                          {{ t('psychologistAppointments.cancel') }}
-                        </button>
-
-                        <button
-                          v-else-if="showCancelDisabled(a)"
-                          type="button"
-                          disabled
-                          class="inline-flex items-center justify-center h-8 px-2.5 rounded-lg border text-xs font-medium opacity-60 cursor-not-allowed border-gray-200 bg-gray-50 text-gray-600"
-                          :title="t('psychologistAppointments.cancelDisabled')"
-                        >
-                          {{ t('psychologistAppointments.cancel') }}
-                        </button>
-                        <button
-                          v-if="normalizeStatus(a.status) === 'completed'"
-                          type="button"
-                          @click="onNotesClick(a, $event)"
-                          class="notes-btn inline-flex items-center gap-2 h-9 px-3 rounded-lg text-xs font-medium border shadow-sm transition duration-150 hover:shadow-md"
-                          style="border-color: rgb(89 151 172 / var(--tw-bg-opacity, 1)); color: rgb(89 151 172 / var(--tw-bg-opacity, 1));"
-                          :title="t('psychologistAppointments.editNotes')"
-                          >
-                          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" :style="{ color: 'inherit' }">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5M18.5 2.5l3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                          </svg>
-                          {{ t('psychologistAppointments.notes') }}
-                        </button>
-                        <!-- Psychologist report patient button -->
-                        <button
-                          v-if="currentUser && String(currentUser.role || '').toUpperCase() === 'PSYCHOLOGIST'"
-                          @click.prevent="openReportForPatient(a)"
-                          class="inline-flex items-center justify-center h-9 w-9 rounded-full bg-white text-red-600 shadow border border-gray-100 hover:scale-105 transition ml-2"
-                          :title="t('psychologistAppointments.reportPatient')"
-                          :aria-label="t('psychologistAppointments.reportPatient')"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" aria-hidden="true">
-                            <path class="fill-current" d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
-                            <rect x="10.5" y="7" width="3" height="7" rx="0.6" class="fill-white stroke-red-600" stroke-width="0.9" />
-                            <circle class="fill-white stroke-red-600" cx="12" cy="16.5" r="1.4" stroke-width="0.9" />
-                          </svg>
-                        </button>
+              <TransitionGroup name="list" tag="div" class="space-y-4">
+                <div v-for="a in sorted" :key="a.id" class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 border rounded-lg hover:shadow-sm" :class="normalizeStatus(a.status) === 'cancelled' ? 'bg-red-50/30' : 'bg-white'">
+                  <div class="flex-1">
+                    <div class="flex items-start sm:items-center gap-3 sm:gap-4">
+                      <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2">
+                          <div class="text-sm font-medium text-gray-900 truncate">{{ bookedForName(a) }}</div>
+                          <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold" :class="String(a.booking_for || '').toLowerCase() === 'other' ? 'bg-yellow-100 text-yellow-800' : 'bg-[#5997ac]/10 text-[#5997ac]'">{{ bookedForBadge(a) }}</span>
+                        </div>
+                        <div class="mt-1 text-xs text-gray-500 truncate">{{ bookedForMeta(a) }}</div>
+                        <div v-if="bookedForDetails(a)" class="mt-1 text-xs text-gray-500">{{ bookedForDetails(a) }}</div>
                       </div>
-
                     </div>
-                  </td>
-                </tr>
-              </tbody>
-                </table>
-              </template>
 
-              <div v-else class="p-8 text-center text-gray-500">
-                <svg class="mx-auto h-10 w-10 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3M3 11h18M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-                <div class="mt-4 text-lg font-medium">{{ t('psychologistAppointments.noAppointments') }}</div>
-                <div class="mt-1 text-sm">{{ t('psychologistAppointments.noAppointmentsDesc') }}</div>
-              </div>
+                    <div class="mt-3 text-sm text-gray-700">
+                      <div class="font-medium">{{ formatDate(a.scheduled_start) }}</div>
+                      <div class="mt-1 text-xs text-gray-500">{{ formatTime(a.scheduled_start) }} – {{ formatTime(a.scheduled_end) }}</div>
+                    </div>
+                  </div>
+
+                  <div class="flex-shrink-0 flex items-center gap-2">
+                    <Link v-if="canJoinRoom(a)" :href="route('appointments.video_call.show', a.id)" class="inline-flex items-center justify-center h-8 px-2.5 rounded-lg border text-xs font-medium border-gray-200 bg-white text-gray-700 hover:bg-gray-50" :title="t('psychologistAppointments.joinVideoCall')">{{ t('psychologistAppointments.joinRoom') }}</Link>
+
+                    <button v-else-if="canStartCall(a)" type="button" @click="startCall(a)" :disabled="startingCallId === a.id" class="inline-flex items-center justify-center h-8 px-2.5 rounded-lg border text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100" :title="t('psychologistAppointments.startVideoCall')">{{ startingCallId === a.id ? t('psychologistAppointments.starting') : t('psychologistAppointments.startCall') }}</button>
+
+                    <button v-if="canCancelAppointment(a)" type="button" @click="cancelWithReason(a)" :disabled="savingId === a.id" class="inline-flex items-center justify-center h-8 px-2.5 rounded-lg border text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed border-red-200 bg-red-50 text-red-700 hover:bg-red-100" :title="t('psychologistAppointments.cancelAppointment')">{{ t('psychologistAppointments.cancel') }}</button>
+
+                    <button v-else-if="showCancelDisabled(a)" type="button" disabled class="inline-flex items-center justify-center h-8 px-2.5 rounded-lg border text-xs font-medium opacity-60 cursor-not-allowed border-gray-200 bg-gray-50 text-gray-600" :title="t('psychologistAppointments.cancelDisabled')">{{ t('psychologistAppointments.cancel') }}</button>
+
+                    <button v-if="normalizeStatus(a.status) === 'completed'" type="button" @click="onNotesClick(a, $event)" class="notes-btn inline-flex items-center gap-2 h-9 px-3 rounded-lg text-xs font-medium border shadow-sm transition duration-150 hover:shadow-md" style="border-color: rgb(89 151 172 / var(--tw-bg-opacity, 1)); color: rgb(89 151 172 / var(--tw-bg-opacity, 1));" :title="t('psychologistAppointments.editNotes')">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" :style="{ color: 'inherit' }">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5M18.5 2.5l3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                      </svg>
+                      {{ t('psychologistAppointments.notes') }}
+                    </button>
+
+                    <button v-if="currentUser && String(currentUser.role || '').toUpperCase() === 'PSYCHOLOGIST'" @click.prevent="openReportForPatient(a)" class="inline-flex items-center justify-center h-9 w-9 rounded-full bg-white text-red-600 shadow border border-gray-100 hover:scale-105 transition ml-2" :title="t('psychologistAppointments.reportPatient')" :aria-label="t('psychologistAppointments.reportPatient')">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" aria-hidden="true">
+                        <path class="fill-current" d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                        <rect x="10.5" y="7" width="3" height="7" rx="0.6" class="fill-white stroke-red-600" stroke-width="0.9" />
+                        <circle class="fill-white stroke-red-600" cx="12" cy="16.5" r="1.4" stroke-width="0.9" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </TransitionGroup>
+            </template>
+
+            <div v-else class="p-8 text-center text-gray-500">
+              <svg class="mx-auto h-10 w-10 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3M3 11h18M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              <div class="mt-4 text-lg font-medium">{{ t('psychologistAppointments.noAppointments') }}</div>
+              <div class="mt-1 text-sm">{{ t('psychologistAppointments.noAppointmentsDesc') }}</div>
+            </div>
           </div>
 
           <div class="flex items-center justify-between px-4 py-3 border-t border-gray-200">

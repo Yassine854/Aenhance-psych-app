@@ -11,7 +11,7 @@
         </div>
       </div>
 
-      <div class="mx-auto max-w-7xl p-6">
+      <div class="mx-auto max-w-8xl p-6">
         <div class="bg-white rounded-2xl shadow-lg border border-gray-100">
         <div class="bg-gradient-to-r from-[#5997ac] to-[#7ba8b7] px-6 py-4 rounded-t-2xl">
           <h2 class="text-lg font-semibold text-white">{{ t('availabilities.myAvailabilities') }}</h2>
@@ -35,16 +35,16 @@
 
               <div class="mt-3 space-y-2">
                 <template v-if="availabilityByDay[d.value].length">
-                  <div v-for="(slot, idx) in availabilityByDay[d.value]" :key="idx" class="flex items-center justify-between gap-3 bg-gray-50 rounded-lg px-3 py-2">
-                    <div class="flex items-center gap-3">
-                      <div class="text-sm font-medium text-gray-800">{{ slot.start_time }} — {{ slot.end_time }}</div>
-                    </div>
-                    <div class="flex items-center gap-2">
-                      <input type="time" v-model="slot.start_time" @change="onSlotChanged(d.value)" class="text-xs px-2 py-1 rounded-md border border-gray-200 bg-white" />
-                      <input type="time" v-model="slot.end_time" @change="onSlotChanged(d.value)" class="text-xs px-2 py-1 rounded-md border border-gray-200 bg-white" />
-                      <button type="button" @click="removeSlotForDay(d.value, idx)" class="text-sm text-red-600 hover:text-red-800" :title="t('availabilities.removeSlot')">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                      </button>
+                  <div v-for="(slot, idx) in availabilityByDay[d.value]" :key="idx" class="flex flex-col sm:flex-row sm:flex-nowrap items-start sm:items-center justify-between gap-3 bg-gray-50 rounded-lg px-3 py-2">
+                    <div class="w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                      
+                      <div class="flex items-center justify-center gap-2 w-full">
+                        <input type="time" v-model="slot.start_time" @change="onSlotChanged(d.value)" class="text-sm px-3 py-1 rounded-md border border-gray-200 bg-white w-36 sm:w-44 md:w-48 flex-shrink-0" />
+                        <input type="time" v-model="slot.end_time" @change="onSlotChanged(d.value)" class="text-sm px-3 py-1 rounded-md border border-gray-200 bg-white w-36 sm:w-44 md:w-48 flex-shrink-0" />
+                        <button type="button" @click="removeSlotForDay(d.value, idx)" class="text-sm text-red-600 hover:text-red-800 flex-shrink-0" :title="t('availabilities.removeSlot')">
+                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </template>

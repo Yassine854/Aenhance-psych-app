@@ -4,49 +4,53 @@
       <div class="flex items-center gap-3">
         <div class="h-9 w-9 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 font-semibold">💬</div>
         <div>
-          <div class="text-sm font-semibold">Session Chat</div>
-          <div class="text-xs text-gray-400">Private session messages</div>
+          <div class="text-sm font-semibold">{{ t('videoCall.chat.title') }}</div>
+          <div class="text-xs text-gray-400">{{ t('videoCall.chat.subtitle') }}</div>
         </div>
       </div>
-      <button @click="$emit('close')" class="ml-2 text-gray-400 hover:text-emerald-500 transition p-1 rounded-full focus:outline-none" aria-label="Close chat">
+      <button @click="$emit('close')" class="ml-2 text-gray-400 hover:text-emerald-500 transition p-1 rounded-full focus:outline-none" :aria-label="t('videoCall.chat.close')">
         <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
       </button>
     </div>
     <div ref="chatBody" class="chat-body flex-1 overflow-y-auto px-4 py-3 space-y-3 bg-gradient-to-b from-white to-emerald-50">
         <div v-for="msg in messages" :key="msg.id" :class="['chat-msg flex', msg.isOwn ? 'justify-end' : 'justify-start']">
           <div class="flex flex-col items-end" v-if="msg.isOwn">
-            <div class="inline-block max-w-xs px-4 py-2 rounded-2xl shadow text-sm bg-emerald-500 text-white font-medium">
+            <div class="w-full sm:w-auto max-w-[72%] px-3 py-2 rounded-2xl shadow text-sm bg-emerald-500 text-white font-medium break-words overflow-hidden box-border">
               <span v-if="msg.type === 'text'">{{ msg.text }}</span>
               <div v-else-if="msg.type === 'file'">
-                <div class="file-card flex items-center gap-3">
-                  <div class="file-thumb h-12 w-12 flex items-center justify-center rounded-md bg-emerald-600/10 text-emerald-50 overflow-hidden">
-                    <img v-if="isImage(msg)" :src="msg.fileUrl" class="h-full w-full object-cover" />
+                <div class="file-card flex flex-wrap items-start sm:items-center gap-3 w-full">
+                  <div class="file-thumb h-16 w-16 sm:h-12 sm:w-12 flex-shrink-0 flex items-center justify-center rounded-md bg-emerald-600/10 text-emerald-50 overflow-hidden">
+                    <img v-if="isImage(msg)" :src="msg.fileUrl" class="max-h-full max-w-full object-contain" />
                     <svg v-else class="h-6 w-6 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
                   </div>
-                  <div class="min-w-0">
+                  <div class="min-w-0 flex-1">
                     <div class="text-sm font-medium truncate">{{ msg.fileName }}</div>
                     <div class="text-xs text-emerald-100 mt-0.5">{{ formatSize(msg.fileSize) }}</div>
                   </div>
-                  <a :href="msg.fileUrl" :download="msg.fileName" class="ml-3 inline-flex items-center px-3 py-1.5 bg-white/10 text-white rounded-full text-xs hover:bg-white/20">Download</a>
+                  <div class="mt-2 sm:mt-0 sm:ml-3 flex-shrink-0">
+                    <a :href="msg.fileUrl" :download="msg.fileName" class="inline-flex items-center px-3 py-1.5 bg-white/10 text-white rounded-full text-xs hover:bg-white/20">{{ t('videoCall.chat.download') }}</a>
+                  </div>
                 </div>
               </div>
             </div>
-            <div class="text-xs text-gray-400 mt-1 pr-1">You</div>
+            <div class="text-xs text-gray-400 mt-1 pr-1">{{ t('videoCall.chat.you') }}</div>
           </div>
           <div class="flex flex-col items-start" v-else>
-            <div class="inline-block max-w-xs px-4 py-2 rounded-2xl shadow text-sm bg-gray-100 text-gray-900 font-medium">
+            <div class="w-full sm:w-auto max-w-[72%] px-3 py-2 rounded-2xl shadow text-sm bg-gray-100 text-gray-900 font-medium break-words overflow-hidden box-border">
               <span v-if="msg.type === 'text'">{{ msg.text }}</span>
               <div v-else-if="msg.type === 'file'">
-                <div class="file-card flex items-center gap-3">
-                  <div class="file-thumb h-12 w-12 flex items-center justify-center rounded-md bg-gray-100 text-gray-600 overflow-hidden">
-                    <img v-if="isImage(msg)" :src="msg.fileUrl" class="h-full w-full object-cover" />
+                <div class="file-card flex flex-wrap items-start sm:items-center gap-3 w-full">
+                  <div class="file-thumb h-16 w-16 sm:h-12 sm:w-12 flex-shrink-0 flex items-center justify-center rounded-md bg-gray-100 text-gray-600 overflow-hidden">
+                    <img v-if="isImage(msg)" :src="msg.fileUrl" class="max-h-full max-w-full object-contain" />
                     <svg v-else class="h-6 w-6 text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
                   </div>
-                  <div class="min-w-0">
+                  <div class="min-w-0 flex-1">
                     <div class="text-sm font-medium truncate">{{ msg.fileName }}</div>
                     <div class="text-xs text-gray-400 mt-0.5">{{ formatSize(msg.fileSize) }}</div>
                   </div>
-                  <a :href="msg.fileUrl" :download="msg.fileName" class="ml-3 inline-flex items-center px-3 py-1.5 bg-emerald-500 text-white rounded-full text-xs hover:bg-emerald-600">Download</a>
+                  <div class="mt-2 sm:mt-0 sm:ml-3 flex-shrink-0">
+                    <a :href="msg.fileUrl" :download="msg.fileName" class="inline-flex items-center px-3 py-1.5 bg-emerald-500 text-white rounded-full text-xs hover:bg-emerald-600">{{ t('videoCall.chat.download') }}</a>
+                  </div>
                 </div>
               </div>
             </div>
@@ -55,16 +59,20 @@
         </div>
       </div>
     <form class="chat-input flex items-center gap-2 px-4 py-3 border-t bg-white" @submit.prevent="sendMessage">
-      <input v-model="input" type="text" class="flex-1 border border-gray-200 rounded-full px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-200 focus:outline-none bg-emerald-50" placeholder="Type a message..." :disabled="!sessionActive" @focus="emitOpened" />
+      <input v-model="input" type="text" class="flex-1 border border-gray-200 rounded-full px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-200 focus:outline-none bg-emerald-50" :placeholder="t('videoCall.chat.placeholder')" :disabled="!sessionActive" @focus="emitOpened" />
       <input ref="fileInput" type="file" class="hidden" @change="handleFile" :disabled="!sessionActive" />
-      <button type="button" class="p-2 text-emerald-600 hover:bg-emerald-100 rounded-full transition" @click="triggerFile" :disabled="!sessionActive" title="Attach file"><svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.586-6.586a4 4 0 10-5.656-5.656l-6.586 6.586"/></svg></button>
-      <button type="submit" class="px-4 py-2 text-sm bg-emerald-500 text-white rounded-full hover:bg-emerald-600 transition disabled:opacity-50" :disabled="!input || !sessionActive">Send</button>
+      <button type="button" class="p-2 text-emerald-600 hover:bg-emerald-100 rounded-full transition" @click="triggerFile" :disabled="!sessionActive" :title="t('videoCall.chat.attach')"><svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.586-6.586a4 4 0 10-5.656-5.656l-6.586 6.586"/></svg></button>
+      <button type="submit" class="px-4 py-2 text-sm bg-emerald-500 text-white rounded-full hover:bg-emerald-600 transition disabled:opacity-50" :disabled="!input || !sessionActive">{{ t('videoCall.chat.send') }}</button>
     </form>
   </div>
 </template>
 
 <script setup>
-import { ref, watch, nextTick } from 'vue'
+import { ref, watch, nextTick, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
+
+const i18n = useI18n()
+const { t } = i18n
 
 const emit = defineEmits(['new-message', 'close', 'chat-opened'])
 
@@ -165,6 +173,8 @@ watch(() => props.sessionActive, (active) => {
 function emitOpened() {
   emit('chat-opened')
 }
+
+
 
 // Expose receiveMessage and scrollToBottom for parent
 defineExpose({ receiveMessage, scrollToBottom })

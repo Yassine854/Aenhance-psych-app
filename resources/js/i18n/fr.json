@@ -1260,7 +1260,16 @@
       "attachFile": "Joindre un fichier",
       "download": "Télécharger",
       "you": "Vous",
-      "send": "Envoyer"
+      "send": "Envoyer",
+      "title": "Chat de session",
+      "subtitle": "Messages privés de la session",
+      "open": "Ouvrir le chat",
+      "placeholder": "Tapez un message...",
+      "attach": "Joindre un fichier"
+    },
+    "viewMode": {
+      "cover": "Remplir (rogner)",
+      "fit": "Ajuster"
     },
     "rating": {
       "title": "Évaluer cette session",

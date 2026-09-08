@@ -1392,8 +1392,17 @@
     "attachFile": "Attach file",
     "download": "Download",
     "you": "You",
-    "send": "Send"
+    "send": "Send",
+    "title": "Session Chat",
+    "subtitle": "Private session messages",
+    "open": "Open chat",
+    "placeholder": "Type a message...",
+    "attach": "Attach file"
   },
+    "viewMode": {
+      "cover": "Fill (crop)",
+      "fit": "Fit"
+    },
   "rating": {
     "title": "Rate this session",
     "submit": "Submit rating",

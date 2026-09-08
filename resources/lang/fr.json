@@ -7,4 +7,18 @@
     "updated_success": "Rendez-vous mis à jour avec succès.",
     "cancelled_success": "Rendez-vous annulé avec succès."
   }
+  ,
+  "videoCall": {
+    "chat": {
+      "title": "Chat de session",
+      "subtitle": "Messages privés de la session",
+      "close": "Fermer le chat",
+      "you": "Vous",
+      "placeholder": "Tapez un message...",
+        "attach": "Joindre un fichier",
+        "open": "Ouvrir le chat",
+      "download": "Télécharger",
+      "send": "Envoyer"
+    }
+  }
 }

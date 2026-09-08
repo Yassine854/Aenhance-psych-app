@@ -174,7 +174,18 @@
                     </td>
                     <td class="px-4 py-3 text-right">
                       <div class="inline-flex items-center justify-end gap-2">
-                        <button @click="show(p)" :title="t('psychologistPayouts.viewDetails')" :aria-label="t('psychologistPayouts.viewDetails')" class="inline-flex items-center justify-center h-9 w-9 rounded-full bg-white text-indigo-600 shadow border border-gray-100 hover:scale-105 transition">
+                        <button
+                          @click="show(p)"
+                          :title="t('psychologistPayouts.viewDetails')"
+                          :aria-label="t('psychologistPayouts.viewDetails')"
+                          :aria-pressed="selected && selected.id === p.id"
+                          :class="[
+                            selected && selected.id === p.id
+                              ? 'bg-[rgb(89,151,172)] border-[rgb(89,151,172)] text-white'
+                              : 'bg-white border-[rgb(89,151,172)] text-[rgb(89,151,172)]',
+                            'inline-flex items-center justify-center h-9 w-9 rounded-full shadow border hover:scale-105 hover:bg-[rgb(89,151,172)] hover:border-[rgb(89,151,172)] hover:text-white transition'
+                          ]"
+                        >
                           <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
                             <path d="M14 2v6h6" />
