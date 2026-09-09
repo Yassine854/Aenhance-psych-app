@@ -12,8 +12,8 @@
             <div>
               <div class="text-white text-lg font-semibold">{{ patient?.name || t('notesBook.patient') }}</div>
               <div class="text-sm text-white/90">
-                {{ t('notesBook.sessions', { count: noteCount }) }}
-                <span v-if="patient?.age"> • {{ t('notesBook.yrs', { age: patient.age }) }}</span>
+                {{ sessionsText }}
+                <span v-if="patient?.age"> • {{ yrsText }}</span>
               </div>
             </div>
           </div>
@@ -178,6 +178,24 @@ const visible = computed(() => {
 })
 
 const noteCount = computed(() => notes.value.length)
+
+const sessionsText = computed(() => {
+  try {
+    const count = Number(noteCount.value ?? 0)
+    return t('notesBook.sessions', { count })
+  } catch {
+    return t('notesBook.sessions', { count: 0 })
+  }
+})
+
+const yrsText = computed(() => {
+  try {
+    const age = props.patient?.age ?? ''
+    return t('notesBook.yrs', { age })
+  } catch {
+    return t('notesBook.yrs', { age: '' })
+  }
+})
 
 const avatarUrl = computed(() => {
   try {

@@ -76,10 +76,14 @@
 
             <Link
               :href="backHref"
-              class="inline-flex items-center justify-center h-9 px-3 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50"
+              class="inline-flex items-center justify-center h-8 sm:h-9 px-2 sm:px-3 rounded-lg border border-gray-200 bg-white text-xs sm:text-sm font-medium text-gray-700 hover:bg-gray-50 gap-2 min-w-[40px] sm:min-w-0"
+              :title="t('videoCall.back')"
               @click.prevent="hangUpAndLeave"
             >
-              {{ t('videoCall.back') }}
+              <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path d="M15 19l-7-7 7-7" />
+              </svg>
+              <span class="hidden sm:inline truncate">{{ t('videoCall.back') }}</span>
             </Link>
       </div>
     </div>
@@ -101,31 +105,31 @@
         playsinline
       ></video>
 
-      <div v-if="showRemotePlaceholder" class="absolute inset-0 flex items-center justify-center">
+      <div v-if="showRemotePlaceholder" class="absolute inset-0 flex items-center justify-center remote-placeholder-container">
         <div class="text-center text-white">
-          <div class="mx-auto h-28 w-28 sm:h-32 sm:w-32 rounded-full bg-white/10 border border-white/15 backdrop-blur flex items-center justify-center shadow-xl">
-            <span class="text-4xl sm:text-5xl font-semibold tracking-tight">{{ remoteInitials }}</span>
+          <div class="mx-auto remote-placeholder-avatar rounded-full bg-white/10 border border-white/15 backdrop-blur flex items-center justify-center shadow-xl">
+            <span class="remote-placeholder-initials font-semibold tracking-tight">{{ remoteInitials }}</span>
           </div>
           <div class="mt-3">
-            <p class="text-lg sm:text-xl font-semibold">{{ remoteDisplayName }}</p>
-            <div class="mt-1 flex items-center justify-center gap-2 text-sm text-white/75">
-              <span v-if="remoteRoleLabel">{{ remoteRoleLabel }}</span>
+            <p class="remote-placeholder-name font-semibold truncate">{{ remoteDisplayName }}</p>
+            <div class="mt-1 flex items-center justify-center gap-2 remote-placeholder-meta text-white/75">
+              <span v-if="remoteRoleLabel" class="remote-role-label">{{ remoteRoleLabel }}</span>
               <span v-if="connectionState === 'connected' && remoteAudioEnabled === false" class="inline-flex items-center gap-1">
-                <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2">
+                <svg viewBox="0 0 24 24" class="remote-placeholder-icon" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M12 1a3 3 0 0 0-3 3v6" />
                   <path d="M19 10v2a7 7 0 0 1-11.2 5.6" />
                   <path d="M12 19v4" />
                   <path d="M23 1 1 23" />
                 </svg>
-                <span class="text-xs">{{ t('videoCall.muted') }}</span>
+                <span class="remote-placeholder-meta-text">{{ t('videoCall.muted') }}</span>
               </span>
               <span v-if="connectionState === 'connected' && remoteVideoEnabled === false" class="inline-flex items-center gap-1">
-                <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2">
+                <svg viewBox="0 0 24 24" class="remote-placeholder-icon" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M23 7l-7 5 7 5V7z" />
                   <path d="M1 1l22 22" />
                   <path d="M14 8H6a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-2" />
                 </svg>
-                <span class="text-xs">{{ t('videoCall.cameraOff') }}</span>
+                <span class="remote-placeholder-meta-text">{{ t('videoCall.cameraOff') }}</span>
               </span>
             </div>
           </div>
@@ -299,18 +303,27 @@
         </div>
       </div>
 
-      <div v-if="connectionState === 'waiting'" class="absolute inset-0 flex items-center justify-center px-6 pointer-events-none">
-        <div class="max-w-md w-full rounded-2xl bg-black/55 border border-white/10 backdrop-blur p-6 text-center text-white">
-          <div class="mx-auto h-10 w-10 rounded-full bg-white/10 flex items-center justify-center mb-3">
-            <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M12 20v-6" />
-              <path d="M12 14l4-4" />
-              <path d="M12 14l-4-4" />
-              <path d="M20 12a8 8 0 1 0-16 0" />
-            </svg>
+      <div v-if="connectionState === 'waiting'" class="absolute inset-0 flex items-center justify-center px-4 sm:px-6">
+        <div class="w-full max-w-lg rounded-2xl bg-black/60 border border-white/10 backdrop-blur p-6 sm:p-8 text-center text-white">
+          <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-emerald-500/15 mb-4">
+            <svg viewBox="0 0 24 24" class="h-8 w-8 text-emerald-400" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 20v-6"/><path d="M12 14l4-4"/><path d="M12 14l-4-4"/><path d="M20 12a8 8 0 1 0-16 0"/></svg>
           </div>
-          <p class="font-semibold">Waiting for the other participant…</p>
-          <p class="text-sm text-white/75 mt-1">Keep this tab open. The call will connect automatically.</p>
+          <h3 class="text-lg sm:text-xl font-semibold mb-2">{{ t('videoCall.waitingTitle') }}</h3>
+          <p class="text-sm sm:text-base text-white/80 mb-4">{{ t('videoCall.waitingDesc') }}</p>
+
+          <div class="flex items-center justify-center gap-2 sm:gap-3 mb-3">
+            <button type="button" @click="copyRoomId" class="inline-flex items-center gap-2 px-3 py-2 rounded-md bg-white/10 hover:bg-white/15 text-sm sm:text-sm" :title="t('videoCall.copyRoom')">
+              <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 9h10v10H9z"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/></svg>
+              <span class="hidden sm:inline">{{ t('videoCall.copyRoom') }}</span>
+            </button>
+
+            <button type="button" @click="shareRoom" class="inline-flex items-center gap-2 px-3 py-2 rounded-md bg-emerald-500/90 hover:bg-emerald-600 text-white text-sm" :title="t('videoCall.shareLink')">
+              <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/><path d="M16 6l-4-4-4 4"/><path d="M12 2v13"/></svg>
+              <span class="hidden sm:inline">{{ t('videoCall.shareLink') }}</span>
+            </button>
+          </div>
+
+          <p class="text-xs text-white/60">{{ t('videoCall.waitingTip') }}</p>
         </div>
       </div>
     </div>
@@ -1352,6 +1365,21 @@ async function copyRoomId() {
   }
 }
 
+async function shareRoom() {
+  try {
+    const url = typeof location !== 'undefined' ? location.href : String(props.roomId)
+    if (navigator.share) {
+      await navigator.share({ title: t('videoCall.shareTitle'), text: t('videoCall.shareText', { room: props.roomId }), url })
+      return
+    }
+    // fallback: copy url
+    await navigator.clipboard.writeText(url)
+    try { alert(t('videoCall.copiedToClipboard')) } catch {}
+  } catch (e) {
+    try { console.error(e) } catch {}
+  }
+}
+
 function hangUp() {
   try {
     // Mark presence off in backend (best-effort)
@@ -1765,6 +1793,31 @@ onBeforeUnmount(() => {
   opacity: 1;
 }
 .chat-badge { box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
+
+/* Responsive remote placeholder styles - scale smoothly with viewport/zoom */
+.remote-placeholder-container {
+  padding: 0.5rem;
+}
+.remote-placeholder-avatar {
+  width: clamp(56px, 18vw, 128px);
+  height: clamp(56px, 18vw, 128px);
+}
+.remote-placeholder-initials {
+  font-size: clamp(1.25rem, 6vw, 2.75rem);
+}
+.remote-placeholder-name {
+  font-size: clamp(1rem, 3.5vw, 1.25rem);
+}
+.remote-placeholder-meta {
+  font-size: clamp(.75rem, 2.5vw, .95rem);
+}
+.remote-placeholder-meta .remote-placeholder-icon {
+  width: clamp(14px, 2.5vw, 18px);
+  height: clamp(14px, 2.5vw, 18px);
+}
+.remote-placeholder-meta .remote-placeholder-meta-text {
+  font-size: clamp(.65rem, 2.2vw, .85rem);
+}
 </style>
 
 <style scoped>
