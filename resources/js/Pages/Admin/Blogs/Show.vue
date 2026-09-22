@@ -34,10 +34,14 @@
 
     <div class="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.45fr)_360px]">
       <article class="overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-sm">
-        <img v-if="coverImage" :src="coverImage" :alt="blog.title" class="max-h-[420px] w-full object-cover" />
+        <div v-if="coverImage" class="overflow-hidden rounded-3xl bg-white shadow-lg">
+          <div class="flex items-center justify-center p-4">
+            <img :src="coverImage" :alt="blog.title" loading="lazy" class="max-w-full max-h-[680px] object-contain" />
+          </div>
+        </div>
 
         <div class="p-6 lg:p-8">
-          <div class="quill-renderer max-w-none" v-html="blog.content"></div>
+          <div class="quill-renderer max-w-none" v-html="blog.content" :dir="contentDirection"></div>
         </div>
       </article>
 
@@ -64,6 +68,7 @@
 <script setup>
 import { Head, Link, router } from '@inertiajs/vue3'
 import { computed } from 'vue'
+import { isRtl } from '@/utils/rtl'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import { resolveStorageUrl } from '@/utils/storage'
 import Swal from 'sweetalert2'
@@ -78,6 +83,10 @@ const blog = computed(() => props.blog)
 const coverImage = computed(() => resolveStorageUrl(blog.value.featured_image) || '')
 const formattedPublishedAt = computed(() => formatDateTime(blog.value.published_at))
 const formattedUpdatedAt = computed(() => formatDateTime(blog.value.updated_at))
+const contentDirection = computed(() => {
+  const raw = String(blog.value.content || '').replace(/<[^>]*>/g, '').trim()
+  return isRtl(raw) ? 'rtl' : 'ltr'
+})
 
 function formatDateTime(value) {
   if (!value) return '—'
@@ -117,6 +126,17 @@ async function confirmDelete() {
   color: rgb(55 65 81);
   font-size: 1rem;
   line-height: 1.85;
+}
+
+.quill-renderer[dir="rtl"] {
+  direction: rtl;
+  text-align: right;
+}
+
+.quill-renderer[dir="rtl"] :deep(ul),
+.quill-renderer[dir="rtl"] :deep(ol) {
+  padding-left: 0;
+  padding-right: 1.5rem;
 }
 
 .quill-renderer :deep(h1),
@@ -180,6 +200,14 @@ async function confirmDelete() {
 .quill-renderer :deep(a) {
   color: rgb(14 116 144);
   text-decoration: underline;
+}
+
+/* Ensure images inside quill content are fully visible */
+.quill-renderer :deep(img) {
+  max-width: 100%;
+  height: auto;
+  object-fit: contain;
+  background: white;
 }
 
 .quill-renderer :deep(.ql-align-center) {

@@ -23,6 +23,7 @@
               <input
                 v-model="form.title"
                 type="text"
+                :dir="directionFor(form.title)"
                 class="mt-2 block w-full rounded-2xl border-gray-300 px-4 py-3 text-lg font-medium shadow-sm focus:border-[rgb(89,151,172)] focus:ring-[rgb(89,151,172)]"
                 placeholder="Write a clear, specific headline"
               />
@@ -37,6 +38,7 @@
               <textarea
                 v-model="form.excerpt"
                 rows="4"
+                :dir="directionFor(form.excerpt)"
                 class="mt-2 block w-full rounded-2xl border-gray-300 px-4 py-3 shadow-sm focus:border-[rgb(89,151,172)] focus:ring-[rgb(89,151,172)]"
                 placeholder="Short summary used in listings, previews, and share cards"
               />
@@ -105,8 +107,8 @@
             >
               <input ref="fileInput" type="file" accept="image/*" class="hidden" @change="handleFileChange" />
 
-              <div v-if="imageResolved" class="relative h-full w-full">
-                <img :src="imageResolved" alt="Cover preview" class="h-full w-full object-cover" />
+              <div v-if="imageResolved" class="relative h-full w-full bg-white flex items-center justify-center p-4">
+                <img :src="imageResolved" alt="Cover preview" class="max-w-full max-h-[600px] object-contain bg-white" />
                 <button
                   type="button"
                   class="absolute right-4 top-4 inline-flex h-10 w-10 items-center justify-center rounded-full bg-red-600 text-white shadow-lg shadow-red-900/20 transition hover:bg-red-700"
@@ -175,6 +177,7 @@
 <script setup>
 import { Link } from '@inertiajs/vue3'
 import { computed, onBeforeUnmount, ref } from 'vue'
+import { isRtl } from '@/utils/rtl'
 import { resolveStorageUrl } from '@/utils/storage'
 import RichTextEditor from './RichTextEditor.vue'
 
@@ -195,6 +198,10 @@ const fileInput = ref(null)
 const imageObjectUrl = ref('')
 
 const excerptLength = computed(() => String(props.form.excerpt || '').length)
+
+function directionFor(value) {
+  return isRtl(String(value || '')) ? 'rtl' : 'ltr'
+}
 
 const imageResolved = computed(() => {
   if (imageObjectUrl.value) return imageObjectUrl.value

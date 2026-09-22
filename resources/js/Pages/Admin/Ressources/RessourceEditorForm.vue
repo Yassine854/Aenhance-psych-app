@@ -21,6 +21,7 @@
               <input
                 v-model="form.title"
                 type="text"
+                :dir="directionFor(form.title)"
                 class="mt-2 block w-full rounded-2xl border-gray-300 px-4 py-3 text-lg font-medium shadow-sm focus:border-[rgb(89,151,172)] focus:ring-[rgb(89,151,172)]"
                 placeholder="Workbook, guide, checklist..."
               />
@@ -171,6 +172,7 @@
 <script setup>
 import { Link } from '@inertiajs/vue3'
 import { computed, onBeforeUnmount, ref } from 'vue'
+import { isRtl } from '@/utils/rtl'
 import { resolveStorageUrl } from '@/utils/storage'
 import RichTextEditor from '../Blogs/RichTextEditor.vue'
 
@@ -190,6 +192,10 @@ const fileInput = ref(null)
 const pdfObjectUrl = ref('')
 
 const descriptionLength = computed(() => stripHtml(props.form.description || '').length)
+
+function directionFor(value) {
+  return isRtl(String(value || '')) ? 'rtl' : 'ltr'
+}
 
 const resolvedPdfUrl = computed(() => {
   if (pdfObjectUrl.value) return pdfObjectUrl.value

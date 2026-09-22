@@ -90,7 +90,7 @@
             <tr v-for="ressource in sortedRessources" :key="ressource.id" class="hover:bg-gray-50">
               <td class="px-4 py-4 text-sm text-gray-700">#{{ ressource.id }}</td>
               <td class="px-4 py-4">
-                <div class="truncate text-sm font-semibold text-gray-900">{{ ressource.title }}</div>
+                <div :dir="(String(ressource.title||'') && /[\u0590-\u06FF]/.test(ressource.title)) ? 'rtl' : 'ltr'" class="truncate text-sm font-semibold text-gray-900">{{ ressource.title }}</div>
               </td>
               <td class="px-4 py-4 text-sm text-gray-700">{{ formatDate(ressource.published_at) }}</td>
               <td class="px-4 py-4 text-sm text-gray-700">

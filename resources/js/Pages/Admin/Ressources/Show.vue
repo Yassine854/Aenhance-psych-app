@@ -44,7 +44,7 @@
       <article class="overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-sm">
         <div class="p-6 lg:p-8">
           <h2 class="text-lg font-semibold text-gray-900">Description</h2>
-          <div v-if="ressource.description" class="ressource-description mt-4 max-w-none" v-html="ressource.description"></div>
+          <div v-if="ressource.description" class="ressource-description mt-4 max-w-none" v-html="ressource.description" :dir="descriptionDirection"></div>
           <p v-else class="mt-4 text-base leading-7 text-gray-700">No description provided.</p>
 
           <div v-if="pdfUrl" class="mt-8 rounded-3xl border border-gray-200 bg-gray-50 p-5">
@@ -94,6 +94,7 @@
 <script setup>
 import { Head, Link, router } from '@inertiajs/vue3'
 import { computed } from 'vue'
+import { isRtl } from '@/utils/rtl'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import { resolveStorageUrl } from '@/utils/storage'
 import Swal from 'sweetalert2'
@@ -108,6 +109,10 @@ const ressource = computed(() => props.ressource)
 const pdfUrl = computed(() => resolveStorageUrl(ressource.value.pdf) || '')
 const formattedPublishedAt = computed(() => formatDateTime(ressource.value.published_at))
 const formattedUpdatedAt = computed(() => formatDateTime(ressource.value.updated_at))
+const descriptionDirection = computed(() => {
+  const raw = String(ressource.value.description || '').replace(/<[^>]*>/g, '').trim()
+  return isRtl(raw) ? 'rtl' : 'ltr'
+})
 
 function formatDateTime(value) {
   if (!value) return '—'
@@ -222,5 +227,16 @@ async function confirmDelete() {
 
 .ressource-description :deep(.ql-align-justify) {
   text-align: justify;
+}
+
+.ressource-description[dir="rtl"] {
+  direction: rtl;
+  text-align: right;
+}
+
+.ressource-description[dir="rtl"] :deep(ul),
+.ressource-description[dir="rtl"] :deep(ol) {
+  padding-left: 0;
+  padding-right: 1.5rem;
 }
 </style>

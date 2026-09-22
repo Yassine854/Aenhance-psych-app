@@ -1,6 +1,7 @@
 <script setup>
 import { Head, Link } from '@inertiajs/vue3'
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch, nextTick } from 'vue'
+import { isRtl } from '@/utils/rtl'
 import { useI18n } from 'vue-i18n'
 import Navbar from '@/Components/Navbar.vue'
 import Footer from '@/Components/Footer.vue'
@@ -87,6 +88,12 @@ function formatDate(value) {
 
 function selectRessource(ressourceId) {
   selectedRessourceId.value = ressourceId
+  nextTick(() => {
+    const el = document.getElementById(`article-${ressourceId}`)
+    if (el && el.scrollIntoView) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  })
 }
 </script>
 
@@ -133,7 +140,7 @@ function selectRessource(ressourceId) {
                 </span>
                 <span>{{ formatDate(selectedRessource.published_at) }}</span>
               </div>
-              <h2 class="mt-4 text-3xl font-bold text-gray-900 md:text-4xl">{{ selectedRessource.title }}</h2>
+              <h2 :dir="isRtl(String(selectedRessource.title || '')) ? 'rtl' : 'ltr'" class="mt-4 text-3xl font-bold text-gray-900 md:text-4xl">{{ selectedRessource.title }}</h2>
               <div
                 v-if="selectedRessource.description"
                 class="ressource-content mt-4 max-w-3xl text-base text-gray-600 md:text-lg"
@@ -200,6 +207,7 @@ function selectRessource(ressourceId) {
             <!-- Resource Articles -->
             <article
               v-for="ressource in remainingRessources"
+              :id="`article-${ressource.id}`"
               :key="ressource.id"
               class="overflow-hidden rounded-lg bg-white shadow-sm ring-1 ring-gray-100"
             >
@@ -211,14 +219,15 @@ function selectRessource(ressourceId) {
                   </span>
                 </div>
 
-                <h3 class="mt-4 text-2xl font-bold text-gray-900">{{ ressource.title }}</h3>
+                <button @click.prevent="selectRessource(ressource.id)" :dir="isRtl(String(ressource.title || '')) ? 'rtl' : 'ltr'" :class="isRtl(String(ressource.title || '')) ? 'mt-4 text-2xl font-bold text-gray-900 text-right w-full cursor-pointer force-rtl' : 'mt-4 text-2xl font-bold text-gray-900 text-left w-full cursor-pointer'">{{ ressource.title }}</button>
                 <p class="mt-3 text-sm text-gray-500">
                   {{ t('ressources.by') }} {{ ressource.author?.name || t('ressources.team') }}
                 </p>
                 <div
                   v-if="ressource.description"
-                  class="ressource-content mt-4 border-l-4 border-[#5997ac] pl-4 text-base text-gray-600"
                   v-html="ressource.description"
+                  :dir="isRtl(String(ressource.description || '')) ? 'rtl' : 'ltr'"
+                  :class="isRtl(String(ressource.description || '')) ? 'ressource-content mt-4 text-base text-gray-600 text-right force-rtl' : 'ressource-content mt-4 border-l-4 border-[#5997ac] pl-4 text-base text-gray-600'"
                 ></div>
 
                 <div class="mt-6 flex flex-wrap items-center gap-3">
@@ -282,7 +291,7 @@ function selectRessource(ressourceId) {
                 <div class="text-xs uppercase tracking-[0.18em] text-gray-500">
                   {{ t('ressources.sidebar.current') }}
                 </div>
-                <div class="mt-2 font-semibold text-gray-900">
+                <div :dir="isRtl(String(selectedRessource?.title || '')) ? 'rtl' : 'ltr'" class="mt-2 font-semibold text-gray-900">
                   {{ selectedRessource?.title || t('ressources.noResource') }}
                 </div>
                 <div v-if="selectedRessource" class="mt-2 text-gray-500">
@@ -308,7 +317,7 @@ function selectRessource(ressourceId) {
                   class="block w-full text-left transition hover:opacity-80" 
                   @click="selectRessource(ressource.id)"
                 >
-                  <div class="text-sm font-semibold text-gray-900">
+                  <div :dir="isRtl(String(ressource.title || '')) ? 'rtl' : 'ltr'" class="text-sm font-semibold text-gray-900">
                     {{ ressource.title }}
                   </div>
                   <div class="mt-1 text-xs uppercase tracking-[0.18em] text-gray-500">
@@ -426,5 +435,15 @@ iframe {
     font-size: 1.2rem;
     line-height: 1.65rem;
   }
+}
+
+/* Force RTL ordering for resource titles/descriptions */
+.force-rtl {
+  direction: rtl !important;
+  unicode-bidi: embed;
+}
+
+.force-rtl > * {
+  direction: rtl !important;
 }
 </style>

@@ -97,7 +97,7 @@
               <td class="px-4 py-4 text-sm text-gray-700">#{{ blog.id }}</td>
               <td class="px-4 py-4">
                 <div class="flex items-start gap-4">
-                  <img v-if="blog.featured_image" :src="resolveStorageUrl(blog.featured_image)" :alt="blog.title" class="h-16 w-24 rounded-2xl object-cover" />
+                  <img v-if="blog.featured_image" :src="resolveStorageUrl(blog.featured_image)" :alt="blog.title" class="h-16 w-24 rounded-2xl object-contain bg-white" />
                   <div class="min-w-0">
                     <div class="truncate text-sm font-semibold text-gray-900">{{ blog.title }}</div>
                     <p class="mt-2 line-clamp-2 max-w-md text-sm leading-6 text-gray-600">{{ blog.excerpt || blog.content }}</p>

@@ -1,6 +1,7 @@
 <script setup>
 import { Head, Link } from '@inertiajs/vue3'
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref, nextTick, watch } from 'vue'
+import { isRtl } from '@/utils/rtl'
 import { useI18n } from 'vue-i18n'
 import Navbar from '@/Components/Navbar.vue'
 import Footer from '@/Components/Footer.vue'
@@ -35,8 +36,25 @@ onMounted(() => {
 })
 
 const visibleBlogs = computed(() => props.blogs?.data || [])
-const featuredBlog = computed(() => visibleBlogs.value[0] || null)
-const remainingBlogs = computed(() => visibleBlogs.value.slice(1))
+
+const selectedBlogId = ref(null)
+
+watch(visibleBlogs, (items) => {
+  const firstId = items[0]?.id ?? null
+  const hasCurrent = items.some((item) => item.id === selectedBlogId.value)
+
+  if (!hasCurrent) selectedBlogId.value = firstId
+}, { immediate: true })
+
+const featuredBlog = computed(() => {
+  const items = visibleBlogs.value
+  return items.find((b) => b.id === selectedBlogId.value) || items[0] || null
+})
+
+const remainingBlogs = computed(() => {
+  if (!featuredBlog.value) return visibleBlogs.value
+  return visibleBlogs.value.filter((b) => b.id !== featuredBlog.value.id)
+})
 const paginationLinks = computed(() => props.blogs?.links || [])
 
 function formatDate(value) {
@@ -59,6 +77,23 @@ function formatDate(value) {
 
 function articleAnchor(blogId) {
   return `#article-${blogId}`
+}
+
+function contentDirFromHtml(html) {
+  const raw = String(html || '').replace(/<[^>]*>/g, '').trim()
+  return isRtl(raw) ? 'rtl' : 'ltr'
+}
+
+function selectBlog(id) {
+  if (!id) return
+  selectedBlogId.value = id
+
+  nextTick(() => {
+    const el = document.getElementById(`article-${id}`)
+    if (el && el.scrollIntoView) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  })
 }
 </script>
 
@@ -110,10 +145,13 @@ function articleAnchor(blogId) {
                 <span>{{ formatDate(featuredBlog.published_at) }}</span>
                 <span v-if="featuredBlog.category">{{ featuredBlog.category }}</span>
               </div>
-              <h2 class="mt-4 text-3xl font-bold text-gray-900 md:text-4xl">
+              <h2 :dir="isRtl(String(featuredBlog.title || '')) ? 'rtl' : 'ltr'" class="mt-4 text-3xl font-bold text-gray-900 md:text-4xl">
                 {{ featuredBlog.title }}
               </h2>
-              <p class="mt-4 max-w-3xl text-base leading-8 text-gray-600 md:text-lg">
+              <p
+                :dir="isRtl(String(featuredBlog.excerpt || featuredBlog.content_preview)) ? 'rtl' : 'ltr'"
+                :class="isRtl(String(featuredBlog.excerpt || featuredBlog.content_preview)) ? 'mt-4 text-base leading-8 text-gray-600 md:text-lg text-right' : 'mt-4 text-base leading-8 text-gray-600 md:text-lg'"
+              >
                 {{ featuredBlog.excerpt || featuredBlog.content_preview }}
               </p>
             </div>
@@ -123,7 +161,8 @@ function articleAnchor(blogId) {
                 v-if="featuredBlog.featured_image"
                 :src="resolveStorageUrl(featuredBlog.featured_image)"
                 :alt="featuredBlog.title"
-                class="mb-8 h-[320px] w-full rounded-3xl object-cover shadow-sm"
+                loading="lazy"
+                class="mb-6 mx-auto w-full sm:w-auto sm:max-w-2xl rounded-2xl shadow-lg border border-gray-100 object-contain block max-h-[80vh]"
               />
 
               <div class="flex flex-wrap items-center gap-4 border-b border-gray-100 pb-5 text-sm text-gray-500">
@@ -132,7 +171,7 @@ function articleAnchor(blogId) {
                 </span>
               </div>
 
-              <div class="blog-content mt-8" v-html="featuredBlog.content"></div>
+              <div class="blog-content mt-8" v-html="featuredBlog.content" :dir="contentDirFromHtml(featuredBlog.content)"></div>
             </div>
           </section>
 
@@ -163,19 +202,7 @@ function articleAnchor(blogId) {
               :key="blog.id"
               class="overflow-hidden rounded-lg bg-white shadow-sm ring-1 ring-gray-100"
             >
-              <div 
-                class="grid grid-cols-1 gap-0 lg:grid-cols-[minmax(0,280px)_minmax(0,1fr)]" 
-                :class="{ 'lg:grid-cols-1': !blog.featured_image }"
-              >
-                <div v-if="blog.featured_image" class="relative min-h-[220px] bg-gray-100 lg:min-h-full">
-                  <img
-                    :src="resolveStorageUrl(blog.featured_image)"
-                    :alt="blog.title"
-                    class="absolute inset-0 h-full w-full object-cover"
-                  />
-                </div>
-
-                <div class="p-6 md:p-8">
+              <div class="p-6 md:p-8">
                   <div class="flex flex-wrap items-center gap-3 text-xs font-semibold uppercase tracking-[0.18em] text-gray-500">
                     <span>{{ formatDate(blog.published_at) }}</span>
                     <span 
@@ -186,22 +213,20 @@ function articleAnchor(blogId) {
                     </span>
                   </div>
 
-                  <h3 class="mt-4 text-2xl font-bold text-gray-900">
+                  <button @click.prevent="selectBlog(blog.id)" :dir="isRtl(String(blog.title || '')) ? 'rtl' : 'ltr'" :class="isRtl(String(blog.title || '')) ? 'mt-4 text-2xl font-bold text-gray-900 text-right w-full cursor-pointer force-rtl' : 'mt-4 text-2xl font-bold text-gray-900 text-left w-full cursor-pointer'">
                     {{ blog.title }}
-                  </h3>
+                  </button>
                   <p class="mt-3 text-sm text-gray-500">
                     {{ t('blogs.by') }} {{ blog.author?.name || t('blogs.team') }}
                   </p>
-                  <p 
-                    v-if="blog.excerpt" 
-                    class="mt-4 border-l-4 border-[#af5166] pl-4 text-base leading-7 text-gray-600"
+                  <p
+                    v-if="blog.excerpt"
+                    :dir="isRtl(String(blog.excerpt || '')) ? 'rtl' : 'ltr'"
+                    :class="isRtl(String(blog.excerpt || '')) ? 'mt-4 text-base leading-7 text-gray-600 text-right force-rtl' : 'mt-4 border-l-4 border-[#af5166] pl-4 text-base leading-7 text-gray-600'"
                   >
                     {{ blog.excerpt }}
                   </p>
-
-                  <div class="blog-content mt-8" v-html="blog.content"></div>
                 </div>
-              </div>
             </article>
 
             <!-- Pagination -->
@@ -247,9 +272,9 @@ function articleAnchor(blogId) {
                 <div class="text-xs uppercase tracking-[0.18em] text-gray-500">
                   {{ t('blogs.sidebar.latest') }}
                 </div>
-                <div class="mt-2 font-semibold text-gray-900">
-                  {{ featuredBlog?.title || t('blogs.noArticle') }}
-                </div>
+                  <div :dir="isRtl(String(featuredBlog?.title || '')) ? 'rtl' : 'ltr'" class="mt-2 font-semibold text-gray-900">
+                    {{ featuredBlog?.title || t('blogs.noArticle') }}
+                  </div>
                 <div v-if="featuredBlog" class="mt-2 text-gray-500">
                   {{ formatDate(featuredBlog.published_at) }}
                 </div>
@@ -268,14 +293,14 @@ function articleAnchor(blogId) {
                 :key="blog.id" 
                 class="border-b border-gray-100 pb-4 last:border-b-0 last:pb-0"
               >
-                <a :href="articleAnchor(blog.id)" class="block transition hover:opacity-80">
-                  <div class="text-sm font-semibold text-gray-900">
-                    {{ blog.title }}
-                  </div>
+                <button @click.prevent="selectBlog(blog.id)" class="block w-full text-left transition hover:opacity-80">
+                      <div :dir="isRtl(String(blog.title || '')) ? 'rtl' : 'ltr'" class="text-sm font-semibold text-gray-900">
+                        {{ blog.title }}
+                      </div>
                   <div class="mt-1 text-xs uppercase tracking-[0.18em] text-gray-500">
                     {{ formatDate(blog.published_at) }}
                   </div>
-                </a>
+                </button>
               </li>
             </ul>
           </div>
@@ -377,5 +402,15 @@ function articleAnchor(blogId) {
     font-size: 1.2rem;
     line-height: 1.65rem;
   }
+}
+
+/* Force correct RTL ordering for titles/excerpts when detected as RTL */
+.force-rtl {
+  direction: rtl !important;
+  unicode-bidi: embed;
+}
+
+.force-rtl > * {
+  direction: rtl !important;
 }
 </style>

@@ -40,6 +40,7 @@
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import Quill from 'quill'
 import 'quill/dist/quill.snow.css'
+import { isRtl } from '@/utils/rtl'
 
 const props = defineProps({
   modelValue: { type: String, default: '' },
@@ -77,11 +78,29 @@ function applyHtml(value) {
     quillInstance.clipboard.dangerouslyPasteHTML(nextValue)
   }
   isApplyingExternalValue = false
+  // adjust direction after applying external content
+  updateDirectionFromEditor()
 }
 
 function handleTextChange() {
   if (!quillInstance || isApplyingExternalValue) return
   emit('update:modelValue', getEditorHtml())
+}
+
+function updateDirectionFromEditor() {
+  if (!quillInstance) return
+  const text = quillInstance.getText ? quillInstance.getText() : (quillInstance.root?.innerText || '')
+  const dir = isRtl(text) ? 'rtl' : 'ltr'
+  try {
+    quillInstance.root.setAttribute('dir', dir)
+    if (dir === 'rtl') {
+      quillInstance.root.style.textAlign = 'right'
+    } else {
+      quillInstance.root.style.textAlign = ''
+    }
+  } catch (e) {
+    /* ignore DOM errors */
+  }
 }
 
 watch(() => props.modelValue, (value) => {
@@ -107,7 +126,12 @@ onMounted(async () => {
   })
 
   applyHtml(props.modelValue)
-  quillInstance.on('text-change', handleTextChange)
+  // ensure direction matches initial content
+  updateDirectionFromEditor()
+  quillInstance.on('text-change', () => {
+    updateDirectionFromEditor()
+    handleTextChange()
+  })
 })
 
 onBeforeUnmount(() => {
