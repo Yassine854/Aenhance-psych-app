@@ -286,6 +286,7 @@ const menuGroups = [
         subItems: [
           { name: "Ressources", path: "/admin/ressources", pro: false },
           { name: "Blogs", path: "/admin/blogs", pro: false },
+          { name: "Pages", path: "/admin/pages", pro: false },
           { name: "App Fee", path: "/app-fees", pro: false },
         ],
       },

@@ -6,10 +6,9 @@
 
     <Navbar 
       :canLogin="canLogin" 
-      :canRegister="canRegister" 
+      :canRegister="canRegister"
       :authUser="authUser" 
     />
-
     <!-- Hero Carousel Section -->
     <div class="relative w-full h-[450px] sm:h-[500px] md:h-[550px] lg:h-[580px] overflow-hidden bg-white"
       @mouseenter="stopAutoPlay"
@@ -40,7 +39,6 @@
           <div class="max-w-xl lg:max-w-2xl text-white" :class="locale === 'ar' ? 'text-right' : ''">
             <h1 class="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-2 md:mb-3 drop-shadow-lg">{{ t(slide.titleKey) }}</h1>
             <p class="text-xs sm:text-sm md:text-base mb-3 md:mb-4 leading-relaxed drop-shadow-md">{{ t(slide.descriptionKey) }}</p>
-            
           </div>
         </div>
       </div>
@@ -89,21 +87,14 @@
             class="text-3xl md:text-4xl font-bold text-[#5997ac] mb-6 transition-all duration-1000"
             :class="telehealthVisible ? 'animate-slide-down opacity-100' : 'opacity-0 -translate-y-10'"
           >
-            {{ t('sections.mentalTelehealth.title') }}
+            {{ localized(sitePages.mentalTelehealth, 'title') || t('sections.mentalTelehealth.title') }}
           </h2>
           <div class="max-w-xl text-left">
-            <p 
+            <div
               class="text-gray-700 text-sm md:text-base leading-relaxed mb-4 transition-all duration-1000 delay-200"
               :class="telehealthVisible ? 'animate-fade-in opacity-100' : 'opacity-0'"
-            >
-              {{ t('sections.mentalTelehealth.paragraph1') }}
-            </p>
-            <p 
-              class="text-gray-700 text-sm md:text-base leading-relaxed mb-6 transition-all duration-1000 delay-300"
-              :class="telehealthVisible ? 'animate-fade-in opacity-100' : 'opacity-0'"
-            >
-              {{ t('sections.mentalTelehealth.paragraph2') }}
-            </p>
+              v-html="localized(sitePages.mentalTelehealth, 'content') || t('sections.mentalTelehealth.paragraph')"
+            ></div>
             <div class="flex justify-center">
               <Link
                 :href="route('telemental-health')"
@@ -139,67 +130,22 @@
     </button>
   </div>
 
-  <!-- AEnhance Values Section -->
+  <!-- AEnhance Values Section (simplified to ensure balanced tags) -->
   <section ref="valuesSection" class="bg-white py-12 md:py-16 lg:py-20">
     <div class="container mx-auto px-4 sm:px-6 lg:px-8">
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
-        
-        <!-- AEnhance Logo Image -->
-        <div 
-          class="flex justify-center order-2 lg:order-1 transition-all duration-1000 delay-400"
-          :class="valuesVisible ? 'animate-slide-right opacity-100' : 'opacity-0 -translate-x-10'"
-        >
-          <img src="/storage/aenhance.svg" alt="AEnhance Logo" class="w-48 h-48 sm:w-52 sm:h-52 md:w-56 md:h-56 lg:w-64 lg:h-64 object-contain hover:scale-105 transition-transform duration-500" />
+        <div class="flex justify-center order-2 lg:order-1">
+          <img src="/storage/aenhance.svg" alt="AEnhance Logo" class="w-48 h-48 object-contain" />
         </div>
-
-        <!-- AEnhance Values Content -->
         <div class="flex flex-col items-center order-1 lg:order-2">
-          <h2 
-            class="text-3xl md:text-4xl font-bold text-[#5997ac] mb-6 transition-all duration-1000"
-            :class="valuesVisible ? 'animate-slide-down opacity-100' : 'opacity-0 -translate-y-10'"
-          >
-            {{ t('sections.aenhanceValues.title') }}
-          </h2>
-          <div class="max-w-xl space-y-4 text-left">
-            <div 
-              class="transition-all duration-1000 delay-200"
-              :class="valuesVisible ? 'animate-fade-in opacity-100' : 'opacity-0'"
-            >
-              <p class="text-gray-700 text-sm md:text-base leading-relaxed">
-                <strong class="text-gray-800 font-bold">{{ t('sections.aenhanceValues.accessibility.title') }}:</strong> {{ t('sections.aenhanceValues.accessibility.description') }}
-              </p>
-            </div>
-            <div 
-              class="transition-all duration-1000 delay-300"
-              :class="valuesVisible ? 'animate-fade-in opacity-100' : 'opacity-0'"
-            >
-              <p class="text-gray-700 text-sm md:text-base leading-relaxed">
-                <strong class="text-gray-800 font-bold">{{ t('sections.aenhanceValues.qualityCare.title') }}:</strong> {{ t('sections.aenhanceValues.qualityCare.description') }}
-              </p>
-            </div>
-            <div 
-              class="transition-all duration-1000 delay-400"
-              :class="valuesVisible ? 'animate-fade-in opacity-100' : 'opacity-0'"
-            >
-              <p class="text-gray-700 text-sm md:text-base leading-relaxed">
-                <strong class="text-gray-800 font-bold">{{ t('sections.aenhanceValues.privacy.title') }}:</strong> {{ t('sections.aenhanceValues.privacy.description') }}
-              </p>
-            </div>
-            <div class="flex justify-center pt-2 relative z-10">
-              <Link
-                :href="route('who-we-are')"
-                class="relative z-20 pointer-events-auto px-5 py-2.5 bg-[#af5166] hover:bg-[#8d3d4f] text-white text-sm rounded-lg transition-all duration-1000 delay-600 flex items-center gap-2 hover:scale-105 hover:shadow-lg"
-                :class="valuesVisible ? 'animate-pop-in opacity-100' : 'opacity-0 scale-75'"
-              >
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
-                </svg>
-                {{ t('sections.aenhanceValues.button') }}
-              </Link>
-            </div>
+          <h2 class="text-3xl md:text-4xl font-bold text-[#5997ac] mb-6">{{ localized(sitePages.aenhanceValues, 'title') || t('sections.aenhanceValues.title') }}</h2>
+          <div class="text-gray-700 text-sm md:text-base leading-relaxed mb-4" v-html="localized(sitePages.aenhanceValues, 'content') || t('sections.aenhanceValues.accessibility.description')"></div>
+          <div class="flex justify-center pt-2 relative z-10">
+            <Link :href="route('who-we-are')" class="px-5 py-2.5 bg-[#af5166] text-white rounded-lg">
+              {{ t('sections.aenhanceValues.button') }}
+            </Link>
           </div>
         </div>
-
       </div>
     </div>
   </section>
@@ -352,21 +298,15 @@
             class="text-3xl md:text-4xl font-bold text-[#5997ac] mb-6 transition-all duration-1000"
             :class="supportVisible ? 'animate-slide-down opacity-100' : 'opacity-0 -translate-y-10'"
           >
-            {{ t('sections.youNeedSupport.title') }}
+              {{ localized(sitePages.youNeedSupport, 'title') || t('sections.youNeedSupport.title') }}
           </h2>
-          <div class="max-w-xl text-left">
-            <p 
-              class="text-gray-700 text-sm md:text-base leading-relaxed mb-4 transition-all duration-1000 delay-200"
-              :class="supportVisible ? 'animate-fade-in opacity-100' : 'opacity-0'"
-            >
-              {{ t('sections.youNeedSupport.paragraph1') }}
-            </p>
-            <p 
+            <div class="max-w-xl text-left">
+            <div 
               class="text-gray-700 text-sm md:text-base leading-relaxed mb-6 transition-all duration-1000 delay-300"
               :class="supportVisible ? 'animate-fade-in opacity-100' : 'opacity-0'"
             >
-              {{ t('sections.youNeedSupport.paragraph2') }}
-            </p>
+                <p v-html="localized(sitePages.youNeedSupport, 'content') || t('sections.youNeedSupport.paragraph')"></p>
+            </div>
             <div class="flex justify-center">
               <Link
                 :href="route('register')"
@@ -413,21 +353,15 @@
             class="text-3xl md:text-4xl font-bold text-[#5997ac] mb-6 transition-all duration-1000"
             :class="joinTeamVisible ? 'animate-slide-down opacity-100' : 'opacity-0 -translate-y-10'"
           >
-            {{ t('sections.joinOurTeam.title') }}
+              {{ localized(sitePages.joinOurTeam, 'title') || t('sections.joinOurTeam.title') }}
           </h2>
-          <div class="max-w-xl text-left">
-            <p 
-              class="text-gray-700 text-sm md:text-base leading-relaxed mb-4 transition-all duration-1000 delay-200"
-              :class="joinTeamVisible ? 'animate-fade-in opacity-100' : 'opacity-0'"
-            >
-              {{ t('sections.joinOurTeam.paragraph1') }}
-            </p>
-            <p 
+            <div class="max-w-xl text-left">
+            <div 
               class="text-gray-700 text-sm md:text-base leading-relaxed mb-6 transition-all duration-1000 delay-300"
               :class="joinTeamVisible ? 'animate-fade-in opacity-100' : 'opacity-0'"
             >
-              {{ t('sections.joinOurTeam.paragraph2') }}
-            </p>
+                <p v-html="localized(sitePages.joinOurTeam, 'content') || t('sections.joinOurTeam.paragraph')"></p>
+            </div>
             <div class="flex justify-center">
               <Link
                 :href="route('join-our-team')"
@@ -457,6 +391,7 @@ import { useI18n } from "vue-i18n";
 import { ref, onMounted, computed, onUnmounted } from "vue";
 import Navbar from '@/Components/Navbar.vue';
 import Footer from '@/Components/Footer.vue';
+import { usePage } from '@inertiajs/vue3'
 
 defineProps({
   canLogin: { type: Boolean },
@@ -538,6 +473,18 @@ const languages = [
   { code: "en", label: "🇬🇧 English" },
   { code: "ar", label: "🇸🇦 العربية" },
 ];
+
+// server-provided site pages (populated in routes/web.php)
+const pageState = usePage()
+// `pageState.props` shape can vary; compute a reactive sitePages object that follows either shape
+const sitePages = computed(() => pageState.props?.value?.site_pages ?? pageState.props?.site_pages ?? {})
+
+function localized(pageObj, fieldBase) {
+  if (!pageObj) return ''
+  const lang = locale.value || 'en'
+  const key = `${fieldBase}_${lang}`
+  return pageObj[key] || ''
+}
 
 // Set language
 function setLang(lang) {

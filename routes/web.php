@@ -28,6 +28,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Controllers\AppFeeController;
+use App\Models\SitePage;
 use App\Http\Controllers\Admin\BlogController;
 use App\Http\Controllers\Admin\RessourceController;
 use App\Http\Controllers\Admin\PaymentsController;
@@ -59,6 +60,23 @@ Route::get('/', function () {
     if ($user && $user->isPsychologist()) {
         $props['psychologist'] = $user->psychologistProfile;
     }
+
+    // Load site pages used on the welcome page
+    $keys = ['mentalTelehealth', 'mentalTelehealth_2', 'aenhanceValues', 'youNeedSupport', 'joinOurTeam'];
+    $pages = SitePage::whereIn('key', $keys)->get()->keyBy('key')->map(function($p) {
+        return [
+            'id' => $p->id,
+            'key' => $p->key,
+            'title_en' => $p->title_en,
+            'title_fr' => $p->title_fr,
+            'title_ar' => $p->title_ar,
+            'content_en' => $p->content_en,
+            'content_fr' => $p->content_fr,
+            'content_ar' => $p->content_ar,
+        ];
+    })->toArray();
+
+    $props['site_pages'] = $pages;
 
     return Inertia::render('Welcome', $props);
 })->name('home');
@@ -243,6 +261,9 @@ Route::middleware(['auth'])->group(function () {
 
         // Ressources (Admin)
         Route::resource('/admin/ressources', RessourceController::class)->names('admin.ressources');
+
+        // Site Pages (Admin CRUD)
+        Route::resource('/admin/pages', App\Http\Controllers\Admin\SitePageController::class)->names('admin.pages');
 
         // Payouts (Admin)
         Route::get('/admin/payouts', [App\Http\Controllers\Admin\PayoutsController::class, 'index'])->name('admin.payouts.index');
