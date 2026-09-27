@@ -126,13 +126,90 @@ function onFileChange(e) {
   if (file) form.remove_profile_image = false
 }
 
+// Compress an image File to be at most `maxKb` kilobytes. Returns a File (JPEG) or the original File on failure.
+async function compressImageFile(file, maxKb = 1024) {
+  if (!file || !(file instanceof File)) return file;
+  const maxBytes = maxKb * 1024;
+  if (file.size <= maxBytes) return file;
+
+  const dataUrl = await new Promise((resolve, reject) => {
+    const fr = new FileReader();
+    fr.onerror = () => reject(new Error('Failed to read file'));
+    fr.onload = () => resolve(fr.result);
+    fr.readAsDataURL(file);
+  });
+
+  const img = await new Promise((resolve, reject) => {
+    const i = new Image();
+    i.onload = () => resolve(i);
+    i.onerror = () => reject(new Error('Image load error'));
+    i.src = dataUrl;
+  });
+
+  let canvas = document.createElement('canvas');
+  let ctx = canvas.getContext('2d');
+  let width = img.width;
+  let height = img.height;
+  canvas.width = width;
+  canvas.height = height;
+  ctx.drawImage(img, 0, 0, width, height);
+
+  // Try decreasing quality first
+  let quality = 0.9;
+  const tryBlob = async (q) => await new Promise((res) => canvas.toBlob(res, 'image/jpeg', q));
+  let blob = await tryBlob(quality);
+
+  while (blob && blob.size > maxBytes && quality > 0.1) {
+    quality = Math.max(0.05, quality - 0.15);
+    blob = await tryBlob(quality);
+  }
+
+  // If still too big, progressively downscale and try again
+  while (blob && blob.size > maxBytes && width > 100 && height > 100) {
+    width = Math.round(width * 0.9);
+    height = Math.round(height * 0.9);
+    const tmpCanvas = document.createElement('canvas');
+    tmpCanvas.width = width;
+    tmpCanvas.height = height;
+    const tmpCtx = tmpCanvas.getContext('2d');
+    tmpCtx.drawImage(canvas, 0, 0, canvas.width, canvas.height, 0, 0, width, height);
+    // replace canvas
+    canvas = tmpCanvas;
+    blob = await new Promise((res) => canvas.toBlob(res, 'image/jpeg', quality));
+  }
+
+  if (!blob) return file;
+
+  // Create a File from the blob
+  const ext = 'jpg';
+  const name = file.name ? file.name.replace(/\.[^/.]+$/, '') + '.' + ext : 'image.' + ext;
+  try {
+    return new File([blob], name, { type: 'image/jpeg', lastModified: Date.now() });
+  } catch (e) {
+    blob.lastModified = Date.now();
+    blob.name = name;
+    return blob;
+  }
+}
+
 function removePhoto() {
   form.profile_image = null
   form.remove_profile_image = true
 }
 
-function submit() {
+async function submit() {
   syncPhoneToForm()
+
+  // Compress profile image client-side if larger than 1024 KB
+  try {
+    if (form.profile_image) {
+      const compressed = await compressImageFile(form.profile_image, 1024);
+      form.profile_image = compressed;
+    }
+  } catch (e) {
+    console.warn('Image compression failed:', e)
+  }
+
   form.post(route('patient.profile.update'), {
     forceFormData: true,
     preserveScroll: true,

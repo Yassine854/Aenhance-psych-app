@@ -169,6 +169,24 @@ function timeToMinutes(t) {
     return hh * 60 + mm
 }
 
+function calculateAgeFromDateString(dateString) {
+    if (!dateString) return null
+    const d = new Date(dateString)
+    if (Number.isNaN(d.getTime())) return null
+    const today = new Date()
+    let age = today.getFullYear() - d.getFullYear()
+    const m = today.getMonth() - d.getMonth()
+    if (m < 0 || (m === 0 && today.getDate() < d.getDate())) {
+        age--
+    }
+    return age
+}
+
+function isAtLeastAge(dateString, minAge) {
+    const age = calculateAgeFromDateString(dateString)
+    return age !== null && age >= minAge
+}
+
 function sortSlots(day) {
     availabilityByDay.value[day].sort((a, b) => {
         const am = timeToMinutes(a.start_time) ?? 0
@@ -294,6 +312,10 @@ function goNext() {
         stepError.value = 'Passwords do not match.'
         return
     }
+    if (!form.password || String(form.password).length < 8) {
+        stepError.value = 'Password must be at least 8 characters.'
+        return
+    }
 
     step.value = 2
 }
@@ -330,6 +352,11 @@ function goNextFromProfile() {
     }
     if (!form.date_of_birth) {
         stepError.value = 'Date of birth is required.'
+        return
+    }
+    // Ensure psychologist is at least 18
+    if (!isAtLeastAge(form.date_of_birth, 18)) {
+        stepError.value = 'You must be at least 18 years old to register as a psychologist.'
         return
     }
     if (!form.country) {
@@ -404,7 +431,74 @@ function onDrop(field, e) {
     form[field] = file
 }
 
-const submit = () => {
+// Compress an image File to be at most `maxKb` kilobytes. Returns a File (JPEG) or the original File on failure.
+async function compressImageFile(file, maxKb = 1024) {
+    if (!file || !(file instanceof File)) return file;
+    const maxBytes = maxKb * 1024;
+    if (file.size <= maxBytes) return file;
+
+    const dataUrl = await new Promise((resolve, reject) => {
+        const fr = new FileReader();
+        fr.onerror = () => reject(new Error('Failed to read file'));
+        fr.onload = () => resolve(fr.result);
+        fr.readAsDataURL(file);
+    });
+
+    const img = await new Promise((resolve, reject) => {
+        const i = new Image();
+        i.onload = () => resolve(i);
+        i.onerror = () => reject(new Error('Image load error'));
+        i.src = dataUrl;
+    });
+
+    let canvas = document.createElement('canvas');
+    let ctx = canvas.getContext('2d');
+    let width = img.width;
+    let height = img.height;
+    canvas.width = width;
+    canvas.height = height;
+    ctx.drawImage(img, 0, 0, width, height);
+
+    // Try decreasing quality first
+    let quality = 0.9;
+    const tryBlob = async (q) => await new Promise((res) => canvas.toBlob(res, 'image/jpeg', q));
+    let blob = await tryBlob(quality);
+
+    while (blob && blob.size > maxBytes && quality > 0.1) {
+        quality = Math.max(0.05, quality - 0.15);
+        blob = await tryBlob(quality);
+    }
+
+    // If still too big, progressively downscale and try again
+    while (blob && blob.size > maxBytes && width > 100 && height > 100) {
+        width = Math.round(width * 0.9);
+        height = Math.round(height * 0.9);
+        const tmpCanvas = document.createElement('canvas');
+        tmpCanvas.width = width;
+        tmpCanvas.height = height;
+        const tmpCtx = tmpCanvas.getContext('2d');
+        tmpCtx.drawImage(canvas, 0, 0, canvas.width, canvas.height, 0, 0, width, height);
+        // replace canvas
+        canvas = tmpCanvas;
+        blob = await new Promise((res) => canvas.toBlob(res, 'image/jpeg', quality));
+    }
+
+    if (!blob) return file;
+
+    // Create a File from the blob
+    const ext = 'jpg';
+    const name = file.name ? file.name.replace(/\.[^/.]+$/, '') + '.' + ext : 'image.' + ext;
+    try {
+        return new File([blob], name, { type: 'image/jpeg', lastModified: Date.now() });
+    } catch (e) {
+        // Fallback for older browsers
+        blob.lastModified = Date.now();
+        blob.name = name;
+        return blob;
+    }
+}
+
+const submit = async () => {
     stepError.value = ''
 
     if (isPsychologist.value) {
@@ -431,6 +525,29 @@ const submit = () => {
         availabilities: isPsychologist.value ? JSON.stringify(flattenedAvailabilities.value) : null,
     }))
 
+    // Compress profile images client-side if larger than 1024 KB
+    try {
+        if (form.patient_profile_image) {
+            const compressed = await compressImageFile(form.patient_profile_image, 1024);
+            form.patient_profile_image = compressed;
+        }
+        if (form.profile_image) {
+            const compressed = await compressImageFile(form.profile_image, 1024);
+            form.profile_image = compressed;
+        }
+    } catch (e) {
+        // If compression fails, proceed with original files
+        console.warn('Image compression failed:', e);
+    }
+
+    // Validate patient DOB (must be >= 18)
+    if (isPatient.value) {
+        if (!form.patient_date_of_birth || !isAtLeastAge(form.patient_date_of_birth, 18)) {
+            stepError.value = 'You must be at least 18 years old to register.'
+            return
+        }
+    }
+
     form.post(route('register'), {
         forceFormData: true,
         onFinish: () => form.reset('password', 'password_confirmation'),
@@ -442,7 +559,7 @@ const submit = () => {
     <Head :title="t('register')" />
 
     <div class="min-h-screen bg-gradient-to-br from-[#af5166] via-[#af5166] to-[#5997ac] flex items-center justify-center px-4 py-10">
-        <div class="w-full max-w-3xl">
+        <div class="w-full max-w-4xl">
             <div class="flex items-center justify-center mb-6">
                 <Link
                     :href="route('home')"
@@ -959,26 +1076,32 @@ const submit = () => {
                                                 :key="idx"
                                                 class="flex items-center gap-2"
                                             >
-                                                <input
-                                                    type="time"
-                                                    v-model="slot.start_time"
-                                                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-[#5997ac] focus:ring-[#5997ac]"
-                                                    @change="onSlotChanged(d.value)"
-                                                />
-                                                <span class="text-xs text-gray-500">to</span>
-                                                <input
-                                                    type="time"
-                                                    v-model="slot.end_time"
-                                                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-[#5997ac] focus:ring-[#5997ac]"
-                                                    @change="onSlotChanged(d.value)"
-                                                />
+                                                <div class="flex items-center gap-2 flex-1 min-w-0">
+                                                    <input
+                                                        type="time"
+                                                        v-model="slot.start_time"
+                                                        class="w-36 sm:w-44 md:w-56 rounded-md border-gray-300 shadow-sm focus:border-[#5997ac] focus:ring-[#5997ac]"
+                                                        @change="onSlotChanged(d.value)"
+                                                    />
+                                                    <span class="text-xs text-gray-500">to</span>
+                                                    <input
+                                                        type="time"
+                                                        v-model="slot.end_time"
+                                                        class="w-36 sm:w-44 md:w-56 rounded-md border-gray-300 shadow-sm focus:border-[#5997ac] focus:ring-[#5997ac]"
+                                                        @change="onSlotChanged(d.value)"
+                                                    />
+                                                </div>
 
                                                 <button
                                                     type="button"
-                                                    class="text-sm text-gray-500 hover:text-gray-800"
+                                                    class="h-8 w-8 rounded-full bg-red-500 text-white flex items-center justify-center hover:bg-red-600 flex-shrink-0"
                                                     @click="removeSlotForDay(d.value, idx)"
+                                                    :title="t('auth.register.removeSlot')"
+                                                    aria-label="Remove slot"
                                                 >
-                                                    Remove
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                                    </svg>
                                                 </button>
                                             </div>
 
