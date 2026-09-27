@@ -809,25 +809,15 @@ async function getRtcConfig(mode = 'default') {
       { urls: 'stun:stun.voipbuster.com:3478' },
     ]
 
-    // TURN server(s) — prefer providing these via environment at build time.
-    const turnServers = [
-      {
-        urls: 'turn:free.expressturn.com:3478',
-        username: '000000002104068558',
-        credential: '79ncE0c2EJ1KFNKcaQ0CUJhOL3k=',
-      },
-    ]
+    // TURN server(s) — read from build env vars (VITE_TURN_*) if provided.
+    // If not provided, no TURN servers are included (STUN-only is used).
+    const envTurnUrl = import.meta?.env?.VITE_TURN_URL || null
+    const envTurnUser = import.meta?.env?.VITE_TURN_USERNAME || null
+    const envTurnCred = import.meta?.env?.VITE_TURN_CREDENTIAL || null
 
-    // Allow overriding TURN via build env vars (recommended)
-    try {
-      const tUrl = import.meta?.env?.VITE_TURN_URL
-      const tUser = import.meta?.env?.VITE_TURN_USERNAME
-      const tPass = import.meta?.env?.VITE_TURN_CREDENTIAL
-      if (tUrl && tUser && tPass) {
-        turnServers.unshift({ urls: tUrl, username: tUser, credential: tPass })
-      }
-    } catch {
-      // ignore
+    const turnServers = []
+    if (envTurnUrl && envTurnUser && envTurnCred) {
+      turnServers.push({ urls: envTurnUrl, username: envTurnUser, credential: envTurnCred })
     }
 
     if (mode === 'stunOnly') {

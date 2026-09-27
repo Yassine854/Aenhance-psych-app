@@ -89,10 +89,10 @@
           >
             {{ localized(sitePages.mentalTelehealth, 'title') || t('sections.mentalTelehealth.title') }}
           </h2>
-          <div class="max-w-xl text-left">
+          <div class="max-w-xl">
             <div
-              class="text-gray-700 text-sm md:text-base leading-relaxed mb-4 transition-all duration-1000 delay-200"
-              :class="telehealthVisible ? 'animate-fade-in opacity-100' : 'opacity-0'"
+              :dir="locale === 'ar' ? 'rtl' : 'ltr'"
+              :class="['text-gray-700 text-sm md:text-base leading-relaxed mb-4 transition-all duration-1000 delay-200', telehealthVisible ? 'animate-fade-in opacity-100' : 'opacity-0', locale === 'ar' ? 'text-right' : 'text-left']"
               v-html="localized(sitePages.mentalTelehealth, 'content') || t('sections.mentalTelehealth.paragraph')"
             ></div>
             <div class="flex justify-center">
@@ -137,9 +137,13 @@
         <div class="flex justify-center order-2 lg:order-1">
           <img src="/storage/aenhance.svg" alt="AEnhance Logo" class="w-48 h-48 object-contain" />
         </div>
-        <div class="flex flex-col items-center order-1 lg:order-2">
+          <div class="flex flex-col items-center order-1 lg:order-2">
           <h2 class="text-3xl md:text-4xl font-bold text-[#5997ac] mb-6">{{ localized(sitePages.aenhanceValues, 'title') || t('sections.aenhanceValues.title') }}</h2>
-          <div class="text-gray-700 text-sm md:text-base leading-relaxed mb-4" v-html="localized(sitePages.aenhanceValues, 'content') || t('sections.aenhanceValues.accessibility.description')"></div>
+          <div
+            :dir="locale === 'ar' ? 'rtl' : 'ltr'"
+            :class="[ 'text-gray-700 text-sm md:text-base leading-relaxed mb-4', locale === 'ar' ? 'text-right' : 'text-left' ]"
+            v-html="localized(sitePages.aenhanceValues, 'content') || t('sections.aenhanceValues.accessibility.description')"
+          ></div>
           <div class="flex justify-center pt-2 relative z-10">
             <Link :href="route('who-we-are')" class="px-5 py-2.5 bg-[#af5166] text-white rounded-lg">
               {{ t('sections.aenhanceValues.button') }}
@@ -300,10 +304,10 @@
           >
               {{ localized(sitePages.youNeedSupport, 'title') || t('sections.youNeedSupport.title') }}
           </h2>
-            <div class="max-w-xl text-left">
+            <div class="max-w-xl">
             <div 
-              class="text-gray-700 text-sm md:text-base leading-relaxed mb-6 transition-all duration-1000 delay-300"
-              :class="supportVisible ? 'animate-fade-in opacity-100' : 'opacity-0'"
+              :dir="locale === 'ar' ? 'rtl' : 'ltr'"
+              :class="['text-gray-700 text-sm md:text-base leading-relaxed mb-6 transition-all duration-1000 delay-300', supportVisible ? 'animate-fade-in opacity-100' : 'opacity-0', locale === 'ar' ? 'text-right' : 'text-left']"
             >
                 <p v-html="localized(sitePages.youNeedSupport, 'content') || t('sections.youNeedSupport.paragraph')"></p>
             </div>
@@ -355,10 +359,10 @@
           >
               {{ localized(sitePages.joinOurTeam, 'title') || t('sections.joinOurTeam.title') }}
           </h2>
-            <div class="max-w-xl text-left">
+            <div class="max-w-xl">
             <div 
-              class="text-gray-700 text-sm md:text-base leading-relaxed mb-6 transition-all duration-1000 delay-300"
-              :class="joinTeamVisible ? 'animate-fade-in opacity-100' : 'opacity-0'"
+              :dir="locale === 'ar' ? 'rtl' : 'ltr'"
+              :class="['text-gray-700 text-sm md:text-base leading-relaxed mb-6 transition-all duration-1000 delay-300', joinTeamVisible ? 'animate-fade-in opacity-100' : 'opacity-0', locale === 'ar' ? 'text-right' : 'text-left']"
             >
                 <p v-html="localized(sitePages.joinOurTeam, 'content') || t('sections.joinOurTeam.paragraph')"></p>
             </div>
