@@ -173,6 +173,10 @@ function formatSize(bytes) {
 function receiveMessage(msg) {
   if (msg.role === props.role && msg.displayName === props.displayName) return // skip own
   messages.value.push({ ...msg, isOwn: false })
+  // play a short notification sound for incoming messages
+  try {
+    playNotificationSound()
+  } catch {}
   emit('new-message')
   scrollToBottom()
 }
@@ -189,6 +193,65 @@ function emitOpened() {
 
 // Expose receiveMessage and scrollToBottom for parent
 defineExpose({ receiveMessage, scrollToBottom })
+
+// --- Audio notification helpers ---
+let _audioCtx = null
+function initAudioContext() {
+  try {
+    if (!_audioCtx) {
+      _audioCtx = new (window.AudioContext || window.webkitAudioContext)()
+    }
+  } catch (e) {
+    _audioCtx = null
+  }
+}
+
+function playNotificationSound() {
+  initAudioContext()
+  if (!_audioCtx) return
+  // resume if suspended (some browsers require a user gesture)
+  if (_audioCtx.state === 'suspended' && typeof _audioCtx.resume === 'function') {
+    _audioCtx.resume().catch(() => {})
+  }
+  try {
+    // Two short tones (higher then lower) with gentle envelope to resemble
+    // common messenger notification sounds.
+    const now = _audioCtx.currentTime
+    const gain = _audioCtx.createGain()
+    // start very low to avoid clicks
+    gain.gain.setValueAtTime(0.0001, now)
+    gain.connect(_audioCtx.destination)
+
+    const notes = [880, 660]
+    for (let i = 0; i < notes.length; i++) {
+      const osc = _audioCtx.createOscillator()
+      osc.type = 'sine'
+      osc.frequency.value = notes[i]
+      osc.connect(gain)
+
+      const start = now + i * 0.14
+      const dur = 0.12
+
+      // simple attack/decay envelope
+      gain.gain.setValueAtTime(0.0001, start)
+      gain.gain.linearRampToValueAtTime(0.08, start + 0.01)
+      gain.gain.linearRampToValueAtTime(0.0001, start + dur)
+
+      osc.start(start)
+      osc.stop(start + dur + 0.02)
+      osc.onended = () => {
+        try { osc.disconnect() } catch (e) {}
+      }
+    }
+
+    // cleanup gain shortly after tones finish
+    setTimeout(() => {
+      try { gain.disconnect() } catch (e) {}
+    }, 500)
+  } catch (e) {
+    // ignore audio errors
+  }
+}
 </script>
 
 <style scoped>

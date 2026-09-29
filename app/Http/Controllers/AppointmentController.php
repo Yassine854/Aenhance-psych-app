@@ -517,9 +517,16 @@ class AppointmentController extends Controller
 
         $returnUrl = route('payments.clictopay.return', ['appointment' => $appointment->id], true);
         $failUrl = route('payments.clictopay.fail', ['appointment' => $appointment->id], true);
-        $pageView = $request->header('Sec-CH-UA-Mobile') === '?1' || $request->boolean('is_mobile')
-            ? 'MOBILE'
-            : 'DESKTOP';
+        // Force desktop pageView to avoid ClickToPay returning mobile template URLs
+        // which can be misnamed/unsupported by the gateway for our merchant.
+        $pageView = 'DESKTOP';
+
+        // Determine language to send to ClickToPay and reuse it for normalization/logging.
+        $language = (function () {
+            $l = (string) (app()->getLocale() ?: config('services.clictopay.language', 'en'));
+            $normalized = strtolower(substr(str_replace('-', '_', trim($l)), 0, 2));
+            return in_array($normalized, ['en', 'fr', 'ar']) ? $normalized : 'en';
+        })();
 
         try {
             $currency = (string) ($appointment->currency ?: 'TND');
@@ -530,12 +537,8 @@ class AppointmentController extends Controller
                 'currency' => $client->currencyToIso4217Numeric($currency),
                 'returnUrl' => $returnUrl,
                 'failUrl' => $failUrl,
-                    // Pass short two-letter language codes (en/fr/ar) which ClickToPay accepts.
-                    'language' => (function () {
-                        $l = (string) (app()->getLocale() ?: config('services.clictopay.language', 'en'));
-                        $normalized = strtolower(substr(str_replace('-', '_', trim($l)), 0, 2));
-                        return in_array($normalized, ['en', 'fr', 'ar']) ? $normalized : 'en';
-                    })(),
+                // Pass short two-letter language codes (en/fr/ar) which ClickToPay accepts.
+                'language' => $language,
                 'description' => 'Appointment '.$appointment->id,
                 'pageView' => $pageView,
             ]);
@@ -587,8 +590,29 @@ class AppointmentController extends Controller
             ]);
         }
 
+        // Log full ClickToPay response for diagnostics.
+        try {
+            Log::debug('ClickToPay register response', $result);
+        } catch (\Throwable $_) {
+            // ignore logging errors
+        }
+
+        // Temporary normalization: if ClickToPay returned a mobile_payment HTML without
+        // a language suffix (e.g. mobile_payment.html) append the requested language
+        // before the query string (mobile_payment_en.html). This is a small workaround
+        // for gateway responses that omit the language variant.
+        $normalizedFormUrl = $formUrl;
+        if (is_string($formUrl) && preg_match('/mobile_payment(?:_([a-z]{2}))?\.html/i', $formUrl, $m)) {
+            if (empty($m[1])) {
+                $parts = explode('?', $formUrl, 2);
+                $path = rtrim($parts[0], '.html').'_'.$language.'.html';
+                $normalizedFormUrl = $path . (isset($parts[1]) ? '?' . $parts[1] : '');
+                Log::warning('ClickToPay formUrl missing language suffix; normalized', ['original' => $formUrl, 'normalized' => $normalizedFormUrl, 'language' => $language]);
+            }
+        }
+
         // Tell Inertia to do a full redirect to the external gateway page.
-        return Inertia::location($formUrl);
+        return Inertia::location($normalizedFormUrl);
     }
 
     /**
