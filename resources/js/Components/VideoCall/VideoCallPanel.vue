@@ -40,6 +40,9 @@
           >
             {{ statusLabel }}
           </span>
+          <span class="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border border-gray-200 bg-gray-50 text-gray-700">
+            ICE: {{ iceModeLabel }}
+          </span>
           <span v-if="callDurationLabel" class="inline text-xs text-gray-500">
             • {{ callDurationLabel }}
           </span>
@@ -214,7 +217,7 @@
         </div>
       </div>
 
-      <div class="absolute left-0 right-0 flex items-center justify-center px-4 bottom-24 sm:bottom-4">
+      <div class="absolute left-0 right-0 flex items-center justify-center px-4 bottom-24 sm:bottom-4 z-30">
         <div class="pointer-events-auto inline-flex items-center gap-2 sm:gap-3 px-3 py-2 rounded-2xl bg-white/10 backdrop-blur border border-white/15 shadow-xl">
           <button
             type="button"
@@ -303,8 +306,8 @@
         </div>
       </div>
 
-      <div v-if="connectionState === 'waiting'" class="absolute inset-0 flex items-center justify-center px-4 sm:px-6">
-        <div class="w-full max-w-lg rounded-2xl bg-black/60 border border-white/10 backdrop-blur p-6 sm:p-8 text-center text-white">
+      <div v-if="connectionState === 'waiting'" class="absolute inset-0 z-10 flex items-center justify-center px-4 sm:px-6 pointer-events-none">
+        <div class="pointer-events-auto w-full max-w-lg rounded-2xl bg-black/60 border border-white/10 backdrop-blur p-6 sm:p-8 text-center text-white">
           <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-emerald-500/15 mb-4">
             <svg viewBox="0 0 24 24" class="h-8 w-8 text-emerald-400" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 20v-6"/><path d="M12 14l4-4"/><path d="M12 14l-4-4"/><path d="M20 12a8 8 0 1 0-16 0"/></svg>
           </div>
@@ -368,6 +371,7 @@ const chatRef = ref(null)
 const showChat = ref(false)
 const unreadCount = ref(0)
 const sessionActive = computed(() => !!callStartedAt.value && !callEndedAt.value)
+const swalConfirmColor = 'rgb(89, 151, 172)'
 
 function toggleChat() {
   showChat.value = !showChat.value
@@ -408,6 +412,7 @@ const error = ref('')
 const isMuted = ref(false)
 const isVideoOff = ref(false)
 const isFullscreen = ref(false)
+const iceModeLabel = ref('HOST')
 
 const isLocalSpeaking = ref(false)
 const isRemoteSpeaking = ref(false)
@@ -454,6 +459,7 @@ let localSpeakOn = 0
 let localSpeakOff = 0
 let remoteSpeakOn = 0
 let remoteSpeakOff = 0
+let iceModeTimer = null
 
 const page = usePage()
 const authUser = computed(() => page.props?.value?.auth?.user ?? page.props?.auth?.user ?? null)
@@ -573,6 +579,11 @@ function resetPeerConnection() {
     if (pc) pc.close()
   } catch {}
   pc = null
+
+  try {
+    if (iceModeTimer) clearInterval(iceModeTimer)
+  } catch {}
+  iceModeTimer = null
 
   localVideoSender = null
   makingOffer = false
@@ -809,15 +820,36 @@ async function getRtcConfig(mode = 'default') {
       { urls: 'stun:stun.voipbuster.com:3478' },
     ]
 
-    // TURN server(s) — read from build env vars (VITE_TURN_*) if provided.
-    // If not provided, no TURN servers are included (STUN-only is used).
+    // TURN server(s) — read from build env vars (VITE_TURN_*).
     const envTurnUrl = import.meta?.env?.VITE_TURN_URL || null
     const envTurnUser = import.meta?.env?.VITE_TURN_USERNAME || null
     const envTurnCred = import.meta?.env?.VITE_TURN_CREDENTIAL || null
+    const turnUrl = envTurnUrl
+    const turnUser = envTurnUser
+    const turnCred = envTurnCred
+
+    function normalizeTurnUrls(rawUrl) {
+      if (!rawUrl) return []
+
+      const value = String(rawUrl).trim()
+      if (!value) return []
+
+      if (/^turns?:/i.test(value)) return [value]
+
+      const host = value.replace(/^\/+/, '')
+      return [
+        `turn:${host}?transport=udp`,
+        `turn:${host}?transport=tcp`,
+      ]
+    }
 
     const turnServers = []
-    if (envTurnUrl && envTurnUser && envTurnCred) {
-      turnServers.push({ urls: envTurnUrl, username: envTurnUser, credential: envTurnCred })
+    if (turnUrl && turnUser && turnCred) {
+      const urls = normalizeTurnUrls(turnUrl)
+      if (urls.length > 0) {
+        turnServers.push({ urls, username: turnUser, credential: turnCred })
+        try { console.debug('[webrtc] using TURN server', { urls, username: turnUser ? '***' : null }) } catch {}
+      }
     }
 
     if (mode === 'stunOnly') {
@@ -1024,22 +1056,64 @@ function setConnectionState(next) {
   connectionState.value = next
 }
 
+function setIceModeLabel(mode) {
+  iceModeLabel.value = mode
+}
+
+function normalizeIceMode(candidateType) {
+  const type = String(candidateType || '').trim().toLowerCase()
+  if (type === 'relay') return 'TURN'
+  if (type === 'srflx') return 'STUN'
+  if (type === 'host') return 'HOST'
+  return 'HOST'
+}
+
+async function refreshIceModeFromStats(peer) {
+  if (!peer || typeof peer.getStats !== 'function') return
+
+  try {
+    const stats = await peer.getStats()
+    let selectedPair = null
+
+    stats.forEach((report) => {
+      if (report.type !== 'candidate-pair') return
+      if (report.state === 'succeeded' && (report.nominated || report.selected)) {
+        selectedPair = report
+      }
+    })
+
+    if (!selectedPair && stats.forEach) {
+      stats.forEach((report) => {
+        if (report.type !== 'candidate-pair') return
+        if (report.selected || report.nominated) {
+          selectedPair = report
+        }
+      })
+    }
+
+    const localCandidate = selectedPair?.localCandidateId ? stats.get(selectedPair.localCandidateId) : null
+    if (localCandidate?.candidateType) {
+      setIceModeLabel(normalizeIceMode(localCandidate.candidateType))
+    }
+  } catch {
+    // ignore stats errors
+  }
+}
+
+function startIceModePolling(peer) {
+  if (iceModeTimer) return
+  iceModeTimer = setInterval(() => {
+    refreshIceModeFromStats(peer)
+  }, 2500)
+}
+
 async function createPeerConnection() {
   if (pc) return pc
 
-  // Start with STUN-only attempt for fastest peer-to-peer path. If that
-  // fails to connect within a short timeout, recreate the connection forcing
-  // TURN (relay) to maximize chance of success.
-  let startedWithRelay = false
-  try {
-    // Honor explicit diagnostic override at build time.
-    if (import.meta && import.meta.env && import.meta.env.VITE_FORCE_RELAY === '1') {
-      startedWithRelay = true
-    }
-  } catch {}
-
-  const initialMode = startedWithRelay ? 'relayOnly' : 'stunOnly'
-  let rtcConfig = await getRtcConfig(initialMode)
+  const forceRelay = import.meta.env.VITE_FORCE_RELAY === '1'
+  const initialMode = forceRelay ? 'relayOnly' : 'default'
+  setIceModeLabel(forceRelay ? 'TURN' : 'AUTO')
+  const rtcConfig = await getRtcConfig(initialMode)
   try { console.debug('[webrtc] rtcConfig before createPeerConnection:', rtcConfig) } catch {}
 
   // Helper to attach the standard handlers to a peer connection.
@@ -1086,7 +1160,11 @@ async function createPeerConnection() {
     peer.onconnectionstatechange = () => {
       const st = peer?.connectionState
       try { console.debug('[webrtc] connectionState changed', st) } catch {}
-      if (st === 'connected') setConnectionState('connected')
+      if (st === 'connected') {
+        setConnectionState('connected')
+        refreshIceModeFromStats(peer)
+        startIceModePolling(peer)
+      }
       else if (st === 'failed' || st === 'disconnected') setConnectionState('failed')
       else setConnectionState('connecting')
     }
@@ -1114,72 +1192,45 @@ async function createPeerConnection() {
     }
   }
 
-  // If we started with STUN-only, set a quick fallback to TURN (relay) so
-  // that environments blocking direct p2p can still connect. This timeout
-  // is conservative: short enough for responsiveness, long enough for ICE.
-  let fallbackTimer = null
-  try {
-    if (initialMode === 'stunOnly') {
-      const FALLBACK_MS = Number(import.meta?.env?.VITE_ICE_FALLBACK_MS || 8000)
-      fallbackTimer = setTimeout(async () => {
-        try {
-          if (!pc) return
-          const st = pc.connectionState
-          if (st === 'connected') return
-
-          try { pc.close() } catch {}
-          pc = null
-
-          // Recreate forcing TURN (relay-only).
-          const relayConfig = await getRtcConfig('relayOnly')
-          try { console.debug('[webrtc] falling back to TURN (relay-only) after timeout') } catch {}
-          pc = new RTCPeerConnection(relayConfig)
-          attachHandlers(pc)
-
-          // Re-add local tracks and trigger negotiation where appropriate.
-          if (localStream) {
-            for (const track of localStream.getTracks()) {
-              const sender = pc.addTrack(track, localStream)
-              if (track.kind === 'video') localVideoSender = sender
-            }
-          }
-
-          // If we're the psychologist, start offer sequence again.
-          if (props.role === 'psychologist' && ws && ws.readyState === WebSocket.OPEN) {
-            try { await makeOffer() } catch {}
-          }
-        } catch {
-          // ignore fallback errors
-        }
-      }, FALLBACK_MS)
-    }
-  } catch {
-    // ignore
-  }
-
-  // Clear fallback timer when connection succeeds or fails definitively.
-  const clearFallback = () => {
-    try { if (fallbackTimer) clearTimeout(fallbackTimer) } catch {}
-    fallbackTimer = null
-  }
-
-  const origOnConnectionStateChange = pc.onconnectionstatechange
-  pc.onconnectionstatechange = () => {
-    try { if (pc && pc.connectionState === 'connected') clearFallback() } catch {}
-    try { if (typeof origOnConnectionStateChange === 'function') origOnConnectionStateChange() } catch {}
-  }
-
   return pc
 }
 
 async function startLocalMedia() {
-  localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+  const mediaAttempts = [
+    { video: true, audio: true },
+    { video: false, audio: true },
+    { video: true, audio: false },
+  ]
+
+  let lastError = null
+  for (const constraints of mediaAttempts) {
+    try {
+      localStream = await navigator.mediaDevices.getUserMedia(constraints)
+      break
+    } catch (error) {
+      lastError = error
+      localStream = null
+    }
+  }
+
+  if (!localStream) {
+    console.warn('[webrtc] unable to access camera/microphone, continuing without local media', lastError)
+    localStream = new MediaStream()
+  }
 
   // Apply initial toggle states.
   const audioTracks = localStream.getAudioTracks()
   const videoTracks = localStream.getVideoTracks()
   audioTracks.forEach((t) => (t.enabled = !isMuted.value))
   videoTracks.forEach((t) => (t.enabled = !isVideoOff.value))
+
+  if (videoTracks.length === 0) {
+    isVideoOff.value = true
+  }
+
+  if (audioTracks.length === 0) {
+    isMuted.value = true
+  }
 
   if (localVideo.value) localVideo.value.srcObject = localStream
 
@@ -1214,13 +1265,18 @@ async function ensureLocalVideoTrack() {
   const existing = localStream.getVideoTracks()[0]
   if (existing) return existing
 
-  const camStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false })
-  const track = camStream.getVideoTracks()[0]
-  if (!track) return null
+  try {
+    const camStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+    const track = camStream.getVideoTracks()[0]
+    if (!track) return null
 
-  localStream.addTrack(track)
-  if (localVideo.value) localVideo.value.srcObject = localStream
-  return track
+    localStream.addTrack(track)
+    if (localVideo.value) localVideo.value.srcObject = localStream
+    return track
+  } catch (error) {
+    console.warn('[webrtc] camera is busy, keeping video off', error)
+    return null
+  }
 }
 
 async function makeOffer() {
@@ -1302,6 +1358,7 @@ async function toggleVideo() {
   try {
     const track = await ensureLocalVideoTrack()
     if (!track) {
+      isVideoOff.value = true
       sendMediaState()
       return
     }
@@ -1482,6 +1539,66 @@ function hangUpAndLeave() {
   router.visit(props.backHref)
 }
 
+async function handlePatientSessionEnded() {
+  try {
+    const formValues = ratingRef.value ? await ratingRef.value.open() : null
+
+    if (formValues && formValues.rating) {
+      try {
+        try {
+          await fetchJson('/sanctum/csrf-cookie', { method: 'GET' })
+        } catch {
+          // ignore
+        }
+
+        await fetchJson('/session-ratings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            session_id: sessionId.value,
+            appointment_id: props.appointmentId,
+            patient_id: authUser.value?.id || null,
+            psychologist_id: sessionPsychologistId.value || null,
+            rating: formValues.rating,
+            comment: formValues.comment || '',
+          }),
+        })
+        Swal.fire({
+          icon: 'success',
+          title: t('videoCall.feedback.thankYou'),
+          text: t('videoCall.feedback.thankYouText'),
+          confirmButtonColor: swalConfirmColor,
+        })
+      } catch (e) {
+        console.error('Failed to submit session rating', e)
+        Swal.fire({
+          icon: 'error',
+          title: t('videoCall.feedback.submitError'),
+          confirmButtonColor: swalConfirmColor,
+        })
+      }
+    }
+  } catch {
+    // ignore
+  } finally {
+    setTimeout(() => {
+      try { hangUpAndLeave() } catch {}
+    }, 600)
+  }
+}
+
+async function handleSessionEnded() {
+  await syncSessionBackend()
+  error.value = 'Session ended by the psychologist.'
+
+  if (props.role === 'patient') {
+    await handlePatientSessionEnded()
+    return
+  }
+
+  setTimeout(() => { try { hangUpAndLeave() } catch {} }, 1200)
+}
+
 onMounted(async () => {
   try {
     // Track session presence immediately.
@@ -1602,61 +1719,7 @@ onMounted(async () => {
 
       if (msg.type === 'session-ended') {
         // Psychologist ended the session.
-        await syncSessionBackend()
-        error.value = 'Session ended by the psychologist.'
-
-        // If we're the patient, prompt the rating component; parent will submit.
-        // Inside the session-ended handler for patient
-// Inside the session-ended handler for patient
-if (props.role === 'patient') {
-  try {
-    const formValues = ratingRef.value ? await ratingRef.value.open() : null
-
-    if (formValues && formValues.rating) {
-      try {
-        try {
-          await fetchJson('/sanctum/csrf-cookie', { method: 'GET' })
-        } catch {
-          // ignore
-        }
-
-        await fetchJson('/session-ratings', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            session_id: sessionId.value,
-            appointment_id: props.appointmentId,
-            patient_id: authUser.value?.id || null,
-            psychologist_id: sessionPsychologistId.value || null,
-            rating: formValues.rating,
-            comment: formValues.comment || '',
-          }),
-        })
-        Swal.fire({
-          icon: 'success',
-          title: t('videoCall.feedback.thankYou'),
-          text: t('videoCall.feedback.thankYouText'),
-          confirmButtonColor: 'rgb(89, 151, 172)',
-        })
-      } catch (e) {
-        console.error('Failed to submit session rating', e)
-        Swal.fire({ 
-          icon: 'error', 
-          title: t('videoCall.feedback.submitError'),
-          confirmButtonColor: 'rgb(89, 151, 172)'
-        })
-      }
-    }
-  } catch {
-    // ignore
-  } finally {
-    setTimeout(() => {
-      try { hangUpAndLeave() } catch {}
-    }, 600)
-  }
-} else {
-  setTimeout(() => { try { hangUpAndLeave() } catch {} }, 1200)
-}
+        await handleSessionEnded()
       }
 
       if (msg.type === 'error') {
