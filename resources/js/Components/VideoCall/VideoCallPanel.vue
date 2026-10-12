@@ -826,10 +826,45 @@ async function getRtcConfig(mode = 'default') {
     const envTurnUrl = import.meta?.env?.VITE_TURN_URL || null
     const envTurnUser = import.meta?.env?.VITE_TURN_USERNAME || null
     const envTurnCred = import.meta?.env?.VITE_TURN_CREDENTIAL || null
+    const envTurnApiKey = import.meta?.env?.VITE_TURN_API_KEY || null
+    const envTurnCredentialsUrl = import.meta?.env?.VITE_TURN_CREDENTIALS_URL || null
     const stunUrl = envStunUrl
     const turnUrl = envTurnUrl
     const turnUser = envTurnUser
     const turnCred = envTurnCred
+
+    async function fetchRuntimeTurnServers() {
+      if (!envTurnApiKey || !envTurnCredentialsUrl) return []
+
+      try {
+        const rawUrl = String(envTurnCredentialsUrl).trim()
+        if (!rawUrl) return []
+
+        const sep = rawUrl.includes('?') ? '&' : '?'
+        const url = `${rawUrl}${sep}apiKey=${encodeURIComponent(String(envTurnApiKey))}`
+        const res = await fetch(url, { method: 'GET', cache: 'no-store' })
+        if (!res.ok) return []
+
+        const data = await res.json()
+        if (!Array.isArray(data)) return []
+
+        return data
+          .filter((item) => item && item.urls)
+          .map((item) => {
+            const urls = Array.isArray(item.urls)
+              ? item.urls.map((u) => String(u).trim()).filter(Boolean)
+              : String(item.urls).trim()
+
+            return {
+              urls,
+              username: item.username ? String(item.username) : undefined,
+              credential: item.credential ? String(item.credential) : undefined,
+            }
+          })
+      } catch {
+        return []
+      }
+    }
 
     function parseUrlList(raw) {
       if (!raw) return []
@@ -872,7 +907,13 @@ async function getRtcConfig(mode = 'default') {
     const envStunServers = normalizeStunUrls(stunUrl).map((urls) => ({ urls }))
     const stunServers = [...envStunServers, ...defaultStunServers]
 
+    const runtimeTurnServers = await fetchRuntimeTurnServers()
     const turnServers = []
+    if (runtimeTurnServers.length > 0) {
+      turnServers.push(...runtimeTurnServers)
+      try { console.debug('[webrtc] using runtime TURN servers from credentials endpoint', { count: runtimeTurnServers.length }) } catch {}
+    }
+
     if (turnUrl && turnUser && turnCred) {
       const urls = normalizeTurnUrls(turnUrl)
       if (urls.length > 0) {
