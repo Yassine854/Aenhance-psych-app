@@ -810,7 +810,7 @@ async function flushPendingIce() {
 async function getRtcConfig(mode = 'default') {
   try {
     // Base STUN servers (multiple for reliability)
-    const stunServers = [
+    const defaultStunServers = [
       { urls: 'stun:stun.l.google.com:19302' },
       { urls: 'stun:stun1.l.google.com:19302' },
       { urls: 'stun:stun2.l.google.com:19302' },
@@ -820,28 +820,57 @@ async function getRtcConfig(mode = 'default') {
       { urls: 'stun:stun.voipbuster.com:3478' },
     ]
 
-    // TURN server(s) — read from build env vars (VITE_TURN_*).
+    // STUN/TURN servers read from build env vars (VITE_*).
+    // VITE_STUN_URL and VITE_TURN_URL can be a single value or a comma/newline-separated list.
+    const envStunUrl = import.meta?.env?.VITE_STUN_URL || null
     const envTurnUrl = import.meta?.env?.VITE_TURN_URL || null
     const envTurnUser = import.meta?.env?.VITE_TURN_USERNAME || null
     const envTurnCred = import.meta?.env?.VITE_TURN_CREDENTIAL || null
+    const stunUrl = envStunUrl
     const turnUrl = envTurnUrl
     const turnUser = envTurnUser
     const turnCred = envTurnCred
 
-    function normalizeTurnUrls(rawUrl) {
-      if (!rawUrl) return []
-
-      const value = String(rawUrl).trim()
-      if (!value) return []
-
-      if (/^turns?:/i.test(value)) return [value]
-
-      const host = value.replace(/^\/+/, '')
-      return [
-        `turn:${host}?transport=udp`,
-        `turn:${host}?transport=tcp`,
-      ]
+    function parseUrlList(raw) {
+      if (!raw) return []
+      return String(raw)
+        .split(/[\n,]/)
+        .map((v) => v.trim())
+        .filter(Boolean)
     }
+
+    function normalizeStunUrls(rawUrls) {
+      const values = Array.isArray(rawUrls) ? rawUrls : parseUrlList(rawUrls)
+      const out = []
+      for (const value of values) {
+        if (!value) continue
+        if (/^stuns?:/i.test(value)) out.push(value)
+        else out.push(`stun:${value.replace(/^\/+/, '')}`)
+      }
+      return [...new Set(out)]
+    }
+
+    function normalizeTurnUrls(rawUrl) {
+      const values = Array.isArray(rawUrl) ? rawUrl : parseUrlList(rawUrl)
+      const out = []
+
+      for (const value of values) {
+        if (!value) continue
+        if (/^turns?:/i.test(value)) {
+          out.push(value)
+          continue
+        }
+
+        const host = value.replace(/^\/+/, '')
+        out.push(`turn:${host}?transport=udp`)
+        out.push(`turn:${host}?transport=tcp`)
+      }
+
+      return [...new Set(out)]
+    }
+
+    const envStunServers = normalizeStunUrls(stunUrl).map((urls) => ({ urls }))
+    const stunServers = [...envStunServers, ...defaultStunServers]
 
     const turnServers = []
     if (turnUrl && turnUser && turnCred) {
