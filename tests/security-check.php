@@ -88,6 +88,10 @@ foreach ([42 => 'PATIENT', 43 => 'PSYCHOLOGIST'] as $id => $roleName) {
     check($claims['roomId'] === 'signed-room' && $claims['role'] === strtolower($roleName), 'Wrong signed identity');
     check(abs($claims['exp'] - time() - 300) <= 2, 'Wrong expiry');
 }
+config(['signaling.secret' => null]);
+$unconfigured = $tokenController($request, $appointment);
+check($unconfigured->getStatusCode() === 503, 'Missing signaling secret should report service unavailable');
+check(str_contains($unconfigured->getData(true)['message'], 'Signaling authentication'), 'Missing signaling configuration diagnostic');
 $appointment->patient_id = 99;
 $appointment->psychologist_id = 98;
 try {

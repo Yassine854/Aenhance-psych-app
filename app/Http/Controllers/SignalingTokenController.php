@@ -22,7 +22,11 @@ class SignalingTokenController extends Controller
         abort_if($session->ended_at || $session->status === 'completed', 403);
 
         $secret = (string) config('signaling.secret');
-        abort_if(strlen($secret) < 32, 503, 'Signaling authentication is not configured.');
+        if (strlen($secret) < 32) {
+            return response()->json([
+                'message' => 'Signaling authentication is not configured in Laravel. Set SIGNALING_AUTH_SECRET and refresh the configuration cache.',
+            ], 503)->header('Cache-Control', 'no-store, private');
+        }
         $payload = rtrim(strtr(base64_encode(json_encode([
             'roomId' => (string) $session->room_id,
             'role' => $role,

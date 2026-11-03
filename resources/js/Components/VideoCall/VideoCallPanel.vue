@@ -1,6 +1,6 @@
 <template>
   <div class="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden flex relative">
-    <div class="flex-1 flex flex-col">
+    <div class="flex-1 min-w-0 flex flex-col">
     <div class="flex items-center justify-between gap-3 px-4 py-3 border-b border-gray-100 bg-gradient-to-r from-white to-gray-50">
       <div class="min-w-0">
         <div class="flex items-center gap-2 min-w-0">
@@ -342,7 +342,7 @@
     </button>
 
     <transition name="slide-chat">
-      <div v-show="showChat" class="absolute top-0 right-0 bottom-0 z-50">
+      <div v-show="showChat" class="absolute top-0 right-0 bottom-0 z-50 w-full max-w-sm min-h-0">
         <VideoCallChat
           :ws="ws"
           :display-name="localDisplayName"
@@ -390,6 +390,7 @@ function onNewMessage() {
 }
 import { Link, router, usePage } from '@inertiajs/vue3'
 import Swal from 'sweetalert2'
+import { fetchConsultationJson as fetchJson } from '@/utils/consultationRequest'
 
 const props = defineProps({
   appointmentId: { type: Number, required: true },
@@ -440,6 +441,7 @@ const sessionPsychologistId = ref(null)
 let hasJoinedSession = false
 
 let ws = null
+let leavingCall = false
 let pc = null
 let localStream = null
 let pendingIce = []
@@ -572,6 +574,7 @@ const callDurationLabel = computed(() => {
 
 const stageStyle = computed(() => ({
   height: `calc(100vh - ${Number(props.heightOffset || 190)}px)`,
+  minHeight: '320px',
 }))
 
 function resetPeerConnection() {
@@ -885,90 +888,6 @@ function wsSendOrQueue(obj) {
     return
   }
   ws.send(JSON.stringify(obj))
-}
-
-function getMetaCsrfToken() {
-  try {
-    return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
-  } catch {
-    return ''
-  }
-}
-
-function getXsrfCookieToken() {
-  try {
-    const m = document.cookie.match(/(?:^|; )XSRF-TOKEN=([^;]+)/)
-    if (m && m[1]) return decodeURIComponent(m[1])
-    return ''
-  } catch {
-    return ''
-  }
-}
-
-async function fetchJson(url, options = {}) {
-  const doFetch = async () => {
-    const metaToken = getMetaCsrfToken()
-    const xsrfToken = getXsrfCookieToken()
-    const isWrite = Boolean(options.method && options.method !== 'GET')
-
-    const headers = {
-      'X-Requested-With': 'XMLHttpRequest',
-      Accept: 'application/json',
-      ...(options.headers || {}),
-    }
-
-    // Laravel accepts either X-CSRF-TOKEN (raw token) or X-XSRF-TOKEN (cookie token).
-    // Sending both makes this resilient to cases where the meta token is stale but the cookie is refreshed.
-    if (isWrite && metaToken) headers['X-CSRF-TOKEN'] = metaToken
-    if (isWrite && xsrfToken) headers['X-XSRF-TOKEN'] = xsrfToken
-
-    return fetch(url, {
-      // Use include to be resilient even if the app is served from a different host/port in dev.
-      credentials: 'include',
-      headers,
-      ...options,
-    })
-  }
-
-  const parse = async (res) => {
-    const text = await res.text()
-    let data = null
-    try {
-      data = text ? JSON.parse(text) : null
-    } catch {
-      data = null
-    }
-    return { res, data }
-  }
-
-  let first = await doFetch()
-  let { res, data } = await parse(first)
-
-  if (res.status === 419) {
-    // Try to refresh CSRF cookies (Sanctum) and retry once.
-    try {
-      await fetch('/sanctum/csrf-cookie', { method: 'GET', credentials: 'include' })
-    } catch {
-      // ignore
-    }
-
-    // Give the browser a moment to persist cookies.
-    try {
-      await new Promise((r) => setTimeout(r, 50))
-    } catch {
-      // ignore
-    }
-
-    const second = await doFetch()
-    ;({ res, data } = await parse(second))
-  }
-
-  if (!res.ok) {
-    const msg = data?.message || `Request failed (${res.status})`
-    throw new Error(msg)
-  }
-
-  return data
 }
 
 function applySession(session) {
@@ -1448,6 +1367,7 @@ async function shareRoom() {
 }
 
 function hangUp() {
+  leavingCall = true
   try {
     // Mark presence off in backend (best-effort)
     leaveSessionBackend()
@@ -1652,8 +1572,19 @@ onMounted(async () => {
     }
 
     ws.onerror = () => {
-      error.value = 'Failed to connect to signaling server.'
+      error.value = 'Unable to reach the signaling server. Check the Node service and WebSocket proxy.'
       setConnectionState('failed')
+    }
+
+    ws.onclose = (event) => {
+      if (leavingCall) return
+      setConnectionState('failed')
+      if (event.code === 1008) {
+        error.value = 'Signaling authorization was rejected. Reload the call; if it persists, check that Laravel and Node use the same SIGNALING_AUTH_SECRET and synchronized clocks.'
+      } else if (!error.value) {
+        error.value = 'The signaling connection closed. Reload this page to rejoin the consultation.'
+      }
+      console.warn('[webrtc] Signaling connection closed', { code: event.code })
     }
 
     ws.onmessage = async (event) => {
