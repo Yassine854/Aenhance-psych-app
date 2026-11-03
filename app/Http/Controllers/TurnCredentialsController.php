@@ -16,7 +16,10 @@ class TurnCredentialsController extends Controller
 
         $secret = (string) config('turn.secret');
         if ($secret === '') {
-            return response()->json(['message' => 'Temporary TURN credentials are not configured.'], 503)
+            return response()->json([
+                'code' => 'turn_not_configured',
+                'message' => 'Temporary TURN credentials are not configured on the application server.',
+            ], 503)
                 ->header('Cache-Control', 'no-store, private');
         }
 

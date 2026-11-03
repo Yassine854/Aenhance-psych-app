@@ -1,6 +1,7 @@
 import { createServer } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { verifyJoinToken } from "./auth.js";
+import { startHeartbeat } from "./heartbeat.js";
 
 const authSecret = process.env.SIGNALING_AUTH_SECRET;
 if (!authSecret || authSecret.length < 32) {
@@ -23,6 +24,7 @@ const wss = new WebSocketServer({
   maxPayload: 64 * 1024,
   perMessageDeflate: false,
 });
+startHeartbeat(wss);
 
 /**
  * @typedef {{ peers: Set<WebSocket>, roles: Map<string, WebSocket> }} Room

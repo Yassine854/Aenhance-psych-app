@@ -829,8 +829,11 @@ async function getRtcConfig(mode = 'default') {
       try {
         const data = await fetchJson(`/appointments/${props.appointmentId}/turn-credentials`, { method: 'GET', cache: 'no-store' })
         return Array.isArray(data?.iceServers) ? data.iceServers : []
-      } catch {
-        console.warn('[webrtc] Temporary TURN credentials unavailable; relay fallback is unavailable.')
+      } catch (requestError) {
+        console.warn('[webrtc] Temporary TURN credentials unavailable', { status: requestError.status })
+        error.value = 'TURN credentials are unavailable. The application server must provide relay credentials before this network can use TURN.'
+        if (mode === 'relayOnly') throw new Error(error.value)
+        setIceModeLabel('STUN ONLY')
         return []
       }
     }
@@ -864,6 +867,7 @@ async function getRtcConfig(mode = 'default') {
     }
 
     if (mode === 'relayOnly') {
+      if (!turnServers.length) throw new Error('TURN-only mode requires valid relay credentials.')
       try { console.debug('[webrtc] debug relay-only mode', { serverCount: turnServers.length }) } catch {}
       return { iceServers: turnServers, iceTransportPolicy: 'relay' }
     }
@@ -873,6 +877,10 @@ async function getRtcConfig(mode = 'default') {
     try { console.debug('[webrtc] ICE configuration', { stunCount: stunServers.length, turnCount: turnServers.length, policy: 'all' }) } catch {}
     return { iceServers }
   } catch (e) {
+    if (mode === 'relayOnly') {
+      setIceModeLabel('UNAVAILABLE')
+      throw e
+    }
     return { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] }
   }
 }
@@ -1042,8 +1050,11 @@ async function createPeerConnection() {
 
   const forceRelay = import.meta.env.VITE_FORCE_RELAY === '1'
   const initialMode = forceRelay ? 'relayOnly' : 'default'
-  setIceModeLabel(forceRelay ? 'TURN' : 'AUTO')
+  // TURN is shown only after getStats confirms a selected relay candidate.
+  setIceModeLabel('AUTO')
   const rtcConfig = await getRtcConfig(initialMode)
+  // ICE messages can arrive while the asynchronous credential request is pending.
+  if (pc) return pc
 
   // Helper to attach the standard handlers to a peer connection.
   const attachHandlers = (peer) => {
@@ -1588,6 +1599,7 @@ onMounted(async () => {
     }
 
     ws.onmessage = async (event) => {
+      try {
       let msg
       try {
         msg = JSON.parse(String(event.data))
@@ -1676,6 +1688,11 @@ onMounted(async () => {
 
       if (msg.type === 'error') {
         error.value = String(msg.message || 'Signaling error.')
+      }
+      } catch (negotiationError) {
+        error.value = negotiationError?.message || 'Failed to negotiate the media connection.'
+        setConnectionState('failed')
+        console.warn('[webrtc] Media negotiation failed', { name: negotiationError?.name })
       }
     }
 

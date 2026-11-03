@@ -29,3 +29,23 @@ During this local investigation, the public signaling health check returned 200 
 - Frontend production build and PHP syntax check.
 
 The request tests cover merged JSON/CSRF headers, stale-meta precedence, one retry with a refreshed cookie, persistent 419 handling, and preserved 503 diagnostics.
+
+## TURN credential 503 and signaling close 1006
+
+The later screenshot shows `/turn-credentials` returning 503. Chat uses WebSocket signaling and can work without any media relay. This error prevents the browser from obtaining TURN credentials; investigate credential delivery before testing Coturn ports or relay media.
+
+The application now returns `code: turn_not_configured` if its runtime `config('turn.secret')` is empty. If that code is present, set `TURN_SHARED_SECRET` (including the final T) in the environment of the Laravel deployment actually serving the request. It must match the existing Coturn `static-auth-secret`; it is different from `SIGNALING_AUTH_SECRET`. From that deployment's Laravel directory run:
+
+```bash
+php artisan config:clear
+php artisan config:cache
+php artisan tinker --execute="dump((string) config('turn.secret') !== '');"
+```
+
+The last command prints only a boolean. If it is true but the browser still receives this application error, check that PHP-FPM/long-running workers and all application instances run the same deployment/configuration; restart them through the existing deployment process if required. A generic HTML 503 instead of this JSON code points to a server/proxy failure and needs its logs/status checked. Do not share the credential endpoint's successful response.
+
+Deploy the updated frontend and rebuild it. With `VITE_FORCE_RELAY=0`, STUN/direct connections remain available when TURN credentials are unavailable, and the panel reports the missing relay fallback. In a relay-only debugging build, missing credentials stop negotiation instead of falling back silently. The TURN badge is now set only by selected-candidate statistics, not by the debug flag.
+
+Deploy the updated Node signaling sources, including `heartbeat.js`, and restart/rebuild the existing signaling process/container. Native ping/pong runs every 25 seconds independently of chat traffic to keep idle proxy connections active and clean up unresponsive sockets. Browser code 1006 means an abnormal closure; it does not identify its cause. Heartbeats mitigate idle timeouts but cannot fix a crashed upstream or proxy misconfiguration. If it recurs, correlate the timestamp with Node and reverse-proxy logs, and verify proxy WebSocket upgrade/read-timeout settings.
+
+Local runtime checks loaded a nonempty TURN secret, and isolated controller checks pass for configured/missing credentials and HMAC signing. Neither proves that the failing deployed installation is configured or that relay media works. Require HTTP 200 from the credential endpoint on both devices, then inspect the selected relay candidate pair and increasing media counters in a fresh call.

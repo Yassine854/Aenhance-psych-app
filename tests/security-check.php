@@ -100,4 +100,16 @@ try {
 } catch (Symfony\Component\HttpKernel\Exception\HttpException $e) {
     check($e->getStatusCode() === 403, 'Wrong authorization error');
 }
-echo "PASS: redirects, CSRF, response headers, blocked users, removed debug route, participant-only signaling tokens\n";
+$turnAppointment = new App\Models\Appointment(['patient_id' => 42, 'psychologist_id' => 43, 'status' => 'confirmed']);
+$turnController = new App\Http\Controllers\TurnCredentialsController;
+config(['turn.secret' => null]);
+$missingTurn = $turnController($request, $turnAppointment);
+check($missingTurn->getStatusCode() === 503 && $missingTurn->getData(true)['code'] === 'turn_not_configured', 'Missing TURN secret diagnostic');
+config(['turn.secret' => 'test-only-turn-secret']);
+$turnResponse = $turnController($request, $turnAppointment);
+$turnServer = $turnResponse->getData(true)['iceServers'][0];
+check($turnResponse->getStatusCode() === 200, 'Configured TURN endpoint failed');
+check($turnServer['credential'] === base64_encode(hash_hmac('sha1', $turnServer['username'], 'test-only-turn-secret', true)), 'Invalid TURN signature');
+check(count($turnServer['urls']) === 2, 'Expected both TURN transports');
+check(!str_contains($turnResponse->getContent(), 'test-only-turn-secret'), 'TURN shared secret exposed');
+echo "PASS: redirects, CSRF, headers, blocked users, debug route removal, signaling authorization, TURN configuration/signing\n";
