@@ -144,7 +144,7 @@ function selectRessource(ressourceId) {
               <div
                 v-if="selectedRessource.description"
                 class="ressource-content mt-4 max-w-3xl text-base text-gray-600 md:text-lg"
-                v-html="selectedRessource.description"
+                v-safe-html="selectedRessource.description"
               ></div>
             </div>
 
@@ -225,7 +225,7 @@ function selectRessource(ressourceId) {
                 </p>
                 <div
                   v-if="ressource.description"
-                  v-html="ressource.description"
+                  v-safe-html="ressource.description"
                   :dir="isRtl(String(ressource.description || '')) ? 'rtl' : 'ltr'"
                   :class="isRtl(String(ressource.description || '')) ? 'ressource-content mt-4 text-base text-gray-600 text-right force-rtl' : 'ressource-content mt-4 border-l-4 border-[#5997ac] pl-4 text-base text-gray-600'"
                 ></div>
@@ -272,7 +272,7 @@ function selectRessource(ressourceId) {
                         : 'cursor-not-allowed border-gray-100 bg-gray-50 text-gray-300',
                   ]"
                 >
-                  <span v-html="link.label"></span>
+                  <span v-safe-html="link.label"></span>
                 </Link>
               </div>
             </div>

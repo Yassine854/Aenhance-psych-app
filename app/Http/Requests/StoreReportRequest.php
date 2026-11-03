@@ -8,16 +8,14 @@ class StoreReportRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        return $this->user() && ($this->user()->isPatient() || $this->user()->isPsychologist());
     }
 
     public function rules(): array
     {
         return [
-            'reporter_id' => ['required', 'integer'],
-            'reporter_type' => ['required', 'string'],
             'reported_id' => ['required', 'integer'],
-            'reported_type' => ['required', 'string'],
+            'reported_type' => ['required', 'string', 'in:patient,psychologist'],
             'reason' => ['required', 'string', 'max:2000'],
             'proof_image' => ['nullable', 'image', 'max:5120'],
         ];

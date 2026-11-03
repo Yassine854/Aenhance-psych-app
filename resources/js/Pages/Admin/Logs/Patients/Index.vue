@@ -142,7 +142,7 @@
         <div class="text-sm text-gray-600">Showing {{ logs.from }}-{{ logs.to }} of {{ logs.total }}</div>
         <div class="flex items-center gap-2">
           <Link v-for="(link, i) in logs.links" :key="i" :href="link.url || '#'" :class="linkClasses(link)" :style="linkStyle(link)" preserve-scroll>
-            <span v-html="link.label"></span>
+            <span v-safe-html="link.label"></span>
           </Link>
         </div>
       </div>

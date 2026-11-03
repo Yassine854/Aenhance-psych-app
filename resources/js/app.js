@@ -6,6 +6,7 @@ import { createInertiaApp } from '@inertiajs/vue3';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { ZiggyVue } from '../../vendor/tightenco/ziggy';
 import { i18n } from './i18n/i18n';
+import safeHtml from './directives/safeHtml';
 
 import '../css/admin.css'
 import 'swiper/css'
@@ -28,6 +29,7 @@ createInertiaApp({
             .use(ZiggyVue)
             .use(i18n)
             .use(VueApexCharts)
+            .directive('safe-html', safeHtml)
             .mount(el);
             
     },

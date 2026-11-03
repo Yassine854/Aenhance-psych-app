@@ -134,7 +134,7 @@
             :href="link.url || '#'"
             :class="linkClasses(link)"
             preserve-scroll
-            v-html="link.label"
+            v-safe-html="link.label"
             :style="link.active ? { backgroundColor: brandColor, borderColor: brandColor, color: '#fff' } : null"
           />
         </div>

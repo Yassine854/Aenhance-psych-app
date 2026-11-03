@@ -1,5 +1,11 @@
 import { createServer } from "http";
 import { WebSocketServer, WebSocket } from "ws";
+import { verifyJoinToken } from "./auth.js";
+
+const authSecret = process.env.SIGNALING_AUTH_SECRET;
+if (!authSecret || authSecret.length < 32) {
+  throw new Error('SIGNALING_AUTH_SECRET must be configured with at least 32 characters.');
+}
 
 const port = Number(process.env.PORT || 3001);
 
@@ -14,6 +20,8 @@ const server = createServer((req, res) => {
 // WebSocket server attached to HTTP server
 const wss = new WebSocketServer({
   server,
+  maxPayload: 64 * 1024,
+  perMessageDeflate: false,
 });
 
 /**
@@ -84,6 +92,12 @@ function cleanup(ws) {
 
 
 wss.on("connection", (ws) => {
+  let rateWindow = Date.now();
+  let messageCount = 0;
+  const joinTimeout = setTimeout(() => {
+    if (!ws._roomId) ws.close(1008, 'Authentication required');
+  }, 15000);
+  ws.on('close', () => clearTimeout(joinTimeout));
 
   console.log("New websocket connection");
 
@@ -98,6 +112,11 @@ wss.on("connection", (ws) => {
 
 
   ws.on("message", (raw) => {
+    if (Date.now() - rateWindow >= 10000) {
+      rateWindow = Date.now();
+      messageCount = 0;
+    }
+    if (++messageCount > 300) return ws.close(1008, 'Too many messages');
 
     let msg;
 
@@ -111,7 +130,7 @@ wss.on("connection", (ws) => {
     }
 
 
-    if (!msg || typeof msg.type !== "string") {
+    if (!msg || typeof msg !== 'object' || Array.isArray(msg) || typeof msg.type !== "string") {
       return;
     }
 
@@ -129,8 +148,11 @@ wss.on("connection", (ws) => {
 
     // Join room
     if (msg.type === "join") {
+      const identity = verifyJoinToken(msg.token, authSecret);
+      if (!identity) return ws.close(1008, 'Invalid or expired room authorization');
+      clearTimeout(joinTimeout);
 
-      const roomId = String(msg.roomId || "").trim();
+      const roomId = identity.roomId;
 
       if (!roomId) {
         return safeSend(ws, {
@@ -140,11 +162,10 @@ wss.on("connection", (ws) => {
       }
 
 
-      const role =
-        String(msg.role || "").trim() || undefined;
 
-      const name =
-        String(msg.name || "").trim() || undefined;
+      const role = identity.role;
+
+      const name = identity.name;
 
 
       cleanup(ws);
@@ -311,6 +332,7 @@ wss.on("connection", (ws) => {
 
     // End session
     if (msg.type === "session-ended") {
+      if (ws._role !== 'psychologist') return;
 
       return broadcast(roomId, ws, {
         type: "session-ended",
@@ -340,7 +362,7 @@ wss.on("connection", (ws) => {
 server.listen(port, "0.0.0.0", () => {
 
   console.log(
-    `AEnhance signaling running on port ${port}`
+    `AEnhance signaling running on port ${server.address().port}`
   );
 
 });

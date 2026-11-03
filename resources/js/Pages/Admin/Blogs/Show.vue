@@ -41,7 +41,7 @@
         </div>
 
         <div class="p-6 lg:p-8">
-          <div class="quill-renderer max-w-none" v-html="blog.content" :dir="contentDirection"></div>
+          <div class="quill-renderer max-w-none" v-safe-html="blog.content" :dir="contentDirection"></div>
         </div>
       </article>
 

@@ -17,7 +17,7 @@ class RoleMiddleware
     {
         $user = auth()->user();
 
-        if (! $user) {
+        if (! $user || (int) $user->is_active !== 1) {
             abort(403);
         }
 

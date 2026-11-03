@@ -125,7 +125,7 @@
           </button>
 
           <nav class="pagination flex items-center gap-2" :aria-label="t('notesBook.pagination')">
-            <button v-for="p in pages" :key="p.key" @click="goToPage(p.index)" :class="['page-btn', { active: p.index === currentIndex } ]" v-html="p.label"></button>
+            <button v-for="p in pages" :key="p.key" @click="goToPage(p.index)" :class="['page-btn', { active: p.index === currentIndex } ]" v-safe-html="p.label"></button>
           </nav>
 
           <button @click="goToLast" class="first-last-btn" :title="t('notesBook.lastNote')">

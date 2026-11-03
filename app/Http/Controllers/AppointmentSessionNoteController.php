@@ -85,7 +85,7 @@ class AppointmentSessionNoteController extends Controller
             ActivityLogger::log($user->id ?? null, $user?->role ?? null, 'created_session_note', 'AppointmentSessionNote', $id, 'Created session note for session '.$session->id.' appointment '.$appointment->id);
             return response()->json($record, 201);
         } catch (\Exception $e) {
-            logger()->error('Failed storing session note: '.$e->getMessage());
+            logger()->error('Failed storing session note', ['exception_type' => get_class($e)]);
             return response()->json(['message' => 'Could not store session note'], 500);
         }
     }
@@ -163,7 +163,7 @@ class AppointmentSessionNoteController extends Controller
             ActivityLogger::log($user->id ?? null, $user?->role ?? null, 'updated_session_note', 'AppointmentSessionNote', $noteId, 'Updated session note '.$noteId.' for appointment '.$appointment->id);
             return response()->json($updated);
         } catch (\Exception $e) {
-            logger()->error('Failed updating session note: '.$e->getMessage());
+            logger()->error('Failed updating session note', ['exception_type' => get_class($e)]);
             return response()->json(['message' => 'Could not update session note'], 500);
         }
     }

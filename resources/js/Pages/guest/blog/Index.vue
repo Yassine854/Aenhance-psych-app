@@ -171,7 +171,7 @@ function selectBlog(id) {
                 </span>
               </div>
 
-              <div class="blog-content mt-8" v-html="featuredBlog.content" :dir="contentDirFromHtml(featuredBlog.content)"></div>
+              <div class="blog-content mt-8" v-safe-html="featuredBlog.content" :dir="contentDirFromHtml(featuredBlog.content)"></div>
             </div>
           </section>
 
@@ -253,7 +253,7 @@ function selectBlog(id) {
                         : 'cursor-not-allowed border-gray-100 bg-gray-50 text-gray-300',
                   ]"
                 >
-                  <span v-html="link.label"></span>
+                  <span v-safe-html="link.label"></span>
                 </Link>
               </div>
             </div>

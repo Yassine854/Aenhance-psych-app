@@ -203,6 +203,11 @@ Route::middleware(['auth'])->group(function () {
 
     // Shared session/video routes (patient + psychologist)
     Route::middleware('role:PSYCHOLOGIST,PATIENT')->group(function () {
+        Route::get('/appointments/{appointment}/signaling-token', \App\Http\Controllers\SignalingTokenController::class)
+            ->middleware('throttle:30,1')->name('appointments.signaling_token');
+        Route::get('/appointments/{appointment}/turn-credentials', \App\Http\Controllers\TurnCredentialsController::class)
+            ->middleware('throttle:30,1')
+            ->name('appointments.turn_credentials');
         Route::get('/appointments/{appointment}/video-call', [AppointmentController::class, 'showVideoCall'])
             ->name('appointments.video_call.show');
 

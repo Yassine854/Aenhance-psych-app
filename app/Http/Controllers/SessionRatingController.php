@@ -57,7 +57,7 @@ class SessionRatingController extends Controller
             ActivityLogger::log($user->id, $user->role ?? null, 'created_session_rating', 'SessionRating', $id, 'Rated session '.$session->id);
             return response()->json($record, 201);
         } catch (\Exception $e) {
-            logger()->error('Failed storing session rating: '.$e->getMessage());
+            logger()->error('Failed storing session rating', ['exception_type' => get_class($e)]);
             return response()->json(['message' => 'Could not store rating'], 500);
         }
     }

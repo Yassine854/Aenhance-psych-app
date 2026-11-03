@@ -44,7 +44,7 @@
       <article class="overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-sm">
         <div class="p-6 lg:p-8">
           <h2 class="text-lg font-semibold text-gray-900">Description</h2>
-          <div v-if="ressource.description" class="ressource-description mt-4 max-w-none" v-html="ressource.description" :dir="descriptionDirection"></div>
+          <div v-if="ressource.description" class="ressource-description mt-4 max-w-none" v-safe-html="ressource.description" :dir="descriptionDirection"></div>
           <p v-else class="mt-4 text-base leading-7 text-gray-700">No description provided.</p>
 
           <div v-if="pdfUrl" class="mt-8 rounded-3xl border border-gray-200 bg-gray-50 p-5">

@@ -93,7 +93,7 @@
             <div
               :dir="locale === 'ar' ? 'rtl' : 'ltr'"
               :class="['text-gray-700 text-sm md:text-base leading-relaxed mb-4 transition-all duration-1000 delay-200', telehealthVisible ? 'animate-fade-in opacity-100' : 'opacity-0', locale === 'ar' ? 'text-right' : 'text-left']"
-              v-html="localized(sitePages.mentalTelehealth, 'content') || t('sections.mentalTelehealth.paragraph')"
+              v-safe-html="localized(sitePages.mentalTelehealth, 'content') || t('sections.mentalTelehealth.paragraph')"
             ></div>
             <div class="flex justify-center">
               <Link
@@ -142,7 +142,7 @@
           <div
             :dir="locale === 'ar' ? 'rtl' : 'ltr'"
             :class="[ 'text-gray-700 text-sm md:text-base leading-relaxed mb-4', locale === 'ar' ? 'text-right' : 'text-left' ]"
-            v-html="localized(sitePages.aenhanceValues, 'content') || t('sections.aenhanceValues.accessibility.description')"
+            v-safe-html="localized(sitePages.aenhanceValues, 'content') || t('sections.aenhanceValues.accessibility.description')"
           ></div>
           <div class="flex justify-center pt-2 relative z-10">
             <Link :href="route('who-we-are')" class="px-5 py-2.5 bg-[#af5166] text-white rounded-lg">
@@ -309,7 +309,7 @@
               :dir="locale === 'ar' ? 'rtl' : 'ltr'"
               :class="['text-gray-700 text-sm md:text-base leading-relaxed mb-6 transition-all duration-1000 delay-300', supportVisible ? 'animate-fade-in opacity-100' : 'opacity-0', locale === 'ar' ? 'text-right' : 'text-left']"
             >
-                <p v-html="localized(sitePages.youNeedSupport, 'content') || t('sections.youNeedSupport.paragraph')"></p>
+                <p v-safe-html="localized(sitePages.youNeedSupport, 'content') || t('sections.youNeedSupport.paragraph')"></p>
             </div>
             <div class="flex justify-center">
               <Link
@@ -364,7 +364,7 @@
               :dir="locale === 'ar' ? 'rtl' : 'ltr'"
               :class="['text-gray-700 text-sm md:text-base leading-relaxed mb-6 transition-all duration-1000 delay-300', joinTeamVisible ? 'animate-fade-in opacity-100' : 'opacity-0', locale === 'ar' ? 'text-right' : 'text-left']"
             >
-                <p v-html="localized(sitePages.joinOurTeam, 'content') || t('sections.joinOurTeam.paragraph')"></p>
+                <p v-safe-html="localized(sitePages.joinOurTeam, 'content') || t('sections.joinOurTeam.paragraph')"></p>
             </div>
             <div class="flex justify-center">
               <Link

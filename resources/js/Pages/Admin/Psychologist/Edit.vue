@@ -597,7 +597,6 @@
 <script setup>
 import { ref, computed, watch, nextTick } from 'vue'
 import { useForm } from '@inertiajs/vue3'
-import { Inertia } from '@inertiajs/inertia'
 import { getCountries, getCitiesByCountryName, splitInternationalPhoneNumber } from '@/utils/geoData'
 import Multiselect from '@vueform/multiselect'
 import { resolveStorageUrl } from '@/utils/storage'

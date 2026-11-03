@@ -149,8 +149,7 @@ const isMobileOpen = sidebarState.isMobileOpen ?? vueRef(false);
 const isHovered = sidebarState.isHovered ?? vueRef(false);
 const openSubmenu = sidebarState.openSubmenu ?? vueRef(null);
 const closeMobileSidebar = sidebarState.closeMobileSidebar ?? (() => {});
-import { usePage } from '@inertiajs/vue3'
-import { Inertia } from '@inertiajs/inertia'
+import { usePage, router } from '@inertiajs/vue3'
 
 const page = usePage()
 // pressedItem highlights clicked subitem until navigation updates the page URL
@@ -177,7 +176,7 @@ const handleParentClick = (item) => {
       if (openSubmenu && typeof openSubmenu === 'object' && 'value' in openSubmenu) {
         openSubmenu.value = item.name;
       }
-      Inertia.get(item.path)
+      router.get(item.path)
       return
     }
   } catch (e) {

@@ -19,13 +19,13 @@ class ReportController extends Controller
      */
     public function store(StoreReportRequest $request): JsonResponse
     {
-        $data = $request->only([
-            'reporter_id',
-            'reporter_type',
+        $data = $request->safe()->only([
             'reported_id',
             'reported_type',
             'reason',
         ]);
+        $data['reporter_id'] = $request->user()->id;
+        $data['reporter_type'] = $request->user()->isPatient() ? 'patient' : 'psychologist';
 
         if ($request->hasFile('proof_image')) {
             $file = $request->file('proof_image');

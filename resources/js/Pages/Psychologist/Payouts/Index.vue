@@ -212,7 +212,7 @@
             <div class="text-sm text-gray-600">{{ t('psychologistPayouts.showing') }} {{ payouts.from }}-{{ payouts.to }} {{ t('psychologistPayouts.of') }} {{ payouts.total }}</div>
             <div class="flex items-center gap-2">
               <Link v-for="(link, i) in payouts.links" :key="i" :href="link.url || '#'" :class="linkClasses(link)" :style="link.active ? { backgroundColor: brandColor, borderColor: brandColor, color: '#fff' } : null" preserve-scroll>
-                <span v-html="link.label"></span>
+                <span v-safe-html="link.label"></span>
               </Link>
             </div>
           </div>

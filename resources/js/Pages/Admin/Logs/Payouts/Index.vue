@@ -237,7 +237,7 @@
 
         <div class="flex items-center gap-2">
           <Link v-for="(link, i) in logs.links" :key="i" :href="link.url || '#'" :class="linkClasses(link)" :style="link.active ? { backgroundColor: brandColor, borderColor: brandColor, color: '#fff' } : null" preserve-scroll>
-            <span v-html="link.label"></span>
+            <span v-safe-html="link.label"></span>
           </Link>
         </div>
       </div>

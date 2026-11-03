@@ -20,7 +20,8 @@ class AuthenticatedSessionController extends Controller
     public function create(Request $request): Response
     {
         $redirect = $request->query('redirect');
-        if (is_string($redirect) && $redirect !== '') {
+        // Only application-relative paths; reject protocol-relative URLs and parser ambiguities.
+        if (is_string($redirect) && preg_match('~^/(?!/)[^\\\\\x00-\x20\x7f]*$~D', $redirect)) {
             $request->session()->put('url.intended', $redirect);
         }
 

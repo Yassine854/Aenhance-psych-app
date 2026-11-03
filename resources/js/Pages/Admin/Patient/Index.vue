@@ -147,7 +147,7 @@
             :style="link.active ? { backgroundColor: brandColor, borderColor: brandColor, color: '#fff' } : null"
             preserve-scroll
           >
-            <span v-html="link.label"></span>
+            <span v-safe-html="link.label"></span>
           </Link>
         </div>
       </div>

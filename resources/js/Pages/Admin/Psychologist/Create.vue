@@ -344,7 +344,6 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { useForm } from '@inertiajs/vue3'
-import { Inertia } from '@inertiajs/inertia'
 import { getCountries, getCitiesByCountryName } from '@/utils/geoData'
 import Multiselect from '@vueform/multiselect'
 

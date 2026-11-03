@@ -103,7 +103,7 @@
               :class="linkClasses(link)"
               preserve-scroll
             >
-              <span v-html="link.label"></span>
+              <span v-safe-html="link.label"></span>
             </Link>
           </div>
         </div>

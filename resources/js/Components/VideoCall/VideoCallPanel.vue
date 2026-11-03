@@ -820,48 +820,14 @@ async function getRtcConfig(mode = 'default') {
       { urls: 'stun:stun.voipbuster.com:3478' },
     ]
 
-    // STUN/TURN servers read from build env vars (VITE_*).
-    // VITE_STUN_URL and VITE_TURN_URL can be a single value or a comma/newline-separated list.
-    const envStunUrl = import.meta?.env?.VITE_STUN_URL || null
-    const envTurnUrl = import.meta?.env?.VITE_TURN_URL || null
-    const envTurnUser = import.meta?.env?.VITE_TURN_USERNAME || null
-    const envTurnCred = import.meta?.env?.VITE_TURN_CREDENTIAL || null
-    const envTurnApiKey = import.meta?.env?.VITE_TURN_API_KEY || null
-    const envTurnCredentialsUrl = import.meta?.env?.VITE_TURN_CREDENTIALS_URL || null
-    const stunUrl = envStunUrl
-    const turnUrl = envTurnUrl
-    const turnUser = envTurnUser
-    const turnCred = envTurnCred
+    const stunUrl = import.meta.env.VITE_STUN_URL || null
 
     async function fetchRuntimeTurnServers() {
-      if (!envTurnApiKey || !envTurnCredentialsUrl) return []
-
       try {
-        const rawUrl = String(envTurnCredentialsUrl).trim()
-        if (!rawUrl) return []
-
-        const sep = rawUrl.includes('?') ? '&' : '?'
-        const url = `${rawUrl}${sep}apiKey=${encodeURIComponent(String(envTurnApiKey))}`
-        const res = await fetch(url, { method: 'GET', cache: 'no-store' })
-        if (!res.ok) return []
-
-        const data = await res.json()
-        if (!Array.isArray(data)) return []
-
-        return data
-          .filter((item) => item && item.urls)
-          .map((item) => {
-            const urls = Array.isArray(item.urls)
-              ? item.urls.map((u) => String(u).trim()).filter(Boolean)
-              : String(item.urls).trim()
-
-            return {
-              urls,
-              username: item.username ? String(item.username) : undefined,
-              credential: item.credential ? String(item.credential) : undefined,
-            }
-          })
+        const data = await fetchJson(`/appointments/${props.appointmentId}/turn-credentials`, { method: 'GET', cache: 'no-store' })
+        return Array.isArray(data?.iceServers) ? data.iceServers : []
       } catch {
+        console.warn('[webrtc] Temporary TURN credentials unavailable; relay fallback is unavailable.')
         return []
       }
     }
@@ -885,42 +851,9 @@ async function getRtcConfig(mode = 'default') {
       return [...new Set(out)]
     }
 
-    function normalizeTurnUrls(rawUrl) {
-      const values = Array.isArray(rawUrl) ? rawUrl : parseUrlList(rawUrl)
-      const out = []
-
-      for (const value of values) {
-        if (!value) continue
-        if (/^turns?:/i.test(value)) {
-          out.push(value)
-          continue
-        }
-
-        const host = value.replace(/^\/+/, '')
-        out.push(`turn:${host}?transport=udp`)
-        out.push(`turn:${host}?transport=tcp`)
-      }
-
-      return [...new Set(out)]
-    }
-
     const envStunServers = normalizeStunUrls(stunUrl).map((urls) => ({ urls }))
     const stunServers = [...envStunServers, ...defaultStunServers]
-
-    const runtimeTurnServers = await fetchRuntimeTurnServers()
-    const turnServers = []
-    if (runtimeTurnServers.length > 0) {
-      turnServers.push(...runtimeTurnServers)
-      try { console.debug('[webrtc] using runtime TURN servers from credentials endpoint', { count: runtimeTurnServers.length }) } catch {}
-    }
-
-    if (turnUrl && turnUser && turnCred) {
-      const urls = normalizeTurnUrls(turnUrl)
-      if (urls.length > 0) {
-        turnServers.push({ urls, username: turnUser, credential: turnCred })
-        try { console.debug('[webrtc] using TURN server', { urls, username: turnUser ? '***' : null }) } catch {}
-      }
-    }
+    const turnServers = await fetchRuntimeTurnServers()
 
     if (mode === 'stunOnly') {
       try { console.debug('[webrtc] using STUN-only iceServers', stunServers) } catch {}
@@ -928,13 +861,13 @@ async function getRtcConfig(mode = 'default') {
     }
 
     if (mode === 'relayOnly') {
-      try { console.debug('[webrtc] using TURN (relay-only) iceServers', turnServers) } catch {}
+      try { console.debug('[webrtc] debug relay-only mode', { serverCount: turnServers.length }) } catch {}
       return { iceServers: turnServers, iceTransportPolicy: 'relay' }
     }
 
     // default: include STUN servers and TURN as fallback in the same config.
     const iceServers = [...stunServers, ...turnServers]
-    try { console.debug('[webrtc] using iceServers (STUN + TURN fallback)', iceServers) } catch {}
+    try { console.debug('[webrtc] ICE configuration', { stunCount: stunServers.length, turnCount: turnServers.length, policy: 'all' }) } catch {}
     return { iceServers }
   } catch (e) {
     return { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] }
@@ -1152,18 +1085,26 @@ async function refreshIceModeFromStats(peer) {
       }
     })
 
-    if (!selectedPair && stats.forEach) {
-      stats.forEach((report) => {
-        if (report.type !== 'candidate-pair') return
-        if (report.selected || report.nominated) {
-          selectedPair = report
-        }
-      })
-    }
+    stats.forEach((report) => {
+      if (report.type === 'transport' && report.selectedCandidatePairId) {
+        selectedPair = stats.get(report.selectedCandidatePairId) || selectedPair
+      }
+    })
 
     const localCandidate = selectedPair?.localCandidateId ? stats.get(selectedPair.localCandidateId) : null
+    const remoteCandidate = selectedPair?.remoteCandidateId ? stats.get(selectedPair.remoteCandidateId) : null
     if (localCandidate?.candidateType) {
-      setIceModeLabel(normalizeIceMode(localCandidate.candidateType))
+      const usesRelay = [localCandidate, remoteCandidate].some((candidate) => candidate?.candidateType === 'relay')
+      const nextMode = usesRelay ? 'TURN' : normalizeIceMode(localCandidate.candidateType)
+      if (iceModeLabel.value !== nextMode) {
+        console.debug('[webrtc] Selected ICE pair', {
+          localType: localCandidate.candidateType,
+          remoteType: remoteCandidate?.candidateType,
+          protocol: localCandidate.protocol,
+          relayProtocol: localCandidate.relayProtocol,
+        })
+      }
+      setIceModeLabel(nextMode)
     }
   } catch {
     // ignore stats errors
@@ -1184,7 +1125,6 @@ async function createPeerConnection() {
   const initialMode = forceRelay ? 'relayOnly' : 'default'
   setIceModeLabel(forceRelay ? 'TURN' : 'AUTO')
   const rtcConfig = await getRtcConfig(initialMode)
-  try { console.debug('[webrtc] rtcConfig before createPeerConnection:', rtcConfig) } catch {}
 
   // Helper to attach the standard handlers to a peer connection.
   const attachHandlers = (peer) => {
@@ -1223,8 +1163,18 @@ async function createPeerConnection() {
     }
 
     peer.onicecandidate = (event) => {
-      try { console.debug('[webrtc] onicecandidate', event.candidate) } catch {}
+      try { console.debug('[webrtc] ICE candidate', { type: event.candidate?.type, protocol: event.candidate?.protocol, gatheringComplete: !event.candidate }) } catch {}
       if (event.candidate) wsSend({ type: 'ice', candidate: event.candidate })
+    }
+
+    peer.oniceconnectionstatechange = () => {
+      console.debug('[webrtc] ICE connection state', peer.iceConnectionState)
+    }
+    peer.onicegatheringstatechange = () => {
+      console.debug('[webrtc] ICE gathering state', peer.iceGatheringState)
+    }
+    peer.onicecandidateerror = (event) => {
+      console.warn('[webrtc] ICE server error', { code: event.errorCode })
     }
 
     peer.onconnectionstatechange = () => {
@@ -1685,10 +1635,11 @@ onMounted(async () => {
     setConnectionState('connecting')
     await startLocalMedia()
 
+    const { token: signalingToken } = await fetchJson(`/appointments/${props.appointmentId}/signaling-token`, { cache: 'no-store' })
     ws = new WebSocket(signalingUrl)
 
     ws.onopen = async () => {
-      wsSend({ type: 'join', roomId, role: props.role, name: localSignalingName.value })
+      wsSend({ type: 'join', roomId, token: signalingToken })
       sendMediaState()
 
       // Sync session start in case the other participant already joined.

@@ -407,12 +407,6 @@ class PsychologistProfileController extends Controller
 
     public function update(PsychologistProfileRequest $request, PsychologistProfile $psychologistProfile)
     {
-        // DEBUG: Log all incoming request data
-        Log::info('Update request received', [
-            'all_input' => $request->all(),
-            'phone_raw' => $request->input('phone'),
-            'country_code_raw' => $request->input('country_code'),
-        ]);
         
         // Start with validated scalar fields
         $data = $request->validated();
@@ -437,11 +431,6 @@ class PsychologistProfileController extends Controller
             unset($data['availabilities']);
         }
         
-        // DEBUG: Log validated data
-        Log::info('Validated data', [
-            'phone' => $data['phone'] ?? 'MISSING',
-            'country_code' => $data['country_code'] ?? 'MISSING'
-        ]);
 
         // Handle profile image upload
         if ($request->hasFile('profile_image')) {
@@ -535,7 +524,7 @@ class PsychologistProfileController extends Controller
         // Remove raw file keys
         unset($data['profile_image'], $data['diploma_file'], $data['diploma_files'], $data['cv_file']);
 
-        Log::info('Admin update profile', ['id' => $psychologistProfile->id, 'data' => $data]);
+        Log::info('Admin update profile', ['id' => $psychologistProfile->id]);
 
         \DB::beginTransaction();
         try {
