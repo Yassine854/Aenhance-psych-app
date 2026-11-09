@@ -1204,6 +1204,7 @@
     "nextPage": "Page suivante"
   },
   "videoCall": {
+    "dismissError": "Masquer le message",
     "title": "Appel vidéo",
     "subtitle": "Rejoignez votre session vidéo programmée",
     "you": "Vous",

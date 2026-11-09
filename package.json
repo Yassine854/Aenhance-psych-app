@@ -5,7 +5,7 @@
         "dev": "vite",
         "build": "vite build",
         "start": "vite",
-        "signaling": "node signaling/server.js"
+        "signaling": "node --env-file=.env signaling/server.js"
     },
     "devDependencies": {
         "@inertiajs/vue3": "^1.0.0",

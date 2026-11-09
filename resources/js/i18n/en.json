@@ -1336,6 +1336,7 @@
   "nextPage": "Next page"
 },
 "videoCall": {
+  "dismissError": "Dismiss message",
   "title": "Video call",
   "subtitle": "Join your scheduled video session",
   "you": "You",

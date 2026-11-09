@@ -50,7 +50,7 @@ test('room access is signed, isolated, and role restricted', { timeout: 15000 },
   // Client-supplied room and role cannot override signed claims.
   const joined = await sendAndReceive(psychologist, psychologist, { type: 'join', roomId: 'forged', role: 'patient', token: token('psychologist') });
   assert.equal(joined.roomId, 'room-1');
-  const patient = await connect();
+  let patient = await connect();
   const peerJoined = once(psychologist, 'message');
   await sendAndReceive(patient, patient, { type: 'join', token: token('patient') });
   assert.equal(JSON.parse((await peerJoined)[0]).type, 'peer-joined');
@@ -62,9 +62,40 @@ test('room access is signed, isolated, and role restricted', { timeout: 15000 },
   const offer = await sendAndReceive(psychologist, patient, { type: 'offer', sdp: { type: 'offer', sdp: 'test' } });
   assert.equal(offer.from.role, 'psychologist');
 
+  // An abrupt signaling loss must not tell the other browser to close media.
+  const duringOutage = [];
+  const recordOutage = (raw) => duringOutage.push(JSON.parse(raw));
+  psychologist.on('message', recordOutage);
+  const patientClosed = once(patient, 'close');
+  patient.terminate();
+  await patientClosed;
+  await new Promise((resolve) => setTimeout(resolve, 100));
+  assert.equal(duringOutage.some((msg) => msg.type === 'peer-left'), false);
+  patient = await connect();
+  const rejoined = once(psychologist, 'message');
+  const room = await sendAndReceive(patient, patient, { type: 'join', token: token('patient') });
+  assert.equal(room.peerCount, 2);
+  assert.equal(JSON.parse((await rejoined)[0]).type, 'peer-joined');
+  assert.equal(duringOutage.some((msg) => msg.type === 'peer-left'), false);
+  psychologist.off('message', recordOutage);
+  assert.equal((await sendAndReceive(patient, psychologist, { type: 'restart-request' })).type, 'restart-request');
+
+  // Duplicate tabs get a terminal close code rather than reconnecting forever.
+  const replacement = await connect();
+  const replaced = once(patient, 'close');
+  const replacementJoined = once(psychologist, 'message');
+  await sendAndReceive(replacement, replacement, { type: 'join', token: token('patient') });
+  assert.equal((await replaced)[0], 4001);
+  assert.equal(JSON.parse((await replacementJoined)[0]).type, 'peer-joined');
+  patient = replacement;
+
   const outsider = await connect();
   await sendAndReceive(outsider, outsider, { type: 'join', token: token('patient', 'other-room') });
   outsider.send(JSON.stringify({ type: 'chat', payload: { text: 'wrong room' } }));
   const isolated = await sendAndReceive(patient, psychologist, { type: 'chat', payload: { text: 'right room' } });
   assert.equal(isolated.payload.text, 'right room');
+
+  const limited = once(patient, 'close');
+  for (let i = 0; i < 301; i++) patient.send(JSON.stringify({ type: 'unsupported' }));
+  assert.equal((await limited)[0], 4029);
 });

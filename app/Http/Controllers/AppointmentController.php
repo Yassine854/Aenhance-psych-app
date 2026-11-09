@@ -1192,7 +1192,7 @@ class AppointmentController extends Controller
             ]
         );
 
-        $signalingUrl = (string) (config('app.signaling_url') ?: env('VITE_SIGNALING_URL', 'ws://localhost:3001'));
+        $signalingUrl = (string) (config('app.signaling_url') ?: config('signaling.url', 'ws://localhost:3001'));
 
         $payload = [
             'appointmentId' => $appointment->id,

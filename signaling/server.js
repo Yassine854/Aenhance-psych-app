@@ -1,6 +1,6 @@
 import { createServer } from "http";
 import { WebSocketServer, WebSocket } from "ws";
-import { verifyJoinToken } from "./auth.js";
+import { inspectJoinToken } from "./auth.js";
 import { startHeartbeat } from "./heartbeat.js";
 
 const authSecret = process.env.SIGNALING_AUTH_SECRET;
@@ -56,7 +56,8 @@ function broadcast(roomId, sender, msg) {
   }
 }
 
-function cleanup(ws) {
+function cleanup(ws, notify = true) {
+  clearTimeout(ws._disconnectTimer);
   const roomId = ws._roomId;
 
   if (!roomId) return;
@@ -77,9 +78,10 @@ function cleanup(ws) {
 
   if (room.peers.size === 0) {
     rooms.delete(roomId);
-  } else {
+  } else if (notify) {
     broadcast(roomId, ws, {
       type: "peer-left",
+      signalingTimeout: ws._disconnectExpired === true,
       role,
       name,
       media,
@@ -97,7 +99,7 @@ wss.on("connection", (ws) => {
   let rateWindow = Date.now();
   let messageCount = 0;
   const joinTimeout = setTimeout(() => {
-    if (!ws._roomId) ws.close(1008, 'Authentication required');
+    if (!ws._roomId) ws.close(4008, 'Room join timed out');
   }, 15000);
   ws.on('close', () => clearTimeout(joinTimeout));
 
@@ -118,7 +120,7 @@ wss.on("connection", (ws) => {
       rateWindow = Date.now();
       messageCount = 0;
     }
-    if (++messageCount > 300) return ws.close(1008, 'Too many messages');
+    if (++messageCount > 300) return ws.close(4029, 'Too many messages');
 
     let msg;
 
@@ -150,8 +152,12 @@ wss.on("connection", (ws) => {
 
     // Join room
     if (msg.type === "join") {
-      const identity = verifyJoinToken(msg.token, authSecret);
-      if (!identity) return ws.close(1008, 'Invalid or expired room authorization');
+      const { identity, reason } = inspectJoinToken(msg.token, authSecret);
+      if (!identity) {
+        // Never log tokens, identity claims, credentials or secret hashes.
+        console.warn('[signaling] Room authorization rejected', { reason });
+        return ws.close(1008, 'Invalid or expired room authorization');
+      }
       clearTimeout(joinTimeout);
 
       const roomId = identity.roomId;
@@ -202,10 +208,10 @@ wss.on("connection", (ws) => {
         if (existing && existing !== ws) {
 
           try {
-            existing.close();
+            existing.close(4001, 'Consultation opened elsewhere');
           } catch {}
 
-          cleanup(existing);
+          cleanup(existing, false);
         }
 
 
@@ -274,6 +280,7 @@ wss.on("connection", (ws) => {
 
     // WebRTC signaling
     if (
+      msg.type === "restart-request" ||
       msg.type === "offer" ||
       msg.type === "answer" ||
       msg.type === "ice"
@@ -353,9 +360,16 @@ wss.on("connection", (ws) => {
 
 
 
-  ws.on("close", () => cleanup(ws));
+  ws.on("close", () => {
+    if (!ws._roomId) return;
+    ws._disconnectTimer = setTimeout(() => {
+      ws._disconnectExpired = true;
+      cleanup(ws);
+    }, 30000);
+    ws._disconnectTimer.unref?.();
+  });
 
-  ws.on("error", () => cleanup(ws));
+  ws.on("error", () => { /* close handles cleanup after a reconnect grace period */ });
 
 });
 

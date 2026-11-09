@@ -92,8 +92,19 @@
     </div>
 
     <div ref="stageEl" class="relative bg-black" :style="stageStyle">
-      <div v-if="error" class="absolute top-0 left-0 right-0 z-20 p-4 text-sm text-red-700 bg-red-50 border-b border-red-200">
-        {{ error }}
+      <div v-if="error" role="alert" class="absolute top-0 left-0 right-0 z-20 flex items-start gap-3 p-4 text-sm text-red-700 bg-red-50 border-b border-red-200">
+        <span class="min-w-0 flex-1 break-words">{{ error }}</span>
+        <button
+          type="button"
+          class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md hover:bg-red-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
+          :aria-label="t('videoCall.dismissError')"
+          :title="t('videoCall.dismissError')"
+          @click="error = ''"
+        >
+          <svg aria-hidden="true" viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="m6 6 12 12M18 6 6 18" />
+          </svg>
+        </button>
       </div>
 
       <video
@@ -391,6 +402,7 @@ function onNewMessage() {
 import { Link, router, usePage } from '@inertiajs/vue3'
 import Swal from 'sweetalert2'
 import { fetchConsultationJson as fetchJson } from '@/utils/consultationRequest'
+import { callAudioConstraints, callVideoConstraints, configureCallVideoSender } from '@/utils/callMedia'
 
 const props = defineProps({
   appointmentId: { type: Number, required: true },
@@ -442,6 +454,49 @@ let hasJoinedSession = false
 
 let ws = null
 let leavingCall = false
+let reconnectTimer = null
+let reconnectAttempt = 0
+let signalingBlocked = false
+let authorizationRetryCount = 0
+let mediaRecoveryTimer = null
+let turnCredentialsExpiresAt = 0
+let iceConfigurationRefreshedAt = 0
+let signalingConnecting = false
+let removeCallListeners = () => {}
+
+function scheduleSignalingReconnect() {
+  if (leavingCall || signalingBlocked || reconnectTimer) return
+  if (pc?.connectionState !== 'connected') setConnectionState('connecting')
+  reconnectTimer = setTimeout(() => {
+    reconnectTimer = null
+    connectSignaling().catch(handleSignalingRequestError)
+  }, Math.min(1000 * 2 ** Math.min(reconnectAttempt++, 4), 15000))
+}
+
+function handleSignalingRequestError(requestError) {
+  if ([401, 403, 404, 409, 419].includes(requestError?.status)) {
+    signalingBlocked = true
+    error.value = requestError.message
+    if (pc?.connectionState !== 'connected') setConnectionState('failed')
+    return
+  }
+  scheduleSignalingReconnect()
+}
+
+function scheduleMediaRecovery() {
+  if (leavingCall || mediaRecoveryTimer) return
+  mediaRecoveryTimer = setTimeout(async () => {
+    mediaRecoveryTimer = null
+    if (leavingCall || !pc || pc.connectionState === 'connected') return
+    if (ws?.readyState === WebSocket.OPEN) {
+      try {
+        if (props.role === 'psychologist') await makeOffer(true)
+        else wsSend({ type: 'restart-request' })
+      } catch { /* Retry while connectivity recovers. */ }
+    }
+    scheduleMediaRecovery()
+  }, 5000)
+}
 let pc = null
 let localStream = null
 let pendingIce = []
@@ -449,6 +504,7 @@ let pendingMediaState = null
 
 let localVideoSender = null
 let makingOffer = false
+let localOfferSentAt = 0
 
 let audioCtx = null
 let localAnalyser = null
@@ -578,6 +634,8 @@ const stageStyle = computed(() => ({
 }))
 
 function resetPeerConnection() {
+  clearTimeout(mediaRecoveryTimer)
+  mediaRecoveryTimer = null
   try {
     if (pc) pc.close()
   } catch {}
@@ -590,6 +648,7 @@ function resetPeerConnection() {
 
   localVideoSender = null
   makingOffer = false
+  localOfferSentAt = 0
 
   pendingIce = []
 
@@ -827,7 +886,12 @@ async function getRtcConfig(mode = 'default') {
 
     async function fetchRuntimeTurnServers() {
       try {
-        const data = await fetchJson(`/appointments/${props.appointmentId}/turn-credentials`, { method: 'GET', cache: 'no-store' })
+        const data = await fetchCallJson(`/appointments/${props.appointmentId}/turn-credentials`)
+        turnCredentialsExpiresAt = Number(data?.expiresAt || 0) * 1000
+        iceConfigurationRefreshedAt = Date.now()
+        if (error.value === 'TURN credentials are unavailable. The application server must provide relay credentials before this network can use TURN.') {
+          error.value = ''
+        }
         return Array.isArray(data?.iceServers) ? data.iceServers : []
       } catch (requestError) {
         console.warn('[webrtc] Temporary TURN credentials unavailable', { status: requestError.status })
@@ -1042,6 +1106,11 @@ function startIceModePolling(peer) {
   if (iceModeTimer) return
   iceModeTimer = setInterval(() => {
     refreshIceModeFromStats(peer)
+    if (turnCredentialsExpiresAt > 0 && turnCredentialsExpiresAt <= Date.now() + 300000) {
+      refreshIceConfiguration(peer).then((refreshed) => {
+        if (refreshed && props.role === 'psychologist') return makeOffer(true)
+      }).catch(() => { /* Keep the existing media route during credential outages. */ })
+    }
   }, 2500)
 }
 
@@ -1053,13 +1122,17 @@ async function createPeerConnection() {
   // TURN is shown only after getStats confirms a selected relay candidate.
   setIceModeLabel('AUTO')
   const rtcConfig = await getRtcConfig(initialMode)
+  if (leavingCall) throw new Error('Call has ended')
   // ICE messages can arrive while the asynchronous credential request is pending.
   if (pc) return pc
 
   // Helper to attach the standard handlers to a peer connection.
   const attachHandlers = (peer) => {
     peer.ontrack = (event) => {
-      const [stream] = event.streams
+      // Some transceivers deliver streamless tracks, particularly when a
+      // camera is enabled after joining without video.
+      const stream = event.streams[0] || remoteVideo.value?.srcObject || new MediaStream()
+      if (!stream.getTracks().includes(event.track)) stream.addTrack(event.track)
       if (remoteVideo.value && stream) remoteVideo.value.srcObject = stream
 
       try {
@@ -1108,25 +1181,35 @@ async function createPeerConnection() {
     }
 
     peer.onconnectionstatechange = () => {
+      if (leavingCall || pc !== peer) return
       const st = peer?.connectionState
       try { console.debug('[webrtc] connectionState changed', st) } catch {}
       if (st === 'connected') {
+        clearTimeout(mediaRecoveryTimer)
+        mediaRecoveryTimer = null
         setConnectionState('connected')
+        for (const sender of peer.getSenders()) configureCallVideoSender(sender)
         refreshIceModeFromStats(peer)
         startIceModePolling(peer)
       }
-      else if (st === 'failed' || st === 'disconnected') setConnectionState('failed')
+      else if (st === 'failed' || st === 'disconnected') {
+        setConnectionState('connecting')
+        scheduleMediaRecovery()
+      }
       else setConnectionState('connecting')
+      if (st === 'connecting') scheduleMediaRecovery()
     }
 
     peer.onnegotiationneeded = async () => {
-      if (props.role !== 'psychologist') return
       if (!ws || ws.readyState !== WebSocket.OPEN) return
       if (!peer || peer.signalingState !== 'stable') return
+      if (props.role !== 'psychologist') {
+        if (peer.remoteDescription) wsSend({ type: 'restart-request' })
+        return
+      }
       if (makingOffer) return
 
-      makingOffer = true
-      try { await makeOffer() } catch {} finally { makingOffer = false }
+      try { await makeOffer() } catch { scheduleMediaRecovery() }
     }
   }
 
@@ -1142,20 +1225,33 @@ async function createPeerConnection() {
     }
   }
 
+  // Reserve a video sender so either role can enable a missing camera later.
+  if (!localVideoSender) {
+    localVideoSender = pc.addTransceiver('video', {
+      direction: 'sendrecv',
+      streams: localStream ? [localStream] : [],
+    }).sender
+  }
   return pc
 }
 
 async function startLocalMedia() {
+  if (leavingCall) return
   const mediaAttempts = [
-    { video: true, audio: true },
-    { video: false, audio: true },
-    { video: true, audio: false },
+    { video: callVideoConstraints(), audio: callAudioConstraints() },
+    { video: false, audio: callAudioConstraints() },
+    { video: callVideoConstraints(), audio: false },
   ]
 
   let lastError = null
   for (const constraints of mediaAttempts) {
     try {
       localStream = await navigator.mediaDevices.getUserMedia(constraints)
+      if (leavingCall) {
+        localStream.getTracks().forEach((track) => track.stop())
+        localStream = null
+        return
+      }
       break
     } catch (error) {
       lastError = error
@@ -1216,7 +1312,11 @@ async function ensureLocalVideoTrack() {
   if (existing) return existing
 
   try {
-    const camStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+    const camStream = await navigator.mediaDevices.getUserMedia({ video: callVideoConstraints(), audio: false })
+    if (leavingCall) {
+      camStream.getTracks().forEach((track) => track.stop())
+      return null
+    }
     const track = camStream.getVideoTracks()[0]
     if (!track) return null
 
@@ -1229,11 +1329,44 @@ async function ensureLocalVideoTrack() {
   }
 }
 
-async function makeOffer() {
-  const peer = await createPeerConnection()
-  const offer = await peer.createOffer()
-  await peer.setLocalDescription(offer)
-  wsSend({ type: 'offer', sdp: offer })
+async function makeOffer(iceRestart = false) {
+  if (leavingCall || makingOffer || ws?.readyState !== WebSocket.OPEN) return
+  makingOffer = true
+  try {
+    const peer = await createPeerConnection()
+    if (iceRestart) await refreshIceConfiguration(peer)
+    if (leavingCall || pc !== peer || ws?.readyState !== WebSocket.OPEN) return
+    if (iceRestart && peer.signalingState === 'have-local-offer') {
+      // Allow a slow answer to arrive before replacing its pending offer.
+      if (Date.now() - localOfferSentAt < 15000) return
+      await peer.setLocalDescription({ type: 'rollback' })
+    }
+    if (peer.signalingState !== 'stable') return
+    const offer = await peer.createOffer({ iceRestart })
+    if (leavingCall || pc !== peer || ws?.readyState !== WebSocket.OPEN) return
+    await peer.setLocalDescription(offer)
+    localOfferSentAt = Date.now()
+    wsSend({ type: 'offer', sdp: peer.localDescription })
+    scheduleMediaRecovery()
+  } finally {
+    makingOffer = false
+  }
+}
+
+async function refreshIceConfiguration(peer) {
+  // Refresh expiring relay credentials before gathering a replacement route.
+  if (turnCredentialsExpiresAt > Date.now() + 300000) return
+  if (Date.now() - iceConfigurationRefreshedAt < 30000) return
+  iceConfigurationRefreshedAt = Date.now()
+  const mode = import.meta.env.VITE_FORCE_RELAY === '1' ? 'relayOnly' : 'default'
+  const configuration = await getRtcConfig(mode)
+  if (leavingCall || pc !== peer) return
+  // A temporary credential endpoint outage must not remove the current relay.
+  if (configuration.iceServers?.some((server) => server.credential)) {
+    peer.setConfiguration(configuration)
+    return true
+  }
+  return false
 }
 
 function setRemoteIdentity(payload) {
@@ -1317,6 +1450,7 @@ async function toggleVideo() {
       if (localVideoSender) {
         try {
           await localVideoSender.replaceTrack(track)
+          await configureCallVideoSender(localVideoSender)
         } catch {
           // ignore
         }
@@ -1379,6 +1513,12 @@ async function shareRoom() {
 
 function hangUp() {
   leavingCall = true
+  removeCallListeners()
+  if (ws) clearTimeout(ws.joinTimeout)
+  clearTimeout(reconnectTimer)
+  clearTimeout(mediaRecoveryTimer)
+  reconnectTimer = null
+  mediaRecoveryTimer = null
   try {
     // Mark presence off in backend (best-effort)
     leaveSessionBackend()
@@ -1550,10 +1690,242 @@ async function handleSessionEnded() {
   setTimeout(() => { try { hangUpAndLeave() } catch {} }, 1200)
 }
 
+async function fetchCallJson(url) {
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), 10000)
+  try {
+    return await fetchJson(url, { cache: 'no-store', signal: controller.signal })
+  } finally {
+    clearTimeout(timeout)
+  }
+}
+
+async function connectSignaling() {
+  if (leavingCall || signalingBlocked) return
+  if (signalingConnecting || ws?.readyState === WebSocket.OPEN || ws?.readyState === WebSocket.CONNECTING) return
+  const roomId = String(props.roomId || '').trim()
+  const signalingUrl = String(props.signalingUrl || import.meta.env.VITE_SIGNALING_URL || '').trim()
+  let signalingToken
+  signalingConnecting = true
+  try {
+    const data = await fetchCallJson(`/appointments/${props.appointmentId}/signaling-token`)
+    signalingToken = data.token
+  } finally {
+    signalingConnecting = false
+  }
+  if (leavingCall) return
+  const socket = new WebSocket(signalingUrl)
+  ws = socket
+  // A stalled upgrade or room join must not leave recovery stuck forever.
+  socket.joinTimeout = setTimeout(() => {
+    if (leavingCall || ws !== socket) return
+    socket.close()
+    scheduleSignalingReconnect()
+  }, 15000)
+
+  socket.onopen = async () => {
+    if (leavingCall || ws !== socket) { socket.close(); return }
+    wsSend({ type: 'join', roomId, token: signalingToken })
+    sendMediaState()
+
+    // Sync session start in case the other participant already joined.
+    syncSessionBackend()
+
+    if (pendingMediaState) {
+      wsSendOrQueue(pendingMediaState)
+      pendingMediaState = null
+    }
+  }
+
+  socket.onerror = () => {
+    // close schedules recovery without interrupting active media.
+  }
+
+  socket.onclose = (event) => {
+    clearTimeout(socket.joinTimeout)
+    if (leavingCall || ws !== socket) return
+    const joinTimedOut = event.code === 4008 || (event.code === 1008 && event.reason === 'Authentication required')
+    const rateLimited = event.code === 4029 || (event.code === 1008 && event.reason === 'Too many messages')
+    console.warn('[webrtc] Signaling connection closed', {
+      code: event.code,
+      category: joinTimedOut ? 'join_timeout' : rateLimited ? 'rate_limited' : event.code === 1008 ? 'room_authorization' : 'connection_closed',
+    })
+    if (joinTimedOut) {
+      scheduleSignalingReconnect()
+      return
+    }
+    if (rateLimited) {
+      signalingBlocked = true
+      error.value = 'Too many call connection updates. Close duplicate call tabs and try again.'
+      if (pc?.connectionState !== 'connected') setConnectionState('failed')
+      return
+    }
+    // A suspended tab may resume with an old token. Fetch a fresh one once;
+    // persistent rejection stops retries rather than bypassing authorization.
+    if (event.code === 1008 && authorizationRetryCount++ < 1) {
+      scheduleSignalingReconnect()
+      return
+    }
+    if (event.code === 1008 || event.code === 4001) {
+      signalingBlocked = true
+      error.value = event.code === 4001
+        ? 'This consultation was opened in another tab or device.'
+        : 'The call server could not verify this room. Please refresh the page and try again.'
+      if (pc?.connectionState !== 'connected') setConnectionState('failed')
+      return
+    }
+    scheduleSignalingReconnect()
+  }
+
+  let messageQueue = Promise.resolve()
+  socket.onmessage = (event) => {
+    // SDP application and TURN fetching are asynchronous. Process subsequent
+    // candidates only after the preceding offer/answer has been applied.
+    messageQueue = messageQueue.then(async () => {
+      if (leavingCall || ws !== socket) return
+      try {
+        let msg
+        try {
+          msg = JSON.parse(String(event.data))
+        } catch {
+          return
+        }
+        // Handle chat messages
+        if (msg.type === 'chat' && sessionActive.value && chatRef.value) {
+          chatRef.value.receiveMessage(msg.payload)
+          return
+        }
+        if (msg.type === 'joined') {
+          authorizationRetryCount = 0
+          clearTimeout(socket.joinTimeout)
+          reconnectAttempt = 0
+          // If someone is already in the room, capture their identity and (if psychologist) start offer.
+          if (Array.isArray(msg.peers) && msg.peers.length > 0) {
+            setRemoteIdentity(msg.peers[0])
+            if (pc?.connectionState !== 'connected') setConnectionState('connecting')
+          } else {
+            if (pc?.connectionState !== 'connected') setConnectionState('waiting')
+          }
+
+          if (props.role === 'psychologist' && Number(msg.peerCount || 0) > 1) {
+            await createPeerConnection()
+            await makeOffer(pc?.connectionState !== 'connected' || pc?.signalingState !== 'stable')
+          }
+
+          // If the other peer is already present, the session might have started.
+          syncSessionBackend()
+        }
+
+        if (msg.type === 'peer-joined') {
+          setRemoteIdentity(msg)
+          if (pc?.connectionState !== 'connected') setConnectionState('connecting')
+
+          // Second participant joined; backend will set started_at.
+          syncSessionBackend()
+
+          if (props.role === 'psychologist') {
+            await createPeerConnection()
+            await makeOffer(pc?.connectionState !== 'connected' || pc?.signalingState !== 'stable')
+          }
+        }
+
+        if (msg.type === 'restart-request' && props.role === 'psychologist') {
+          await makeOffer(true)
+        }
+
+        if (msg.type === 'offer') {
+          setRemoteIdentity(msg.from || msg)
+          const peer = await createPeerConnection()
+          await refreshIceConfiguration(peer)
+          if (leavingCall || ws !== socket || pc !== peer) return
+          await peer.setRemoteDescription(new RTCSessionDescription(msg.sdp))
+          await flushPendingIce()
+          const answer = await peer.createAnswer()
+          await peer.setLocalDescription(answer)
+          wsSend({ type: 'answer', sdp: peer.localDescription })
+          for (const sender of peer.getSenders()) configureCallVideoSender(sender)
+        }
+
+        if (msg.type === 'answer') {
+          setRemoteIdentity(msg.from || msg)
+          const peer = await createPeerConnection()
+          await peer.setRemoteDescription(new RTCSessionDescription(msg.sdp))
+          await flushPendingIce()
+          for (const sender of peer.getSenders()) configureCallVideoSender(sender)
+        }
+
+        if (msg.type === 'ice') {
+          setRemoteIdentity(msg.from || msg)
+          await createPeerConnection()
+          await addIceCandidateBuffered(msg.candidate)
+        }
+
+        if (msg.type === 'peer-left') {
+          if (msg.signalingTimeout && pc?.connectionState === 'connected') return
+          setConnectionState('waiting')
+          remoteName.value = ''
+          remoteRole.value = ''
+          remoteVideoEnabled.value = true
+          remoteAudioEnabled.value = true
+          resetPeerConnection()
+        }
+
+        if (msg.type === 'media') {
+          // Remote toggled mic/camera.
+          setRemoteIdentity(msg.from || msg)
+          updateRemoteVideoRenderable()
+        }
+
+        if (msg.type === 'session-ended') {
+          // Psychologist ended the session.
+          await handleSessionEnded()
+        }
+
+        if (msg.type === 'error') {
+          error.value = String(msg.message || 'Signaling error.')
+        }
+      } catch (negotiationError) {
+        if (leavingCall || ws !== socket) return
+        if (pc?.connectionState !== 'connected') setConnectionState('connecting')
+        scheduleMediaRecovery()
+        console.warn('[webrtc] Media negotiation failed', { name: negotiationError?.name })
+      }
+    })
+    return messageQueue
+  }
+
+}
+
+function handleConnectionWake() {
+  if (leavingCall || signalingBlocked || document.visibilityState === 'hidden') return
+  if (!ws || ws.readyState === WebSocket.CLOSED || ws.readyState === WebSocket.CLOSING) {
+    clearTimeout(reconnectTimer)
+    reconnectTimer = null
+    connectSignaling().catch(handleSignalingRequestError)
+  }
+  if (pc && pc.connectionState !== 'connected') scheduleMediaRecovery()
+}
+
 onMounted(async () => {
+  const onFsChange = () => {
+    isFullscreen.value = Boolean(document.fullscreenElement)
+  }
+  const onRemoteVideoMeta = () => updateRemoteVideoRenderable()
+  const videoElement = remoteVideo.value
+  document.addEventListener('fullscreenchange', onFsChange)
+  document.addEventListener('visibilitychange', handleConnectionWake)
+  window.addEventListener('online', handleConnectionWake)
+  for (const event of ['loadedmetadata', 'resize', 'playing']) videoElement?.addEventListener(event, onRemoteVideoMeta)
+  removeCallListeners = () => {
+    document.removeEventListener('fullscreenchange', onFsChange)
+    document.removeEventListener('visibilitychange', handleConnectionWake)
+    window.removeEventListener('online', handleConnectionWake)
+    for (const event of ['loadedmetadata', 'resize', 'playing']) videoElement?.removeEventListener(event, onRemoteVideoMeta)
+  }
   try {
     // Track session presence immediately.
     await joinSessionBackend()
+    if (leavingCall) return
 
     const roomId = String(props.roomId || '').trim()
     if (!roomId) throw new Error('Missing room id')
@@ -1566,161 +1938,9 @@ onMounted(async () => {
     setConnectionState('connecting')
     await startLocalMedia()
 
-    const { token: signalingToken } = await fetchJson(`/appointments/${props.appointmentId}/signaling-token`, { cache: 'no-store' })
-    ws = new WebSocket(signalingUrl)
-
-    ws.onopen = async () => {
-      wsSend({ type: 'join', roomId, token: signalingToken })
-      sendMediaState()
-
-      // Sync session start in case the other participant already joined.
-      syncSessionBackend()
-
-      if (pendingMediaState) {
-        wsSendOrQueue(pendingMediaState)
-        pendingMediaState = null
-      }
-    }
-
-    ws.onerror = () => {
-      error.value = 'Unable to reach the signaling server. Check the Node service and WebSocket proxy.'
-      setConnectionState('failed')
-    }
-
-    ws.onclose = (event) => {
-      if (leavingCall) return
-      setConnectionState('failed')
-      if (event.code === 1008) {
-        error.value = 'Signaling authorization was rejected. Reload the call; if it persists, check that Laravel and Node use the same SIGNALING_AUTH_SECRET and synchronized clocks.'
-      } else if (!error.value) {
-        error.value = 'The signaling connection closed. Reload this page to rejoin the consultation.'
-      }
-      console.warn('[webrtc] Signaling connection closed', { code: event.code })
-    }
-
-    ws.onmessage = async (event) => {
-      try {
-      let msg
-      try {
-        msg = JSON.parse(String(event.data))
-      } catch {
-        return
-      }
-      // Handle chat messages
-      if (msg.type === 'chat' && sessionActive.value && chatRef.value) {
-        chatRef.value.receiveMessage(msg.payload)
-        return
-      }
-      if (msg.type === 'joined') {
-        // If someone is already in the room, capture their identity and (if psychologist) start offer.
-        if (Array.isArray(msg.peers) && msg.peers.length > 0) {
-          setRemoteIdentity(msg.peers[0])
-          setConnectionState('connecting')
-        } else {
-          setConnectionState('waiting')
-        }
-
-        if (props.role === 'psychologist' && Number(msg.peerCount || 0) > 1) {
-          await createPeerConnection()
-          await makeOffer()
-        }
-
-        // If the other peer is already present, the session might have started.
-        syncSessionBackend()
-      }
-
-      if (msg.type === 'peer-joined') {
-        setRemoteIdentity(msg)
-        setConnectionState('connecting')
-
-        // Second participant joined; backend will set started_at.
-        syncSessionBackend()
-
-        if (props.role === 'psychologist') {
-          await createPeerConnection()
-          await makeOffer()
-        }
-      }
-
-      if (msg.type === 'offer') {
-        setRemoteIdentity(msg.from || msg)
-        if (pc) resetPeerConnection()
-        const peer = await createPeerConnection()
-        await peer.setRemoteDescription(new RTCSessionDescription(msg.sdp))
-        await flushPendingIce()
-        const answer = await peer.createAnswer()
-        await peer.setLocalDescription(answer)
-        wsSend({ type: 'answer', sdp: answer })
-      }
-
-      if (msg.type === 'answer') {
-        setRemoteIdentity(msg.from || msg)
-        const peer = await createPeerConnection()
-        await peer.setRemoteDescription(new RTCSessionDescription(msg.sdp))
-        await flushPendingIce()
-      }
-
-      if (msg.type === 'ice') {
-        setRemoteIdentity(msg.from || msg)
-        await createPeerConnection()
-        await addIceCandidateBuffered(msg.candidate)
-      }
-
-      if (msg.type === 'peer-left') {
-        setConnectionState('waiting')
-        remoteName.value = ''
-        remoteRole.value = ''
-        remoteVideoEnabled.value = true
-        remoteAudioEnabled.value = true
-        resetPeerConnection()
-      }
-
-      if (msg.type === 'media') {
-        // Remote toggled mic/camera.
-        setRemoteIdentity(msg.from || msg)
-        updateRemoteVideoRenderable()
-      }
-
-      if (msg.type === 'session-ended') {
-        // Psychologist ended the session.
-        await handleSessionEnded()
-      }
-
-      if (msg.type === 'error') {
-        error.value = String(msg.message || 'Signaling error.')
-      }
-      } catch (negotiationError) {
-        error.value = negotiationError?.message || 'Failed to negotiate the media connection.'
-        setConnectionState('failed')
-        console.warn('[webrtc] Media negotiation failed', { name: negotiationError?.name })
-      }
-    }
-
-    const onFsChange = () => {
-      isFullscreen.value = Boolean(document.fullscreenElement)
-    }
-    document.addEventListener('fullscreenchange', onFsChange)
-
-    const onRemoteVideoMeta = () => updateRemoteVideoRenderable()
-    try {
-      remoteVideo.value?.addEventListener('loadedmetadata', onRemoteVideoMeta)
-      remoteVideo.value?.addEventListener('resize', onRemoteVideoMeta)
-      remoteVideo.value?.addEventListener('playing', onRemoteVideoMeta)
-    } catch {
-      // ignore
-    }
-
-    onBeforeUnmount(() => {
-      document.removeEventListener('fullscreenchange', onFsChange)
-      try {
-        remoteVideo.value?.removeEventListener('loadedmetadata', onRemoteVideoMeta)
-        remoteVideo.value?.removeEventListener('resize', onRemoteVideoMeta)
-        remoteVideo.value?.removeEventListener('playing', onRemoteVideoMeta)
-      } catch {
-        // ignore
-      }
-    })
+    try { await connectSignaling() } catch (requestError) { handleSignalingRequestError(requestError) }
   } catch (e) {
+    if (leavingCall) return
     error.value = e?.message ? String(e.message) : 'Failed to start video call.'
     setConnectionState('failed')
   }
