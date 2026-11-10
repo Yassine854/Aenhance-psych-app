@@ -9,7 +9,6 @@ use App\Models\Payment;
 use App\Models\PatientProfile;
 use App\Models\PsychologistProfile;
 use App\Services\ClicToPayClient;
-use App\Services\JaaSJitsiJwt;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;

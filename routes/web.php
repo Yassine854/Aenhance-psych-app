@@ -337,7 +337,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/appointments/{appointment}/session/end', [AppointmentSessionController::class, 'end'])
             ->name('appointments.session.end');
 
-        // Video call (Jitsi)
+        // Video call
         Route::post('/psychologist/appointments/{appointment}/video-call/start', [AppointmentController::class, 'startVideoCall'])
             ->name('psychologist.appointments.video_call.start');
 

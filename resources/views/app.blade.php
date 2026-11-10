@@ -10,7 +10,8 @@
         <title inertia>{{ config('app.name', 'Laravel') }}</title>
         <link rel="icon" type="image/svg+xml" href="{{ asset('images/aenhance.svg') }}">
         <link rel="shortcut icon" href="{{ asset('images/aenhance.svg') }}">
-
+        <link rel="manifest" href="{{ asset('manifest.json') }}">
+        <meta name="theme-color" content="#af5166">
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />

@@ -1,7 +1,6 @@
 <template>
   <div class="overflow-x-hidden">
     <Head title="Telemental Health - AEfhance">
-      <link rel="manifest" href="/manifest.json" />
     </Head>
 
     <Navbar 
