@@ -1,208 +1,138 @@
 <template>
   <Head :title="t('psychologistAppointments.title')" />
-
   <Navbar :canLogin="canLogin" :canRegister="canRegister" :authUser="authUser || page.props?.auth?.user" />
 
-  <div class="min-h-[calc(100vh-112px)] bg-gray-50">
-    <div class="bg-gradient-to-r from-[#af5166] to-[#5997ac]">
-      <div class="mx-auto max-w-6xl px-4 py-8">
-        <h1 class="text-2xl sm:text-3xl font-semibold text-white">{{ t('psychologistAppointments.title') }}</h1>
-        <p class="mt-1 text-sm text-white/90">{{ t('psychologistAppointments.subtitle') }}</p>
-      </div>
-    </div>
-
-    <div class="mx-auto max-w-6xl px-4 py-8">
-      <div class="p-6 space-y-6">
-        <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+  <main class="min-h-[calc(100vh-112px)] bg-[#f7f9fa] py-8 sm:py-12">
+    <div class="app-page-shell space-y-6 px-4 sm:px-6 lg:px-8">
+      <section class="relative overflow-hidden rounded-3xl border border-gray-200 bg-white p-5 shadow-sm sm:p-8">
+        <div aria-hidden="true" class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[#af5166] to-[#5997ac]" />
+        <div class="flex flex-col justify-between gap-5 sm:flex-row sm:items-start">
           <div>
-            <div v-if="flashMessage" class="mb-3 rounded-lg border border-green-200 bg-green-50 px-4 py-3">
-              <div class="flex items-start justify-between gap-3">
-                <div class="flex items-start gap-3">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-5 w-5 text-green-700 mt-0.5">
-                    <path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12Zm13.61-1.814a.75.75 0 0 0-1.22-.872l-3.236 4.53-1.784-1.784a.75.75 0 1 0-1.06 1.06l2.4 2.4a.75.75 0 0 0 1.14-.094l3.76-5.24Z" clip-rule="evenodd" />
-                  </svg>
-                  <div>
-                    <div class="text-sm font-medium text-green-800">{{ t('psychologistAppointments.success') }}</div>
-                    <div class="text-sm text-green-800">{{ flashMessage }}</div>
-                  </div>
-                </div>
-                <button type="button" @click="clearFlash" class="text-green-700/70 hover:text-green-800" :aria-label="t('psychologistAppointments.dismiss')">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-5 w-5">
-                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-
-            <div v-if="flashError" class="mb-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3">
-              <div class="flex items-start justify-between gap-3">
-                <div class="flex items-start gap-3">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-5 w-5 text-red-700 mt-0.5">
-                    <path fill-rule="evenodd" d="M12 2.25c5.385 0 9.75 4.365 9.75 9.75S17.385 21.75 12 21.75 2.25 17.385 2.25 12 6.615 2.25 12 2.25Zm.75 6a.75.75 0 0 0-1.5 0V12a.75.75 0 0 0 1.5 0V8.25ZM12 15.75a.75.75 0 1 0 0 1.5.75.75 0 0 0 0-1.5Z" clip-rule="evenodd" />
-                  </svg>
-                  <div>
-                    <div class="text-sm font-medium text-red-800">{{ t('psychologistAppointments.notAllowed') }}</div>
-                    <div class="text-sm text-red-800">{{ flashError }}</div>
-                  </div>
-                </div>
-                <button type="button" @click="clearError" class="text-red-700/70 hover:text-red-800" :aria-label="t('psychologistAppointments.dismiss')">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-5 w-5">
-                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-                  </svg>
-                </button>
-              </div>
-            </div>
+            <p class="mb-2 text-xs font-bold uppercase tracking-widest text-[#5997ac]">{{ t('psychologistAppointments.workspace') }}</p>
+            <h1 class="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">{{ t('psychologistAppointments.title') }}</h1>
+            <p class="mt-2 max-w-xl text-sm leading-6 text-gray-500">{{ t('psychologistAppointments.overview') }}</p>
           </div>
-        </header>
-
-        <div class="flex items-center gap-3 w-full md:w-auto">
-          <div class="flex items-center gap-2 flex-1">
-          <select
-            v-model="searchField"
-            class="h-10 w-40 md:w-48 shrink-0 rounded-lg border-gray-300 bg-white px-3 text-sm text-gray-700"
-            :aria-label="t('psychologistAppointments.searchFilter')"
-          >
-            <option value="patient">{{ t('psychologistAppointments.patient') }}</option>
-            <option value="date">{{ t('psychologistAppointments.date') }}</option>
-          </select>
-
-            <div class="relative flex-1 md:w-80">
-              <template v-if="searchField !== 'date'">
-                <input
-                  v-model="searchQuery"
-                  type="text"
-                  :placeholder="searchPlaceholder"
-                  class="w-full rounded-lg border-gray-300 pl-10 pr-3 py-2"
-                />
-
-                <button
-                  v-if="searchQuery"
-                  type="button"
-                  @click="clearSearch"
-                  class="absolute right-2 top-1/2 -translate-y-1/2 inline-flex items-center justify-center h-7 w-7 rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-700"
-                  :aria-label="t('psychologistAppointments.clearText')"
-                  :title="t('psychologistAppointments.clear')"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-4 w-4">
-                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-                  </svg>
-                </button>
-              </template>
-
-              <template v-else>
-                <input
-                  v-model="searchDate"
-                  type="date"
-                  class="w-full rounded-lg border-gray-300 pl-10 pr-10 py-2"
-                  :aria-label="t('psychologistAppointments.searchDate')"
-                />
-
-                <button
-                  v-if="searchDate"
-                  type="button"
-                  @click="searchDate = ''"
-                  class="absolute right-2 top-1/2 -translate-y-1/2 inline-flex items-center justify-center h-7 w-7 rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-700"
-                  :aria-label="t('psychologistAppointments.clearDate')"
-                  :title="t('psychologistAppointments.clear')"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-4 w-4">
-                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-                  </svg>
-                </button>
-              </template>
-
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
-                <path
-                  fill-rule="evenodd"
-                  d="M12.9 14.32a8 8 0 111.414-1.414l4.387 4.387a1 1 0 01-1.414 1.414l-4.387-4.387zM14 8a6 6 0 11-12 0 6 6 0 0112 0z"
-                  clip-rule="evenodd"
-                />
-              </svg>
-            </div>
-          </div>
+          <Link :href="route('psychologist.availabilities')" class="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl border border-[#5997ac]/25 bg-[#5997ac]/5 px-4 py-2.5 text-sm font-semibold text-[#477e90] transition hover:bg-[#5997ac]/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5997ac]">
+            <svg aria-hidden="true" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M8 2v4m8-4v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14H3V6a2 2 0 0 1 2-2Z" /><path d="m9 15 2 2 4-4" /></svg>
+            {{ t('psychologistAppointments.manageAvailability') }}
+          </Link>
         </div>
-        <div class="bg-white rounded-lg shadow overflow-hidden">
-          <div class="p-4">
-            <template v-if="data.length">
-              <TransitionGroup name="list" tag="div" class="space-y-4">
-                <div v-for="a in sorted" :key="a.id" class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 border rounded-lg hover:shadow-sm" :class="normalizeStatus(a.status) === 'cancelled' ? 'bg-red-50/30' : 'bg-white'">
-                  <div class="flex-1">
-                    <div class="flex items-start sm:items-center gap-3 sm:gap-4">
-                      <div class="flex-1 min-w-0">
-                        <div class="flex items-center gap-2">
-                          <div class="text-sm font-medium text-gray-900 truncate">{{ bookedForName(a) }}</div>
-                          <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold" :class="String(a.booking_for || '').toLowerCase() === 'other' ? 'bg-yellow-100 text-yellow-800' : 'bg-[#5997ac]/10 text-[#5997ac]'">{{ bookedForBadge(a) }}</span>
-                        </div>
-                        <div class="mt-1 text-xs text-gray-500 truncate">{{ bookedForMeta(a) }}</div>
-                        <div v-if="bookedForDetails(a)" class="mt-1 text-xs text-gray-500">{{ bookedForDetails(a) }}</div>
-                      </div>
-                    </div>
-
-                    <div class="mt-3 text-sm text-gray-700">
-                      <div class="font-medium">{{ formatDate(a.scheduled_start) }}</div>
-                      <div class="mt-1 text-xs text-gray-500">{{ formatTime(a.scheduled_start) }} – {{ formatTime(a.scheduled_end) }}</div>
-                    </div>
-                  </div>
-
-                  <div class="flex-shrink-0 flex items-center gap-2">
-                    <Link v-if="canJoinRoom(a)" :href="route('appointments.video_call.show', a.id)" class="inline-flex items-center justify-center h-8 px-2.5 rounded-lg border text-xs font-medium border-gray-200 bg-white text-gray-700 hover:bg-gray-50" :title="t('psychologistAppointments.joinVideoCall')">{{ t('psychologistAppointments.joinRoom') }}</Link>
-
-                    <button v-else-if="canStartCall(a)" type="button" @click="startCall(a)" :disabled="startingCallId === a.id" class="inline-flex items-center justify-center h-8 px-2.5 rounded-lg border text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100" :title="t('psychologistAppointments.startVideoCall')">{{ startingCallId === a.id ? t('psychologistAppointments.starting') : t('psychologistAppointments.startCall') }}</button>
-
-                    <button v-if="canCancelAppointment(a)" type="button" @click="cancelWithReason(a)" :disabled="savingId === a.id" class="inline-flex items-center justify-center h-8 px-2.5 rounded-lg border text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed border-red-200 bg-red-50 text-red-700 hover:bg-red-100" :title="t('psychologistAppointments.cancelAppointment')">{{ t('psychologistAppointments.cancel') }}</button>
-
-                    <button v-else-if="showCancelDisabled(a)" type="button" disabled class="inline-flex items-center justify-center h-8 px-2.5 rounded-lg border text-xs font-medium opacity-60 cursor-not-allowed border-gray-200 bg-gray-50 text-gray-600" :title="t('psychologistAppointments.cancelDisabled')">{{ t('psychologistAppointments.cancel') }}</button>
-
-                    <button v-if="normalizeStatus(a.status) === 'completed'" type="button" @click="onNotesClick(a, $event)" class="notes-btn inline-flex items-center gap-2 h-9 px-3 rounded-lg text-xs font-medium border shadow-sm transition duration-150 hover:shadow-md" style="border-color: rgb(89 151 172 / var(--tw-bg-opacity, 1)); color: rgb(89 151 172 / var(--tw-bg-opacity, 1));" :title="t('psychologistAppointments.editNotes')">
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" :style="{ color: 'inherit' }">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5M18.5 2.5l3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                      </svg>
-                      {{ t('psychologistAppointments.notes') }}
-                    </button>
-
-                    <button v-if="currentUser && String(currentUser.role || '').toUpperCase() === 'PSYCHOLOGIST'" @click.prevent="openReportForPatient(a)" class="inline-flex items-center justify-center h-9 w-9 rounded-full bg-white text-red-600 shadow border border-gray-100 hover:scale-105 transition ml-2" :title="t('psychologistAppointments.reportPatient')" :aria-label="t('psychologistAppointments.reportPatient')">
-                      <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" aria-hidden="true">
-                        <path class="fill-current" d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
-                        <rect x="10.5" y="7" width="3" height="7" rx="0.6" class="fill-white stroke-red-600" stroke-width="0.9" />
-                        <circle class="fill-white stroke-red-600" cx="12" cy="16.5" r="1.4" stroke-width="0.9" />
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-              </TransitionGroup>
-            </template>
-
-            <div v-else class="p-8 text-center text-gray-500">
-              <svg class="mx-auto h-10 w-10 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3M3 11h18M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-              <div class="mt-4 text-lg font-medium">{{ t('psychologistAppointments.noAppointments') }}</div>
-              <div class="mt-1 text-sm">{{ t('psychologistAppointments.noAppointmentsDesc') }}</div>
-            </div>
-          </div>
-
-          <div class="flex items-center justify-between px-4 py-3 border-t border-gray-200">
-            <div class="text-sm text-gray-600">{{ t('psychologistAppointments.showing') }} {{ appointments.from }}-{{ appointments.to }} {{ t('psychologistAppointments.of') }} {{ appointments.total }}</div>
-            <div class="flex items-center gap-2">
-              <Link v-for="(link, i) in appointments.links" :key="i" :href="link.url || '#'" :class="linkClasses(link)" :style="link.active ? { backgroundColor: brandColor, borderColor: brandColor, color: '#fff' } : null" preserve-scroll>
-                <span v-safe-html="link.label"></span>
-              </Link>
-            </div>
-          </div>
+        <div class="mt-7 grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <button v-for="stat in summaryCards" :key="stat.key" type="button" @click="selectStatus(stat.filter)" :aria-pressed="statusFilter === stat.filter"
+            class="flex min-w-0 items-center justify-between gap-2 rounded-2xl border p-4 text-start transition hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5997ac]"
+            :class="[stat.tone, statusFilter === stat.filter ? 'ring-2 ring-[#5997ac]/40' : '']">
+            <div><p class="text-xs font-semibold">{{ stat.label }}</p><p class="mt-2 text-2xl font-bold tabular-nums">{{ stat.value }}</p></div>
+            <span aria-hidden="true" class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/70">
+              <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path :d="stat.icon" stroke-linecap="round" stroke-linejoin="round" /></svg>
+            </span>
+          </button>
         </div>
+      </section>
+
+      <div v-if="flashMessage" role="status" class="flex items-start justify-between gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm text-emerald-800">
+        <span>{{ flashMessage }}</span><button type="button" @click="clearFlash" :aria-label="t('psychologistAppointments.dismiss')" class="font-bold">&#215;</button>
       </div>
+      <div v-if="flashError" role="alert" class="flex items-start justify-between gap-3 rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-800">
+        <span>{{ flashError }}</span><button type="button" @click="clearError" :aria-label="t('psychologistAppointments.dismiss')" class="font-bold">&#215;</button>
+      </div>
+
+      <section :aria-label="t('psychologistAppointments.searchFilter')" class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5">
+        <div class="flex flex-col justify-between gap-4 md:flex-row md:items-center">
+          <div class="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row">
+            <select v-model="searchField" :aria-label="t('psychologistAppointments.searchFilter')" class="min-h-11 rounded-xl border-gray-200 bg-gray-50 text-sm focus:border-[#5997ac] focus:ring-[#5997ac] sm:w-36">
+              <option value="patient">{{ t('psychologistAppointments.patient') }}</option><option value="date">{{ t('psychologistAppointments.date') }}</option>
+            </select>
+            <div class="relative flex-1">
+              <svg aria-hidden="true" class="pointer-events-none absolute start-3 top-3.5 h-4 w-4 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="10.5" cy="10.5" r="6.5" /><path d="m16 16 4 4" /></svg>
+              <input v-if="searchField !== 'date'" v-model="searchQuery" type="search" :placeholder="searchPlaceholder" :aria-label="searchPlaceholder" class="min-h-11 w-full rounded-xl border-gray-200 bg-white ps-10 text-sm focus:border-[#5997ac] focus:ring-[#5997ac]" />
+              <input v-else v-model="searchDate" type="date" :aria-label="t('psychologistAppointments.searchDate')" class="min-h-11 w-full rounded-xl border-gray-200 bg-white ps-10 text-sm focus:border-[#5997ac] focus:ring-[#5997ac]" />
+            </div>
+          </div>
+          <button v-if="hasFilters" type="button" @click="resetFilters" class="min-h-11 rounded-xl px-3 text-sm font-semibold text-[#477e90] hover:bg-[#5997ac]/5">{{ t('psychologistAppointments.resetFilters') }}</button>
+        </div>
+        <div role="group" :aria-label="t('psychologistAppointments.status')" class="mt-4 flex flex-wrap gap-2 border-t border-gray-100 pt-4">
+          <button v-for="filter in statusOptions" :key="filter.value" type="button" @click="selectStatus(filter.value)" :aria-pressed="statusFilter === filter.value"
+            class="min-h-9 rounded-full px-3.5 py-1.5 text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5997ac]"
+            :class="statusFilter === filter.value ? 'bg-[#5997ac] text-white shadow-sm' : 'bg-gray-50 text-gray-600 hover:bg-gray-100'">{{ filter.label }}</button>
+        </div>
+      </section>
+
+      <section :aria-label="t('psychologistAppointments.title')" class="space-y-4">
+        <div class="flex items-center justify-between gap-3 px-1">
+          <h2 class="text-base font-semibold text-gray-900">{{ t('psychologistAppointments.schedule') }} <span class="ms-1 rounded-full bg-gray-200/60 px-2 py-0.5 text-xs tabular-nums text-gray-600">{{ appointments.total || 0 }}</span></h2>
+          <span class="text-xs text-gray-500">{{ t('psychologistAppointments.recentFirst') }}</span>
+        </div>
+        <TransitionGroup v-if="data.length" name="list" tag="div" class="space-y-4">
+          <article v-for="a in sorted" :key="a.id" class="relative overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition hover:border-[#5997ac]/30 hover:shadow-md">
+            <div aria-hidden="true" class="absolute inset-y-0 start-0 w-1" :class="statusAccent(a.status)" />
+            <div class="p-5 ps-6 sm:p-6 sm:ps-7">
+              <div class="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
+                <div class="flex min-w-0 items-start gap-3">
+                  <span aria-hidden="true" class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#5997ac]/10 text-sm font-bold text-[#477e90]">{{ patientInitials(a) }}</span>
+                  <div class="min-w-0">
+                    <div class="flex flex-wrap items-center gap-2">
+                      <h3 class="break-words text-base font-bold text-gray-900">{{ bookedForName(a) }}</h3>
+                      <span class="inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold" :class="appointmentBadge(a.status)">{{ appointmentLabel(a.status) }}</span>
+                    </div>
+                    <div class="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-gray-500">
+                      <span>{{ bookedForBadge(a) }}</span><span aria-hidden="true">&middot;</span><span>{{ bookedForMeta(a) }}</span>
+                    </div>
+                    <p v-if="bookedForDetails(a)" class="mt-1.5 text-xs text-gray-500">{{ bookedForDetails(a) }}</p>
+                  </div>
+                </div>
+                <div class="flex shrink-0 flex-wrap items-center gap-2 sm:justify-end">
+                  <Link v-if="canJoinRoom(a)" :href="route('appointments.video_call.show', a.id)" class="appointment-primary" :title="t('psychologistAppointments.joinVideoCall')">
+                    <svg aria-hidden="true" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="6" width="12" height="12" rx="2" /><path d="m15 10 6-3v10l-6-3" /></svg>{{ t('psychologistAppointments.joinRoom') }}
+                  </Link>
+                  <button v-else-if="canStartCall(a)" type="button" @click="startCall(a)" :disabled="startingCallId === a.id" class="appointment-primary" :title="t('psychologistAppointments.startVideoCall')">{{ startingCallId === a.id ? t('psychologistAppointments.starting') : t('psychologistAppointments.startCall') }}</button>
+                  <button v-if="normalizeStatus(a.status) === 'completed'" type="button" @click="onNotesClick(a, $event)" class="appointment-primary" :title="t('psychologistAppointments.editNotes')">{{ t('psychologistAppointments.notes') }}</button>
+                  <button v-if="canCancelAppointment(a)" type="button" @click="cancelWithReason(a)" :disabled="savingId === a.id" class="appointment-secondary text-red-600 hover:border-red-200 hover:bg-red-50" :title="t('psychologistAppointments.cancelAppointment')">{{ t('psychologistAppointments.cancel') }}</button>
+                  <button v-else-if="showCancelDisabled(a)" type="button" disabled class="appointment-secondary cursor-not-allowed text-gray-400" :title="t('psychologistAppointments.cancelDisabled')">{{ t('psychologistAppointments.cancel') }}</button>
+                  <button v-if="currentUser && String(currentUser.role || '').toUpperCase() === 'PSYCHOLOGIST'" type="button" @click="openReportForPatient(a)" class="flex h-10 w-10 items-center justify-center rounded-xl text-gray-400 transition hover:bg-red-50 hover:text-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-200" :title="t('psychologistAppointments.reportPatient')" :aria-label="t('psychologistAppointments.reportPatient')">
+                    <svg aria-hidden="true" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M5 21V4m0 0c5-4 9 4 14 0v10c-5 4-9-4-14 0" /></svg>
+                  </button>
+                </div>
+              </div>
+              <div class="mt-5 grid gap-3 rounded-xl border border-gray-100 bg-gray-50/80 px-4 py-3 text-sm sm:grid-cols-[1.4fr_1fr_auto] sm:items-center">
+                <div class="flex items-center gap-2.5 text-gray-700"><svg aria-hidden="true" class="h-4 w-4 shrink-0 text-[#5997ac]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M7 2v6m10-6v6M3 11h18" /></svg><span class="font-medium">{{ formatDate(a.scheduled_start) }}</span></div>
+                <div class="flex items-center gap-2.5 text-gray-700"><svg aria-hidden="true" class="h-4 w-4 shrink-0 text-[#5997ac]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg><span class="font-semibold tabular-nums">{{ formatTime(a.scheduled_start) }} &ndash; {{ formatTime(a.scheduled_end) }}</span></div>
+                <span class="text-xs text-gray-500">{{ t('psychologistAppointments.videoSession') }}</span>
+              </div>
+              <p v-if="normalizeStatus(a.status) === 'cancelled' && a.cancellation_reason" class="mt-3 text-xs leading-5 text-gray-500"><span class="font-semibold">{{ t('psychologistAppointments.reason') }}:</span> {{ a.cancellation_reason }}</p>
+            </div>
+          </article>
+        </TransitionGroup>
+        <div v-else class="rounded-2xl border border-dashed border-gray-300 bg-white px-6 py-14 text-center">
+          <span aria-hidden="true" class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#5997ac]/10 text-[#5997ac]"><svg class="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M7 2v6m10-6v6M3 11h18m5 5h8" /></svg></span>
+          <h3 class="mt-4 font-semibold text-gray-900">{{ t(hasFilters ? 'psychologistAppointments.noResults' : 'psychologistAppointments.noAppointments') }}</h3>
+          <p class="mx-auto mt-2 max-w-sm text-sm leading-6 text-gray-500">{{ t(hasFilters ? 'psychologistAppointments.noResultsDesc' : 'psychologistAppointments.noAppointmentsDesc') }}</p>
+          <button v-if="hasFilters" type="button" @click="resetFilters" class="appointment-primary mt-5">{{ t('psychologistAppointments.resetFilters') }}</button>
+        </div>
+        <div v-if="data.length" class="flex flex-col items-center justify-between gap-4 rounded-2xl border border-gray-200 bg-white px-5 py-4 sm:flex-row">
+          <p class="text-xs text-gray-500">{{ t('psychologistAppointments.showing') }} <span class="font-semibold text-gray-700">{{ appointments.from || 0 }}&ndash;{{ appointments.to || 0 }}</span> {{ t('psychologistAppointments.of') }} {{ appointments.total || 0 }}</p>
+          <nav v-if="appointments.last_page > 1" :aria-label="t('psychologistAppointments.pagination')" class="flex flex-wrap justify-center gap-1.5">
+            <template v-for="(link, i) in appointments.links" :key="i">
+              <Link v-if="link.url" :href="link.url" :class="linkClasses(link)" :style="link.active ? { backgroundColor: brandColor, borderColor: brandColor, color: '#fff' } : null" :aria-current="link.active ? 'page' : undefined" preserve-scroll><span v-safe-html="link.label" /></Link>
+              <span v-else :class="linkClasses(link)" aria-disabled="true"><span v-safe-html="link.label" /></span>
+            </template>
+          </nav>
+        </div>
+        <p class="flex items-start gap-2 px-1 text-xs leading-5 text-gray-500"><svg aria-hidden="true" class="mt-0.5 h-4 w-4 shrink-0 text-[#5997ac]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9" /><path d="M12 11v6m0-10v1" /></svg>{{ t('psychologistAppointments.cancelDisabled') }}</p>
+      </section>
     </div>
-  </div>
+  </main>
+  <Footer />
   <VideoCallSessionNotes ref="notesRef" />
   <ReportModal :show="showReportModal" :profile="reportProfile" :authUser="currentUser" reported-role="patient" @close="showReportModal=false" @sent="() => { showReportModal=false }" />
 </template>
 
+
 <script setup>
 import { Head, Link, router, usePage } from '@inertiajs/vue3'
-import { computed, ref, watch, onMounted } from 'vue'
+import { computed, ref, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Navbar from '@/Components/Navbar.vue'
-import SortIcon from '@/Components/SortIcon.vue'
+import Footer from '@/Components/Footer.vue'
 import Swal from 'sweetalert2'
 import VideoCallSessionNotes from '@/Components/VideoCall/VideoCallSessionNotes.vue'
 import ReportModal from '@/Components/ReportModal.vue'
@@ -228,6 +158,7 @@ onMounted(() => {
 
 const props = defineProps({
   appointments: Object,
+  summary: { type: Object, default: () => ({}) },
   status: { type: String, default: '' },
   filters: { type: Object, default: () => ({}) },
   canLogin: Boolean,
@@ -307,6 +238,46 @@ const data = computed(() => props.appointments?.data || [])
 const searchField = ref('patient')
 const searchQuery = ref('')
 const searchDate = ref('')
+const statusFilter = ref('')
+const hasFilters = computed(() => Boolean(statusFilter.value || searchQuery.value.trim() || searchDate.value))
+const statusOptions = computed(() => [
+  { value: '', label: t('psychologistAppointments.all') },
+  ...['confirmed', 'pending', 'completed', 'cancelled', 'no_show'].map(value => ({
+    value, label: appointmentLabel(value),
+  })),
+])
+const summaryCards = computed(() => [
+  { key: 'total', filter: '', label: t('psychologistAppointments.total'), tone: 'border-gray-200 bg-gray-50 text-gray-700', icon: 'M8 2v4m8-4v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14H3V6a2 2 0 0 1 2-2Z' },
+  { key: 'confirmed', filter: 'confirmed', label: t('psychologistAppointments.confirmed'), tone: 'border-[#5997ac]/20 bg-[#5997ac]/5 text-[#477e90]', icon: 'M12 3v9l5 3M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0' },
+  { key: 'pending', filter: 'pending', label: t('psychologistAppointments.pending'), tone: 'border-amber-200 bg-amber-50/70 text-amber-800', icon: 'M12 8v5m0 3v1M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0' },
+  { key: 'completed', filter: 'completed', label: t('psychologistAppointments.completed'), tone: 'border-emerald-200 bg-emerald-50/70 text-emerald-800', icon: 'm8 12 3 3 5-6M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0' },
+].map(card => ({ ...card, value: Number(props.summary[card.key] || 0) })))
+
+function selectStatus(value) {
+  if (statusFilter.value === value) return
+  statusFilter.value = value
+  applyServerFilters()
+}
+
+async function resetFilters() {
+  if (searchDebounce) clearTimeout(searchDebounce)
+  isHydratingFilters.value = true
+  searchQuery.value = ''
+  searchDate.value = ''
+  searchField.value = 'patient'
+  statusFilter.value = ''
+  await nextTick()
+  isHydratingFilters.value = false
+  applyServerFilters()
+}
+
+function patientInitials(appointment) {
+  return bookedForName(appointment).trim().split(/\s+/).slice(0, 2).map(part => part[0]).join('').toUpperCase() || '?'
+}
+
+function statusAccent(status) {
+  return ({ confirmed: 'bg-[#5997ac]', pending: 'bg-amber-400', completed: 'bg-emerald-500', cancelled: 'bg-rose-400' })[normalizeStatus(status)] || 'bg-gray-300'
+}
 const isHydratingFilters = ref(false)
 let searchDebounce = null
 
@@ -319,6 +290,7 @@ function normalizeFilters(filters = {}) {
     search_field: validField,
     search_query: String(filters?.search_query || ''),
     search_date: String(filters?.search_date || ''),
+    status_filter: ['pending', 'confirmed', 'completed', 'cancelled', 'no_show'].includes(filters?.status_filter) ? filters.status_filter : '',
   }
 }
 
@@ -328,7 +300,8 @@ function hydrateFiltersFromProps() {
   searchField.value = f.search_field
   searchQuery.value = f.search_query
   searchDate.value = f.search_date
-  isHydratingFilters.value = false
+  statusFilter.value = f.status_filter
+  nextTick(() => { isHydratingFilters.value = false })
 }
 
 function currentQueryParams() {
@@ -336,6 +309,7 @@ function currentQueryParams() {
     search_field: searchField.value,
     search_query: searchField.value === 'date' ? '' : String(searchQuery.value || '').trim(),
     search_date: searchField.value === 'date' ? String(searchDate.value || '').trim() : '',
+    status_filter: statusFilter.value,
   }
 
   return Object.fromEntries(
@@ -345,6 +319,7 @@ function currentQueryParams() {
 
 function applyServerFilters({ resetPage = true } = {}) {
   if (isHydratingFilters.value) return
+  if (searchDebounce) { clearTimeout(searchDebounce); searchDebounce = null }
 
   const params = currentQueryParams()
   if (resetPage) params.page = 1
@@ -353,7 +328,7 @@ function applyServerFilters({ resetPage = true } = {}) {
     preserveScroll: true,
     preserveState: true,
     replace: true,
-    only: ['appointments', 'filters', 'status'],
+    only: ['appointments', 'filters', 'summary', 'status'],
   })
 }
 
@@ -561,7 +536,8 @@ function formatTime(value) {
 }
 
 function normalizeStatus(value) {
-  return String(value || '').trim().toLowerCase()
+  const status = String(value || '').trim().toLowerCase()
+  return status === 'canceled' ? 'cancelled' : status
 }
 
 function appointmentLabel(status) {
@@ -831,6 +807,12 @@ function linkClasses(link) {
 
 const brandColor = 'rgb(89 151 172 / var(--tw-bg-opacity, 1))'
 
+onBeforeUnmount(() => {
+  clearTimeout(searchDebounce)
+  clearTimeout(flashTimer)
+  clearTimeout(errorTimer)
+})
+
 // Notes button click animation: briefly add a class then open modal
 function onNotesClick(a, ev) {
   try {
@@ -854,6 +836,15 @@ function onNotesClick(a, ev) {
 </script>
 
 <style scoped>
+.appointment-primary {
+  @apply inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-[#5997ac] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#477e90] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5997ac] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50;
+}
+.appointment-secondary {
+  @apply inline-flex min-h-10 items-center justify-center rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5997ac] disabled:opacity-60;
+}
+.list-enter-active, .list-leave-active { transition: opacity 180ms ease, transform 180ms ease; }
+.list-enter-from, .list-leave-to { opacity: 0; transform: translateY(6px); }
+@media (prefers-reduced-motion: reduce) { .list-enter-active, .list-leave-active { transition: none; } }
 [dir="rtl"] {
   text-align: right;
 }

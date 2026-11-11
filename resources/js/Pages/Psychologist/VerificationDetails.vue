@@ -198,7 +198,7 @@ watch(() => Object.keys(form.errors).length, (errorCount, oldErrorCount) => {
 
   <div class="min-h-[calc(100vh-112px)] bg-gray-50">
     <div class="bg-gradient-to-r from-[#af5166] to-[#5997ac]">
-      <div class="mx-auto max-w-6xl px-4 py-8">
+      <div class="app-page-shell px-4 py-8">
         <div class="flex items-center gap-4">
           <div class="h-14 w-14 rounded-full overflow-hidden ring-2 ring-white/70 bg-white/15 flex items-center justify-center">
             <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -214,7 +214,7 @@ watch(() => Object.keys(form.errors).length, (errorCount, oldErrorCount) => {
     </div>
 
     <!-- Back to Profile Button -->
-    <div class="mx-auto max-w-6xl px-4 py-4">
+    <div class="app-page-shell px-4 py-4">
       <Link
         :href="route('psychologist.profile.self')"
         class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200"
@@ -226,7 +226,7 @@ watch(() => Object.keys(form.errors).length, (errorCount, oldErrorCount) => {
       </Link>
     </div>
 
-    <div class="mx-auto max-w-6xl px-4 py-8">
+    <div class="app-page-shell px-4 py-8">
       <form @submit.prevent="submit" class="space-y-8">
         <!-- Bank Information Section -->
         <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">

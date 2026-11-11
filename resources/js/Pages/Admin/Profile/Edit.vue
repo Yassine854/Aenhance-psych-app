@@ -27,7 +27,7 @@ const isAdmin = computed(() => {
 
     <AdminLayout>
         <div class="pt-2">
-            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+            <div class="app-page-shell sm:px-6 lg:px-8">
                 <div class="mb-6">
                     <h2 class="font-semibold text-xl text-gray-800 leading-tight">Profile</h2>
                 </div>

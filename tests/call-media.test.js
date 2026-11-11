@@ -13,6 +13,14 @@ test('capture requests speech processing and bounded camera settings without req
   assert.equal(video.frameRate.max, 30);
 });
 
+test('camera capture prefers an uncropped frame and permits portrait HD dimensions', () => {
+  const video = callVideoConstraints();
+  assert.equal(video.resizeMode.ideal, 'none');
+  assert.equal(video.resizeMode.exact, undefined);
+  assert(video.width.max >= 720);
+  assert(video.height.max >= 1280);
+});
+
 test('video limits preserve negotiated encoding identity and permit lower bitrates', async () => {
   const parameters = { transactionId: 'browser-id', encodings: [{ rid: 'main', active: true }] };
   let applied;

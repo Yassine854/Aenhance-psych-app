@@ -16,5 +16,7 @@ Production with PM2:
 - `pm2 start pm2.config.js`
 
 Notes:
+- The frontend sends reactions and raised-hand updates as versioned `call-interaction` chat payloads. Existing signaling deployments relay these intact, so these controls do not require a signaling restart. Deploy the frontend and refresh both participants' call pages.
+- Interaction payloads are consumed before chat rendering. Reactions are temporary; raised hands are resynchronized when signaling reconnects or another participant joins.
 - Expose a secure `wss://` endpoint through a reverse proxy (nginx/traefik)
 - Validate JWTs from Laravel when accepting WebSocket connections

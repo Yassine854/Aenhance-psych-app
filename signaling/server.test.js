@@ -62,6 +62,19 @@ test('room access is signed, isolated, and role restricted', { timeout: 15000 },
   const offer = await sendAndReceive(psychologist, patient, { type: 'offer', sdp: { type: 'offer', sdp: 'test' } });
   assert.equal(offer.from.role, 'psychologist');
 
+  const reaction = await sendAndReceive(patient, psychologist, {
+    type: 'reaction', reaction: 'love', name: 'forged', role: 'psychologist',
+  });
+  assert.deepEqual(reaction, { type: 'reaction', reaction: 'love', name: 'patient', role: 'patient' });
+  // Unsupported reactions and rapid repeats must not reach the other peer.
+  patient.send(JSON.stringify({ type: 'reaction', reaction: '<script>' }));
+  patient.send(JSON.stringify({ type: 'reaction', reaction: 'happy' }));
+  assert.equal((await sendAndReceive(patient, psychologist, { type: 'chat', payload: { text: 'after-reaction' } })).type, 'chat');
+  const raised = await sendAndReceive(psychologist, patient, {
+    type: 'media', audioEnabled: false, videoEnabled: true, handRaised: true,
+  });
+  assert.deepEqual(raised.media, { audioEnabled: false, videoEnabled: true, handRaised: true });
+
   // An abrupt signaling loss must not tell the other browser to close media.
   const duringOutage = [];
   const recordOutage = (raw) => duringOutage.push(JSON.parse(raw));
@@ -75,10 +88,17 @@ test('room access is signed, isolated, and role restricted', { timeout: 15000 },
   const rejoined = once(psychologist, 'message');
   const room = await sendAndReceive(patient, patient, { type: 'join', token: token('patient') });
   assert.equal(room.peerCount, 2);
+  assert.equal(room.peers[0].media.handRaised, true);
+  // Reactions are transient and are not replayed when a participant rejoins.
+  assert.equal(room.peers[0].reaction, undefined);
   assert.equal(JSON.parse((await rejoined)[0]).type, 'peer-joined');
   assert.equal(duringOutage.some((msg) => msg.type === 'peer-left'), false);
   psychologist.off('message', recordOutage);
   assert.equal((await sendAndReceive(patient, psychologist, { type: 'restart-request' })).type, 'restart-request');
+  const lowered = await sendAndReceive(psychologist, patient, {
+    type: 'media', audioEnabled: false, videoEnabled: true, handRaised: false,
+  });
+  assert.equal(lowered.media.handRaised, false);
 
   // Duplicate tabs get a terminal close code rather than reconnecting forever.
   const replacement = await connect();
@@ -92,6 +112,7 @@ test('room access is signed, isolated, and role restricted', { timeout: 15000 },
   const outsider = await connect();
   await sendAndReceive(outsider, outsider, { type: 'join', token: token('patient', 'other-room') });
   outsider.send(JSON.stringify({ type: 'chat', payload: { text: 'wrong room' } }));
+  outsider.send(JSON.stringify({ type: 'reaction', reaction: 'love' }));
   const isolated = await sendAndReceive(patient, psychologist, { type: 'chat', payload: { text: 'right room' } });
   assert.equal(isolated.payload.text, 'right room');
 

@@ -5,13 +5,13 @@
 
   <div class="min-h-[calc(100vh-112px)] bg-gray-50">
     <div class="bg-gradient-to-r from-[#af5166] to-[#5997ac]">
-      <div class="mx-auto max-w-6xl px-4 py-8">
+      <div class="app-page-shell px-4 py-8">
         <h1 class="text-2xl sm:text-3xl font-semibold text-white">{{ t('psychologistPatients.title') }}</h1>
         <p class="mt-1 text-sm text-white/90">{{ t('psychologistPatients.subtitle') }}</p>
       </div>
     </div>
 
-    <div class="mx-auto max-w-6xl px-4 py-8">
+    <div class="app-page-shell px-4 py-8">
       <div class="p-6 space-y-6">
         <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
           <div>

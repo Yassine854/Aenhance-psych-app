@@ -480,7 +480,7 @@ async function cancelAppointment(a) {
   <Navbar :canLogin="canLogin" :canRegister="canRegister" :authUser="authUser" />
 
   <div class="bg-gray-50 py-10 md:py-14">
-    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="app-page-shell px-4 sm:px-6 lg:px-8">
       <div class="mb-8 rounded-2xl border border-gray-200 bg-white p-6 md:p-7 shadow-sm">
         <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
           <div>

@@ -420,7 +420,7 @@ function submit() {
   <Navbar :canLogin="canLogin" :canRegister="canRegister" :authUser="authUser" />
 
   <div class="bg-gray-50 py-10 md:py-14">
-    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="app-page-shell px-4 sm:px-6 lg:px-8">
       <div class="flex items-start justify-between gap-4 mb-8">
         <div>
           <h1 class="text-2xl md:text-3xl font-bold text-gray-900">{{ t('appointment.title') }}</h1>

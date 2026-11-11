@@ -25,6 +25,23 @@ class PsychologistAppointmentController extends Controller
         $searchField = strtolower(trim((string) $request->input('search_field', 'patient')));
         $searchQuery = trim((string) $request->input('search_query', ''));
         $searchDate = trim((string) $request->input('search_date', ''));
+        $statusFilter = strtolower(trim((string) $request->input('status_filter', '')));
+        if (! in_array($statusFilter, ['pending', 'confirmed', 'completed', 'cancelled', 'no_show'], true)) {
+            $statusFilter = '';
+        }
+
+        // Summaries cover the whole practice, not just the current pagination page.
+        $summary = ['total' => 0, 'pending' => 0, 'confirmed' => 0, 'completed' => 0, 'cancelled' => 0, 'no_show' => 0];
+        $counts = Appointment::query()->where('psychologist_id', $user->id)
+            ->selectRaw('LOWER(status) as appointment_status, COUNT(*) as total')
+            ->groupByRaw('LOWER(status)')->get();
+        foreach ($counts as $count) {
+            $summary['total'] += (int) $count->total;
+            $key = $count->appointment_status === 'canceled' ? 'cancelled' : $count->appointment_status;
+            if (array_key_exists($key, $summary) && $key !== 'total') {
+                $summary[$key] += (int) $count->total;
+            }
+        }
 
         if (! in_array($searchField, ['patient', 'date'], true)) {
             $searchField = 'patient';
@@ -38,6 +55,11 @@ class PsychologistAppointmentController extends Controller
                 'beneficiary:appointment_id,first_name,last_name,date_of_birth,gender,relationship_to_patient',
                 'session:id,appointment_id,room_id,status,started_at',
             ]);
+
+        if ($statusFilter !== '') {
+            $statuses = $statusFilter === 'cancelled' ? ['cancelled', 'canceled'] : [$statusFilter];
+            $appointmentsQuery->whereIn('status', $statuses);
+        }
 
         if ($searchField === 'date') {
             if ($searchDate !== '') {
@@ -110,11 +132,13 @@ class PsychologistAppointmentController extends Controller
 
         return Inertia::render('Psychologist/Appointments/Index', [
             'appointments' => $payload,
+            'summary' => $summary,
             'status' => session('status'),
             'filters' => [
                 'search_field' => $searchField,
                 'search_query' => $searchQuery,
                 'search_date' => $searchDate,
+                'status_filter' => $statusFilter,
             ],
         ]);
     }

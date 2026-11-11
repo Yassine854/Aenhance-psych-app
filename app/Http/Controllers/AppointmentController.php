@@ -1196,7 +1196,8 @@ class AppointmentController extends Controller
         $payload = [
             'appointmentId' => $appointment->id,
             'roomId' => (string) $session->room_id,
-            'displayName' => (string) ($user->name ?? 'User'),
+            'displayName' => $user->videoCallFirstName(),
+            'remoteFirstName' => ($user->isPsychologist() ? $appointment->patient : $appointment->psychologist)?->videoCallFirstName() ?? '',
             'signalingUrl' => $signalingUrl,
         ];
 

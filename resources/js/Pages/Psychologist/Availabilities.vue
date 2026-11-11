@@ -5,13 +5,13 @@
 
     <div>
       <div class="bg-gradient-to-r from-[#af5166] to-[#5997ac]">
-        <div class="mx-auto max-w-7xl px-4 py-8">
+        <div class="app-page-shell px-4 py-8">
           <h1 class="text-2xl sm:text-3xl font-semibold text-white">{{ t('availabilities.title') }}</h1>
           <p class="mt-1 text-sm text-white/90">{{ t('availabilities.subtitle') }}</p>
         </div>
       </div>
 
-      <div class="mx-auto max-w-8xl p-6">
+      <div class="app-page-shell p-6">
         <div class="bg-white rounded-2xl shadow-lg border border-gray-100">
         <div class="bg-gradient-to-r from-[#5997ac] to-[#7ba8b7] px-6 py-4 rounded-t-2xl">
           <h2 class="text-lg font-semibold text-white">{{ t('availabilities.myAvailabilities') }}</h2>

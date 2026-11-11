@@ -49,6 +49,14 @@ class User extends Authenticatable
 
     // Relationships
 
+    public function videoCallFirstName(): string
+    {
+        $profile = $this->isPsychologist() ? $this->psychologistProfile : ($this->isPatient() ? $this->patientProfile : null);
+        $firstName = trim((string) ($profile?->first_name ?? ''));
+
+        return $firstName !== '' ? $firstName : (preg_split('/\s+/u', trim((string) $this->name), 2)[0] ?? '');
+    }
+
     public function psychologistProfile()
     {
         return $this->hasOne(PsychologistProfile::class);

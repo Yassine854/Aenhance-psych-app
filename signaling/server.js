@@ -3,6 +3,8 @@ import { WebSocketServer, WebSocket } from "ws";
 import { inspectJoinToken } from "./auth.js";
 import { startHeartbeat } from "./heartbeat.js";
 
+const reactions = new Set(['thumbs-up', 'happy', 'sad', 'love', 'laugh', 'applause', 'celebrate', 'surprised']);
+
 const authSecret = process.env.SIGNALING_AUTH_SECRET;
 if (!authSecret || authSecret.length < 32) {
   throw new Error('SIGNALING_AUTH_SECRET must be configured with at least 32 characters.');
@@ -112,6 +114,7 @@ wss.on("connection", (ws) => {
   ws._media = {
     audioEnabled: true,
     videoEnabled: true,
+    handRaised: false,
   };
 
 
@@ -186,6 +189,7 @@ wss.on("connection", (ws) => {
       ws._media = {
         audioEnabled: true,
         videoEnabled: true,
+        handRaised: false,
       };
 
 
@@ -300,6 +304,15 @@ wss.on("connection", (ws) => {
 
 
 
+    // Reactions are transient, room-scoped, and attributed to the signed identity.
+    if (msg.type === 'reaction') {
+      if (!reactions.has(msg.reaction) || Date.now() - (ws._lastReactionAt || 0) < 600) return;
+      ws._lastReactionAt = Date.now();
+      return broadcast(roomId, ws, {
+        type: 'reaction', reaction: msg.reaction, role: ws._role, name: ws._name,
+      });
+    }
+
     // Chat
     if (msg.type === "chat") {
 
@@ -325,6 +338,7 @@ wss.on("connection", (ws) => {
       ws._media = {
         audioEnabled,
         videoEnabled,
+        handRaised: msg.handRaised === true,
       };
 
 

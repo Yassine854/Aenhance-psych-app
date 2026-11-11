@@ -1,13 +1,8 @@
-import rawCountries from '../../json/country.json'
+import { getCountries } from './countries'
+export { getCountries, splitInternationalPhoneNumber } from './countries'
+export type { CountryOption } from './countries'
 import rawStates from '../../json/state.json'
 import rawCities from '../../json/city.json'
-
-type RawCountry = {
-  id: string
-  sortname: string
-  name: string
-  phonecode: string
-}
 
 type RawState = {
   id: string
@@ -19,14 +14,6 @@ type RawCity = {
   id: string
   name: string
   state_id: string
-}
-
-export type CountryOption = {
-  id: string
-  isoCode: string
-  name: string
-  phonecode: string
-  dialCode: string
 }
 
 export type StateOption = {
@@ -41,15 +28,7 @@ export type CityOption = {
   stateId: string
 }
 
-const countries: CountryOption[] = (rawCountries as RawCountry[])
-  .map((c) => ({
-    id: String(c.id),
-    isoCode: String(c.sortname),
-    name: String(c.name),
-    phonecode: String(c.phonecode ?? ''),
-    dialCode: `+${String(c.phonecode ?? '')}`,
-  }))
-  .sort((a, b) => a.name.localeCompare(b.name))
+const countries = getCountries()
 
 const states: StateOption[] = (rawStates as RawState[]).map((s) => ({
   id: String(s.id),
@@ -62,10 +41,6 @@ const cities: CityOption[] = (rawCities as RawCity[]).map((c) => ({
   name: String(c.name),
   stateId: String(c.state_id),
 }))
-
-export function getCountries(): CountryOption[] {
-  return countries
-}
 
 export function getStates(): StateOption[] {
   return states
@@ -109,28 +84,4 @@ export async function loadCityNames(): Promise<string[]> {
   )
 
   return cityNamesPromise
-}
-
-export function splitInternationalPhoneNumber(
-  phone: string | null | undefined,
-  dialCodes: string[],
-): { dialCode: string; nationalNumber: string } {
-  const raw = String(phone ?? '').trim()
-  if (!raw) return { dialCode: '', nationalNumber: '' }
-
-  const normalized = raw.replace(/[\s\-()]/g, '')
-
-  if (!normalized.startsWith('+')) {
-    return { dialCode: '', nationalNumber: normalized.replace(/\D/g, '') }
-  }
-
-  const sortedDialCodes = [...dialCodes].sort((a, b) => b.length - a.length)
-  const match = sortedDialCodes.find((dc) => normalized.startsWith(dc))
-
-  if (!match) {
-    return { dialCode: '', nationalNumber: normalized.replace(/\D/g, '') }
-  }
-
-  const rest = normalized.slice(match.length)
-  return { dialCode: match, nationalNumber: rest.replace(/\D/g, '') }
 }

@@ -9,7 +9,8 @@ import Multiselect from '@vueform/multiselect'
 import { Head, useForm, usePage, Link } from '@inertiajs/vue3'
 import { computed, ref, watch, nextTick, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { getCountries, getCitiesByCountryName } from '@/utils/geoData'
+import { getCountries } from '@/utils/countries'
+import { useProfileCities } from '@/composables/useProfileCities'
 import { resolveStorageUrl } from '@/utils/storage'
 import Swal from 'sweetalert2'
 
@@ -92,10 +93,7 @@ const cvInput = ref(null)
 
 const dialCodes = computed(() => countriesList.value.map(c => c.dialCode).filter(Boolean))
 
-const cities = computed(() => {
-  if (!form.country) return []
-  return getCitiesByCountryName(form.country).map(c => c.name)
-})
+const { cities, citiesLoading } = useProfileCities(form)
 
 const imagePreview = computed(() => {
   if (form.profile_image) return URL.createObjectURL(form.profile_image)
@@ -340,7 +338,7 @@ watch(() => Object.keys(form.errors).length, (errorCount, oldErrorCount) => {
 
   <div class="min-h-[calc(100vh-112px)] bg-gray-50">
     <div class="bg-gradient-to-r from-[#af5166] to-[#5997ac]">
-      <div class="mx-auto max-w-6xl px-4 py-8">
+      <div class="app-page-shell px-4 py-8">
         <div class="flex items-center gap-4">
           <div class="h-14 w-14 rounded-full overflow-hidden ring-2 ring-white/70 bg-white/15 flex items-center justify-center">
             <img v-if="headerImage" :src="headerImage" class="h-full w-full object-cover" />
@@ -355,7 +353,7 @@ watch(() => Object.keys(form.errors).length, (errorCount, oldErrorCount) => {
     </div>
 
     <!-- Approval Status Message -->
-    <div v-if="!profile?.is_approved" class="mx-auto max-w-6xl px-4 py-6">
+    <div v-if="!profile?.is_approved" class="app-page-shell px-4 py-6">
       <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
         <div class="flex items-center gap-3">
           <div class="w-5 h-5 text-yellow-600 flex-shrink-0">
@@ -372,7 +370,7 @@ watch(() => Object.keys(form.errors).length, (errorCount, oldErrorCount) => {
     </div>
 
     <!-- Approved Status Message -->
-    <div v-else-if="profile?.is_approved" class="mx-auto max-w-6xl px-4 py-6">
+    <div v-else-if="profile?.is_approved" class="app-page-shell px-4 py-6">
       <div class="bg-green-50 border border-green-200 rounded-xl p-4">
         <div class="flex items-center">
           <div class="flex-1">
@@ -448,7 +446,7 @@ watch(() => Object.keys(form.errors).length, (errorCount, oldErrorCount) => {
       </div>
     </div>
 
-    <div class="mx-auto max-w-6xl px-4 py-8">
+    <div class="app-page-shell px-4 py-8">
       <form @submit.prevent="submit" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <!-- Profile Photo Section - Displayed first on mobile/tablet -->
         <aside class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden order-first lg:order-last lg:col-span-1">
@@ -716,7 +714,8 @@ watch(() => Object.keys(form.errors).length, (errorCount, oldErrorCount) => {
                   <div class="relative">
                     <select
                       v-model="form.city"
-                      :disabled="!form.country"
+                      :aria-busy="citiesLoading"
+                      :disabled="!form.country || citiesLoading"
                       class="mt-1 block w-full pl-10 rounded-md border-gray-300 disabled:bg-gray-50 focus:border-[#5997ac] focus:ring-[#5997ac] shadow-sm"
                     >
                       <option value="">{{ form.country ? t('profile.selectCity') : t('profile.selectCountryFirst') }}</option>

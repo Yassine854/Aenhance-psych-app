@@ -179,13 +179,13 @@ watch(() => Object.keys(passwordForm.errors).length, (errorCount, oldErrorCount)
 
   <div class="min-h-[calc(100vh-112px)] bg-gray-50">
     <div class="bg-gradient-to-r from-[#af5166] to-[#5997ac]">
-      <div class="mx-auto max-w-6xl px-4 py-8">
+      <div class="app-page-shell px-4 py-8">
         <h1 class="text-2xl sm:text-3xl font-semibold text-white">{{ t('account.title') }}</h1>
         <p class="mt-1 text-sm text-white/90">{{ t('account.subtitle') }}</p>
       </div>
     </div>
 
-    <div class="mx-auto max-w-6xl px-4 py-8">
+    <div class="app-page-shell px-4 py-8">
       <div class="space-y-8">
         <!-- Profile Information Section -->
         <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">

@@ -6,7 +6,8 @@ import TextInput from '@/Components/TextInput.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { getCountries, getCitiesByCountryName } from '@/utils/geoData'
+import { getCountries } from '@/utils/countries'
+import { useProfileCities } from '@/composables/useProfileCities'
 import Multiselect from '@vueform/multiselect'
 
 const props = defineProps({
@@ -100,10 +101,9 @@ watch(patientCountryCode, (code) => {
 
 watch([patientDialCode, patientNationalNumber], () => syncPatientPhoneToForm())
 
-const patientCities = computed(() => {
-    if (!form.patient_country) return []
-    return getCitiesByCountryName(form.patient_country).map(c => c.name)
-})
+const { cities: patientCities, citiesLoading: patientCitiesLoading } = useProfileCities(
+    form, 'patient_country', 'patient_city',
+)
 
 // Psychologist geo + phone
 const countryCode = ref('')
@@ -125,10 +125,7 @@ watch(countryCode, (code) => {
 
 watch([dialCode, nationalNumber], () => syncPhoneToForm())
 
-const cities = computed(() => {
-    if (!form.country) return []
-    return getCitiesByCountryName(form.country).map(c => c.name)
-})
+const { cities, citiesLoading } = useProfileCities(form)
 
 const daysOfWeek = computed(() => [
     { value: 0, label: t('auth.register.days.sunday') },
@@ -747,7 +744,8 @@ const submit = async () => {
                                         id="patient_city"
                                         v-model="form.patient_city"
                                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#5997ac] focus:ring-[#5997ac]"
-                                        :disabled="!form.patient_country"
+                                        :disabled="!form.patient_country || patientCitiesLoading"
+                                        :aria-busy="patientCitiesLoading"
                                     >
                                         <option value="">{{ t('auth.register.selectCity') }}</option>
                                         <option v-for="ct in patientCities" :key="ct" :value="ct">{{ ct }}</option>
@@ -906,7 +904,8 @@ const submit = async () => {
                                         id="city"
                                         v-model="form.city"
                                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#5997ac] focus:ring-[#5997ac]"
-                                        :disabled="!form.country"
+                                        :disabled="!form.country || citiesLoading"
+                                        :aria-busy="citiesLoading"
                                         required
                                     >
                                         <option value="">{{ t('auth.register.selectCity') }}</option>

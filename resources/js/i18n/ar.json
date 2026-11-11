@@ -1203,6 +1203,27 @@
   "nextPage": "الصفحة التالية"
   },
   "videoCall": {
+    "toolbar": {
+      "more": "المزيد من الخيارات",
+      "close": "إغلاق الخيارات",
+      "endSession": "إنهاء الجلسة"
+    },
+    "interactions": {
+    "reactions": "التفاعلات",
+    "raiseHand": "رفع اليد",
+    "lowerHand": "خفض اليد",
+    "handRaised": "{name} يرغب في التحدث",
+    "reacted": "تفاعل {name}: {reaction}",
+    "unavailable": "جارٍ إعادة الاتصال. يرجى المحاولة مجددًا.",
+    "thumbs-up": "إعجاب",
+    "happy": "سعادة",
+    "sad": "حزن",
+    "love": "حب",
+    "laugh": "ضحك",
+    "applause": "تصفيق",
+    "celebrate": "احتفال",
+    "surprised": "دهشة"
+  },
     "dismissError": "إخفاء الرسالة",
     "title": "مكالمة فيديو",
     "subtitle": "انضم إلى جلستك المجدولة عبر الفيديو",
@@ -1560,6 +1581,18 @@
   }
 },
 "psychologistAppointments": {
+  "workspace": "مساحتك المهنية",
+  "overview": "جلساتك منظمة بوضوح. ابحث عن مريض أو انضم إلى مكالمة أو راجع ملاحظاتك.",
+  "manageAvailability": "إدارة أوقات التوفر",
+  "total": "جميع المواعيد",
+  "all": "الكل",
+  "schedule": "مواعيدك",
+  "recentFirst": "الأحدث أولاً",
+  "videoSession": "استشارة بالفيديو",
+  "resetFilters": "إعادة تعيين الفلاتر",
+  "noResults": "لا توجد مواعيد مطابقة",
+  "noResultsDesc": "جرّب اسماً أو تاريخاً أو حالة أخرى، أو أعد تعيين الفلاتر لعرض جميع المواعيد.",
+  "pagination": "صفحات المواعيد",
   "title": "المواعيد",
   "subtitle": "إدارة مواعيدك. يمكنك الإلغاء فقط قبل 24 ساعة+ من وقت البدء.",
   "success": "نجاح",

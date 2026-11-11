@@ -4,11 +4,11 @@
       <Backdrop />
       <app-sidebar />
       <div
-        class="flex-1 transition-all duration-300 ease-in-out"
+        class="min-w-0 flex-1 transition-all duration-300 ease-in-out"
         :class="[isExpanded || isHovered ? 'lg:ml-[290px]' : 'lg:ml-[90px]']"
       >
         <app-header />
-        <div class="p-4 mx-auto max-w-(--breakpoint-2xl) md:p-6">
+        <div class="app-page-shell p-4 md:p-6">
           <slot></slot>
         </div>
       </div>

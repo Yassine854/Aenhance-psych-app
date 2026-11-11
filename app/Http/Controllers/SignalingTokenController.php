@@ -30,7 +30,7 @@ class SignalingTokenController extends Controller
         $payload = rtrim(strtr(base64_encode(json_encode([
             'roomId' => (string) $session->room_id,
             'role' => $role,
-            'name' => (string) $user->name,
+            'name' => $user->videoCallFirstName(),
             'exp' => now()->timestamp + 300,
         ], JSON_THROW_ON_ERROR)), '+/', '-_'), '=');
 

@@ -1204,6 +1204,27 @@
     "nextPage": "Page suivante"
   },
   "videoCall": {
+    "toolbar": {
+      "more": "Plus d’options",
+      "close": "Fermer les options",
+      "endSession": "Terminer la séance"
+    },
+    "interactions": {
+    "reactions": "Réactions",
+    "raiseHand": "Lever la main",
+    "lowerHand": "Baisser la main",
+    "handRaised": "{name} souhaite prendre la parole",
+    "reacted": "{name} a réagi : {reaction}",
+    "unavailable": "Reconnexion. Veuillez réessayer votre réaction.",
+    "thumbs-up": "J’aime",
+    "happy": "Joie",
+    "sad": "Tristesse",
+    "love": "Amour",
+    "laugh": "Rire",
+    "applause": "Applaudissements",
+    "celebrate": "Célébration",
+    "surprised": "Surprise"
+  },
     "dismissError": "Masquer le message",
     "title": "Appel vidéo",
     "subtitle": "Rejoignez votre session vidéo programmée",
@@ -1554,6 +1575,18 @@
   }
 },
 "psychologistAppointments": {
+  "workspace": "Votre espace professionnel",
+  "overview": "Vos séances, en toute clarté. Retrouvez un patient, rejoignez un appel ou consultez vos notes.",
+  "manageAvailability": "Gérer mes disponibilités",
+  "total": "Tous les rendez-vous",
+  "all": "Tous",
+  "schedule": "Vos rendez-vous",
+  "recentFirst": "Les plus récents d’abord",
+  "videoSession": "Consultation vidéo",
+  "resetFilters": "Réinitialiser les filtres",
+  "noResults": "Aucun rendez-vous correspondant",
+  "noResultsDesc": "Essayez un autre nom, une autre date ou un autre statut, ou réinitialisez les filtres.",
+  "pagination": "Pages des rendez-vous",
   "title": "Rendez-vous",
   "subtitle": "Gérez vos rendez-vous. Vous ne pouvez annuler que 24h+ avant l'heure de début.",
   "success": "Succès",

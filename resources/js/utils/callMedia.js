@@ -11,7 +11,10 @@ export function callAudioConstraints() {
 export function callVideoConstraints() {
   return {
     width: { ideal: 1280, max: 1280 },
-    height: { ideal: 720, max: 720 },
+    // Allow portrait camera modes too; a 720px height ceiling can exclude them.
+    height: { ideal: 720, max: 1280 },
+    // Prefer native capture rather than cropping the sensor to match our size.
+    resizeMode: { ideal: 'none' },
     frameRate: { ideal: 24, max: 30 },
     facingMode: { ideal: 'user' },
   }

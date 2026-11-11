@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 import { parse } from '@babel/parser';
+import { callInteractionMessage, readCallInteraction } from '../resources/js/utils/callInteractions.js';
 
 const script = readFileSync(new URL('../resources/js/Components/VideoCall/VideoCallPanel.vue', import.meta.url), 'utf8')
   .split('<script setup>')[1].split('</script>')[0];
@@ -34,7 +35,8 @@ function fixture() {
     localOfferSentAt: 0,
     turnCredentialsExpiresAt: 0, iceConfigurationRefreshedAt: 0,
     AbortController, document: { visibilityState: 'visible' },
-    error: { value: '' }, console: { warn() {} }, WebSocket: Socket,
+    error: { value: '' }, remoteHandRaised: { value: false }, handRaised: { value: false },
+    callInteractionMessage, readCallInteraction, console: { warn() {} }, WebSocket: Socket,
     setTimeout(fn) { const id = ++timerId; timers.set(id, fn); return id; },
     clearTimeout(id) { timers.delete(id); }, clearInterval() {},
     fetchJson: async () => ({ token: `fresh-${++tokenCount}` }),
@@ -51,6 +53,46 @@ async function join(context, sockets) {
   await context.connectSignaling();
   await sockets.at(-1).onmessage({ data: JSON.stringify({ type: 'joined', peers: [] }) });
 }
+
+test('incoming reactions reach the call overlay after joining', async () => {
+  const { context, sockets } = fixture();
+  const received = [];
+  context.interactionsRef = { value: { receiveReaction: (...args) => received.push(args) } };
+  context.remoteDisplayName = { value: 'Other participant' };
+  await join(context, sockets);
+  await sockets[0].onmessage({ data: JSON.stringify({ type: 'reaction', reaction: 'love' }) });
+  assert.deepEqual(received, [['love', 'Other participant']]);
+});
+
+test('legacy chat relay delivers reactions and hand updates without creating chat messages', async () => {
+  const { context, sockets } = fixture();
+  const received = [];
+  context.interactionsRef = { value: { receiveReaction: (...args) => received.push(args) } };
+  context.remoteDisplayName = { value: 'Other participant' };
+  context.sessionActive = { value: false };
+  context.chatRef = { value: { receiveMessage() { throw new Error('Interactions must not appear in chat'); } } };
+  await join(context, sockets);
+  for (const message of [callInteractionMessage('reaction', 'happy'), callInteractionMessage('hand', true)]) {
+    await sockets[0].onmessage({ data: JSON.stringify(message) });
+  }
+  assert.deepEqual(received, [['happy', 'Other participant']]);
+  assert.equal(context.remoteHandRaised.value, true);
+  await sockets[0].onmessage({ data: JSON.stringify(callInteractionMessage('hand', false)) });
+  assert.equal(context.remoteHandRaised.value, false);
+  await sockets[0].onmessage({ data: JSON.stringify(callInteractionMessage('hand', 'invalid')) });
+  assert.equal(context.remoteHandRaised.value, false);
+});
+
+test('a peer joining receives the current raised hand through the legacy relay', async () => {
+  const { context, sockets } = fixture();
+  const sent = [];
+  context.wsSend = message => sent.push(message);
+  context.setRemoteIdentity = () => {};
+  context.handRaised.value = true;
+  await join(context, sockets);
+  await sockets[0].onmessage({ data: JSON.stringify({ type: 'peer-joined', role: 'psychologist' }) });
+  assert(sent.some(message => readCallInteraction(message)?.raised === true));
+});
 
 test('signaling loss preserves media and reconnects with fresh authorization', async () => {
   const { context, timers, sockets, peer, tokens } = fixture();

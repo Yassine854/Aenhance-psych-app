@@ -1,9 +1,10 @@
 <script setup>
 import { Head, Link, router } from '@inertiajs/vue3'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Navbar from '@/Components/Navbar.vue'
 import Footer from '@/Components/Footer.vue'
+import { formatNamedMessage } from '@/utils/i18n.js'
 
 const props = defineProps({
   canLogin: { type: Boolean },
@@ -19,6 +20,11 @@ const props = defineProps({
 const markingAll = ref(false)
 
 const { t } = useI18n()
+const paginationSummary = computed(() => formatNamedMessage(t, 'notifications.showing', {
+  start: props.notifications.from ?? 0,
+  end: props.notifications.to ?? 0,
+  total: props.notifications.total ?? 0,
+}))
 
 const linkClasses = (link) => {
   const base = 'inline-flex min-w-[36px] items-center justify-center rounded-md border px-3 py-1.5 text-sm transition'
@@ -64,7 +70,7 @@ const markAllAsRead = async () => {
   <Navbar :canLogin="canLogin" :canRegister="canRegister" :authUser="authUser" />
 
   <div class="bg-gray-50 py-10 md:py-14">
-    <div class="container mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+    <div class="app-page-shell px-4 sm:px-6 lg:px-8 space-y-6">
       <div class="rounded-2xl border border-gray-200 bg-white p-6 md:p-7 shadow-sm">
         <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
           <div>
@@ -152,7 +158,7 @@ const markAllAsRead = async () => {
 
         <div class="flex items-center justify-between border border-gray-200 rounded-2xl bg-white px-4 py-3">
           <div class="text-sm text-gray-600">
-            {{ t('notifications.showing', { start: notifications.from || 0, end: notifications.to || 0, total: notifications.total || 0 }) }}
+            {{ paginationSummary }}
           </div>
 
           <div class="flex items-center gap-2">

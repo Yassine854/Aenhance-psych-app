@@ -29,6 +29,14 @@
 
 /* Component defaults for admin layout — ensure dark variants */
 @layer components {
+  /* Main application layouts follow the available viewport, including at browser zoom.
+     Keep text, form, and dialog width limits on their inner elements. */
+  .app-page-shell {
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+  }
+
   .menu-item {
     @apply flex items-center gap-3 px-3 py-2 rounded-lg transition-colors h-11;
   }

@@ -1336,6 +1336,27 @@
   "nextPage": "Next page"
 },
 "videoCall": {
+    "toolbar": {
+      "more": "More options",
+      "close": "Close options",
+      "endSession": "End session"
+    },
+    "interactions": {
+    "reactions": "Reactions",
+    "raiseHand": "Raise hand",
+    "lowerHand": "Lower hand",
+    "handRaised": "{name} would like to speak",
+    "reacted": "{name} reacted: {reaction}",
+    "unavailable": "Reconnecting. Please try your reaction again.",
+    "thumbs-up": "Thumbs up",
+    "happy": "Happy",
+    "sad": "Sad",
+    "love": "Love",
+    "laugh": "Laugh",
+    "applause": "Applause",
+    "celebrate": "Celebrate",
+    "surprised": "Surprised"
+  },
   "dismissError": "Dismiss message",
   "title": "Video call",
   "subtitle": "Join your scheduled video session",
@@ -1556,6 +1577,18 @@
   }
 },
 "psychologistAppointments": {
+  "workspace": "Your practice",
+  "overview": "Your sessions, clearly organized. Find a patient, join a call, or pick up where you left off.",
+  "manageAvailability": "Manage availability",
+  "total": "All appointments",
+  "all": "All",
+  "schedule": "Your appointments",
+  "recentFirst": "Most recent first",
+  "videoSession": "Video consultation",
+  "resetFilters": "Reset filters",
+  "noResults": "No matching appointments",
+  "noResultsDesc": "Try another name, date, or status, or reset your filters to see all appointments.",
+  "pagination": "Appointment pages",
   "title": "Appointments",
   "subtitle": "Manage your appointments. You can only cancel 24h+ before start time.",
   "success": "Success",

@@ -55,28 +55,17 @@
   
 
       <div class="flex items-center gap-2">
-            <button
-              type="button"
-              class="hidden sm:inline-flex items-center gap-2 h-9 px-3 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50"
-              @click="copyRoomId"
-            >
-              <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M9 9h10v10H9z" />
-                <path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1" />
+            <button type="button"
+              class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
+              :title="remoteViewMode === 'cover' ? t('videoCall.viewMode.fit') : t('videoCall.viewMode.cover')"
+              :aria-label="remoteViewMode === 'cover' ? t('videoCall.viewMode.fit') : t('videoCall.viewMode.cover')"
+              @click="toggleRemoteViewMode">
+              <svg aria-hidden="true" viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="18" height="18" rx="2" />
+                <path v-if="remoteViewMode === 'cover'" d="M7 7h10v10H7z" />
+                <path v-else d="M3 12h18M12 3v18" />
               </svg>
-              {{ t('videoCall.copyRoom') }}
             </button>
-
-            <button
-              type="button"
-              class="hidden sm:inline-flex items-center gap-2 h-9 px-3 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50"
-              :title="remoteViewMode === 'cover' ? t('videoCall.viewMode.cover') : t('videoCall.viewMode.fit')"
-              @click="toggleRemoteViewMode"
-            >
-              <svg v-if="remoteViewMode === 'cover'" viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 7h10v10H7z"/></svg>
-              <svg v-else viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 12h18M12 3v18"/></svg>
-            </button>
-
             <Link
               :href="backHref"
               class="inline-flex items-center justify-center h-8 sm:h-9 px-2 sm:px-3 rounded-lg border border-gray-200 bg-white text-xs sm:text-sm font-medium text-gray-700 hover:bg-gray-50 gap-2 min-w-[40px] sm:min-w-0"
@@ -91,7 +80,12 @@
       </div>
     </div>
 
-    <div ref="stageEl" class="relative bg-black" :style="stageStyle">
+    <div ref="stageEl" class="relative bg-black" :style="stageStyle"
+      tabindex="0" :aria-label="t('videoCall.title')"
+      @pointermove="interactionsRef?.revealControls()"
+      @pointerdown="interactionsRef?.revealControls()"
+      @keydown="interactionsRef?.revealControls()"
+      @focus="interactionsRef?.revealControls()">
       <div v-if="error" role="alert" class="absolute top-0 left-0 right-0 z-20 flex items-start gap-3 p-4 text-sm text-red-700 bg-red-50 border-b border-red-200">
         <span class="min-w-0 flex-1 break-words">{{ error }}</span>
         <button
@@ -118,6 +112,10 @@
         autoplay
         playsinline
       ></video>
+
+      <div v-if="remoteHandRaised" role="status" class="absolute top-16 left-3 z-20 max-w-[55%] rounded-xl bg-amber-100 px-3 py-2 text-sm font-medium text-amber-950 shadow-lg">
+        ✋ {{ formatCallMessage(t, 'videoCall.interactions.handRaised', { name: remoteDisplayName }) }}
+      </div>
 
       <div v-if="showRemotePlaceholder" class="absolute inset-0 flex items-center justify-center remote-placeholder-container">
         <div class="text-center text-white">
@@ -152,13 +150,13 @@
 
       <div class="absolute inset-0 pointer-events-none bg-gradient-to-t from-black/35 via-black/0 to-black/20"></div>
 
-      <div class="absolute bottom-3 left-3 pointer-events-none">
+      <div class="absolute top-3 left-3 max-w-[55%] pointer-events-none">
         <div
-          class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-black/45 text-white text-sm backdrop-blur"
+          class="inline-flex max-w-full items-center gap-2 px-3 py-1.5 rounded-xl bg-black/45 text-white text-sm backdrop-blur"
           :class="isRemoteSpeaking ? 'speaking-pulse' : ''"
         >
           <span class="font-semibold truncate max-w-[220px]">{{ remoteDisplayName }}</span>
-          <span v-if="remoteRoleLabel" class="text-white/70 text-xs">({{ remoteRoleLabel }})</span>
+          <span v-if="remoteRoleLabel" class="hidden sm:inline text-white/70 text-xs">({{ remoteRoleLabel }})</span>
           <span v-if="connectionState === 'connected' && remoteAudioEnabled === false" class="ml-1" :title="t('videoCall.muted')">
             <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M12 1a3 3 0 0 0-3 3v6" />
@@ -180,11 +178,14 @@
       <div
         class="absolute top-3 right-3 rounded-xl overflow-hidden border border-white/15 shadow-lg local-preview"
         :class="isLocalSpeaking ? 'speaking-pulse' : ''"
+        :style="{ aspectRatio: localVideoAspectRatio }"
       >
         <video
           ref="localVideo"
-          class="w-full h-full object-cover bg-black transition-opacity duration-200"
+          class="absolute inset-0 w-full h-full object-contain bg-black transition-opacity duration-200"
           :class="showLocalPlaceholder ? 'opacity-0' : 'opacity-100'"
+          @loadedmetadata="updateLocalVideoAspectRatio"
+          @resize="updateLocalVideoAspectRatio"
           autoplay
           playsinline
           muted
@@ -195,7 +196,7 @@
             <div class="mx-auto h-12 w-12 rounded-full bg-white/10 border border-white/15 flex items-center justify-center">
               <span class="text-base font-semibold">{{ localInitials }}</span>
             </div>
-            <p class="mt-2 text-xs font-semibold px-2 max-w-[180px] truncate">{{ localDisplayName }}</p>
+            <p class="mt-2 text-xs font-semibold px-2 max-w-[180px] truncate">{{ localUiName }}</p>
           </div>
         </div>
 
@@ -228,8 +229,21 @@
         </div>
       </div>
 
-      <div class="absolute left-0 right-0 flex items-center justify-center px-4 bottom-24 sm:bottom-4 z-30">
-        <div class="pointer-events-auto inline-flex items-center gap-2 sm:gap-3 px-3 py-2 rounded-2xl bg-white/10 backdrop-blur border border-white/15 shadow-xl">
+      <VideoCallToolbar
+        ref="interactionsRef"
+        :connected="connectionState === 'connected'"
+        :hand-raised="handRaised"
+        :unread-count="unreadCount"
+        :display-name="localDisplayName"
+        :send-reaction="sendReaction"
+        :fullscreen="isFullscreen"
+        :view-mode="remoteViewMode"
+        :chat-open="showChat"
+        @toggle-hand="toggleHand"
+        @chat="toggleChat"
+        @fullscreen="toggleFullscreen"
+        @fit="toggleRemoteViewMode"
+      >
           <button
             type="button"
             class="control-btn"
@@ -270,40 +284,6 @@
 
           <button
             type="button"
-            class="control-btn bg-white/10 hover:bg-white/15 text-white border-white/15"
-            :title="isFullscreen ? t('videoCall.minimize') : t('videoCall.fullscreen')"
-            @click="toggleFullscreen"
-          >
-            <svg v-if="!isFullscreen" viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M9 3H5a2 2 0 0 0-2 2v4" />
-              <path d="M15 3h4a2 2 0 0 1 2 2v4" />
-              <path d="M9 21H5a2 2 0 0 1-2-2v-4" />
-              <path d="M15 21h4a2 2 0 0 0 2-2v-4" />
-            </svg>
-            <svg v-else viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M9 9H5V5" />
-              <path d="M15 9h4V5" />
-              <path d="M9 15H5v4" />
-              <path d="M15 15h4v4" />
-            </svg>
-          </button>
-
-          <button
-            v-if="role === 'psychologist' && callDurationSec >= 1500"
-            type="button"
-            class="control-btn"
-            :class="(isEndingSession || sessionStatus === 'completed' || callEndedAt) ? 'bg-amber-500/60 text-white border-amber-400/30 cursor-not-allowed' : 'bg-amber-500 hover:bg-amber-600 text-white border-amber-400/40'"
-            :disabled="isEndingSession || sessionStatus === 'completed' || Boolean(callEndedAt)"
-            :title="sessionStatus === 'completed' || callEndedAt ? 'Session ended' : 'End session'"
-            @click="endSession"
-          >
-            <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M6 6h12v12H6z" />
-            </svg>
-          </button>
-
-          <button
-            type="button"
             class="control-btn bg-red-600 hover:bg-red-700 text-white border-red-500/40"
             title="Hang up"
             @click="hangUpAndLeave"
@@ -314,43 +294,23 @@
               <path d="M22 14.5v3a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2v-3" />
             </svg>
           </button>
-        </div>
-      </div>
-
-      <div v-if="connectionState === 'waiting'" class="absolute inset-0 z-10 flex items-center justify-center px-4 sm:px-6 pointer-events-none">
-        <div class="pointer-events-auto w-full max-w-lg rounded-2xl bg-black/60 border border-white/10 backdrop-blur p-6 sm:p-8 text-center text-white">
-          <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-emerald-500/15 mb-4">
-            <svg viewBox="0 0 24 24" class="h-8 w-8 text-emerald-400" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 20v-6"/><path d="M12 14l4-4"/><path d="M12 14l-4-4"/><path d="M20 12a8 8 0 1 0-16 0"/></svg>
-          </div>
-          <h3 class="text-lg sm:text-xl font-semibold mb-2">{{ t('videoCall.waitingTitle') }}</h3>
-          <p class="text-sm sm:text-base text-white/80 mb-4">{{ t('videoCall.waitingDesc') }}</p>
-
-          <div class="flex items-center justify-center gap-2 sm:gap-3 mb-3">
-            <button type="button" @click="copyRoomId" class="inline-flex items-center gap-2 px-3 py-2 rounded-md bg-white/10 hover:bg-white/15 text-sm sm:text-sm" :title="t('videoCall.copyRoom')">
-              <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 9h10v10H9z"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/></svg>
-              <span class="hidden sm:inline">{{ t('videoCall.copyRoom') }}</span>
-            </button>
-
-            <button type="button" @click="shareRoom" class="inline-flex items-center gap-2 px-3 py-2 rounded-md bg-emerald-500/90 hover:bg-emerald-600 text-white text-sm" :title="t('videoCall.shareLink')">
-              <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/><path d="M16 6l-4-4-4 4"/><path d="M12 2v13"/></svg>
-              <span class="hidden sm:inline">{{ t('videoCall.shareLink') }}</span>
-            </button>
-          </div>
-
-          <p class="text-xs text-white/60">{{ t('videoCall.waitingTip') }}</p>
-        </div>
-      </div>
-    </div>
-    </div>
-    <!-- Floating chat toggle -->
-    <button
-      @click="toggleChat"
-      class="chat-toggle absolute right-4 bottom-4 sm:bottom-4 z-40 inline-flex items-center justify-center h-12 w-12 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg focus:outline-none"
-      :title="showChat ? t('videoCall.chat.close') : t('videoCall.chat.open')"
-    >
-      <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-      <span v-if="unreadCount > 0" class="chat-badge absolute -top-1 -right-1 inline-flex items-center justify-center h-5 min-w-[20px] px-1 rounded-full bg-red-600 text-white text-xs font-semibold">{{ unreadCount }}</span>
-    </button>
+        <template #session-action>
+          <button
+            v-if="role === 'psychologist' && callDurationSec >= 1500"
+            type="button"
+            class="flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-sm"
+            :class="(isEndingSession || sessionStatus === 'completed' || callEndedAt) ? 'bg-amber-500/60 text-white border-amber-400/30 cursor-not-allowed' : 'bg-amber-500 hover:bg-amber-600 text-white border-amber-400/40'"
+            :disabled="isEndingSession || sessionStatus === 'completed' || Boolean(callEndedAt)"
+            :title="sessionStatus === 'completed' || callEndedAt ? 'Session ended' : 'End session'"
+            @click="endSession"
+          >
+            <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M6 6h12v12H6z" />
+            </svg>
+            {{ t('videoCall.toolbar.endSession') }}
+          </button>
+        </template>
+      </VideoCallToolbar>
 
     <transition name="slide-chat">
       <div v-show="showChat" class="absolute top-0 right-0 bottom-0 z-50 w-full max-w-sm min-h-0">
@@ -366,6 +326,29 @@
         />
       </div>
     </transition>
+
+      <div v-if="connectionState === 'waiting'" class="absolute inset-0 z-10 flex items-center justify-center px-4 sm:px-6 pointer-events-none">
+        <div class="pointer-events-auto w-full max-w-lg rounded-2xl bg-black/60 border border-white/10 backdrop-blur p-6 sm:p-8 text-center text-white">
+          <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-emerald-500/15 mb-4">
+            <svg viewBox="0 0 24 24" class="h-8 w-8 text-emerald-400" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 20v-6"/><path d="M12 14l4-4"/><path d="M12 14l-4-4"/><path d="M20 12a8 8 0 1 0-16 0"/></svg>
+          </div>
+          <h3 class="text-lg sm:text-xl font-semibold mb-2">{{ t('videoCall.waitingTitle') }}</h3>
+          <p class="text-sm sm:text-base text-white/80 mb-4">{{ t('videoCall.waitingDesc') }}</p>
+
+          <div class="flex items-center justify-center gap-2 sm:gap-3 mb-3">
+
+            <button type="button" @click="shareRoom" class="inline-flex items-center gap-2 px-3 py-2 rounded-md bg-emerald-500/90 hover:bg-emerald-600 text-white text-sm" :title="t('videoCall.shareLink')">
+              <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/><path d="M16 6l-4-4-4 4"/><path d="M12 2v13"/></svg>
+              <span class="hidden sm:inline">{{ t('videoCall.shareLink') }}</span>
+            </button>
+          </div>
+
+          <p class="text-xs text-white/60">{{ t('videoCall.waitingTip') }}</p>
+        </div>
+      </div>
+    </div>
+    </div>
+
     <VideoCallRating ref="ratingRef" />
     <VideoCallSessionNotes ref="notesRef" />
   </div>
@@ -377,6 +360,8 @@ import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import VideoCallChat from './VideoCallChat.vue'
 import VideoCallRating from './VideoCallRating.vue'
 import VideoCallSessionNotes from './VideoCallSessionNotes.vue'
+import VideoCallToolbar from './VideoCallToolbar.vue'
+import { callInteractionMessage, readCallInteraction, formatCallMessage } from '@/utils/callInteractions'
 // Chat state
 const chatRef = ref(null)
 const showChat = ref(false)
@@ -408,6 +393,7 @@ const props = defineProps({
   appointmentId: { type: Number, required: true },
   roomId: { type: String, required: true },
   displayName: { type: String, default: '' },
+  remoteFirstName: { type: String, default: '' },
   signalingUrl: { type: String, default: '' },
   role: { type: String, default: 'patient' },
   backHref: { type: String, required: true },
@@ -419,7 +405,31 @@ const { t } = useI18n()
 const stageEl = ref(null)
 const localVideo = ref(null)
 const remoteVideo = ref(null)
-const remoteViewMode = ref('cover') // 'cover' = fill/crop (like Meet/Zoom), 'contain' = fit (no crop)
+const interactionsRef = ref(null)
+const handRaised = ref(false)
+const remoteHandRaised = ref(false)
+
+function toggleHand() {
+  handRaised.value = !handRaised.value
+  sendMediaState()
+}
+
+function sendReaction(reaction) {
+  if (leavingCall || !ws || ws.readyState !== WebSocket.OPEN) return false
+  wsSend(callInteractionMessage('reaction', reaction))
+  return true
+}
+// Fill the participant tile by default; Fit remains available to show the full frame.
+// This crops only the local display, never the stream sent to the other participant.
+const remoteViewMode = ref('cover')
+const localVideoAspectRatio = ref(4 / 3)
+
+function updateLocalVideoAspectRatio() {
+  const video = localVideo.value
+  if (video?.videoWidth > 0 && video?.videoHeight > 0) {
+    localVideoAspectRatio.value = video.videoWidth / video.videoHeight
+  }
+}
 
 const error = ref('')
 const isMuted = ref(false)
@@ -529,11 +539,12 @@ const localBaseName = computed(() => {
   const fromProp = String(props.displayName || '').trim()
   if (fromProp) return fromProp
 
-  const fromAuth = String(authUser.value?.name || '').trim()
-  if (fromAuth) return fromAuth
+  const profile = props.role === 'psychologist' ? authUser.value?.psychologistProfile : authUser.value?.patientProfile
+  const fromProfile = String(profile?.first_name || '').trim()
+  if (fromProfile) return fromProfile
 
-  const fromEmail = String(authUser.value?.email || '').trim()
-  if (fromEmail) return fromEmail
+  const fromAuth = String(authUser.value?.name || '').trim().split(/\s+/)[0]
+  if (fromAuth) return fromAuth
 
   return ''
 })
@@ -566,7 +577,8 @@ const remoteRoleLabel = computed(() => {
 })
 
 const remoteDisplayName = computed(() => {
-  if (remoteName.value) return remoteName.value
+  if (props.remoteFirstName.trim()) return props.remoteFirstName.trim()
+  if (remoteName.value) return remoteName.value.trim().split(/\s+/)[0]
   if (connectionState.value === 'waiting') return t('videoCall.waitingShort')
   // Never show "Participant"; fall back to role label.
   if (remoteRoleLabel.value) return remoteRoleLabel.value
@@ -1380,11 +1392,14 @@ function setRemoteIdentity(payload) {
   if (media) {
     remoteVideoEnabled.value = media.videoEnabled !== false
     remoteAudioEnabled.value = media.audioEnabled !== false
+    if (typeof media.handRaised === 'boolean') remoteHandRaised.value = media.handRaised
   }
 }
 
 function sendMediaState() {
-  wsSendOrQueue({ type: 'media', audioEnabled: !isMuted.value, videoEnabled: !isVideoOff.value })
+  wsSendOrQueue({ type: 'media', audioEnabled: !isMuted.value, videoEnabled: !isVideoOff.value, handRaised: handRaised.value })
+  // Legacy signaling servers strip extra media fields; chat payloads are relayed intact.
+  wsSend(callInteractionMessage('hand', handRaised.value))
 }
 
 function toggleMute() {
@@ -1483,14 +1498,6 @@ async function toggleFullscreen() {
 
     await document.exitFullscreen()
     isFullscreen.value = false
-  } catch {
-    // ignore
-  }
-}
-
-async function copyRoomId() {
-  try {
-    await navigator.clipboard.writeText(String(props.roomId))
   } catch {
     // ignore
   }
@@ -1790,6 +1797,18 @@ async function connectSignaling() {
         } catch {
           return
         }
+        if (msg.type === 'chat' && msg.payload?.type === 'call-interaction') {
+          const interaction = readCallInteraction(msg)
+          if (interaction?.event === 'hand') remoteHandRaised.value = interaction.raised
+          if (interaction?.event === 'reaction') {
+            interactionsRef.value?.receiveReaction(interaction.reaction, remoteDisplayName.value)
+          }
+          return
+        }
+        if (msg.type === 'reaction') {
+          interactionsRef.value?.receiveReaction(msg.reaction, remoteDisplayName.value)
+          return
+        }
         // Handle chat messages
         if (msg.type === 'chat' && sessionActive.value && chatRef.value) {
           chatRef.value.receiveMessage(msg.payload)
@@ -1804,6 +1823,7 @@ async function connectSignaling() {
             setRemoteIdentity(msg.peers[0])
             if (pc?.connectionState !== 'connected') setConnectionState('connecting')
           } else {
+            remoteHandRaised.value = false
             if (pc?.connectionState !== 'connected') setConnectionState('waiting')
           }
 
@@ -1817,7 +1837,10 @@ async function connectSignaling() {
         }
 
         if (msg.type === 'peer-joined') {
+          remoteHandRaised.value = false
           setRemoteIdentity(msg)
+          // A newly joined/reconnected peer needs our current state even on old servers.
+          wsSend(callInteractionMessage('hand', handRaised.value))
           if (pc?.connectionState !== 'connected') setConnectionState('connecting')
 
           // Second participant joined; backend will set started_at.
@@ -1863,6 +1886,7 @@ async function connectSignaling() {
         if (msg.type === 'peer-left') {
           if (msg.signalingTimeout && pc?.connectionState === 'connected') return
           setConnectionState('waiting')
+          remoteHandRaised.value = false
           remoteName.value = ''
           remoteRole.value = ''
           remoteVideoEnabled.value = true
@@ -2066,8 +2090,8 @@ onBeforeUnmount(() => {
 /* Mobile/touch improvements */
 @media (max-width: 640px) {
   .control-btn {
-    height: 56px;
-    width: 56px;
+    height: 44px;
+    width: 44px;
     border-radius: 14px;
   }
 
@@ -2091,10 +2115,10 @@ onBeforeUnmount(() => {
 </style>
 
 <style scoped>
-/* Local preview (portrait) default sizes */
+/* Follow the actual camera orientation without cropping the local preview. */
 .local-preview {
   width: 156px; /* reduced width */
-  height: 198px; /* reduced height, keep portrait */
+  height: auto;
   right: 12px;
   top: 12px;
 }
@@ -2102,7 +2126,6 @@ onBeforeUnmount(() => {
 @media (min-width: 640px) {
   .local-preview {
     width: 178px; /* slightly reduced on larger screens */
-    height: 232px;
     right: 12px;
     top: 12px;
   }
@@ -2111,7 +2134,6 @@ onBeforeUnmount(() => {
 @media (max-width: 640px) {
   .local-preview {
     width: calc(24vw);
-    height: calc(30vw);
     right: 10px !important;
     top: 10px !important;
   }
@@ -2120,6 +2142,6 @@ onBeforeUnmount(() => {
 .local-preview video {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
 }
 </style>
